@@ -10,6 +10,7 @@ This file applies to the whole repository. Read the relevant current specificati
 | `docs/game-design-document.md` | Product vision, confirmed product decisions, core loop, document map, and chronological product decision log. Start here for scope. |
 | `docs/gameplay-systems.md` | Career rules, weekly loop, statistics, formulas, economy, automation, endings, and scoring. Numerical values are a prototype baseline until a ranked ruleset is frozen. |
 | `docs/content-and-experience.md` | Fictional world, event structure, Polish copy, adult themes, screen flows, accessibility, and text filters. |
+| `docs/content-capacity-estimate.md` | Content authoring measurement method, effort model, proposed launch floor by phase and category, and owner sign-off; `docs/templates/` holds the measurement CSV. |
 | `docs/technical-architecture.md` | Online/server-authoritative boundaries, career API, persistence, ranking integrity, security, and deployment architecture. |
 | `docs/technology-stack.md` | Repository layout, .NET layers, React stack, libraries, API client generation, and test tools. |
 | `docs/infrastructure-and-operations.md` | VPS and k3s topology, Ansible/Helm, SQL Server, Vault, environments, backups, and recovery. |
