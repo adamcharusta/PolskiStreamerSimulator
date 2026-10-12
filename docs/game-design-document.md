@@ -241,6 +241,7 @@ This is a chronological record. Later entries supersede earlier ones when they c
 | 2026-10-12 | Let the owner add, edit and remove events and change balance constants from `/admin`; publish validated, versioned changes while existing careers retain their original ruleset and material balance changes start a new leaderboard season. | User admin-scope addition |
 | 2026-10-12 | Add local pre-commit formatting, fixable lint and fast unit tests; rerun tests on `develop`; use SonarQube Cloud quality checks on PRs to `develop` and `main` while preserving Git Flow. | User development-workflow interview |
 | 2026-10-12 | Clarify pre-commit auto-fixes: `dotnet format` applies to the backend and ESLint `--fix` to the frontend; check Prettier in CI. | User tooling correction |
+| 2026-10-13 | Propose a content-capacity measurement method, effort model and launch floor of 173 templates (130 live events by phase and category, 43 other), below the 212-template planning estimate; the floor stays pending until the owner measures authoring/QA time and approves it ([content capacity estimate](content-capacity-estimate.md), [#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7)). | Agent proposal |
 
 ## 7. Next Step
 

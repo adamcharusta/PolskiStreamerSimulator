@@ -8,6 +8,7 @@ Read and follow [AGENTS.md](AGENTS.md); it is the canonical agent guide for this
 | `docs/game-design-document.md` | Current product scope, confirmed choices, and product decision history. |
 | `docs/gameplay-systems.md` | Simulation rules, formulas, economy, automation, and score. |
 | `docs/content-and-experience.md` | Event data, Polish content, screens, accessibility, and filters. |
+| `docs/content-capacity-estimate.md` | Content authoring measurement method, effort model, proposed launch floor, and owner sign-off (`docs/templates/` CSV). |
 | `docs/technical-architecture.md` | Online API, persistence, ranking integrity, and security boundaries. |
 | `docs/technology-stack.md` | Source layout, .NET/React stack, libraries, and testing tools. |
 | `docs/infrastructure-and-operations.md` | k3s, Ansible/Helm, SQL Server, Vault, backups, and recovery. |
