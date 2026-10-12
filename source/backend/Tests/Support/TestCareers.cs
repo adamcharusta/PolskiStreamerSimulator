@@ -18,6 +18,10 @@ public static class TestCareers
         Equipment: Enum.GetValues<EquipmentSlot>().ToImmutableDictionary(slot => slot, _ => 0),
         ScoreMultiplier: Fixed.One);
 
+    /// <summary>A week-one career on the repository content's profile for <paramref name="background"/>.</summary>
+    public static CareerState For(Background background, Difficulty difficulty, ulong seed, PronounSet pronouns = PronounSet.Woman)
+        => CareerFactory.Create(RulesetId, TestContent.Valid().Digest, TestContent.Valid().Profiles[background], background, difficulty, pronouns, seed);
+
     public static CareerState Dorm(ulong seed)
         => CareerFactory.Create(RulesetId, TestContent.Valid().Digest, DormProfile, Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Woman, seed);
 }
