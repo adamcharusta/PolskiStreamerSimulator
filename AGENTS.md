@@ -18,6 +18,7 @@ This file applies to the whole repository. Read the relevant current specificati
 | `docs/technical-decisions.md` | Confirmed technical/workflow decisions, implementation defaults to validate, outstanding deployment inputs, and superseded choices. |
 | `docs/validation-and-delivery.md` | Release stages, acceptance criteria, simulation and test priorities, risks, and documentation maintenance. |
 | `docs/requirements-traceability.md` | Requirement IDs mapped to source, acceptance criterion, issue/milestone and status; superseded guidance with its replacement. |
+| `docs/reports/` | Generated simulation reports, such as the M1 baseline of 10,000 seeded careers, with dated findings and follow-ups. |
 | `docs/superpowers/` | Design specs (`specs/`) and implementation plans (`plans/`) for milestone work, such as the M1 simulation prototype. |
 | `docs/core-concept.md` | Original concept only; use the current GDD and linked specifications where they differ. |
 | `docs/polski-pilkarz-simulator-analysis.md` | Reference-game design analysis, not requirements for this game. |

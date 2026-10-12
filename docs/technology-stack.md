@@ -8,6 +8,7 @@ The proposed layout applies the owner's four-project .NET solution and keeps Rea
 
 ```text
 docs/                         English project documentation
+content/                      versioned content and balance snapshots (M1: content/m1/*.json; TD-76)
 .github/
   workflows/                  GitHub Actions workflows
 source/
@@ -17,7 +18,8 @@ source/
     Application/              CQRS messages, handlers, application policies
     Infrastructure/           EF Core, Identity, SQL Server, external adapters
     WebApp/                   ASP.NET Core host, Wolverine HTTP endpoints, OpenAPI
-    Tests/                    xUnit unit and integration tests
+    Tests/                    xUnit v3 unit, property and integration tests (Microsoft.Testing.Platform; TD-82)
+    Tools/BatchSimulator/     console batch simulator for seeded careers; not deployed (TD-78)
   frontend/                   React + TypeScript + Vite, game and /admin route
     src/
       features/               feature-level components, hooks, state and screens
