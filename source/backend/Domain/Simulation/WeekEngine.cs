@@ -24,6 +24,18 @@ public sealed class WeekEngine(RulesetRegistry registry)
             : Result<IReadOnlyList<(WeekPlan Plan, string? DisabledReason)>>.Fail(ruleset.Error);
     }
 
+    public Result<EventPresentation> PresentEvent(CareerState s, ContentSnapshot c)
+    {
+        var ruleset = Resolve(s, c);
+        return ruleset.IsSuccess ? ruleset.Value.PresentEvent(s, c) : Result<EventPresentation>.Fail(ruleset.Error);
+    }
+
+    public Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
+    {
+        var ruleset = Resolve(s, c);
+        return ruleset.IsSuccess ? ruleset.Value.ResolveEvent(s, c, choiceId, expectedVersion) : Result<CareerState>.Fail(ruleset.Error);
+    }
+
     private Result<IRuleset> Resolve(CareerState s, ContentSnapshot c)
     {
         var ruleset = registry.Resolve(s.RulesetId);

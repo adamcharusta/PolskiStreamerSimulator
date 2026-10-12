@@ -21,4 +21,9 @@ public sealed class LegacyRuleset(string id = LegacyRuleset.LegacyId) : IRuleset
         => Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "legacy");
 
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c) => inner.LegalPlans(s, c);
+
+    public Result<EventPresentation> PresentEvent(CareerState s, ContentSnapshot c) => inner.PresentEvent(s, c);
+
+    public Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
+        => inner.ResolveEvent(s, c, choiceId, expectedVersion);
 }

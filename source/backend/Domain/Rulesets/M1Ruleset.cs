@@ -38,6 +38,134 @@ public sealed class M1Ruleset : IRuleset
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
         => [.. AllPlans().Select(plan => (plan, PlanRejection(s, c.Balance, plan)))];
 
+    public Result<EventPresentation> PresentEvent(CareerState s, ContentSnapshot c)
+    {
+        if (s.Status == CareerStatus.Ended)
+        {
+            return Result<EventPresentation>.Fail(DomainErrorCode.CareerEnded, "career-ended");
+        }
+
+        var next = NextEvent(s, c);
+        return next.IsSuccess
+            ? Result<EventPresentation>.Ok(new EventPresentation(next.Value.Id, [.. next.Value.Choices.Select(choice => OddsCalculator.For(s, choice, c.Balance))]))
+            : Result<EventPresentation>.Fail(next.Error);
+    }
+
+    public Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
+    {
+        if (CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
+        var next = NextEvent(s, c);
+        if (!next.IsSuccess)
+        {
+            return Result<CareerState>.Fail(next.Error);
+        }
+
+        var e = next.Value;
+        if (e.Choices.FirstOrDefault(choice => choice.Id == choiceId) is not { } chosen)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.UnknownChoice, choiceId);
+        }
+
+        var odds = OddsCalculator.For(s, chosen, c.Balance);
+        var rng = s.Rng;
+        var (roll, outcome, effects) = Roll(chosen, odds, ref rng);
+        var pending = s.Pending!;
+        var state = ApplyEffects(s, e.Id, effects, ref pending);
+        var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
+        var result = new RollResult(e.Id, chosen.Id, roll, odds.Threshold, odds.Modifiers, outcome);
+        return Result<CareerState>.Ok(state with
+        {
+            Rng = rng,
+            StateVersion = s.StateVersion + 1,
+            EventCooldowns = s.EventCooldowns.SetItem(e.Id, s.Week.Value + e.CooldownWeeks),
+            Metrics = s.Metrics with
+            {
+                EventsResolved = s.Metrics.EventsResolved + 1,
+                Criticals = s.Metrics.Criticals + (critical ? 1 : 0),
+            },
+            Pending = pending with { Resolved = pending.Resolved.Add(result) },
+        });
+    }
+
+    /// <summary>
+    /// Guaranteed choices draw nothing. Otherwise roll 1–100: with criticals allowed, 1 is a critical success
+    /// and 100 a critical failure; any other roll succeeds when it is at most the threshold.
+    /// </summary>
+    private static (int? Roll, RollOutcome Outcome, ImmutableArray<Effect> Effects) Roll(ChoiceDefinition choice, ChoiceOdds odds, ref Pcg32 rng)
+    {
+        var outcomes = choice.Outcomes;
+        if (choice.Guaranteed)
+        {
+            return (null, RollOutcome.Guaranteed, outcomes.Success);
+        }
+
+        (var roll, rng) = rng.NextInt(1, 100);
+        return roll switch
+        {
+            1 when choice.AllowsCritical => (roll, RollOutcome.CriticalSuccess, outcomes.CriticalSuccess ?? outcomes.Success),
+            100 when choice.AllowsCritical => (roll, RollOutcome.CriticalFailure, outcomes.CriticalFailure ?? outcomes.Failure),
+            _ when roll <= odds.Threshold => (roll, RollOutcome.Success, outcomes.Success),
+            _ => (roll, RollOutcome.Failure, outcomes.Failure),
+        };
+    }
+
+    /// <summary>Stat effects change the career now; cash, audience and quality effects accumulate for settlement.</summary>
+    private static CareerState ApplyEffects(CareerState s, string eventId, ImmutableArray<Effect> effects, ref PendingWeek pending)
+    {
+        var primary = pending.Plan.Category;
+        var lines = pending.Lines.ToBuilder();
+        foreach (var effect in effects)
+        {
+            switch (effect.Kind)
+            {
+                case EffectKind.StatDelta:
+                    var stat = effect.Stat!.Value;
+                    var before = Stats.Get(s, stat, primary);
+                    s = Stats.Add(s, stat, effect.Amount, primary);
+                    lines.Add(new ReportLine($"stat:{stat}", Delta: Stats.Get(s, stat, primary) - before, Detail: eventId));
+                    break;
+                case EffectKind.CashDelta:
+                    var amount = effect.Amount.RoundToLong();
+                    pending = pending with { CashDeltaFromEvents = pending.CashDeltaFromEvents + amount };
+                    lines.Add(new ReportLine(amount >= 0 ? "income:event" : "cost:event", AmountPln: Math.Abs(amount), Detail: eventId));
+                    break;
+                case EffectKind.AudienceMultiplier:
+                    pending = pending with { AudienceMultiplier = pending.AudienceMultiplier * effect.Amount };
+                    break;
+                case EffectKind.EventQuality:
+                    pending = pending with { EventQuality = pending.EventQuality + effect.Amount };
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(effects), effect.Kind, null);
+            }
+        }
+
+        pending = pending with { Lines = lines.ToImmutable() };
+        return s;
+    }
+
+    private static Result<EventDefinition> NextEvent(CareerState s, ContentSnapshot c)
+    {
+        if (s.Pending is not { } pending)
+        {
+            return Result<EventDefinition>.Fail(DomainErrorCode.NoPendingWeek, "no-pending-week");
+        }
+
+        if (pending.Resolved.Length >= pending.EventIds.Length)
+        {
+            return Result<EventDefinition>.Fail(DomainErrorCode.IllegalAction, "all-resolved");
+        }
+
+        var id = pending.EventIds[pending.Resolved.Length];
+        return c.Events.FirstOrDefault(e => e.Id == id) is { } definition
+            ? Result<EventDefinition>.Ok(definition)
+            : Result<EventDefinition>.Fail(DomainErrorCode.ContentMismatch, $"missing-event-{id}");
+    }
+
     /// <summary>Training and growth slow with skill but never fall below a fifth.</summary>
     public static Fixed GrowthFactor(Fixed skill)
         => FixedMath.Max(MinimumGrowthFactor, (Fixed.Hundred - skill) / Fixed.Hundred);
