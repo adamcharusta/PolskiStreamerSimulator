@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 
@@ -147,6 +148,24 @@ public sealed class M1Ruleset : IRuleset
                 WeeksPerCategory = s.Metrics.WeeksPerCategory.With(primary, s.Metrics.WeeksPerCategory[primary] + 1),
             },
         };
+
+        // Insolvency is checked at the end of settlement, after all income and costs, before completion.
+        EndingReason? ending = state.CashPln <= b.InsolvencyThresholdPln ? EndingReason.Insolvency
+            : s.Week.IsLast ? EndingReason.Completed
+            : null;
+        state = state with
+        {
+            Achievements = Achievements.Evaluate(state, completed: ending == EndingReason.Completed),
+            Metrics = state.Metrics with
+            {
+                PeakFollowersMilestone = Math.Max(state.Metrics.PeakFollowersMilestone, Achievements.FollowersMilestone(state.Followers)),
+            },
+        };
+        if (ending is { } reason)
+        {
+            state = End(state, reason, c) with { Week = s.Week };
+        }
+
         var report = new WeekReport(
             s.Week,
             pending.Plan,
@@ -159,9 +178,41 @@ public sealed class M1Ruleset : IRuleset
             finance.Costs,
             finance.CashDelta,
             [.. statLines],
-            null);
+            ending);
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
+
+    public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion)
+    {
+        if (CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
+        if (s.Pending is not null)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "week-in-progress");
+        }
+
+        var state = s with { Achievements = Achievements.Evaluate(s, completed: false), StateVersion = s.StateVersion + 1 };
+        return Result<CareerState>.Ok(End(state, EndingReason.EarlyRetirement, c));
+    }
+
+    /// <summary>Ends the career once: read-only status, reason and the final score breakdown.</summary>
+    private static CareerState End(CareerState s, EndingReason reason, ContentSnapshot c) => s with
+    {
+        Status = CareerStatus.Ended,
+        Ending = reason,
+        Pending = null,
+        FinalScore = ScoreCalculator.Compute(
+            s.Followers,
+            s.CashPln,
+            Achievements.Points(s.Achievements),
+            s.Difficulty,
+            c.Profiles[s.Background].ScoreMultiplier,
+            reason,
+            c.Balance),
+    };
 
     private static ImmutableDictionary<string, long> Accumulate(ImmutableDictionary<string, long> totals, IEnumerable<ReportLine> lines)
     {
