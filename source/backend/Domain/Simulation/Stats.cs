@@ -31,4 +31,29 @@ public static class Stats
         StatKey.PrimaryBoredom => s with { Boredom = s.Boredom.With(primary, Bounded(s.Boredom[primary] + delta)) },
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, null),
     };
+
+    /// <summary>
+    /// Report lines (<c>stat:Energy</c>, <c>stat:Skill.Fps</c>, …) for every bounded stat that differs between two
+    /// states, with the actual change and <paramref name="detail"/> naming the cause.
+    /// </summary>
+    public static IEnumerable<ReportLine> Changes(CareerState before, CareerState after, string detail)
+    {
+        (string Name, Fixed Before, Fixed After)[] scalars =
+        [
+            ("Drama", before.Drama, after.Drama),
+            ("Credibility", before.Credibility, after.Credibility),
+            ("Energy", before.Energy, after.Energy),
+            ("Burnout", before.Burnout, after.Burnout),
+        ];
+        var perCategory = Enum.GetValues<Category>()
+            .Select(c => ($"Skill.{c}", before.Skill[c], after.Skill[c]))
+            .Concat(Enum.GetValues<Category>().Select(c => ($"Boredom.{c}", before.Boredom[c], after.Boredom[c])));
+        foreach (var (name, from, to) in scalars.Concat(perCategory))
+        {
+            if (from != to)
+            {
+                yield return new ReportLine($"stat:{name}", Delta: to - from, Detail: detail);
+            }
+        }
+    }
 }

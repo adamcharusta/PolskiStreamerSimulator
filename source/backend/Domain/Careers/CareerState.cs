@@ -23,6 +23,9 @@ public sealed record CareerState
 
     public required CareerWeek Week { get; init; }
 
+    /// <summary>Last week whose settlement completed; 0 before the first settlement.</summary>
+    public int LastSettledWeek { get; init; }
+
     public required Pcg32 Rng { get; init; }
 
     public required long CashPln { get; init; }

@@ -20,4 +20,7 @@ public interface IRuleset
 
     /// <summary>Rolls (unless guaranteed) and records the chosen response to the next unresolved event.</summary>
     Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion);
+
+    /// <summary>Settles a week whose events are all resolved, produces its report and advances the week once.</summary>
+    Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion);
 }

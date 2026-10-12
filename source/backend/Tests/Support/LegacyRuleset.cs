@@ -26,4 +26,7 @@ public sealed class LegacyRuleset(string id = LegacyRuleset.LegacyId) : IRuleset
 
     public Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
         => inner.ResolveEvent(s, c, choiceId, expectedVersion);
+
+    public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
+        => inner.SettleWeek(s, c, expectedVersion);
 }

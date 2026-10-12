@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Simulation;
+using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets;
 
@@ -10,8 +11,6 @@ namespace PolskiStreamerSimulator.Domain.Rulesets;
 public sealed class M1Ruleset : IRuleset
 {
     public const string RulesetId = "m1-prototype.1";
-
-    private static readonly Fixed MinimumGrowthFactor = Fixed.FromRatio(1, 5);
 
     public string Id => RulesetId;
 
@@ -30,6 +29,7 @@ public sealed class M1Ruleset : IRuleset
         var rng = s.Rng;
         var lines = ImmutableArray.CreateBuilder<ReportLine>();
         var next = ApplyAction(s, c.Balance, plan, ref rng, lines);
+        lines.AddRange(Stats.Changes(s, next, "action"));
         var eventIds = EventSelector.Select(next, c, plan.Category, ref rng);
         var pending = new PendingWeek(s.Week, plan, eventIds, [], Fixed.Zero, Fixed.One, 0, lines.ToImmutable());
         return Result<CareerState>.Ok(next with { Rng = rng, StateVersion = s.StateVersion + 1, Pending = pending });
@@ -91,6 +91,55 @@ public sealed class M1Ruleset : IRuleset
         });
     }
 
+    public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
+    {
+        if (CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<(CareerState, WeekReport)>.Fail(error);
+        }
+
+        if (s.Pending is not { } pending)
+        {
+            var alreadySettled = s.LastSettledWeek >= CareerWeek.First && s.LastSettledWeek >= s.Week.Value - 1;
+            return alreadySettled
+                ? Result<(CareerState, WeekReport)>.Fail(DomainErrorCode.WeekAlreadySettled, $"week-{s.LastSettledWeek}")
+                : Result<(CareerState, WeekReport)>.Fail(DomainErrorCode.NoPendingWeek, "no-pending-week");
+        }
+
+        if (pending.Resolved.Length < pending.EventIds.Length)
+        {
+            return Result<(CareerState, WeekReport)>.Fail(DomainErrorCode.EventsUnresolved, $"resolved-{pending.Resolved.Length}-of-{pending.EventIds.Length}");
+        }
+
+        var b = c.Balance;
+        var primary = pending.Plan.Category;
+        var rng = s.Rng;
+        var statLines = pending.Lines.Where(l => l.Code.StartsWith("stat:", StringComparison.Ordinal)).ToList();
+
+        var state = ProgressionRules.ApplyStreamFatigue(s, b);
+        statLines.AddRange(Stats.Changes(s, state, "stream"));
+        var practiced = ProgressionRules.ApplySkillAndBoredom(state, primary, c.Profiles[s.Background].Skill, ref rng, b);
+        statLines.AddRange(Stats.Changes(state, practiced, "practice"));
+
+        var nextWeek = s.Week.IsLast ? s.Week : s.Week.Next();
+        state = practiced with
+        {
+            Week = nextWeek,
+            LastSettledWeek = s.Week.Value,
+            Rng = rng,
+            StateVersion = s.StateVersion + 1,
+            Pending = null,
+            EventCooldowns = s.EventCooldowns.RemoveRange(s.EventCooldowns.Where(p => p.Value <= nextWeek.Value).Select(p => p.Key)),
+            Metrics = s.Metrics with
+            {
+                Streams = s.Metrics.Streams + 1,
+                WeeksPerCategory = s.Metrics.WeeksPerCategory.With(primary, s.Metrics.WeeksPerCategory[primary] + 1),
+            },
+        };
+        var report = new WeekReport(s.Week, pending.Plan, pending.Resolved, 0, 0, 0, 0, [], [], 0, [.. statLines], null);
+        return Result<(CareerState, WeekReport)>.Ok((state, report));
+    }
+
     /// <summary>
     /// Guaranteed choices draw nothing. Otherwise roll 1–100: with criticals allowed, 1 is a critical success
     /// and 100 a critical failure; any other roll succeeds when it is at most the threshold.
@@ -116,17 +165,14 @@ public sealed class M1Ruleset : IRuleset
     /// <summary>Stat effects change the career now; cash, audience and quality effects accumulate for settlement.</summary>
     private static CareerState ApplyEffects(CareerState s, string eventId, ImmutableArray<Effect> effects, ref PendingWeek pending)
     {
-        var primary = pending.Plan.Category;
+        var before = s;
         var lines = pending.Lines.ToBuilder();
         foreach (var effect in effects)
         {
             switch (effect.Kind)
             {
                 case EffectKind.StatDelta:
-                    var stat = effect.Stat!.Value;
-                    var before = Stats.Get(s, stat, primary);
-                    s = Stats.Add(s, stat, effect.Amount, primary);
-                    lines.Add(new ReportLine($"stat:{stat}", Delta: Stats.Get(s, stat, primary) - before, Detail: eventId));
+                    s = Stats.Add(s, effect.Stat!.Value, effect.Amount, pending.Plan.Category);
                     break;
                 case EffectKind.CashDelta:
                     var amount = effect.Amount.RoundToLong();
@@ -144,6 +190,7 @@ public sealed class M1Ruleset : IRuleset
             }
         }
 
+        lines.AddRange(Stats.Changes(before, s, eventId));
         pending = pending with { Lines = lines.ToImmutable() };
         return s;
     }
@@ -165,10 +212,6 @@ public sealed class M1Ruleset : IRuleset
             ? Result<EventDefinition>.Ok(definition)
             : Result<EventDefinition>.Fail(DomainErrorCode.ContentMismatch, $"missing-event-{id}");
     }
-
-    /// <summary>Training and growth slow with skill but never fall below a fifth.</summary>
-    public static Fixed GrowthFactor(Fixed skill)
-        => FixedMath.Max(MinimumGrowthFactor, (Fixed.Hundred - skill) / Fixed.Hundred);
 
     private static DomainError? CommandRejection(CareerState s, long expectedVersion)
     {
@@ -233,7 +276,7 @@ public sealed class M1Ruleset : IRuleset
             case MainAction.TrainCategory:
                 var target = plan.TrainTarget ?? plan.Category;
                 (var points, rng) = rng.NextInt(b.TrainSkillMin, b.TrainSkillMax);
-                var gain = Fixed.FromInt(points) * GrowthFactor(s.Skill[target]);
+                var gain = Fixed.FromInt(points) * ProgressionRules.GrowthFactor(s.Skill[target]);
                 s = s with { Skill = s.Skill.With(target, Stats.Bounded(s.Skill[target] + gain)) };
                 return Stats.Add(s, StatKey.Energy, -b.TrainEnergyCost, plan.Category);
             case MainAction.ImproveProduction:
