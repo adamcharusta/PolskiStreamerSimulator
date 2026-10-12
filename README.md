@@ -38,6 +38,7 @@ k8s/                       Ansible, Helm and environment values (later milestone
 - [Technical decision register](docs/technical-decisions.md) — confirmed technical decisions, defaults, open inputs and superseded choices.
 - [Validation and delivery plan](docs/validation-and-delivery.md) — release stages, acceptance criteria, test gates and risks.
 - [Requirements traceability](docs/requirements-traceability.md) — requirement → source → acceptance criterion → issue/milestone → status, and superseded decisions with their replacements.
+- [Content production capacity estimate](docs/content-capacity-estimate.md) — measurement method, effort model and proposed launch floor of event templates, pending owner measurement.
 - [M1 baseline simulation report](docs/reports/m1-baseline-simulation.md) — 10,000 seeded careers: endings, outcome percentiles, extremes, cost of a full career and balance follow-ups.
 - [Original core concept](docs/core-concept.md) — background only; the GDD and specifications above take precedence.
 - [Reference game analysis](docs/polski-pilkarz-simulator-analysis.md) and [reference code analysis](docs/polski-pilkarz-simulator-code-analysis.md) — historical references, not requirements.
