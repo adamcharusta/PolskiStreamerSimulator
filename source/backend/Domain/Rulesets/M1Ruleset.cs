@@ -118,12 +118,20 @@ public sealed class M1Ruleset : IRuleset
 
         var state = ProgressionRules.ApplyStreamFatigue(s, b);
         statLines.AddRange(Stats.Changes(s, state, "stream"));
+        var audience = AudienceRules.Compute(state, pending, ref rng, b);
+        var finance = FinanceRules.Compute(state, pending, audience.LiveViewers, b);
+        var paidAtStart = pending.Lines.Where(l => l.Code == "cost:equipment").Sum(l => l.AmountPln!.Value);
         var practiced = ProgressionRules.ApplySkillAndBoredom(state, primary, c.Profiles[s.Background].Skill, ref rng, b);
         statLines.AddRange(Stats.Changes(state, practiced, "practice"));
 
         var nextWeek = s.Week.IsLast ? s.Week : s.Week.Next();
         state = practiced with
         {
+            Followers = Math.Max(0, s.Followers + audience.Net),
+            LastLiveViewers = audience.LiveViewers,
+
+            // The equipment purchase was paid when the week started; the report still lists it.
+            CashPln = s.CashPln + finance.CashDelta + paidAtStart,
             Week = nextWeek,
             LastSettledWeek = s.Week.Value,
             Rng = rng,
@@ -133,11 +141,36 @@ public sealed class M1Ruleset : IRuleset
             Metrics = s.Metrics with
             {
                 Streams = s.Metrics.Streams + 1,
+                TotalLiveViews = s.Metrics.TotalLiveViews + audience.LiveViewers,
+                IncomeBySource = Accumulate(s.Metrics.IncomeBySource, finance.Income),
+                CostsBySource = Accumulate(s.Metrics.CostsBySource, finance.Costs),
                 WeeksPerCategory = s.Metrics.WeeksPerCategory.With(primary, s.Metrics.WeeksPerCategory[primary] + 1),
             },
         };
-        var report = new WeekReport(s.Week, pending.Plan, pending.Resolved, 0, 0, 0, 0, [], [], 0, [.. statLines], null);
+        var report = new WeekReport(
+            s.Week,
+            pending.Plan,
+            pending.Resolved,
+            audience.LiveViewers,
+            audience.Gained,
+            audience.Lost,
+            audience.Net,
+            finance.Income,
+            finance.Costs,
+            finance.CashDelta,
+            [.. statLines],
+            null);
         return Result<(CareerState, WeekReport)>.Ok((state, report));
+    }
+
+    private static ImmutableDictionary<string, long> Accumulate(ImmutableDictionary<string, long> totals, IEnumerable<ReportLine> lines)
+    {
+        foreach (var line in lines)
+        {
+            totals = totals.SetItem(line.Code, totals.GetValueOrDefault(line.Code) + line.AmountPln!.Value);
+        }
+
+        return totals;
     }
 
     /// <summary>
