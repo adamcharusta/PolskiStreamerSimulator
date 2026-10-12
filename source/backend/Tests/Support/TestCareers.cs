@@ -19,5 +19,5 @@ public static class TestCareers
         ScoreMultiplier: Fixed.One);
 
     public static CareerState Dorm(ulong seed)
-        => CareerFactory.Create(RulesetId, "test", DormProfile, Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Woman, seed);
+        => CareerFactory.Create(RulesetId, TestContent.Valid().Digest, DormProfile, Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Woman, seed);
 }

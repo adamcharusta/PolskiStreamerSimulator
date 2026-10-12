@@ -30,7 +30,7 @@ public class CareerFactoryTests
         Assert.All(Enum.GetValues<Category>(), c => Assert.Equal(Fixed.Zero, s.Boredom[c]));
         Assert.Equal(0, s.Equipment[EquipmentSlot.Camera]);
         Assert.Equal("m1-prototype.1", s.RulesetId);
-        Assert.Equal("test", s.ContentDigest);
+        Assert.Equal(TestContent.Valid().Digest, s.ContentDigest);
         Assert.Null(s.Ending);
         Assert.Null(s.FinalScore);
         Assert.Null(s.Pending);
