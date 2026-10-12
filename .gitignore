@@ -1,8 +1,6 @@
 # Agent-local files and transcripts
 **/.codex/
 **/.claude/
-**/AGENTS.md
-**/CLAUDE.md
 **/.aider*
 **/.cursor/
 

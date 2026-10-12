@@ -6,7 +6,8 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 
 | File | Scope and role |
 | --- | --- |
-| `.gitignore` | Ignore Codex/Claude local artifacts, OS files, Visual Studio, VS Code, JetBrains files and local deployment credentials. |
+| `.gitignore` | Ignore Codex/Claude local artifacts, OS files, Visual Studio, VS Code, JetBrains files and local deployment credentials; keep the root `AGENTS.md` and `CLAUDE.md` tracked. |
+| `AGENTS.md` and `CLAUDE.md` | Versioned agent guides with a documentation map and English decision-record policy. `AGENTS.md` is canonical; `CLAUDE.md` points to it. |
 | `source/frontend/.gitignore` | Ignore Node dependencies, Vite/TypeScript output, test reports and local frontend environment files. |
 | `source/backend/.gitignore` | Ignore .NET build/test output, local settings, certificates and local SQL data/backup files. |
 | `.gitattributes` | Normalize source, docs, workflow, Ansible and Kubernetes text to LF; retain CRLF for Windows batch files and preserve binaries. |
@@ -20,7 +21,7 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 | `source/frontend/.prettierignore` | Keep generated Orval client and build/test output out of formatting checks. |
 | `lefthook.yml` (planned with application scaffolding) | Run backend `dotnet format`, frontend ESLint `--fix` and fast unit tests before code commits. |
 
-There are exactly **three `.gitignore` files**, each with a distinct responsibility. The root ignore covers editor/agent/OS and deployment-local files without hiding source or documentation. Frontend and backend files cover their own generated output. Root `.editorconfig` and `.gitattributes` also cover `.github/workflows/`, `k8s/` and optional `scripts/`; infrastructure assets do not get a fourth ignore file. Verify `git status --ignored` and `git check-ignore -v` when a new tool writes files, especially before adding broad patterns. `.gitattributes` is the canonical line-ending policy; `.editorconfig` is the editor policy. GitHub Actions must validate formatting rather than silently rewrite committed files.
+There are exactly **three `.gitignore` files**, each with a distinct responsibility. The root ignore covers editor/agent/OS and deployment-local files without hiding source or documentation; the root agent guides are explicit exceptions. Frontend and backend files cover their own generated output. Root `.editorconfig` and `.gitattributes` also cover `.github/workflows/`, `k8s/` and optional `scripts/`; infrastructure assets do not get a fourth ignore file. Verify `git status --ignored` and `git check-ignore -v` when a new tool writes files, especially before adding broad patterns. `.gitattributes` is the canonical line-ending policy; `.editorconfig` is the editor policy. GitHub Actions must validate formatting rather than silently rewrite committed files.
 
 The .NET SDK selection uses `global.json` with `rollForward: latestFeature`, which stays within .NET 10 while accepting later installed feature bands. Central Package Management uses `ManagePackageVersionsCentrally`. [Microsoft SDK selection](https://learn.microsoft.com/en-us/dotnet/core/tools/global-json), [NuGet Central Package Management](https://learn.microsoft.com/en-us/nuget/consume-packages/Central-Package-Management), [MSBuild directory customization](https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-by-directory?view=visualstudio).
 
