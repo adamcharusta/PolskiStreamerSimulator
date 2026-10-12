@@ -1,0 +1,46 @@
+using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Simulation;
+using PolskiStreamerSimulator.Domain.Simulation.Policies;
+
+namespace PolskiStreamerSimulator.Tests.Support;
+
+/// <summary>Test policy that picks uniformly among enabled plans and offered choices, and sometimes retires late.</summary>
+public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
+{
+    private Pcg32 rng = Pcg32.Create(seed, 7);
+
+    public string Name => "RandomLegal";
+
+    public WeekPlan ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
+    {
+        var enabled = legal.Where(l => l.DisabledReason is null).Select(l => l.Plan).ToArray();
+        (var index, rng) = rng.NextInt(0, enabled.Length - 1);
+        var plan = enabled[index];
+        if (plan.Action != MainAction.TrainCategory)
+        {
+            return plan;
+        }
+
+        (var target, rng) = rng.NextInt(0, CategoryValues<int>.Count - 1);
+        return plan with { TrainTarget = (Category)target };
+    }
+
+    public string ChooseEventChoice(CareerState s, EventPresentation e)
+    {
+        (var index, rng) = rng.NextInt(0, e.Choices.Length - 1);
+        return e.Choices[index].ChoiceId;
+    }
+
+    public bool ShouldRetire(CareerState s)
+    {
+        if (s.Week.Value < 900)
+        {
+            return false;
+        }
+
+        (var roll, rng) = rng.NextInt(1, 1_000);
+        return roll == 1;
+    }
+}

@@ -55,7 +55,7 @@ public class CareerInvariantsTests
         {
             Status = CareerStatus.Ended,
             Ending = EndingReason.Insolvency,
-            FinalScore = new ScoreBreakdown(),
+            FinalScore = ScoreCalculator.Compute(0, -5_000, 0, Difficulty.Normal, Fixed.One, EndingReason.Insolvency, TestContent.Valid().Balance),
             CashPln = -5_000,
         };
         Assert.Empty(CareerInvariants.Validate(s));

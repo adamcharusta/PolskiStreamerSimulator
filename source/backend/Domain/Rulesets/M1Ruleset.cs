@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 
@@ -118,12 +119,20 @@ public sealed class M1Ruleset : IRuleset
 
         var state = ProgressionRules.ApplyStreamFatigue(s, b);
         statLines.AddRange(Stats.Changes(s, state, "stream"));
+        var audience = AudienceRules.Compute(state, pending, ref rng, b);
+        var finance = FinanceRules.Compute(state, pending, audience.LiveViewers, b);
+        var paidAtStart = pending.Lines.Where(l => l.Code == "cost:equipment").Sum(l => l.AmountPln!.Value);
         var practiced = ProgressionRules.ApplySkillAndBoredom(state, primary, c.Profiles[s.Background].Skill, ref rng, b);
         statLines.AddRange(Stats.Changes(state, practiced, "practice"));
 
         var nextWeek = s.Week.IsLast ? s.Week : s.Week.Next();
         state = practiced with
         {
+            Followers = Math.Max(0, s.Followers + audience.Net),
+            LastLiveViewers = audience.LiveViewers,
+
+            // The equipment purchase was paid when the week started; the report still lists it.
+            CashPln = s.CashPln + finance.CashDelta + paidAtStart,
             Week = nextWeek,
             LastSettledWeek = s.Week.Value,
             Rng = rng,
@@ -133,11 +142,86 @@ public sealed class M1Ruleset : IRuleset
             Metrics = s.Metrics with
             {
                 Streams = s.Metrics.Streams + 1,
+                TotalLiveViews = s.Metrics.TotalLiveViews + audience.LiveViewers,
+                IncomeBySource = Accumulate(s.Metrics.IncomeBySource, finance.Income),
+                CostsBySource = Accumulate(s.Metrics.CostsBySource, finance.Costs),
                 WeeksPerCategory = s.Metrics.WeeksPerCategory.With(primary, s.Metrics.WeeksPerCategory[primary] + 1),
             },
         };
-        var report = new WeekReport(s.Week, pending.Plan, pending.Resolved, 0, 0, 0, 0, [], [], 0, [.. statLines], null);
+
+        // Insolvency is checked at the end of settlement, after all income and costs, before completion.
+        EndingReason? ending = state.CashPln <= b.InsolvencyThresholdPln ? EndingReason.Insolvency
+            : s.Week.IsLast ? EndingReason.Completed
+            : null;
+        state = state with
+        {
+            Achievements = Achievements.Evaluate(state, completed: ending == EndingReason.Completed),
+            Metrics = state.Metrics with
+            {
+                PeakFollowersMilestone = Math.Max(state.Metrics.PeakFollowersMilestone, Achievements.FollowersMilestone(state.Followers)),
+            },
+        };
+        if (ending is { } reason)
+        {
+            state = End(state, reason, c) with { Week = s.Week };
+        }
+
+        var report = new WeekReport(
+            s.Week,
+            pending.Plan,
+            pending.Resolved,
+            audience.LiveViewers,
+            audience.Gained,
+            audience.Lost,
+            audience.Net,
+            finance.Income,
+            finance.Costs,
+            finance.CashDelta,
+            [.. statLines],
+            ending);
         return Result<(CareerState, WeekReport)>.Ok((state, report));
+    }
+
+    public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion)
+    {
+        if (CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
+        if (s.Pending is not null)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "week-in-progress");
+        }
+
+        var state = s with { Achievements = Achievements.Evaluate(s, completed: false), StateVersion = s.StateVersion + 1 };
+        return Result<CareerState>.Ok(End(state, EndingReason.EarlyRetirement, c));
+    }
+
+    /// <summary>Ends the career once: read-only status, reason and the final score breakdown.</summary>
+    private static CareerState End(CareerState s, EndingReason reason, ContentSnapshot c) => s with
+    {
+        Status = CareerStatus.Ended,
+        Ending = reason,
+        Pending = null,
+        FinalScore = ScoreCalculator.Compute(
+            s.Followers,
+            s.CashPln,
+            Achievements.Points(s.Achievements),
+            s.Difficulty,
+            c.Profiles[s.Background].ScoreMultiplier,
+            reason,
+            c.Balance),
+    };
+
+    private static ImmutableDictionary<string, long> Accumulate(ImmutableDictionary<string, long> totals, IEnumerable<ReportLine> lines)
+    {
+        foreach (var line in lines)
+        {
+            totals = totals.SetItem(line.Code, totals.GetValueOrDefault(line.Code) + line.AmountPln!.Value);
+        }
+
+        return totals;
     }
 
     /// <summary>

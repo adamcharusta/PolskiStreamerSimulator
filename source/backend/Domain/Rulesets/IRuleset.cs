@@ -23,4 +23,7 @@ public interface IRuleset
 
     /// <summary>Settles a week whose events are all resolved, produces its report and advances the week once.</summary>
     Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion);
+
+    /// <summary>Ends the career between weeks with <c>EarlyRetirement</c>.</summary>
+    Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion);
 }
