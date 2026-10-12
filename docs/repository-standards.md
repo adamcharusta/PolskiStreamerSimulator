@@ -14,9 +14,10 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 | `.editorconfig` | Root UTF-8/LF/two-space conventions for GitHub Actions, YAML, JSON, shell, PowerShell, Terraform and other repository scripts. |
 | `docs/.editorconfig` | English Markdown files in UTF-8/LF; preserve intentional Markdown trailing spaces. |
 | `source/backend/.editorconfig` | Four-space C# style, file-scoped namespaces, braces and unused-import diagnostics; two-space project XML. |
-| `source/backend/Directory.Build.props` | Common `net10.0`, nullable, implicit usings, build analysis, deterministic output and CI settings for all .NET projects. |
+| `source/backend/Directory.Build.props` | Common `net10.0`, nullable, implicit usings, build analysis, deterministic output and CI settings for all .NET projects; `PolskiStreamerSimulator.<Project>` assembly names and root namespaces; XML documentation generation (needed for the IDE0005 unused-using check on build) with CS1591 suppressed (TD-82). |
 | `source/backend/Directory.Packages.props` | NuGet Central Package Management for every backend project. Add exact package versions as projects are scaffolded; project `PackageReference` elements omit versions. |
-| `source/backend/global.json` | Minimum .NET SDK 10.0.100, rolling to the latest installed .NET 10 feature band/patch; prerelease SDKs excluded. |
+| `source/backend/global.json` | Minimum .NET SDK 10.0.100, rolling to the latest installed .NET 10 feature band/patch; prerelease SDKs excluded. Selects Microsoft.Testing.Platform as the `dotnet test` runner (TD-82). |
+| `source/backend/Tests/testconfig.json` | Microsoft.Testing.Platform settings, including coverlet.MTP coverage filters (tests and the batch tool entry point excluded, generated `*.g.cs` and `[GeneratedCode]`/`[CompilerGenerated]` code excluded) and Cobertura output (TD-82). |
 | `source/frontend/.prettierrc.json` | Initial two-space, LF, single-quote, semicolon and 100-column formatting defaults; review with the first React code. |
 | `source/frontend/.prettierignore` | Keep generated Orval client and build/test output out of formatting checks. |
 | `lefthook.yml` (planned with application scaffolding) | Run backend `dotnet format`, frontend ESLint `--fix` and fast unit tests before code commits. |
