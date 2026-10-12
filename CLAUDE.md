@@ -15,6 +15,8 @@ Read and follow [AGENTS.md](AGENTS.md); it is the canonical agent guide for this
 | `docs/repository-standards.md` | Editor, ignore, format, lint, and package conventions. |
 | `docs/technical-decisions.md` | Current technical decisions, defaults, open inputs, and superseded choices. |
 | `docs/validation-and-delivery.md` | Acceptance criteria, test gates, balance validation, and risks. |
+| `docs/requirements-traceability.md` | Requirement → source → acceptance criterion → issue/milestone → status; superseded guidance → replacement. |
+| `docs/superpowers/` | Milestone design specs and implementation plans (M1 simulation prototype). |
 | `docs/core-concept.md` | Original concept; the current GDD and specifications take precedence. |
 | `docs/polski-pilkarz-simulator-analysis.md` | Historical reference-game design analysis, not current requirements. |
 | `docs/polski-pilkarz-simulator-code-analysis.md` | Historical reference-game code analysis, not an implementation plan. |
