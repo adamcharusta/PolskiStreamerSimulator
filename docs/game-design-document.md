@@ -241,6 +241,7 @@ This is a chronological record. Later entries supersede earlier ones when they c
 | 2026-10-12 | Let the owner add, edit and remove events and change balance constants from `/admin`; publish validated, versioned changes while existing careers retain their original ruleset and material balance changes start a new leaderboard season. | User admin-scope addition |
 | 2026-10-12 | Add local pre-commit formatting, fixable lint and fast unit tests; rerun tests on `develop`; use SonarQube Cloud quality checks on PRs to `develop` and `main` while preserving Git Flow. | User development-workflow interview |
 | 2026-10-12 | Clarify pre-commit auto-fixes: `dotnet format` applies to the backend and ESLint `--fix` to the frontend; check Prettier in CI. | User tooling correction |
+| 2026-10-12 | Build the M1 simulation prototype as a minimal mechanics core: five categories as data, actions Rest/Train/Improve production/Manage community/No action, one platform (Czatnia), four backgrounds, two or three synthetic live events per manual week, the 45/45/10 score and endings Completed, Insolvency and Early retirement. Sponsors, gambling, adult side business, Network/collaborate, migration and bans move to milestone 3. This supersedes the "one category" wording of milestone 1 (see [TD-75](technical-decisions.md)). | Owner decision (M1 brainstorming) |
 
 ## 7. Next Step
 
