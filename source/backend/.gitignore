@@ -1,0 +1,19 @@
+# .NET build and test output
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+artifacts/
+*.trx
+*.coverage
+*.coveragexml
+
+# Local .NET settings, certificates and database files
+appsettings.*.Local.json
+appsettings.*.local.json
+*.pfx
+*.p12
+*.mdf
+*.ldf
+*.bak
+

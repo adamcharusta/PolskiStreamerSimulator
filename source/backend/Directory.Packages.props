@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <!-- Add PackageVersion entries when the solution projects are scaffolded. -->
+</Project>
+

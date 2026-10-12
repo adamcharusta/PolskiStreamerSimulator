@@ -1,0 +1,93 @@
+# Validation, Release Plan, and Review Decisions
+
+Status: **implementation proposal for review**, 2026-10-12. This document turns the [game design](game-design-document.md), [gameplay rules](gameplay-systems.md), [content and interface](content-and-experience.md), and [architecture](technical-architecture.md) into observable checks. It does not claim the game has been built or tested.
+
+## 1. Scope and Release Stages
+
+The **first public release** includes all confirmed systems: a complete 1,040-week career; manual streams and 4/13/52-week auto batches; five categories; four backgrounds; three fictional platforms; sponsor, gambling, and text-only adult side-business systems; burnout, drama, credibility, migration and bans; online server-authoritative play and autosaves; three manual slots/export-import for unranked careers; anonymous recovery keys; a PDF ending; Polish interface; an owner-only admin panel for moderation, event management and balance constants; and a global top 100. There is no narrower public MVP that omits these commitments.
+
+Use internal milestones to reduce delivery risk:
+
+1. **Simulation prototype:** Pure deterministic C# `Domain` core with 1,040-week state, one category, weekly reports, basic economy, and terminal conditions. Measure performance and inspect extreme outcomes.
+2. **Vertical slice:** React/ASP.NET Core/MSSQL flow for anonymous career creation, one complete manual week, one 13-week batch, server autosave/reload, and one representative event from each adult theme. Validate clarity and tone with players.
+3. **System complete:** All five categories, three platforms, four backgrounds, contracts, side business, migration, achievements, and full content schema; automated policies and end-of-career report/PDF.
+4. **Online and administration complete:** Anonymous career recovery, unranked save import/export/migration, ranked append-only state, Identity/2FA owner panel with event/constant draft editing and publication, leaderboard API, backups, outage handling, and opt-in telemetry.
+5. **Content and balance lock:** Polish copy and event inventory, 1–2-hour mixed career pacing, representative-path balance, accessibility and mobile QA, legal/privacy review, staged load test.
+6. **Public release:** Freeze season-one ruleset, rehearse rollback and restore, verify monitoring, validate `release/*` in its separate environment, then merge a passing release PR to `main` for automatic publication.
+
+The implementation order may change, but a stage is complete only with its acceptance evidence. Do not promise a release date until prototype pacing, content capacity, and hosting ownership are measured.
+
+## 2. Feature Acceptance Matrix
+
+| Requirement | Observable acceptance criterion |
+| --- | --- |
+| Full career | A legal 1,040-week run reaches age 38 and ends once; early retirement, insolvency, global/all-platform bans produce distinct endings. |
+| Weekly loop | Each settled week contains exactly one main action, one primary category, two or three manual live events when played manually, a report, and an autosave. |
+| Choice transparency | Every random option shows chance and modifiers before selection; afterward the recorded roll, threshold, and explanation reproduce the outcome. |
+| Automation | 4/13/52-week batch uses the saved strategy, commits each week once, records policy/fallback reasons, and pauses before mandatory decisions. |
+| Pacing | In a moderated test, a complete mixed-mode run targets 60–120 minutes; record manual weeks, batch mix, interruptions, and reading time. Tune without removing significant choice. |
+| Audience and finances | Followers and live viewers are separate in state, UI, reports, and score. Revenue and costs reconcile exactly to cash delta each week. |
+| Risk routes | Low-drama and high-drama strategies can both reach 20 years and competitive score ranges across many seeds, with controversy displaying greater variance. |
+| Specialization | A one-category policy can succeed but shows slower late skill gain and measurable boredom pressure; rotating categories has different trade-offs. |
+| Platform migration | A permanent single-platform ban offers a legal switch if available; follower retention is shown and matches the resulting state. |
+| Adult themes | Wagers never use real currency; adult work is optional and non-explicit; leaks use synthetic data. A blocking 18+ dialog names the adult themes and strong language before showing game content; only an explicit adult confirmation proceeds, while decline, Escape and outside click cannot open the game. |
+| Character options | Woman, man, and nonbinary pronoun forms are complete. Changing the selected option or editing pronouns changes pronouns and required grammatical agreement only; event IDs, dialogue content, availability, roll sequence, score, and ranking eligibility remain identical. |
+| Online play | Disconnect network and verify that no new career choice settles. The UI shows the last confirmed report and reconnects to the authoritative server state. The installed PWA follows the same rule. |
+| Anonymous recovery | Each career has its own browser-held secret and exported recovery key. Recovering one career on another device never grants access to another. A lost response, duplicate command and concurrent tab cannot reroll or settle a week twice. |
+| Unfinished-career retention | Six calendar months after the last successful gameplay action, an unfinished career and its secrets, slots and action records are purged. Reads and duplicate retries do not extend retention; the UI shows the expiry rule and recovery cannot revive a deleted career. |
+| Finished-career retention | Twelve calendar months after the ending, detailed career state, action records and secrets are purged; season results remain visible indefinitely from independent minimal leaderboard records. Show the history/diploma access expiry date beforehand. |
+| Saves | Server autosave survives browser closure after each committed step. Three manual slots and import/export work only for unranked careers; invalid/newer imports cannot overwrite valid saves; ranked careers cannot rewind or import state. |
+| Ranking | C# `Domain` computes the final score from authoritative server state; client-supplied score, state and random outcome are ignored or rejected. Repeated publish calls create one entry. |
+| Leaderboard | Only server-computed eligible entries appear; top 100 ordering and ties are deterministic; nickname is at most five supported characters and safe to render. |
+| Owner panel | A one-time server command creates the only Identity owner account after migration. The owner logs in with a cookie and authenticator-app TOTP or a one-time recovery code; unauthorized and CSRF-bearing admin requests are rejected; moderation writes an audit record. |
+| Event and balance administration | The owner can add, edit and delete draft events; edit named, bounded balance constants; preview and validate a candidate; and publish an immutable snapshot. Published events can be archived for future versions but remain available to pinned careers. Mechanical changes create a new leaderboard season; existing careers and results stay on their original version. Every change and publication is audited. |
+| UI and accessibility | The playable interface meets WCAG 2.2 AA at launch. Core journey works by keyboard and at 320 CSS pixels without horizontal scrolling or timed decisions; screen-reader and reduced-motion checks pass. |
+| Polish content | No missing player-facing translation key or grammatical form in a complete simulated career. |
+| Streamer Friendly mode | Setting starts off. When enabled, listed words and multiword phrases are masked in all player-visible text, accessible announcements and exported diploma PDFs, including user-supplied display names. The same seed and choices produce identical events, outcomes, score and ranking eligibility with the mode on or off. |
+| Browser targets | Current Chrome, Edge, Firefox, and Safari pass the full journey on desktop and supported phones; proposed regression matrix covers two recent major desktop versions. |
+| Analytics consent | Gameplay analytics remain off before opt-in and after revocation; any locally buffered telemetry is deleted on revocation and never includes nickname, career secret, action history, or save content. |
+| TDD and coverage | Production behavior and bug fixes follow red-green-refactor, with a failing behavior/regression test written before implementation. CI reports line coverage for handwritten backend and frontend code separately and blocks a PR or deployment if either is below 80%. Coverage exclusions are explicit and reviewed. |
+| Local and CI checks | A code commit runs backend `dotnet format`, frontend `npm run lint -- --fix` and fast xUnit/Vitest tests through the pre-commit hook; failed checks block the local commit. PRs into `develop` or `main` require tests, separate coverage gates, a Prettier check and a passing SonarQube Cloud quality-gate job. The exact merged `develop` and `main` commits are checked again before deployment. SQL/Testcontainers and Playwright run in CI. |
+
+## 3. Balance and Simulation Tests
+
+Run at least 10,000 seeded careers across backgrounds, difficulties, platform strategies, categories, and risk policies before freezing the ranked ruleset. This is a proposed engineering gate, not proof of fun. Log completion rate, median/95th percentile followers and cash, early insolvency, bans, score by route, dominant income source, manual-versus-auto divergence, and event repetition. Investigate any route that is always best or any background/difficulty multiplier that overwhelms play choices. Simulation can flag problems but cannot replace human sessions.
+
+Human playtests should include first-time players and repeat players on desktop and phone. Observe whether they can explain: what followers versus live viewers mean; why a choice succeeded or failed; what each weekly action costs; why a contract paid or failed; why a platform switch lost followers; why their final score differs across backgrounds/difficulties; and whether auto strategy behaved as expected. Record confusion rather than coaching players through the interface. Check that 18+ material and satire feel coherent without referencing actual creators.
+
+### Engineering test priorities
+
+The [development workflow](development-and-delivery.md) requires a failing test first for new production behavior and bug fixes, followed by minimal implementation and refactoring. Keep backend and frontend line coverage at or above 80% independently; the CI report is part of the acceptance evidence. Critical paths still need direct behavior and integration tests even when the percentage passes.
+
+- Property tests for stat bounds, nonnegative audience, legal action count, cash reconciliation, seed determinism, and score monotonicity in followers/wealth at fixed other inputs.
+- Golden C# `Domain` fixtures for normal week, event criticals, 52-week batch interruption, sponsor breach, migration, insolvency, old-ruleset continuation, and terminal score. xUnit/Testcontainers API tests verify Wolverine orchestration, EF persistence and Identity boundaries.
+- Save compatibility fixtures for every supported unranked export schema, import tampering, interrupted transaction, two-tab conflict, and storage exhaustion.
+- API integration tests for anonymous-secret recovery, duplicate command IDs, stale state versions, invalid choices, nickname validation, top-100 ties, old ruleset acceptance, and credential rotation.
+- Integration tests for per-career recovery isolation, six-month unfinished and 12-month finished expiry, separation of permanent season results from deleted career history, and retention behavior after a restore from an older backup.
+- Outage tests for connection loss before and after server commit, browser restart, ambiguous response timeout, reconnect to confirmed state, and no speculative offline settlement.
+- Season-end outage test: owner extends the server deadline for all eligible careers, announcement shows the new timestamp, and the API accepts the same eligible server records without trusting local times.
+- Admin configuration tests for invalid event references, missing Polish/pronoun text, out-of-range constants, unavailable fallback choices, draft deletion, published-event archiving, atomic publication, old-career pinning, mandatory new season on mechanical changes, copy-only revision, audit and unauthorized/CSRF rejection. Run deterministic simulation checks on a candidate before publication.
+- Operations rehearsal for staging access denial to non-testers, k3s/ingress and Metrics Server checks, SQL/Vault persistent storage and restore, external-KMS Vault auto-unseal, a successful SQL restore from an `ovh2` backup no more than about 24 hours old, a separate encrypted Vault snapshot restore from `ovh2` under the 30-daily/12-monthly retention policy, and Discord failure/recovery notifications without player data or secrets.
+- Browser checks for online-only outage messaging, phone viewport, touch targets, keyboard focus, screen reader announcements, no-motion mode, age gate, and full Polish copy. Use Vitest/Testing Library and Playwright.
+- Load test concurrent career actions, 52-week batches, leaderboard reads and admin requests; define acceptable p95 latency after a real hosting estimate. Long batches must not starve ordinary play.
+
+## 4. Risks and Required Decisions
+
+| Risk or unresolved decision | Current proposal / owner decision needed |
+| --- | --- |
+| Exact score normalization and multipliers | User approved `45/45/10` follower/wealth/achievement weighting and all current gameplay numbers as the first prototype baseline. Normal `1.10`, easy `1.00`, background `0.90–1.00`, and normalization thresholds remain tunable after simulation and player tests; freeze them before a ranked season. |
+| Starting backgrounds | User approved the four proposed profile concepts as the test baseline. Their numerical advantages, drawbacks, and score multipliers require balance testing. |
+| 1–2-hour pacing | Requires substantial batching. Prototype and human tests should determine whether 25–60 manual weeks feels sufficient. |
+| Content volume | The template counts in the content specification are planning estimates, not mandatory launch counts. Estimate authoring/QA time, then set the launch floor before scheduling content production. |
+| Anonymous access and integrity | Server authority prevents client-side score edits and ranked rewinds. Recovery secrets are bearer credentials; test loss, theft, rotation, and rate limiting. Human-vs-bot proof remains outside the launch model. |
+| Ruleset changes | User chose a new top-100 season after material balance changes, with past season tables retained and old-season submissions accepted for 90 days after close. Publish the deadline before career creation; if a ranking outage overlaps it, the owner announces a uniform extension for that season. |
+| Hosting and operations | User chose k3s on VPS alias `ovh`, production at `polskistreamersimulator.pl`, restricted staging at `staging.polskistreamersimulator.pl`, and restricted release candidates at `rc.polskistreamersimulator.pl`. `ovh2` remains outside k3s for separate encrypted SQL and Vault backups, each retaining 30 daily and 12 monthly copies. Vault auto-unseals through an external KMS whose vendor will be selected after an account/cost comparison. Ansible checks the cluster; Helm manages shared SQL Server/Vault services and the app. Discord alerts and roughly 24-hour recovery-point and recovery-time targets remain. The recovery point applies to careers as well as rankings. SQL Server is a StatefulSet/PVC; Vault storage and recovery require design. SSH inventory timed out twice on 2026-10-12; the user deferred further host checks. Verify both hosts and capacity before choosing SQL edition and Vault topology; test SQL/Vault restores and alerts. See [Infrastructure and Operations](infrastructure-and-operations.md). |
+| Deployment process | Git Flow uses production `main`, integration `develop`, and `feature/*`, `bugfix/*`, `release/*`, `hotfix/*`. Passing `develop` pushes deploy staging; release candidates use a separate restricted environment. A tested release PR or urgent hotfix PR into `main` automatically publishes that exact passing commit after Ansible conformity checks, migration and Kubernetes rollout. Reconcile release and hotfix fixes into `develop` and any active release branch. Detected drift stops deployment and is repaired separately. The prior manual environment approval and `master` proposal are superseded. The repository already has `main`; create `develop`, protect `main`, verify that a failing gate prevents publication, and rehearse rollback. See [Development and Delivery](development-and-delivery.md). |
+| Owner administration | Only the owner may use the private Tailwind/shadcn `/admin` panel with Identity cookie and TOTP/recovery-code 2FA. Test unauthorized access denial, CSRF protection, leaderboard hide/revoke, event and balance draft editing, publication/version history, audit records, and restoration of an accidentally hidden entry. |
+| 18+ launch obligations | Obtain region-specific review of age presentation, simulated gambling, adult themes, privacy notice, and leaderboard moderation before public launch. |
+
+These are the remaining product/operational review points. The detailed specification is sufficiently concrete for prototyping while preserving room to revise numbers based on evidence. No document can guarantee that every future issue is known; the matrix above is the current coverage baseline and should grow when new cases are discovered.
+
+## 5. Documentation Maintenance
+
+Treat the linked game, content, architecture, technology and validation specs as one versioned design set. Every material mechanics change updates the rule table, player-facing explanation, server action schema/ruleset ID, acceptance matrix, and relevant event data. Record the change and its reason in a short changelog entry. Keep confirmed interview decisions distinct from proposed defaults. Once the user approves a proposal and the implementation uses it, move it from `proposed` to `locked for season one` with a ruleset identifier; do not silently revise ranked scoring or random odds within an active season.

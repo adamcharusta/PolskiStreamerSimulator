@@ -1,0 +1,71 @@
+# Development and Delivery Workflow
+
+Status: **confirmed Git Flow direction**, 2026-10-12. `main` is the production branch, `develop` integrates new work, and `feature/*`, `bugfix/*`, `release/*` and `hotfix/*` have separate purposes. Passing `develop` pushes deploy staging automatically. A release candidate has its **own environment**, and a tested PR into `main` triggers automatic production publication. GitHub Actions runs tests, Ansible checks server conformity, Kubernetes deploys the app, and Docker Compose supports local development. Infrastructure drift stops the app release and is reported. This supersedes the earlier `master` branch and manual production-environment approval proposals. The repository currently has `main` and `origin/main`; `develop` has not yet been created.
+
+## Git Flow branch contract
+
+| Branch | Create from | Merge into | Purpose |
+| --- | --- | --- | --- |
+| `main` | Existing production baseline | — | Contains only released production code; every new commit triggers the production pipeline. |
+| `develop` | Initially from `main` | Source for new `release/*` branches | Integrates new changes; each passing push deploys the staging environment. |
+| `feature/*` | `develop` | `develop` by PR | Implements new mechanics, UI, content or other planned work. |
+| `bugfix/*` | `develop` by default | `develop` by PR | Fixes non-emergency bugs for the next release. A release-blocking fix can instead branch from the active `release/*` and must also reach `develop`. |
+| `release/*` | `develop` | `main` by tested PR, then reconcile into `develop` | Freezes a versioned release candidate, accepts only release fixes, versioning and deployment preparation. |
+| `hotfix/*` | `main` | `main` by tested PR, then reconcile into `develop` and any open `release/*` | Repairs a production problem without waiting for the normal release branch. |
+
+Use descriptive branch names such as `feature/sponsor-contracts`, `bugfix/save-import`, `release/1.0.0` and `hotfix/1.0.1-login`. Delete short-lived branches after verified merges. If a release/hotfix is merged to `main`, merge or cherry-pick its exact fixes into `develop` and any active release branch, resolve conflicts, and run checks there. A hotfix bypasses the **normal release branch**, not review, tests, branch protection or the production deployment checks. Tag the released `main` commit with a version after a successful publication; the released image digests and ruleset/content versions belong in the deployment record.
+
+Protect `main` against force pushes, direct pushes and deletion. Require passing status checks on PRs from `release/*` or `hotfix/*`. Prevent ordinary `feature/*` and `bugfix/*` PRs from targeting `main`. The exact GitHub ruleset and emergency bypass policy are configured during repository setup. [GitHub branch protection](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches).
+
+## Test-driven development
+
+Use TDD for production behavior in both the C# backend and React frontend: write a test that fails for the intended behavior or reproduced defect, implement the smallest change that makes it pass, then refactor while keeping the suite green. Include the regression test with every bug fix. Tests should assert observable behavior and important edge cases rather than mirror implementation details. Documentation-only, formatting-only and generated-code changes do not need artificial tests; generated output must still pass its contract/drift checks.
+
+Require **at least 80% line coverage independently for backend and frontend**. CI measures each application separately and fails if either falls below 80%; averaging them is not permitted. Count handwritten production code in the relevant project. Exclude test files, generated code, build output and migrations from the denominator through explicit, reviewed coverage configuration. Playwright journeys supplement the coverage gate and do not replace backend or frontend tests. Coverage is a floor, not a substitute for testing critical gameplay, ranking, authentication and persistence paths.
+
+## Local pre-commit checks
+
+Use a versioned root `lefthook.yml` with an install step in the local setup instructions. Before each code commit, run `dotnet format` from `source/backend` for staged backend source and `npm run lint -- --fix` from `source/frontend` for staged TypeScript/React source. Then run fast backend xUnit unit tests that do not need SQL Server and frontend Vitest unit/component tests. A failed formatter, lint command or test blocks the commit. If a fixer changes files, require the developer to inspect and stage those changes explicitly before retrying; do not run `git add .` or stage unrelated work automatically. Documentation-only commits may skip application checks. Prettier formatting is checked separately in CI. This local hook complements, but does not replace, CI because hooks can be bypassed or missing on another machine. [Lefthook commands](https://lefthook.dev/configuration/Commands/), [dotnet format](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-format).
+
+Run the full backend integration suite with Testcontainers/SQL Server, Playwright browser tests, separate 80% line-coverage gates, formatting verification and contract checks in GitHub Actions. CI never applies automatic fixes to committed code.
+
+## Environments and triggers
+
+| Event | Workflow result |
+| --- | --- |
+| PR from `feature/*` or `bugfix/*` into `develop` | Build, lint/typecheck, .NET/React tests, OpenAPI/Orval drift check, relevant integration/browser tests and SonarQube Cloud analysis with a passing quality gate. |
+| Push to `develop` | Rerun tests and coverage on the exact commit; only after they pass, package it, run Ansible conformity checks, deploy to `streamer-staging` and run staging smoke checks. |
+| Push to `release/*` | Validate and package a release candidate; run Ansible conformity checks; deploy it to a **separate release-candidate environment** at `rc.polskistreamersimulator.pl` with its own namespace, database, Vault policy and restricted access; run acceptance/smoke checks there. |
+| PR `release/*` → `main` | Require passing checks, SonarQube Cloud quality gate and a successful release-candidate verification for the candidate being promoted. Ensure the merged tree contains no untested changes. |
+| PR `hotfix/*` → `main` | Require checks, SonarQube Cloud quality gate and a focused candidate smoke test; it does not wait for a normal `release/*`. |
+| Push to `main` after either merge | Recheck tests, coverage and quality on the exact `main` commit, verify infrastructure with Ansible, run controlled migrations and deploy that passing version to production automatically; record SHA, image digests and release metadata. |
+
+Serialize deployments per environment so an older workflow run cannot replace a newer commit. Keep staging, release candidate and production credentials, databases, Vault paths and Kubernetes namespaces separate. A production GitHub environment may scope credentials and record deployments, but no second required-reviewer gate follows the merge into `main`. A failed test, Ansible check, migration or rollout blocks publication and alerts the owner. The deployment must never silently select an older successful commit. [GitHub workflow branch filters](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax), [GitHub environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
+
+## GitHub Actions stages
+
+1. **Validate:** .NET build/xUnit/Testcontainers-MSSQL and backend line-coverage gate; React typecheck, lint, Vitest/Testing Library, frontend line-coverage gate and Playwright; OpenAPI/Orval regeneration and drift check; Ansible syntax/lint and Helm/Kubernetes template validation. On PRs to `develop` or `main`, upload coverage reports to SonarQube Cloud and fail the required analysis job if its quality gate fails.
+2. **Package:** Build frontend and WebApp images tagged with the source commit and store immutable registry digests. Do not package secrets.
+3. **Inspect infrastructure:** Run pinned Ansible inventory and k3s/Kubernetes checks for nodes, namespaces, Metrics Server/HPA, ingress, Vault seal state, and SQL connectivity/storage. **Stop and report drift**. A separate reviewable infrastructure workflow repairs the cluster; the app pipeline does not do so silently.
+4. **Migrate and deploy:** Apply reviewed EF Core migrations once through a release Job or controlled operator step. Update the workload using the versioned game Helm chart and immutable image digests. Wait for readiness and smoke-test the API, React and admin boundary.
+5. **Record and recover:** Store SHA, image digests, ruleset/content versions, database migration version and deployment time. Rehearse app rollback independently of database restore.
+
+The normal release decision is merging `release/*` into `main`; a hotfix uses a tested PR from `hotfix/*` to `main`. Publication then follows automatically if all gates pass. Whether the exact release-candidate image digest can be promoted unchanged depends on the merge result and build metadata; at minimum, verify that the production `main` tree is the tested candidate tree and test the exact `main` commit again.
+
+### SonarQube Cloud quality gate
+
+Use **SonarQube Cloud** through CI-based GitHub Actions analysis for PRs targeting `develop` and `main`, then analyze the resulting integration/production branch commits. Start with one project analyzing the repository's C# and TypeScript source; verify both trees are included when the code is scaffolded. Generate backend and frontend coverage reports in CI before scanning and import them; the independently enforced 80% line-coverage checks remain in GitHub Actions. Configure the scanner to wait for the quality-gate result so a failure makes its GitHub Actions job fail, and require that job for the protected PR targets. Store the analysis token in GitHub secrets, not the repository. No SonarQube service runs on the VPS. [SonarScanner for .NET multilanguage analysis](https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/scanners/sonarscanner-for-dotnet/using), [SonarQube Cloud quality-gate wait](https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/analysis-parameters/parameters-not-settable-in-ui), [JavaScript/TypeScript coverage import](https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/test-coverage/javascript-typescript-test-coverage).
+
+The owner may publish event and balance data through `/admin` without a code deployment. Treat this as a separate, audited content release: validate the full candidate, preview its changes, run deterministic regression/simulation checks, then explicitly publish an immutable snapshot and export its digest. Mechanical changes open a new leaderboard season for new ranked careers; active careers keep their prior version. New effect types or simulation logic still require the normal tested Git Flow code release. A reversal republishes prior data as a new version rather than mutating history.
+
+## Local Docker Compose
+
+Keep a root `compose.yaml` as the **development-only** entry point and document its command in `docs/`; put any reusable local helper under root `scripts/` only if needed. One documented command should start a local SQL Server, WebApp API and React development server with health checks and persistent development volumes. Use a root `.env.example` with placeholders; local `.env` and database files are ignored. Development credentials and data must never point at production, release candidate or staging. Seed only fictional test data and a clearly local-only admin account when needed.
+
+If the API requires Vault during local runs, add a disposable local Vault development profile or a documented local configuration adapter. Do not require access to the production Vault. Compose does not replace k3s on the VPS; the same app contracts and EF migrations must work in both environments, while ingress, storage and autoscaling differ. Add a local smoke check for career creation, one decision, save reload and admin authentication. [Docker Compose profiles](https://docs.docker.com/compose/how-tos/profiles/).
+
+## Repository setup and remaining inputs
+
+The repository already has `main` and `origin/main`; no rename to `master` is needed. Create `develop` from the intended `main` baseline, configure PR/status-check rules, add release-candidate environment isolation, then enable deployment workflows after secrets and hosts are ready. Do not enable production-on-`main` before branch protection, dry runs and target credentials are verified. This is a setup plan, not a change already made.
+
+Still to confirm: VPS capacity, the detailed Vault/recovery design, and authorization for the separate infrastructure-correction workflow. `ovh2` remains outside k3s, the release-candidate hostname is `rc.polskistreamersimulator.pl`, and Helm manages shared services and the app. Host inventory remains deferred by the owner.

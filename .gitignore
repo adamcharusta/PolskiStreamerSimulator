@@ -1,0 +1,53 @@
+# Agent-local files and transcripts
+**/.codex/
+**/.claude/
+**/AGENTS.md
+**/CLAUDE.md
+**/.aider*
+**/.cursor/
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100/
+.Trashes/
+
+# Linux desktop and editor backups
+*~
+.directory
+.Trash-*/
+.nfs*
+
+# Visual Studio, VS Code and JetBrains IDEs
+**/.vs/
+**/.vscode/
+**/.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.code-workspace
+*.iml
+
+# Local deployment credentials and generated state
+**/.env
+**/.env.local
+**/.env.*.local
+**/kubeconfig
+**/kubeconfig.*
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform/
+**/ansible.retry
+*.retry
+

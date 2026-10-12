@@ -1,0 +1,75 @@
+# Content, Interface, and Player Experience
+
+Status: **implementation proposal for review**, 2026-10-12. See the [game design document](game-design-document.md) for confirmed direction and [gameplay systems](gameplay-systems.md) for proposed mechanics. All shipped player-facing text is Polish; English is used for project documentation and source keys.
+
+## 1. World and Tone
+
+The game satirizes recognizable patterns of Polish online culture: chat culture, creator rivalries, platform trends, sponsor pitches, viral clips, and bizarre public relations mishaps. It uses fictional platforms, personalities, games, brands, sponsors, and data. No event should require knowing a real influencer to understand its stakes. Humor can be absurd, but mechanical outcomes must follow visible causes.
+
+The confirmed fictional platform names are **Czatnia**, **PulsLive**, and **Nurt**. Check public-facing names and art before release for avoidable confusion with existing marks. Category labels at launch are **Just Chatting, FPS, MOBA, Chess, Gambling**; localized display names can be adjusted without changing category IDs. Avoid copying reference-game text, art, code, event chains, or identifiable character likenesses.
+
+The player creates a nickname, chooses one of four backgrounds, selects easy or normal difficulty, then selects woman, man, or nonbinary as a character option and can edit pronouns. The chosen gender changes **pronouns in player-facing text only**. All players receive the same event pool and dialogue content; gender never changes probability, rewards, penalties, career eligibility, or score. Polish copy may use the grammatical agreement required by the selected pronouns, without adding different lines or story situations. Pronoun editing is available in settings without changing the simulation log or ranking eligibility.
+
+## 2. Content Structure
+
+Events are data, not hard-coded UI branches. An event record should include:
+
+- Stable ID, version, phase (`pre-week`, `pre-stream`, `live`, `post-stream`, `milestone`, `crisis`), title and localized text keys.
+- Eligibility conditions (week range, category, platform, stats, prior flags), weight, repeat cooldown, and mutual-exclusion arc tags.
+- Two or three clearly distinct responses with displayed fixed costs, risk class, base odds, relevant modifier keys, and explicit mechanical outcomes for success, failure, and permitted critical variants.
+- Pronoun placeholders or grammatical forms where required by Polish, with a complete neutral fallback; no gender-specific event or dialogue variants.
+- Content tags (`gambling`, `adult-business`, `privacy-incident`, `sponsor`, `rivalry`, `community`) for warning, filters, and QA.
+- Reporting text that explains why the outcome occurred, plus optional follow-up event IDs and expiration week.
+
+The owner-only `/admin` editor can create, edit and remove event drafts, including localized text, eligibility, weighting, cooldown, choices, disclosed odds and declarative outcomes. A draft can be deleted. Once published, an event version is immutable; removal means archiving it from **future** content releases while retaining the version for careers already using it. Validate references, complete Polish text and pronoun forms, legal fallback choices, effect bounds and duplicate IDs before publication. Preview event variants and outcomes in the panel. New event behavior that cannot be expressed by the approved data schema requires a C# code change and normal release tests.
+
+**Content-capacity planning estimate, not a launch requirement:** 20 reusable live-event templates per category, 40 cross-category events, 25 between-stream opportunities, 15 sponsor templates, 12 platform/rivalry arcs, and 20 milestones/crises. The owner chose to set the actual launch counts **after estimating writing and QA time**. Parametric names, category inserts, and alternate response outcomes multiply variety. Add a per-event cooldown of at least 13 weeks by default, with longer cooldowns for memorable story beats. In a 1,040-week career, repetition is unavoidable; the content system should vary context and refrain from presenting the same unique story twice.
+
+### Event quality rules
+
+Every decision should have a discernible trade-off. At least one legal response must exist regardless of cash, platform, or character options. Chance-bearing responses expose odds and modifiers; deterministic responses expose exact fixed outcomes. An event cannot charge more than disclosed on its option unless it explicitly previews a bounded variable range. Story arcs may set flags for later events, but no required arc can depend on a single rare roll. Critical outcomes may surprise the player in flavor, but their mechanical category must be previewed. Avoid jokes that depend on protected identity or real private information.
+
+### Adult themes
+
+On entry, show a **blocking 18+ warning dialog** over a neutral screen before exposing game content, the home screen or career creation. The dialog states the 18+ rating and names gambling, adult creator work, privacy incidents and strong language as game themes. Provide two clear actions: `I am 18 or older — continue` and `Leave`. Do not treat closing the dialog with Escape, clicking outside it or navigating back as age confirmation. Only an explicit affirmative action opens the game; declining leads to a neutral exit screen or leaves the site. Store the acknowledgment locally so returning players do not have to repeat it on every visit; a fresh install or cleared storage shows it again. Acknowledgment is a presentation gate, **not** identity verification. A future legal review may require a stronger age-assurance flow in specific territories.
+
+- **Gambling:** Fictional game-currency wagers only. Show stake, chance, potential payout/loss, and possible platform or sponsor consequences. No real-money links, payment prompts, cash-out, or mechanics designed to mimic purchase of credits. Keep it a stream category, not a product purchase flow.
+- **Adult creator side business:** Use non-explicit text decisions about workload, pricing, audience, contracts, and reputation. No nudity, sexual imagery, explicit acts, or real-world platform names. Participation is optional; the game remains fully playable without it.
+- **Privacy leaks:** Use fictional names and synthetic data only. Show harm as narrative/financial/policy consequences and allow mitigation choices; never expose actual addresses, credentials, phone numbers, or instructions for obtaining them.
+
+Provide a `Sensitive content` settings panel with optional text filtering for adult-business and privacy-incident descriptions while keeping mechanically equivalent choices and outcomes. A filtered player can still access the same career paths; filters replace wording, not rules. The game remains labeled 18+.
+
+### Streamer Friendly mode
+
+Offer an optional **Streamer Friendly** setting, off by default, that masks words and multiword phrases from a maintained, versioned list with asterisks. The list targets language the owner considers risky to show during a Twitch broadcast; it is not an official or exhaustive list of Twitch enforcement rules and must be reviewed as platform policies and usage change. Apply masking to **all player-visible text**, including event/dialogue copy, simulated chat, reports, user-supplied display names, accessibility announcements and the locally generated PDF diploma. Apply it after localization and before display or PDF generation; do not alter canonical content, saved career data or server action records.
+
+This mode changes presentation only. The same events, choices, probabilities, random draws, rewards, penalties, score and ranking eligibility apply whether it is enabled or disabled. Keep the existing `Sensitive content` wording filter as a separate setting. Test phrase matching across capitalization, Polish characters, punctuation and word boundaries; ensure masked text stays understandable and accessible. No masking feature can guarantee that a broadcast will comply with every platform policy.
+
+## 3. Key Screens and Navigation
+
+1. **18+ entry dialog:** Blocking content warning and explicit adult confirmation or exit before game content appears; then show language and concise privacy/online-connection notice.
+2. **Home:** List careers known to this browser, each with its own access secret; resume one, recover a separate career with its exported key, start a career, manage unranked manual slots/imports, view leaderboard, and open settings. Show the six-month inactivity expiry for unfinished careers and a connection-required state during outages.
+3. **Character creation:** Nickname, gender/pronouns, four background cards with benefits/drawbacks and score multiplier, difficulty with its multiplier, and ranked/unranked choice; common starting platform is displayed. Review summary before starting. After server creation, explain the six-month unfinished-career retention rule and offer export of this career's recovery key.
+4. **Career dashboard:** Current week/age/platform, followers, last-stream live viewers, cash, drama, credibility, energy/burnout, category skills, active obligations, and next milestone. Primary action: `Plan week`.
+5. **Week planning:** One action, category, eligible sponsor commitments, wager where applicable, manual/auto resolution. Show resource costs, weekly obligations, and expected risk class.
+6. **Live stream:** Faux chat and event panel. Present response odds, modifier breakdown, and consequences. No timer. After response, show the roll and immediate result; advance through 2–3 situations.
+7. **Weekly report:** Viewers, followers gained/lost, line-item money, stat and skill deltas, contract fulfillment, risk incidents, and cause log. Explicit `Next week` button.
+8. **Batch planner/progress:** Choose 4/13/52 weeks and a versioned strategy with a readable summary. Show progress and cumulative results; pause on major events without consuming that week. Allow stop after any committed week.
+9. **Career history:** Search/filter weekly reports, milestones, platform moves, contracts, and incidents.
+10. **Ending:** Cause, score breakdown, career narrative, achievements, local `pdf-lib` diploma, five-character ranked nickname entry if eligible, and server-confirmed leaderboard result.
+
+No essential information is available only in animated chat. The chat can be lively, but the choice panel and report remain stable and readable. Use one primary action per screen and persistent back/history affordances where undo is safe. A committed roll or completed week cannot be undone in a ranked career.
+
+## 4. Desktop and Mobile Layout
+
+The visual metaphor is a streamer control desk rather than a grid of generic stat cards. On desktop, use a wide main stage for event text and a narrower chat/status rail. On mobile, collapse the rail into a labeled tab or drawer and keep the current choice, odds, and primary button in the main reading order. A 320 CSS-pixel viewport should allow every action without horizontal scrolling. Important numerals use a clear type hierarchy; satirical decoration must not obscure probabilities, costs, or status.
+
+Color cannot be the only indicator of a gain, loss, ban, or risk. Show labels and icons with text. Support keyboard navigation, visible focus, semantic headings/buttons, and screen-reader announcements for changed odds and revealed results. Honor reduced-motion preferences; chat motion and celebratory effects may be disabled. Prevent rapid double activation of a choice. Server save status, connection state, and ranked/unranked status remain visibly labeled. User-entered nicknames and imported text are always rendered as text, never as HTML.
+
+**Launch accessibility requirement:** WCAG 2.2 AA for the playable interface. Test with keyboard and screen readers on desktop and mobile. The 18+ dialog and all mandatory choices must meet the same standard; manage focus correctly and avoid modal traps.
+
+## 5. Localization and Copy System
+
+Use i18next and stable keys for all user-visible strings, with Polish as the launch locale (`pl-PL`). Keep rules and numbers separate from translated copy. Format PLN, percentages, dates, and large audience counts using locale-aware formatters. Support Polish inflection with explicit copy variants or named grammatical forms; do not rely on concatenating fragments. A missing variant should fall back to a complete neutral sentence. Store only stable event IDs and choice IDs in server action records and unranked exports, not localized text, so future translations and copy edits do not change simulation.
+
+Copy QA checks spelling, consistent fictional naming, age-rating wording, treatment of gender/pronouns, clarity of mechanical risk, and whether a joke remains understandable outside a particular week's real-world meme cycle. Avoid promises of legal or financial outcomes in copy; keep consequences inside the fictional setting.

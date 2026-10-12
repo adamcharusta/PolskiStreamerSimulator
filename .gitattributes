@@ -1,0 +1,48 @@
+# Normalize source and configuration files across Windows and Linux.
+* text=auto
+*.cs text eol=lf
+*.csproj text eol=lf
+*.props text eol=lf
+*.targets text eol=lf
+*.sln text eol=lf
+*.slnx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.jsonc text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.tf text eol=lf
+*.hcl text eol=lf
+Dockerfile* text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Keep binary files byte-for-byte intact.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.svg text eol=lf
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.7z binary
+*.mp3 binary
+*.mp4 binary
+*.db binary
+*.bak binary
+*.mdf binary
+*.ldf binary
+
