@@ -1,0 +1,18 @@
+# Git hooks (TD-88). Install once with `npm install` in the repository root.
+# A hook that changes tracked files rejects the commit; review and stage the fixes yourself.
+pre-commit:
+  piped: true
+  fail_on_changes: always
+  jobs:
+    - name: backend-format
+      root: "source/backend/"
+      glob: "source/backend/**/*.cs"
+      run: dotnet format PolskiStreamerSimulator.slnx --include {staged_files}
+    # No `root` here: `root` also filters the staged files and would skip content-only commits.
+    - name: backend-tests
+      glob:
+        - "source/backend/*"
+        - "source/backend/**/*"
+        - "content/*"
+        - "content/**/*"
+      run: cd source/backend && dotnet test PolskiStreamerSimulator.slnx --filter-not-trait "Category=Integration"
