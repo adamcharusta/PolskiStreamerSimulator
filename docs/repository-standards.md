@@ -6,7 +6,7 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 
 | File | Scope and role |
 | --- | --- |
-| `.gitignore` | Ignore Codex/Claude local artifacts, OS files, Visual Studio, VS Code, JetBrains files and local deployment credentials; keep the root `AGENTS.md` and `CLAUDE.md` tracked. |
+| `.gitignore` | Ignore Codex/Claude local artifacts, OS files, Visual Studio, VS Code, JetBrains files local deployment credentials and the root tooling `node_modules/`; keep the root `AGENTS.md` and `CLAUDE.md` tracked. |
 | `AGENTS.md` and `CLAUDE.md` | Versioned agent guides with a documentation map and English decision-record policy. `AGENTS.md` is canonical; `CLAUDE.md` points to it. |
 | `source/frontend/.gitignore` | Ignore Node dependencies, Vite/TypeScript output, test reports and local frontend environment files. |
 | `source/backend/.gitignore` | Ignore .NET build/test output, local settings, certificates and local SQL data/backup files. |
@@ -17,10 +17,15 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 | `source/backend/Directory.Build.props` | Common `net10.0`, nullable, implicit usings, build analysis, deterministic output and CI settings for all .NET projects; `PolskiStreamerSimulator.<Project>` assembly names and root namespaces; XML documentation generation (needed for the IDE0005 unused-using check on build) with CS1591 suppressed (TD-82). |
 | `source/backend/Directory.Packages.props` | NuGet Central Package Management for every backend project. Add exact package versions as projects are scaffolded; project `PackageReference` elements omit versions. |
 | `source/backend/global.json` | Minimum .NET SDK 10.0.100, rolling to the latest installed .NET 10 feature band/patch; prerelease SDKs excluded. Selects Microsoft.Testing.Platform as the `dotnet test` runner (TD-82). |
-| `source/backend/Tests/testconfig.json` | Microsoft.Testing.Platform settings, including coverlet.MTP coverage filters (tests and the batch tool entry point excluded, generated `*.g.cs` and `[GeneratedCode]`/`[CompilerGenerated]` code excluded) and Cobertura output (TD-82). |
+| `source/backend/Tests/testconfig.json` | Microsoft.Testing.Platform settings, including coverlet.MTP coverage filters (tests and the batch tool entry point excluded, generated `*.g.cs` and `[GeneratedCode]`/`[CompilerGenerated]` code excluded) and Cobertura (CI artifact) plus OpenCover (SonarQube Cloud) output (TD-82, TD-86). |
 | `source/frontend/.prettierrc.json` | Initial two-space, LF, single-quote, semicolon and 100-column formatting defaults; review with the first React code. |
 | `source/frontend/.prettierignore` | Keep generated Orval client and build/test output out of formatting checks. |
-| `lefthook.yml` (planned with application scaffolding) | Run backend `dotnet format`, frontend ESLint `--fix` and fast unit tests before code commits. |
+| `package.json` and `package-lock.json` (root) | Repository tooling only: the exact Lefthook version installed by `npm install` in the root, with Lefthook's install script approved under npm `allowScripts` (TD-88). The React app keeps its own `package.json` in `source/frontend`. |
+| `lefthook.yml` | `pre-commit` hook. Runs `dotnet format` on staged backend C# files and rejects the commit if anything changes, then fast backend tests without `Category=Integration`. Frontend lint is added with the React app (TD-88). |
+| `.github/workflows/ci.yml` | Required CI jobs `backend`, `sonar` and `pr-policy`; third-party actions pinned to commit SHAs (TD-86). |
+| `.github/scripts/` | Bash helpers used by CI, each with a self-test (`check-pr-source.sh`, `check-pr-source.test.sh`). |
+| `.github/rulesets/` | Versioned definitions of the `main` and `develop` repository rulesets (TD-87). |
+| `source/backend/.config/dotnet-tools.json` | Local .NET tool manifest pinning SonarScanner for .NET (TD-86). |
 
 There are exactly **three `.gitignore` files**, each with a distinct responsibility. The root ignore covers editor/agent/OS and deployment-local files without hiding source or documentation; the root agent guides are explicit exceptions. Frontend and backend files cover their own generated output. Root `.editorconfig` and `.gitattributes` also cover `.github/workflows/`, `k8s/` and optional `scripts/`; infrastructure assets do not get a fourth ignore file. Verify `git status --ignored` and `git check-ignore -v` when a new tool writes files, especially before adding broad patterns. `.gitattributes` is the canonical line-ending policy; `.editorconfig` is the editor policy. GitHub Actions must validate formatting rather than silently rewrite committed files.
 

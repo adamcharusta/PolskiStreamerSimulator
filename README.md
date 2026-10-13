@@ -22,7 +22,10 @@ source/
     Tools/BatchSimulator/  console runner for seeded careers and reports
   frontend/                React client (later milestone)
 k8s/                       Ansible, Helm and environment values (later milestone)
-.github/workflows/         GitHub Actions (later milestone)
+.github/
+  workflows/               CI (backend, SonarQube Cloud, PR policy)
+  rulesets/                main and develop branch rules
+  scripts/                 CI helper scripts
 ```
 
 ## Specifications
@@ -55,3 +58,20 @@ dotnet build PolskiStreamerSimulator.slnx
 dotnet test PolskiStreamerSimulator.slnx
 dotnet run --project Tools/BatchSimulator -- --careers 1000 --seed 42
 ```
+
+Install the Git hooks once. This requires Node.js; the hooks run `dotnet format` and the fast backend tests before each backend commit:
+
+```sh
+npm install
+```
+
+CI runs the same backend checks as:
+
+```sh
+cd source/backend
+dotnet build PolskiStreamerSimulator.slnx -c Release
+dotnet format PolskiStreamerSimulator.slnx --verify-no-changes
+dotnet test PolskiStreamerSimulator.slnx -c Release --coverlet --coverlet-threshold 80 --coverlet-threshold-type line --coverlet-threshold-stat total
+```
+
+Changes reach `develop` and `main` only through pull requests; see [development and delivery](docs/development-and-delivery.md).
