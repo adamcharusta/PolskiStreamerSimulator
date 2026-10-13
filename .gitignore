@@ -49,3 +49,6 @@ $RECYCLE.BIN/
 **/ansible.retry
 *.retry
 
+
+# Root tooling dependencies (package.json for Lefthook)
+/node_modules/
