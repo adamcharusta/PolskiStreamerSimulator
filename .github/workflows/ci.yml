@@ -1,0 +1,147 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  SONAR_ORGANIZATION: adamcharusta
+  SONAR_PROJECT_KEY: adamcharusta_PolskiStreamerSimulator
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: source/backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: source/backend/global.json
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('source/backend/Directory.Packages.props', 'source/backend/**/*.csproj', 'source/backend/.config/dotnet-tools.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Restore
+        run: dotnet restore PolskiStreamerSimulator.slnx
+      - name: Build
+        run: dotnet build PolskiStreamerSimulator.slnx -c Release --no-restore
+      - name: Verify formatting
+        run: dotnet format PolskiStreamerSimulator.slnx --verify-no-changes --no-restore
+      - name: Test with coverage gate
+        run: >-
+          dotnet test PolskiStreamerSimulator.slnx -c Release --no-build
+          --results-directory "$RUNNER_TEMP/test-results"
+          --coverlet --coverlet-threshold 80 --coverlet-threshold-type line --coverlet-threshold-stat total
+      # coverlet.MTP only sets a non-zero exit code when the gate fails, so state the measured value here.
+      - name: Coverage summary
+        if: always()
+        run: |
+          report=$(ls "$RUNNER_TEMP"/test-results/coverage.cobertura.*.xml 2>/dev/null | head -n 1)
+          if [ -z "$report" ]; then
+            echo "Backend coverage report was not produced." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          rate=$(grep -o 'line-rate="[0-9.]*"' "$report" | head -n 1 | cut -d '"' -f 2)
+          percent=$(awk -v r="$rate" 'BEGIN { printf "%.2f", r * 100 }')
+          echo "Backend line coverage: ${percent}% (gate: 80%)" >> "$GITHUB_STEP_SUMMARY"
+          if awk -v r="$rate" 'BEGIN { exit !(r < 0.8) }'; then
+            echo "::error::Backend line coverage ${percent}% is below the 80% gate."
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: backend-coverage
+          path: ${{ runner.temp }}/test-results/coverage.cobertura.*.xml
+          if-no-files-found: warn
+
+  sonar:
+    name: sonar
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: source/backend
+    steps:
+      - name: Require SonarQube Cloud token
+        working-directory: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::error::The SONAR_TOKEN repository secret is not available to this run. Add it as described in docs/development-and-delivery.md (SonarQube Cloud quality gate)."
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: source/backend/global.json
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('source/backend/Directory.Packages.props', 'source/backend/**/*.csproj', 'source/backend/.config/dotnet-tools.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Restore tools
+        run: dotnet tool restore
+      - name: Begin analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >-
+          dotnet sonarscanner begin
+          /k:"$SONAR_PROJECT_KEY"
+          /o:"$SONAR_ORGANIZATION"
+          /d:sonar.host.url="https://sonarcloud.io"
+          /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.cs.opencover.reportsPaths="$RUNNER_TEMP/sonar-results/coverage.opencover.*.xml"
+          /d:sonar.coverage.exclusions="**/Tools/BatchSimulator/Program.cs,**/*.g.cs"
+          /d:sonar.exclusions="**/Tests/Golden/**"
+          /d:sonar.qualitygate.wait=true
+      - name: Build
+        run: dotnet build PolskiStreamerSimulator.slnx -c Release
+      - name: Test with OpenCover coverage
+        run: dotnet test PolskiStreamerSimulator.slnx -c Release --no-build --results-directory "$RUNNER_TEMP/sonar-results" --coverlet
+      - name: Require OpenCover report
+        run: |
+          if ! ls "$RUNNER_TEMP"/sonar-results/coverage.opencover.*.xml >/dev/null 2>&1; then
+            echo "::error::No OpenCover report in $RUNNER_TEMP/sonar-results; SonarQube Cloud would see 0% coverage."
+            exit 1
+          fi
+      - name: End analysis and wait for the quality gate
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+  pr-policy:
+    name: pr-policy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts
+      - name: Self-test the policy script
+        run: bash .github/scripts/check-pr-source.test.sh
+      - name: Check the PR source branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: bash .github/scripts/check-pr-source.sh
