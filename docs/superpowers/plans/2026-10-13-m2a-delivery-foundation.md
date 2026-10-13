@@ -253,6 +253,8 @@ git commit -m "ci: add PR source-branch policy script with self-test" -m "Co-Aut
   - check runs named exactly `backend`, `sonar` and `pr-policy`;
   - the artifact `backend-coverage` (Cobertura XML).
 
+Note against the spec: §4 describes `pr-policy` as a short Bash step with no third-party action. The plan runs the Task 2 script after a sparse checkout with GitHub's own `actions/checkout`, so its self-test also runs in CI. Record this as a ruling when executing.
+
 - [ ] **Step 1: Install actionlint** (verification tool, user scope):
 
 ```bash
@@ -960,6 +962,8 @@ gh pr create --base develop --head probe/coverage-drop --title "Probe: coverage 
 
 Expected: `backend` fails at `Test with coverage gate`. The tests that ran passed, the log reports total line coverage below 80%, and the run exits non-zero.
 
+If coverage stays at or above 80%, also remove `source/backend/Tests/Infrastructure`, then commit and push again. Record which folders the probe removed.
+
 - [ ] **Step 4: Probe 3, PR source policy.**
 
 ```bash
@@ -1052,7 +1056,15 @@ git push && gh pr checks <A> --watch --fail-fast=false
 Ask "Append this to issue #14?". After the yes:
 
 ```bash
-gh issue view 14 --json body --jq .body > "<scratchpad>/issue14.md" && printf '\n%s\n' "<the section above>" >> "<scratchpad>/issue14.md" && gh issue edit 14 --body-file "<scratchpad>/issue14.md"
+gh issue view 14 --json body --jq .body > "<scratchpad>/issue14.md"
+cat >> "<scratchpad>/issue14.md" <<'EOF'
+
+## Delivery split (TD-85)
+
+- **M2-A (delivery foundation):** Lefthook pre-commit (`dotnet format`, fast backend tests), GitHub Actions CI with tests and the backend 80% line-coverage gate, and SonarQube Cloud PR checks.
+- **M2-C (frontend slice):** Docker Compose with SQL Server, API and Vite started by one command, frontend lint/Vitest and its 80% coverage gate, Prettier check, and the local smoke test (career start, choice, reload, test admin login).
+EOF
+gh issue edit 14 --body-file "<scratchpad>/issue14.md"
 ```
 
 Expected: `gh issue view 14` shows the original body followed by the new section.
