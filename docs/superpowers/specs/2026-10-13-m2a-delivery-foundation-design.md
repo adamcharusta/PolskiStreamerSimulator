@@ -116,7 +116,7 @@ Settings and constraints:
 ### Later extensions
 
 - B adds `backend-integration` for SQL Server through Testcontainers, filtered by `Category=Integration`. Integration tests are excluded from `backend` from then on.
-- C adds `frontend`: lint, typecheck, Vitest with its own 80% line-coverage gate, Prettier and the Orval drift check.
+- C adds `frontend`: lint, typecheck, Vitest with its own 80% line-coverage gate, Prettier and the Orval drift check. C also extends `sonar` to the TypeScript source with Vitest LCOV coverage in the same SonarQube Cloud project (TD-73).
 - Each new job name is added to the rulesets' required checks in the same sub-project.
 
 ## 5. Repository rules
