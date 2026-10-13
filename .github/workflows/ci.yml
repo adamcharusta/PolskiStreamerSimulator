@@ -3,6 +3,9 @@ name: CI
 on:
   pull_request:
     branches: [develop, main]
+    # `edited` re-runs every check when a PR's base branch changes; otherwise a PR retargeted to main
+    # would keep the green pr-policy result from develop, and one retargeted away from main would stay red.
+    types: [opened, synchronize, reopened, edited]
   push:
     branches: [develop, main]
   workflow_dispatch:
