@@ -7,7 +7,9 @@ pre-commit:
     - name: backend-format
       root: "source/backend/"
       glob: "source/backend/**/*.cs"
-      run: dotnet format PolskiStreamerSimulator.slnx --include {staged_files}
+      # Print the formatter's fix and fail here: with partially staged files Lefthook restores the
+      # unstaged hunks afterwards and discards the fix, so the printed diff is what to apply.
+      run: dotnet format PolskiStreamerSimulator.slnx --include {staged_files} && git diff --exit-code -- {staged_files}
     # No `root` here: `root` also filters the staged files and would skip content-only commits.
     - name: backend-tests
       glob:
