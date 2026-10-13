@@ -53,7 +53,7 @@ Steps marked **[external]** change GitHub state, and the agent asks the owner fo
 
 1. On `feature/m2a-delivery-foundation` (from `develop`), add the workflow, tool manifest, Lefthook files and documentation. Verify locally: `actionlint`, the CI commands run locally, and the hook tested on real commits (§7).
 2. **[external]** Push `develop` for the first time, then the feature branch. Open the PR into `develop`. CI runs; `sonar` fails until step 3.
-3. **[owner]** Create the SonarQube Cloud organization and project by importing the GitHub repository, and disable *Automatic Analysis*. Mark `develop` as a long-lived branch. Add the repository secret `SONAR_TOKEN`. The agent supplies exact steps and adjusts the organization and project key constants if Sonar assigns different ones. Then re-run CI: through `workflow_dispatch` on `develop` for the first branch analysis, and on the PR.
+3. **[owner]** Create the SonarQube Cloud organization and project by importing the GitHub repository, and disable *Automatic Analysis*. Mark `develop` as a long-lived branch (TD-89 later made it the main branch). Add the repository secret `SONAR_TOKEN`. The agent supplies exact steps and adjusts the organization and project key constants if Sonar assigns different ones. Then re-run CI: through `workflow_dispatch` on `develop` for the first branch analysis, and on the PR.
 4. **[external]** Open three probe PRs and close them unmerged:
    - a PR with a formatting violation, expecting a red `backend`;
    - a PR that lowers coverage below 80%, expecting a red `backend`;
@@ -103,6 +103,7 @@ Settings and constraints:
 
 - The quality gate is the default **Sonar way**. Its conditions apply to new code, including coverage ≥ 80% and duplication ≤ 3%.
 - Long-lived branches are `main`, `develop` and `release/*`.
+- *Amended by TD-89 (2026-10-13):* the Free plan analyses only the main branch, so `develop` is the SonarQube Cloud main branch and the job runs only on PRs and pushes to `develop`.
 - PRs from forks and from bots without access to secrets cannot pass `sonar`. Admins merge such PRs through the PR-only bypass after review.
 
 ### Job `pr-policy` (required, `pull_request` events only)

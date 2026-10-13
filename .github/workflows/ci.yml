@@ -76,6 +76,8 @@ jobs:
 
   sonar:
     name: sonar
+    # The SonarQube Cloud Free plan analyses only its main branch, `develop` (TD-89), and PRs; pushes to `main` skip the job.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
