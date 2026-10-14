@@ -39,6 +39,12 @@ public sealed class AppTestKit(WeekEngine? engine = null)
         return new SubmitActionHandler(new CareerAccess(s, Secrets), s, Contents, Engine, Views, Time);
     }
 
+    public RunBatchHandler BatchHandler(ICareerStore? store = null)
+    {
+        var s = store ?? Store;
+        return new RunBatchHandler(new CareerAccess(s, Secrets), s, Contents, Engine, Views, Time);
+    }
+
     public async Task<CreatedCareer> NewCareerAsync(string nickname = "Streamer", Background background = Background.DormRoomNewcomer)
         => (await CreateHandler().Handle(
             new CreateCareer(nickname, background, Difficulty.Normal, PronounSet.Woman),

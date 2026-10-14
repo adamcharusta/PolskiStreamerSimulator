@@ -13,6 +13,7 @@ public sealed class StoredContractTests
     [Theory]
     [InlineData("week-report.json", typeof(WeekReportView))]
     [InlineData("action-outcome.json", typeof(ActionOutcome))]
+    [InlineData("auto-week-record.json", typeof(AutoWeekRecord))]
     public void A_stored_v1_row_still_reads_back_unchanged(string file, Type type)
     {
         var json = File.ReadAllText(TestPaths.Golden(Path.Combine("contract-v1", file))).TrimEnd();
