@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
@@ -9,7 +10,15 @@ namespace PolskiStreamerSimulator.Application.Careers;
 public sealed record CreateCareer(string Nickname, Background Background, Difficulty Difficulty, PronounSet Pronouns);
 
 /// <summary>The new career; <see cref="Secret"/> is returned only here and never stored.</summary>
-public sealed record CreatedCareer(Guid CareerId, string Secret, CareerView Career);
+public sealed record CreatedCareer(Guid CareerId, string Secret, CareerView Career)
+{
+    // The response body carries the secret; ToString(), which loggers use, never does.
+    private bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append($"CareerId = {CareerId}, Secret = ***, Career = {Career}");
+        return true;
+    }
+}
 
 public sealed class CreateCareerHandler(ICareerStore store, ICurrentContent content, ISecretHasher secrets, CareerViewBuilder views, TimeProvider time)
 {

@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using PolskiStreamerSimulator.Application.Careers.Persistence;
+using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.WebApp;
@@ -41,12 +43,66 @@ public sealed class CareerApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     [InlineData("{")]
     [InlineData("""{"nickname":"Streamer","background":"wizard","difficulty":"normal","pronouns":"woman"}""")]
     [InlineData("")]
+    [InlineData("null")]
+    [InlineData("""{"nickname":"Streamer","difficulty":"normal","pronouns":"woman"}""")]
+    [InlineData("""{"nickname":"Streamer","background":0,"difficulty":"normal","pronouns":"woman"}""")]
     public async Task Malformed_json_and_unknown_enums_return_validation_failed(string json)
     {
         var response = await client.PostAsync("/v1/careers", new StringContent(json, Encoding.UTF8, "application/json"), Ct);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("validation-failed", await response.CodeAsync(Ct));
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("""{"commandId":"6f1c2b7e-0000-4000-8000-000000000001","expectedVersion":0,"type":"startWeek","mainAction":"rest","category":"fps","trainTarget":99}""")]
+    [InlineData("""{"commandId":"6f1c2b7e-0000-4000-8000-000000000001","expectedVersion":0,"type":"startWeek","mainAction":"rest","category":"fps","upgradeSlot":"7"}""")]
+    [InlineData("""{"commandId":"6f1c2b7e-0000-4000-8000-000000000001","expectedVersion":0,"mainAction":"rest","category":"fps"}""")]
+    [InlineData("""{"commandId":"6f1c2b7e-0000-4000-8000-000000000001","type":"settleWeek"}""")]
+    [InlineData("""{"commandId":"6f1c2b7e-0000-4000-8000-000000000001","expectedVersion":"0","type":"settleWeek"}""")]
+    public async Task Malformed_action_requests_return_validation_failed(string json)
+    {
+        var (id, secret, _) = await client.CreateCareerAsync(Ct);
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/v1/careers/{id}/actions") { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+        request.Headers.TryAddWithoutValidation("Authorization", $"Bearer {secret}");
+
+        var response = await client.SendAsync(request, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("validation-failed", await response.CodeAsync(Ct));
+    }
+
+    [Fact]
+    public async Task Rejected_steps_return_their_stable_codes()
+    {
+        var (id, secret, career) = await client.CreateCareerAsync(Ct);
+        var version = career.GetProperty("version").GetInt64();
+        var command = Guid.NewGuid();
+
+        var illegal = await client.PostActionAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = version, type = "startWeek", mainAction = "improveProduction", category = "fps" }, Ct);
+        var started = await client.ActAsync(id, secret, new { commandId = command, expectedVersion = version, type = "startWeek", mainAction = "rest", category = "fps" }, Ct);
+        var startedVersion = started.GetProperty("career").GetProperty("version").GetInt64();
+        var unknownChoice = await client.PostActionAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = startedVersion, type = "resolveEvent", choiceId = "no-such-choice" }, Ct);
+        var reused = await client.PostActionAsync(id, secret, new { commandId = command, expectedVersion = startedVersion, type = "settleWeek" }, Ct);
+
+        Assert.Equal((HttpStatusCode.UnprocessableEntity, "illegal-action"), (illegal.StatusCode, await illegal.CodeAsync(Ct)));
+        Assert.Equal((HttpStatusCode.UnprocessableEntity, "unknown-choice"), (unknownChoice.StatusCode, await unknownChoice.CodeAsync(Ct)));
+        Assert.Equal((HttpStatusCode.UnprocessableEntity, "command-id-reused"), (reused.StatusCode, await reused.CodeAsync(Ct)));
+    }
+
+    [Fact]
+    public async Task An_ended_career_returns_409_career_ended()
+    {
+        var (id, secret, _) = await client.CreateCareerAsync(Ct);
+        var state = (await api.Store.FindAsync(id, Ct))!.State;
+        var ended = state with { StateVersion = state.StateVersion + 1, Status = CareerStatus.Ended, Ending = EndingReason.EarlyRetirement };
+        await api.Store.AppendAsync(id, state.StateVersion, ended, new NewAction(Guid.NewGuid(), 0, ActionKind.SettleWeek, "{}", "{}", null), DateTimeOffset.UnixEpoch, Ct);
+
+        var response = await client.PostActionAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = ended.StateVersion, type = "startWeek", mainAction = "rest", category = "fps" }, Ct);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("career-ended", await response.CodeAsync(Ct));
     }
 
     [Fact]

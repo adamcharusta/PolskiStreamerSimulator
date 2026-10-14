@@ -8,8 +8,16 @@ public static class ContractJson
 {
     public static JsonSerializerOptions Options { get; } = Create();
 
+    /// <summary>
+    /// Enums only as camelCase names, numbers only as JSON numbers, and every constructor parameter without a default
+    /// required, so a typo or an omitted field is a 400 instead of a silently defaulted value.
+    /// </summary>
     public static void Configure(JsonSerializerOptions options)
-        => options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+    {
+        options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+        options.NumberHandling = JsonNumberHandling.Strict;
+        options.RespectRequiredConstructorParameters = true;
+    }
 
     public static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Options);
 

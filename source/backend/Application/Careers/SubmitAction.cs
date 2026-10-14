@@ -1,3 +1,4 @@
+using System.Text;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
@@ -25,7 +26,15 @@ public sealed record ActionInput(
 
 public sealed record ActionOutcome(CareerView Career, RollView? Roll, WeekReportView? Report);
 
-public sealed record SubmitAction(Guid CareerId, string? Secret, Guid CommandId, ActionInput Input);
+public sealed record SubmitAction(Guid CareerId, string? Secret, Guid CommandId, ActionInput Input)
+{
+    // Wolverine logs a failed message with ToString(); the bearer secret must never reach a log.
+    private bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append($"CareerId = {CareerId}, Secret = ***, CommandId = {CommandId}, Input = {Input}");
+        return true;
+    }
+}
 
 public sealed class SubmitActionHandler(
     CareerAccess access,
@@ -41,6 +50,12 @@ public sealed class SubmitActionHandler(
         if (!opened.IsSuccess)
         {
             return AppResult<ActionOutcome>.Fail(opened.Error);
+        }
+
+        // Before serializing: the contract writes enum names only, so an undefined value cannot even be stored.
+        if (!Defined(command.Input))
+        {
+            return AppResult<ActionOutcome>.Fail(ErrorCodes.ValidationFailed, "an enum value is not defined");
         }
 
         var requestJson = ContractJson.Serialize(command.Input);
@@ -133,6 +148,14 @@ public sealed class SubmitActionHandler(
 
     private static AppResult<(CareerState State, RollView? Roll, WeekReportView? Report)> Rejected(AppError error)
         => AppResult<(CareerState, RollView?, WeekReportView?)>.Fail(error);
+
+    // The rules index tables by these values; an undefined one would be a server fault instead of a rejected request.
+    private static bool Defined(ActionInput input)
+        => Enum.IsDefined(input.Type)
+            && (input.MainAction is not { } action || Enum.IsDefined(action))
+            && (input.Category is not { } category || Enum.IsDefined(category))
+            && (input.TrainTarget is not { } target || Enum.IsDefined(target))
+            && (input.UpgradeSlot is not { } slot || Enum.IsDefined(slot));
 
     private static ActionKind KindOf(ActionType type) => type switch
     {

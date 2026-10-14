@@ -139,6 +139,17 @@ public sealed class SubmitActionTests
     }
 
     [Fact]
+    public async Task Undefined_enum_values_are_rejected_before_the_rules_run()
+    {
+        var career = await kit.NewCareerAsync();
+        var v = career.Career.Version;
+
+        Assert.Equal(ErrorCodes.ValidationFailed, (await SubmitAsync(career, new ActionInput(v, ActionType.StartWeek, MainAction.TrainCategory, Category.Fps, (Category)99, null, null))).Error.Code);
+        Assert.Equal(ErrorCodes.ValidationFailed, (await SubmitAsync(career, new ActionInput(v, ActionType.StartWeek, MainAction.ImproveProduction, Category.Fps, null, (EquipmentSlot)(-1), null))).Error.Code);
+        Assert.Equal(ErrorCodes.ValidationFailed, (await SubmitAsync(career, new ActionInput(v, (ActionType)7, null, null, null, null, null))).Error.Code);
+    }
+
+    [Fact]
     public async Task An_ended_career_rejects_actions()
     {
         var career = await kit.NewCareerAsync();

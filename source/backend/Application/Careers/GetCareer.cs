@@ -1,9 +1,18 @@
+using System.Text;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 
 namespace PolskiStreamerSimulator.Application.Careers;
 
-public sealed record GetCareer(Guid CareerId, string? Secret);
+public sealed record GetCareer(Guid CareerId, string? Secret)
+{
+    // Wolverine logs a failed message with ToString(); the bearer secret must never reach a log.
+    private bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append($"CareerId = {CareerId}, Secret = ***");
+        return true;
+    }
+}
 
 public sealed class GetCareerHandler(CareerAccess access, ICareerStore store, IContentStore contents, CareerViewBuilder views)
 {
