@@ -1,7 +1,7 @@
 # M2-B Backend Slice — Design
 
 Date: 2026-10-14
-Status: **Design approved in conversation for §3–§6 (owner, 2026-10-14 brainstorming session); §7 and §8 are written without a separate conversation review and are approved together with this spec.** The implementation plan is not written yet.
+Status: **Approved design (owner, 2026-10-14 brainstorming session).** §3–§6 were approved in conversation; §7 and §8 were approved with the written spec.
 Milestone: [M2 — Vertical slice](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/2), sub-project B ([TD-85](../../technical-decisions.md)), delivering [#9](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/9), [#10](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/10) and the server side of [#13](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/13).
 
 ## 1. Intent
@@ -114,7 +114,7 @@ The **next step** is one of: the week plans with the reason each disabled plan i
 
 `Domain` errors map one-to-one: `IllegalAction` → `illegal-action` (with the domain's stable detail), `StaleVersion` → `stale-version`, `WeekAlreadySettled` → `stale-version`, `NoPendingWeek` → `no-pending-week`, `EventsUnresolved` → `events-unresolved`, `CareerEnded` → `career-ended`, `UnknownChoice` → `unknown-choice`; `UnknownRuleset` and `ContentMismatch` are server faults (`500`).
 
-**Contract.** Enum values are JSON strings in camelCase (`dormRoomNewcomer`, `trainCategory`). `Fixed` values are exposed as JSON numbers through an exact `decimal` conversion (at most six decimal places). The OpenAPI document is generated at build time into `source/backend/WebApp/openapi/v1.json`, committed, and checked for drift in CI; C's Orval reads this file.
+**Contract.** Enum values are JSON strings in camelCase (`dormRoomNewcomer`, `trainCategory`). `Fixed` values are exposed as JSON numbers through an exact `decimal` conversion (at most six decimal places). The OpenAPI document is generated with Wolverine's `openapi` command (it never starts the host or opens the database) into `source/backend/WebApp/openapi/v1.json`, committed, and checked for drift in CI; C's Orval reads this file.
 
 **Character nickname.** 3–20 characters after trimming; letters including Polish diacritics, digits, space, `_`, `-` and `.`. It is display metadata on `careers`, not part of the domain state, and differs from the 1–5-character leaderboard nickname.
 
@@ -178,7 +178,7 @@ Thirteen weeks take microseconds of domain work and 13 short transactions, well 
 
 - migrations on an empty database, and no pending model changes;
 - restart survival: play through one host, dispose it, start a second host on the same database, read the same state and hash;
-- atomicity: a command interceptor fails the `careers` update after the log insert; neither the row nor the new state is stored;
+- atomicity: a command interceptor fails the log insert that follows the `careers` update; neither the row nor the new state is stored;
 - concurrency: parallel requests with the same `commandId` store one row and return identical responses; parallel requests with different `commandId`s at one version return one `200` and one `409`;
 - secret isolation: career B's secret on career A returns `404`;
 - the full flow: create, one manual week, a 13-week batch, reload.
@@ -216,7 +216,7 @@ Documentation updates: `technical-architecture.md` (API table and tables), `tech
 | --- | --- |
 | #9 Confirmed weeks survive an API restart | Integration test with two hosts on one database (store level in PR 1, HTTP level in PR 2). |
 | #9 Migrations work on an empty database | Integration test: migrate an empty database; no pending model changes. |
-| #9 A test covers atomic persistence | Integration test with the failing `careers` update. |
+| #9 A test covers atomic persistence | Integration test with the failing log insert after the `careers` update. |
 | #10 Duplicate requests and concurrent tabs cannot settle a week twice | Parallel same-`commandId` and parallel same-version tests (unit and integration). |
 | #10 One career's secret cannot open another career | HTTP and integration tests returning `404 career-not-found`. |
 | #10 Invalid choices return a stable error | HTTP tests for `unknown-choice` and `illegal-action` Problem Details. |
