@@ -13,24 +13,24 @@ public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
 
     public string Name => "RandomLegal";
 
-    public WeekPlan ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
+    public PlanDecision ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
     {
         var enabled = legal.Where(l => l.DisabledReason is null).Select(l => l.Plan).ToArray();
         (var index, rng) = rng.NextInt(0, enabled.Length - 1);
         var plan = enabled[index];
         if (plan.Action != MainAction.TrainCategory)
         {
-            return plan;
+            return new PlanDecision(plan, PolicyReason.Of("random"));
         }
 
         (var target, rng) = rng.NextInt(0, CategoryValues.Count - 1);
-        return plan with { TrainTarget = (Category)target };
+        return new PlanDecision(plan with { TrainTarget = (Category)target }, PolicyReason.Of("random"));
     }
 
-    public string ChooseEventChoice(CareerState s, EventPresentation e)
+    public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
     {
         (var index, rng) = rng.NextInt(0, e.Choices.Length - 1);
-        return e.Choices[index].ChoiceId;
+        return new ChoiceDecision(e.Choices[index].ChoiceId, PolicyReason.Of("random"));
     }
 
     public bool ShouldRetire(CareerState s)

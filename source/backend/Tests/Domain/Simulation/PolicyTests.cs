@@ -12,7 +12,7 @@ public class PolicyTests
     private static readonly ContentSnapshot Content = TestWorld.Content;
 
     private static WeekPlan Choose(IChoicePolicy policy, CareerState s)
-        => policy.ChoosePlan(s, Content, TestWorld.Engine.LegalPlans(s, Content).Value);
+        => policy.ChoosePlan(s, Content, TestWorld.Engine.LegalPlans(s, Content).Value).Plan;
 
     /// <summary>Dorm career at a given week with too little cash for the upgrade rule (needs more than 3 × 600 PLN).</summary>
     private static CareerState Poor(int week) => TestCareers.Dorm(1) with { CashPln = 500, Week = new CareerWeek(week) };
@@ -96,9 +96,9 @@ public class PolicyTests
         var likely = new EventPresentation("e", [Odds("risky", 40), Odds("bold", 65), Odds("safe", 100, guaranteed: true)]);
         var unlikely = new EventPresentation("e", [Odds("risky", 40), Odds("bold", 45), Odds("safe", 100, guaranteed: true)]);
         var noSafe = new EventPresentation("e", [Odds("risky", 20), Odds("bold", 30)]);
-        Assert.Equal("bold", BuiltInPolicies.Balanced.ChooseEventChoice(TestCareers.Dorm(1), likely));
-        Assert.Equal("safe", BuiltInPolicies.Balanced.ChooseEventChoice(TestCareers.Dorm(1), unlikely));
-        Assert.Equal("bold", BuiltInPolicies.Balanced.ChooseEventChoice(TestCareers.Dorm(1), noSafe));
+        Assert.Equal("bold", BuiltInPolicies.Balanced.ChooseEventChoice(TestCareers.Dorm(1), likely).ChoiceId);
+        Assert.Equal("safe", BuiltInPolicies.Balanced.ChooseEventChoice(TestCareers.Dorm(1), unlikely).ChoiceId);
+        Assert.Equal("bold", BuiltInPolicies.Balanced.ChooseEventChoice(TestCareers.Dorm(1), noSafe).ChoiceId);
     }
 
     [Fact]

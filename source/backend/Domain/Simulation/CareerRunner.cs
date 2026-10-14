@@ -41,7 +41,7 @@ public static class CareerRunner
                 break;
             }
 
-            if (!Accept(engine.StartWeek(s, c, policy.ChoosePlan(s, c, legal.Value), s.StateVersion), $"{week} start", violations, ref s)
+            if (!Accept(engine.StartWeek(s, c, policy.ChoosePlan(s, c, legal.Value).Plan, s.StateVersion), $"{week} start", violations, ref s)
                 || !Check(s, $"{week} start", violations)
                 || !ResolveEvents(engine, c, policy, week, violations, ref s))
             {
@@ -88,7 +88,7 @@ public static class CareerRunner
             }
 
             var step = $"{week} resolve {presentation.Value.EventId}";
-            var choice = policy.ChooseEventChoice(s, presentation.Value);
+            var choice = policy.ChooseEventChoice(s, presentation.Value).ChoiceId;
             if (!Accept(engine.ResolveEvent(s, c, choice, s.StateVersion), step, violations, ref s) || !Check(s, step, violations))
             {
                 return false;
