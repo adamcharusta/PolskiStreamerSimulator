@@ -48,6 +48,12 @@ public sealed class WeekEngine(RulesetRegistry registry)
         return ruleset.IsSuccess ? ruleset.Value.Retire(s, c, expectedVersion) : Result<CareerState>.Fail(ruleset.Error);
     }
 
+    public Result<bool> RequiresPlayerDecision(CareerState s, ContentSnapshot c)
+    {
+        var ruleset = Resolve(s, c);
+        return ruleset.IsSuccess ? Result<bool>.Ok(ruleset.Value.RequiresPlayerDecision(s, c)) : Result<bool>.Fail(ruleset.Error);
+    }
+
     private Result<IRuleset> Resolve(CareerState s, ContentSnapshot c)
     {
         var ruleset = registry.Resolve(s.RulesetId);

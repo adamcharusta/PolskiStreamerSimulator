@@ -39,6 +39,9 @@ public sealed class M1Ruleset : IRuleset
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
         => [.. AllPlans().Select(plan => (plan, PlanRejection(s, c.Balance, plan)))];
 
+    /// <summary>The M1 rules have no mandatory decisions (TD-90); forced rest leaves only one legal plan.</summary>
+    public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c) => false;
+
     public Result<EventPresentation> PresentEvent(CareerState s, ContentSnapshot c)
     {
         if (s.Status == CareerStatus.Ended)

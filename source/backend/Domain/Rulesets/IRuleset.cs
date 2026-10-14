@@ -26,4 +26,10 @@ public interface IRuleset
 
     /// <summary>Ends the career between weeks with <c>EarlyRetirement</c>.</summary>
     Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion);
+
+    /// <summary>
+    /// Whether the next week needs a player decision before it may start; an automated batch stops here without
+    /// starting the week.
+    /// </summary>
+    bool RequiresPlayerDecision(CareerState s, ContentSnapshot c);
 }
