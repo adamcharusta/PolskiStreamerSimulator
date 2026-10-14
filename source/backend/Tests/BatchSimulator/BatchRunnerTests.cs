@@ -19,10 +19,10 @@ public sealed class BatchRunnerTests : IDisposable
     {
         public string Name => "Broken";
 
-        public WeekPlan ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
-            => new(MainAction.ImproveProduction, Category.Fps);
+        public PlanDecision ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
+            => new(new WeekPlan(MainAction.ImproveProduction, Category.Fps), PolicyReason.Of("broken"));
 
-        public string ChooseEventChoice(CareerState s, EventPresentation e) => e.Choices[0].ChoiceId;
+        public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e) => new(e.Choices[0].ChoiceId, PolicyReason.Of("broken"));
 
         public bool ShouldRetire(CareerState s) => false;
     }

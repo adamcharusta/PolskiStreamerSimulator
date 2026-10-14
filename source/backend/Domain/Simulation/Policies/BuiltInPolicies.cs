@@ -1,3 +1,4 @@
+using System.Globalization;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
@@ -46,39 +47,70 @@ public static class BuiltInPolicies
 
         public string Name => name;
 
-        public WeekPlan ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
+        public PlanDecision ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
         {
-            var category = ChooseCategory(s, c);
-            var rest = new WeekPlan(MainAction.Rest, category);
-            var preferred = Prefer(s, c, category);
-            return legal.Any(l => l.Plan == preferred && l.DisabledReason is null) ? preferred : rest;
+            var (category, categoryRule) = ChooseCategory(s, c);
+            var (preferred, code, args) = Prefer(s, c, category);
+            (string Name, string Value)[] common = [("category", PolicyReason.Name(category)), ("categoryRule", categoryRule)];
+            return legal.Any(l => l.Plan == preferred && l.DisabledReason is null)
+                ? new PlanDecision(preferred, PolicyReason.Of(code, [.. args, .. common]))
+                : new PlanDecision(
+                    new WeekPlan(MainAction.Rest, category),
+                    PolicyReason.Of("fallback-rest", [("preferred", PolicyReason.Name(preferred.Action)), .. common]));
         }
 
         /// <summary>Highest-probability gamble when it is at least even odds, otherwise the guaranteed response.</summary>
-        public string ChooseEventChoice(CareerState s, EventPresentation e)
+        public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
         {
             var bestGamble = e.Choices.Where(o => !o.Guaranteed).OrderByDescending(o => o.Probability).FirstOrDefault();
             if (bestGamble is not null && bestGamble.Probability >= GambleThreshold)
             {
-                return bestGamble.ChoiceId;
+                return new ChoiceDecision(
+                    bestGamble.ChoiceId,
+                    PolicyReason.Of("gamble-best-odds", ("probability", bestGamble.Probability.ToString()), ("threshold", GambleThreshold.ToString())));
             }
 
-            return (e.Choices.FirstOrDefault(o => o.Guaranteed) ?? bestGamble ?? e.Choices[0]).ChoiceId;
+            var guaranteed = e.Choices.FirstOrDefault(o => o.Guaranteed);
+            if (guaranteed is not null)
+            {
+                return new ChoiceDecision(
+                    guaranteed.ChoiceId,
+                    bestGamble is null
+                        ? PolicyReason.Of("take-guaranteed")
+                        : PolicyReason.Of("take-guaranteed", ("bestProbability", bestGamble.Probability.ToString())));
+            }
+
+            var only = bestGamble ?? e.Choices[0];
+            return new ChoiceDecision(only.ChoiceId, PolicyReason.Of("only-gambles", ("probability", only.Probability.ToString())));
         }
 
         public bool ShouldRetire(CareerState s) => false;
 
-        private WeekPlan Prefer(CareerState s, ContentSnapshot c, Category category)
+        private (WeekPlan Plan, string Code, (string Name, string Value)[] Args) Prefer(CareerState s, ContentSnapshot c, Category category)
         {
+            var rest = new WeekPlan(MainAction.Rest, category);
             var forcedRest = s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred;
+            (string Name, string Value)[] tiredness = [("energy", s.Energy.ToString()), ("burnout", s.Burnout.ToString())];
             if (grind)
             {
-                return forcedRest ? new WeekPlan(MainAction.Rest, category) : new WeekPlan(MainAction.TrainCategory, category);
+                return forcedRest
+                    ? (rest, "forced-rest", tiredness)
+                    : (new WeekPlan(MainAction.TrainCategory, category), "train-every-week", []);
             }
 
-            if (forcedRest || s.Energy < Fixed.FromInt(restBelowEnergy) || s.Burnout > BurnoutLimit)
+            if (forcedRest)
             {
-                return new WeekPlan(MainAction.Rest, category);
+                return (rest, "forced-rest", tiredness);
+            }
+
+            if (s.Energy < Fixed.FromInt(restBelowEnergy))
+            {
+                return (rest, "rest-low-energy", [("energy", s.Energy.ToString()), ("threshold", restBelowEnergy.ToString(CultureInfo.InvariantCulture))]);
+            }
+
+            if (s.Burnout > BurnoutLimit)
+            {
+                return (rest, "rest-high-burnout", [("burnout", s.Burnout.ToString()), ("limit", BurnoutLimit.ToString())]);
             }
 
             var upgradable = Enum.GetValues<EquipmentSlot>().Where(slot => s.Equipment[slot] < CareerInvariants.MaxEquipmentTier).ToArray();
@@ -88,33 +120,38 @@ public static class BuiltInPolicies
                 var price = c.Balance.EquipmentPricePln[s.Equipment[cheapest] + 1];
                 if (s.CashPln > UpgradeReserveMultiple * price)
                 {
-                    return new WeekPlan(MainAction.ImproveProduction, category, UpgradeSlot: cheapest);
+                    return (
+                        new WeekPlan(MainAction.ImproveProduction, category, UpgradeSlot: cheapest),
+                        "upgrade-equipment",
+                        [("slot", PolicyReason.Name(cheapest)), ("pricePln", price.ToString(CultureInfo.InvariantCulture)), ("cashPln", s.CashPln.ToString(CultureInfo.InvariantCulture))]);
                 }
             }
 
             if (s.Week.Value % TrainEveryWeeks == 0)
             {
-                return new WeekPlan(MainAction.TrainCategory, category);
+                return (new WeekPlan(MainAction.TrainCategory, category), "train-scheduled", [("everyWeeks", TrainEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
             }
 
-            return new WeekPlan(s.Drama > DramaLimit ? MainAction.ManageCommunity : MainAction.NoAction, category);
+            return s.Drama > DramaLimit
+                ? (new WeekPlan(MainAction.ManageCommunity, category), "manage-community-drama", [("drama", s.Drama.ToString()), ("limit", DramaLimit.ToString())])
+                : (new WeekPlan(MainAction.NoAction, category), "no-action-default", []);
         }
 
-        private Category ChooseCategory(CareerState s, ContentSnapshot c)
+        private (Category Category, string Rule) ChooseCategory(CareerState s, ContentSnapshot c)
         {
             if (categoryMode == CategoryMode.Rotate)
             {
-                return (Category)(s.Week.Value % CategoryValues.Count);
+                return ((Category)(s.Week.Value % CategoryValues.Count), "rotation");
             }
 
             var startingSkill = c.Profiles[s.Background].Skill;
             var bonus = Enum.GetValues<Category>().MaxBy(category => startingSkill[category]);
             if (categoryMode == CategoryMode.BonusUnlessBored && s.Boredom[bonus] >= BoredomLimit)
             {
-                return Enum.GetValues<Category>().MinBy(category => s.Boredom[category]);
+                return (Enum.GetValues<Category>().MinBy(category => s.Boredom[category]), "least-bored");
             }
 
-            return bonus;
+            return (bonus, "bonus");
         }
     }
 }

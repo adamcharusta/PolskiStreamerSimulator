@@ -15,6 +15,7 @@ public sealed class SecretRedactionTests
         Assert.DoesNotContain(Secret, new GetCareer(Guid.NewGuid(), Secret).ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(Secret, new SubmitAction(Guid.NewGuid(), Secret, Guid.NewGuid(), input).ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(Secret, new CreatedCareer(Guid.NewGuid(), Secret, null!).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, new RunBatch(Guid.NewGuid(), Secret, Guid.NewGuid(), new BatchInput(0, 13)).ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

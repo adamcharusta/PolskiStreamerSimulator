@@ -152,7 +152,7 @@ A step cannot be re-rolled: the PCG32 generator is part of the career state, so 
 3. otherwise play the week with `Balanced`: legal plans → plan with reason → `StartWeek` → for each event, odds → choice with reason → `ResolveEvent` → `SettleWeek`;
 4. commit the week as one `autoWeek` log row (`step` = week index in the batch) with the plan, every choice, the reasons, the rolls and the week report, in one transaction with the state update.
 
-If a week's commit fails its version check because another request changed the career, the batch stops with `interrupted` and reports the weeks it committed. A batch that runs all 13 weeks stops with `completed`.
+If a week's commit fails its version check because another request changed the career, the batch stops with `interrupted` and reports the weeks it committed. A repeat of the same batch command is not another request: when it commits a week first, the batch continues from that week, so concurrent repeats store each week once and answer alike (TD-97). A batch that runs all 13 weeks stops with `completed`.
 
 **Response.** `weeksCommitted`, `stopReason` (`completed`, `pausedForDecision`, `careerEnded`, `interrupted`), the per-week ledger (week, plan and reason, each event's choice, reason, roll, threshold and outcome, the week report), a cumulative summary (net followers, cash change, income and cost totals, start and end values of the main statistics) and the final career view.
 
@@ -160,7 +160,9 @@ If a week's commit fails its version check because another request changed the c
 
 - with no stored rows runs the batch (a pause before the first week changes nothing, so the repeat pauses identically);
 - with stored rows, when the career is still at the last row's `state_version_after` and the batch had neither finished nor stopped, resumes the remaining weeks (recovery after a crash);
-- otherwise rebuilds the response from the stored rows.
+- otherwise rebuilds the response from the stored rows; the stop reason is then recomputed as `completed` when all 13 weeks were committed and `interrupted` otherwise, because a pause or an ending is reproduced only while the career is unchanged (TD-97).
+
+A batch that committed no week stores nothing: its repeat runs as a new batch (`409 stale-version` once the career has moved on), and its command ID stays free for another command (TD-97).
 
 Thirteen weeks take microseconds of domain work and 13 short transactions, well inside one HTTP request; a persisted job is not needed for M2.
 

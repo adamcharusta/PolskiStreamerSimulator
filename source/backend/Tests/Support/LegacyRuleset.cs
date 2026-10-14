@@ -31,4 +31,6 @@ public sealed class LegacyRuleset(string id = LegacyRuleset.LegacyId) : IRuleset
         => inner.SettleWeek(s, c, expectedVersion);
 
     public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion) => inner.Retire(s, c, expectedVersion);
+
+    public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c) => false;
 }

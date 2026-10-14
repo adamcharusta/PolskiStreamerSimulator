@@ -54,6 +54,21 @@ public sealed class ActionRequestValidator : AbstractValidator<ActionRequest>
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 
+public sealed record BatchRequest(Guid CommandId, long ExpectedVersion, int Weeks);
+
+public sealed class BatchRequestValidator : AbstractValidator<BatchRequest>
+{
+    public BatchRequestValidator()
+    {
+        RuleFor(r => r.CommandId).NotEmpty();
+        RuleFor(r => r.ExpectedVersion).GreaterThanOrEqualTo(0);
+        RuleFor(r => r.Weeks).Equal(RunBatchHandler.Weeks);
+    }
+
+    protected override bool PreValidate(ValidationContext<BatchRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
 internal static class RequestBodies
 {
     /// <summary>A JSON body of <c>null</c> is a validation failure, not a server error.</summary>
