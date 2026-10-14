@@ -193,6 +193,99 @@
         }
       }
     },
+    "/v1/careers/{id}/batches": {
+      "post": {
+        "tags": [
+          "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
+        ],
+        "summary": "POST_v1_careers_id_batches",
+        "description": "POST_v1_careers_id_batches",
+        "operationId": "runBatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchOutcome"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -323,6 +416,60 @@
           "settleWeek"
         ]
       },
+      "AutoChoiceView": {
+        "required": [
+          "eventId",
+          "choiceId",
+          "reason",
+          "roll"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "choiceId": {
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReasonView"
+          },
+          "roll": {
+            "$ref": "#/components/schemas/RollView"
+          }
+        }
+      },
+      "AutoWeekView": {
+        "required": [
+          "week",
+          "plan",
+          "planReason",
+          "choices",
+          "report"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanView"
+          },
+          "planReason": {
+            "$ref": "#/components/schemas/ReasonView"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoChoiceView"
+            }
+          },
+          "report": {
+            "$ref": "#/components/schemas/WeekReportView"
+          }
+        }
+      },
       "Background": {
         "enum": [
           "dormRoomNewcomer",
@@ -330,6 +477,107 @@
           "chessClubRegular",
           "industryInsider"
         ]
+      },
+      "BatchOutcome": {
+        "required": [
+          "weeksCommitted",
+          "stopReason",
+          "weeks",
+          "summary",
+          "career"
+        ],
+        "type": "object",
+        "properties": {
+          "weeksCommitted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stopReason": {
+            "$ref": "#/components/schemas/BatchStopReason"
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoWeekView"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/BatchSummaryView"
+          },
+          "career": {
+            "$ref": "#/components/schemas/CareerView"
+          }
+        }
+      },
+      "BatchRequest": {
+        "required": [
+          "commandId",
+          "expectedVersion",
+          "weeks"
+        ],
+        "type": "object",
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "weeks": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "BatchStopReason": {
+        "enum": [
+          "completed",
+          "pausedForDecision",
+          "careerEnded",
+          "interrupted"
+        ]
+      },
+      "BatchSummaryView": {
+        "required": [
+          "weeksCommitted",
+          "followersNet",
+          "cashDelta",
+          "incomePln",
+          "costsPln",
+          "start",
+          "end"
+        ],
+        "type": "object",
+        "properties": {
+          "weeksCommitted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "followersNet": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cashDelta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "incomePln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "costsPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "start": {
+            "$ref": "#/components/schemas/CareerStatsView"
+          },
+          "end": {
+            "$ref": "#/components/schemas/CareerStatsView"
+          }
+        }
       },
       "CareerStatsView": {
         "required": [
@@ -837,6 +1085,24 @@
           "nonbinary"
         ],
         "description": "Grammatical form only; no rule may read it."
+      },
+      "ReasonView": {
+        "required": [
+          "code",
+          "args"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
       },
       "ReportLineView": {
         "required": [

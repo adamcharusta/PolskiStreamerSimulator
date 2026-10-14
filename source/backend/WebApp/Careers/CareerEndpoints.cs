@@ -45,4 +45,19 @@ public static class CareerEndpoints
         var result = await bus.InvokeAsync<AppResult<ActionOutcome>>(message, cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : ApiProblems.From(result.Error);
     }
+
+    [WolverinePost("/v1/careers/{id}/batches", OperationId = "runBatch")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity, ProblemJson)]
+    public static async Task<Results<Ok<BatchOutcome>, ProblemHttpResult>> PostBatch(
+        Guid id, BatchRequest request, [FromHeader(Name = "Authorization")] string? authorization, IMessageBus bus, IHostApplicationLifetime lifetime)
+    {
+        // A batch keeps running when the client disconnects; only shutdown stops it, and each week is already committed.
+        var message = new RunBatch(id, Bearer.Secret(authorization), request.CommandId, request.Adapt<BatchInput>());
+        var result = await bus.InvokeAsync<AppResult<BatchOutcome>>(message, lifetime.ApplicationStopping, TimeSpan.FromMinutes(1));
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : ApiProblems.From(result.Error);
+    }
 }
