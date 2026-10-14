@@ -45,6 +45,11 @@ jobs:
         run: dotnet restore PolskiStreamerSimulator.slnx
       - name: Build
         run: dotnet build PolskiStreamerSimulator.slnx -c Release --no-restore
+      # C generates its client from this file; it must match the code. The output path is relative to WebApp.
+      - name: Verify OpenAPI document
+        run: |
+          dotnet run --project WebApp -c Release --no-build -- openapi --document v1 --output openapi/v1.json
+          git diff --exit-code -- WebApp/openapi/v1.json
       - name: Verify formatting
         run: dotnet format PolskiStreamerSimulator.slnx --verify-no-changes --no-restore
       - name: Test with coverage gate

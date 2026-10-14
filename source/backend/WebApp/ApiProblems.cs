@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using PolskiStreamerSimulator.Application.Careers;
 
@@ -21,7 +22,7 @@ public static class ApiProblems
         [ErrorCodes.CommandIdReused] = StatusCodes.Status422UnprocessableEntity,
     };
 
-    public static IResult From(AppError error)
+    public static ProblemHttpResult From(AppError error)
     {
         var problem = new ProblemDetails
         {

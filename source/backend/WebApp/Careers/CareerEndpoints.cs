@@ -1,4 +1,5 @@
 using Mapster;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using PolskiStreamerSimulator.Application.Careers;
 using Wolverine;
@@ -12,9 +13,8 @@ public static class CareerEndpoints
     private const string ProblemJson = "application/problem+json";
 
     [WolverinePost("/v1/careers", OperationId = "createCareer")]
-    [ProducesResponseType<CreatedCareer>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson)]
-    public static async Task<IResult> PostCareer(CreateCareerRequest request, IMessageBus bus, CancellationToken cancellationToken)
+    public static async Task<Results<Created<CreatedCareer>, ProblemHttpResult>> PostCareer(CreateCareerRequest request, IMessageBus bus, CancellationToken cancellationToken)
     {
         var result = await bus.InvokeAsync<AppResult<CreatedCareer>>(request.Adapt<CreateCareer>(), cancellationToken);
         return result.IsSuccess
@@ -23,10 +23,9 @@ public static class CareerEndpoints
     }
 
     [WolverineGet("/v1/careers/{id}", OperationId = "getCareer")]
-    [ProducesResponseType<CareerView>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson)]
-    public static async Task<IResult> GetCareerById(
+    public static async Task<Results<Ok<CareerView>, ProblemHttpResult>> GetCareerById(
         Guid id, [FromHeader(Name = "Authorization")] string? authorization, IMessageBus bus, CancellationToken cancellationToken)
     {
         var result = await bus.InvokeAsync<AppResult<CareerView>>(new GetCareer(id, Bearer.Secret(authorization)), cancellationToken);
@@ -34,13 +33,12 @@ public static class CareerEndpoints
     }
 
     [WolverinePost("/v1/careers/{id}/actions", OperationId = "submitAction")]
-    [ProducesResponseType<ActionOutcome>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict, ProblemJson)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status422UnprocessableEntity, ProblemJson)]
-    public static async Task<IResult> PostAction(
+    public static async Task<Results<Ok<ActionOutcome>, ProblemHttpResult>> PostAction(
         Guid id, ActionRequest request, [FromHeader(Name = "Authorization")] string? authorization, IMessageBus bus, CancellationToken cancellationToken)
     {
         var message = new SubmitAction(id, Bearer.Secret(authorization), request.CommandId, request.Adapt<ActionInput>());
