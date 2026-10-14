@@ -52,6 +52,26 @@ public sealed class BatchApiTests(ApiFactory api) : IClassFixture<ApiFactory>
         Assert.Equal("week-in-progress", await response.CodeAsync(Ct));
     }
 
+    [Fact]
+    public async Task Rejected_batches_return_their_stable_codes()
+    {
+        var (id, secret, career) = await client.CreateCareerAsync(Ct);
+        var version = career.GetProperty("version").GetInt64();
+        var manual = Guid.NewGuid();
+        await client.ActAsync(id, secret, new { commandId = manual, expectedVersion = version, type = "startWeek", mainAction = "rest", category = "fps" }, Ct);
+
+        async Task<(HttpStatusCode Status, string? Code)> BatchAsync(string? withSecret, Guid commandId, long expectedVersion)
+        {
+            var response = await client.PostBatchAsync(id, withSecret, new { commandId, expectedVersion, weeks = 13 }, Ct);
+            return (response.StatusCode, await response.CodeAsync(Ct));
+        }
+
+        Assert.Equal((HttpStatusCode.Unauthorized, "missing-secret"), await BatchAsync(null, Guid.NewGuid(), version + 1));
+        Assert.Equal((HttpStatusCode.NotFound, "career-not-found"), await BatchAsync("not-the-secret", Guid.NewGuid(), version + 1));
+        Assert.Equal((HttpStatusCode.Conflict, "stale-version"), await BatchAsync(secret, Guid.NewGuid(), version));
+        Assert.Equal((HttpStatusCode.UnprocessableEntity, "command-id-reused"), await BatchAsync(secret, manual, version + 1));
+    }
+
     [Theory]
     [InlineData("null")]
     [InlineData("""{"commandId":"6f1c2b7e-0000-4000-8000-000000000001","expectedVersion":0}""")]

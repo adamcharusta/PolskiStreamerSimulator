@@ -70,15 +70,14 @@ public sealed class RunBatchHandler(
             return AppResult<BatchOutcome>.Fail(opened.Error);
         }
 
-        var career = opened.Value;
         var requestJson = ContractJson.Serialize(command.Input);
-        var stored = await store.FindCommandAsync(career.Id, command.CommandId, cancellationToken);
+        var (career, stored) = await SnapshotAsync(opened.Value.Id, command.CommandId, cancellationToken);
         if (!IsSameBatch(stored, requestJson))
         {
             return AppResult<BatchOutcome>.Fail(ErrorCodes.CommandIdReused);
         }
 
-        var records = stored.Select(a => ContractJson.Deserialize<AutoWeekRecord>(a.ResponseJson)).ToList();
+        var records = Records(stored);
         var content = await contents.RequireAsync(career.State.ContentDigest, cancellationToken);
         BatchStopReason stop;
         if (stored.Count == 0)
@@ -90,15 +89,15 @@ public sealed class RunBatchHandler(
 
             stop = await PlayAsync(career, content, command.CommandId, requestJson, records, cancellationToken);
         }
-        else if (career.State.StateVersion == stored[^1].StateVersionAfter)
+        else if (Owns(career, stored))
         {
-            // Nothing happened since this batch's last week: finish it (after a crash) or report the same stop.
+            // Nothing else happened since this batch's last week: finish it (after a crash or beside a repeat) or report the same stop.
             stop = await PlayAsync(career, content, command.CommandId, requestJson, records, cancellationToken);
         }
         else
         {
-            // The career moved on; report what the batch committed and never play further weeks.
-            stop = StoppedAt(records);
+            // Another command moved the career on; report what the batch committed and never play further weeks.
+            stop = records.Count == Weeks ? BatchStopReason.Completed : BatchStopReason.Interrupted;
         }
 
         var current = await store.FindAsync(career.Id, cancellationToken) ?? throw new InvalidOperationException("The career disappeared.");
@@ -125,14 +124,31 @@ public sealed class RunBatchHandler(
         return s.Pending is null ? null : new AppError(ErrorCodes.WeekInProgress);
     }
 
-    private static BatchStopReason StoppedAt(List<AutoWeekRecord> records)
-    {
-        if (records.Count == Weeks)
-        {
-            return BatchStopReason.Completed;
-        }
+    private static List<AutoWeekRecord> Records(IReadOnlyList<StoredAction> stored)
+        => [.. stored.Select(a => ContractJson.Deserialize<AutoWeekRecord>(a.ResponseJson))];
 
-        return records[^1].Week.Report.Ending is null ? BatchStopReason.Interrupted : BatchStopReason.CareerEnded;
+    /// <summary>Whether the career's latest change is this command's last week, so no other command moved it since.</summary>
+    private static bool Owns(StoredCareer career, IReadOnlyList<StoredAction> stored)
+        => stored.Count > 0 && career.State.StateVersion == stored[^1].StateVersionAfter;
+
+    /// <summary>
+    /// The career and this command's weeks, read so that no week of the command was added in between; a repeat of the
+    /// same command running beside this one cannot then pass for another command.
+    /// </summary>
+    private async Task<(StoredCareer Career, IReadOnlyList<StoredAction> Stored)> SnapshotAsync(Guid careerId, Guid commandId, CancellationToken cancellationToken)
+    {
+        var stored = await store.FindCommandAsync(careerId, commandId, cancellationToken);
+        while (true)
+        {
+            var career = await store.FindAsync(careerId, cancellationToken) ?? throw new InvalidOperationException("The career disappeared.");
+            var again = await store.FindCommandAsync(careerId, commandId, cancellationToken);
+            if (again.Count == stored.Count)
+            {
+                return (career, stored);
+            }
+
+            stored = again;
+        }
     }
 
     private async Task<BatchStopReason> PlayAsync(
@@ -159,13 +175,23 @@ public sealed class RunBatchHandler(
             var (next, week) = PlayWeek(s, c);
             var record = new AutoWeekRecord(CareerViewBuilder.Stats(s), CareerViewBuilder.Stats(next), week);
             var entry = new NewAction(commandId, records.Count + 1, ActionKind.AutoWeek, requestJson, ContractJson.Serialize(record), ContractJson.Serialize(week.Report));
-            if (await store.AppendAsync(career.Id, s.StateVersion, next, entry, time.GetUtcNow(), cancellationToken) != AppendOutcome.Appended)
+            if (await store.AppendAsync(career.Id, s.StateVersion, next, entry, time.GetUtcNow(), cancellationToken) == AppendOutcome.Appended)
+            {
+                records.Add(record);
+                s = next;
+                continue;
+            }
+
+            var (current, stored) = await SnapshotAsync(career.Id, commandId, cancellationToken);
+            if (!Owns(current, stored))
             {
                 return BatchStopReason.Interrupted;
             }
 
-            records.Add(record);
-            s = next;
+            // A repeat of this command committed the week first: carry on from its weeks, as it does.
+            records.Clear();
+            records.AddRange(Records(stored));
+            s = current.State;
         }
     }
 

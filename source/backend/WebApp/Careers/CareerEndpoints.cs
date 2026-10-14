@@ -57,7 +57,7 @@ public static class CareerEndpoints
     {
         // A batch keeps running when the client disconnects; only shutdown stops it, and each week is already committed.
         var message = new RunBatch(id, Bearer.Secret(authorization), request.CommandId, request.Adapt<BatchInput>());
-        var result = await bus.InvokeAsync<AppResult<BatchOutcome>>(message, lifetime.ApplicationStopping, TimeSpan.FromMinutes(1));
+        var result = await bus.InvokeAsync<AppResult<BatchOutcome>>(message, lifetime.ApplicationStopping);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : ApiProblems.From(result.Error);
     }
 }

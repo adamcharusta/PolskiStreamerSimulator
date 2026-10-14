@@ -94,4 +94,42 @@ public sealed class PolicyReasonTests
         Assert.Equal(("safe", "take-guaranteed", "0.400000"), (guaranteed.ChoiceId, guaranteed.Reason.Code, guaranteed.Reason.Args["bestProbability"]));
         Assert.Equal(("bold", "only-gambles"), (forced.ChoiceId, forced.Reason.Code));
     }
+
+    [Fact]
+    public void The_grinder_trains_every_week_until_it_must_rest()
+    {
+        var training = Plan(BuiltInPolicies.Grinder, Career() with { Energy = Fixed.FromInt(80) });
+        var exhausted = Plan(BuiltInPolicies.Grinder, Career() with { Energy = Fixed.Zero });
+
+        Assert.Equal("train-every-week", training.Reason.Code);
+        Assert.Equal(("forced-rest", "0.000000"), (exhausted.Reason.Code, exhausted.Reason.Args["energy"]));
+        Assert.Equal(Career().Burnout.ToString(), exhausted.Reason.Args["burnout"]);
+    }
+
+    [Fact]
+    public void High_drama_manages_the_community_and_a_calm_week_does_nothing()
+    {
+        // Week 1 is not a training week, and 500 PLN is below the upgrade reserve.
+        var calm = Career() with { Energy = Fixed.FromInt(80), CashPln = 500 };
+
+        var dramatic = Plan(BuiltInPolicies.Balanced, calm with { Drama = Fixed.FromInt(50) });
+        var quiet = Plan(BuiltInPolicies.Balanced, calm with { Drama = Fixed.Zero });
+
+        Assert.Equal(("manage-community-drama", "50.000000", "40.000000"), (dramatic.Reason.Code, dramatic.Reason.Args["drama"], dramatic.Reason.Args["limit"]));
+        Assert.Equal("no-action-default", quiet.Reason.Code);
+    }
+
+    [Fact]
+    public void A_disabled_preference_falls_back_to_rest_and_names_it()
+    {
+        var s = Career() with { Energy = Fixed.FromInt(80), CashPln = 500, Drama = Fixed.Zero };
+        var legal = TestWorld.Engine.LegalPlans(s, Content).Value
+            .Select(l => l.Plan.Action == MainAction.NoAction ? (l.Plan, "disabled-for-test") : l)
+            .ToList();
+
+        var decision = BuiltInPolicies.Balanced.ChoosePlan(s, Content, legal);
+
+        Assert.Equal(MainAction.Rest, decision.Plan.Action);
+        Assert.Equal(("fallback-rest", "noAction", "bonus"), (decision.Reason.Code, decision.Reason.Args["preferred"], decision.Reason.Args["categoryRule"]));
+    }
 }

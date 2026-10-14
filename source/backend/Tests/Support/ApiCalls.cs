@@ -21,7 +21,7 @@ public static class ApiCalls
     public static Task<HttpResponseMessage> PostActionAsync(this HttpClient client, Guid id, string? secret, object body, CancellationToken ct)
         => client.SendAsync(Request(HttpMethod.Post, $"/v1/careers/{id}/actions", secret, body), ct);
 
-    public static Task<HttpResponseMessage> PostBatchAsync(this HttpClient client, Guid id, string secret, object body, CancellationToken ct)
+    public static Task<HttpResponseMessage> PostBatchAsync(this HttpClient client, Guid id, string? secret, object body, CancellationToken ct)
         => client.SendAsync(Request(HttpMethod.Post, $"/v1/careers/{id}/batches", secret, body), ct);
 
     public static async Task<JsonElement> ActAsync(this HttpClient client, Guid id, string secret, object body, CancellationToken ct)

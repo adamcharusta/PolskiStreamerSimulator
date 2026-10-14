@@ -89,6 +89,34 @@ public sealed class RunBatchTests
         Assert.Equal(2, outcome.WeeksCommitted);
         Assert.Equal(BatchStopReason.CareerEnded, outcome.StopReason);
         Assert.Equal(NextStepKind.Ended, outcome.Career.Next.Kind);
+        Assert.Equal(ErrorCodes.CareerEnded, (await RunAsync(kit, career, outcome.Career.Version)).Error.Code);
+    }
+
+    [Fact]
+    public async Task A_wrong_secret_finds_no_career()
+    {
+        var kit = new AppTestKit();
+        var career = await kit.NewCareerAsync();
+
+        var result = await RunAsync(kit, career with { Secret = "not-the-secret" }, career.Career.Version);
+
+        Assert.Equal(ErrorCodes.CareerNotFound, result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Repeating_a_completed_batch_after_the_career_moved_on_still_reports_it_completed()
+    {
+        var kit = new AppTestKit();
+        var career = await kit.NewCareerAsync();
+        var command = Guid.NewGuid();
+        var first = (await RunAsync(kit, career, career.Career.Version, command)).Value;
+        await kit.SubmitHandler().Handle(new SubmitAction(career.CareerId, career.Secret, Guid.NewGuid(), new ActionInput(first.Career.Version, ActionType.StartWeek, MainAction.Rest, Category.Fps, null, null, null)), Ct);
+
+        var repeat = (await RunAsync(kit, career, career.Career.Version, command)).Value;
+
+        Assert.Equal((13, BatchStopReason.Completed), (repeat.WeeksCommitted, repeat.StopReason));
+        Assert.Equal(ContractJson.Serialize(first.Weeks), ContractJson.Serialize(repeat.Weeks));
+        Assert.Equal(14, kit.Store.LogCount(career.CareerId));
     }
 
     [Fact]
@@ -172,6 +200,22 @@ public sealed class RunBatchTests
 
         Assert.Equal((0, BatchStopReason.Interrupted), (outcome.WeeksCommitted, outcome.StopReason));
         Assert.Equal(NextStepKind.ResolveEvent, outcome.Career.Next.Kind);
+    }
+
+    [Fact]
+    public async Task A_repeat_racing_the_same_batch_answers_like_it()
+    {
+        var kit = new AppTestKit();
+        var career = await kit.NewCareerAsync();
+        var command = Guid.NewGuid();
+        AppResult<BatchOutcome>? twin = null;
+        var racing = new RacingCareerStore(kit.Store, async () => twin = await RunAsync(kit, career, career.Career.Version, command));
+
+        var outcome = (await RunAsync(kit, career, career.Career.Version, command, store: racing)).Value;
+
+        Assert.Equal((13, BatchStopReason.Completed), (outcome.WeeksCommitted, outcome.StopReason));
+        Assert.Equal(ContractJson.Serialize(twin!.Value), ContractJson.Serialize(outcome));
+        Assert.Equal(13, kit.Store.LogCount(career.CareerId));
     }
 
     [Fact]

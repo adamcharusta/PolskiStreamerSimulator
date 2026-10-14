@@ -5,8 +5,9 @@ using PolskiStreamerSimulator.Tests.Support;
 namespace PolskiStreamerSimulator.Tests.Application.Careers;
 
 /// <summary>
-/// Stored responses and reports are read back into today's contract records on every read and repeat, so rows written
-/// by an earlier version must keep loading unchanged (TD-91).
+/// Stored responses and reports are read back into today's contract records on every read and repeat, and stored
+/// requests are compared byte for byte with today's serialization, so rows written by an earlier version must keep
+/// loading and serializing unchanged (TD-91).
 /// </summary>
 public sealed class StoredContractTests
 {
@@ -14,6 +15,8 @@ public sealed class StoredContractTests
     [InlineData("week-report.json", typeof(WeekReportView))]
     [InlineData("action-outcome.json", typeof(ActionOutcome))]
     [InlineData("auto-week-record.json", typeof(AutoWeekRecord))]
+    [InlineData("action-input.json", typeof(ActionInput))]
+    [InlineData("batch-input.json", typeof(BatchInput))]
     public void A_stored_v1_row_still_reads_back_unchanged(string file, Type type)
     {
         var json = File.ReadAllText(TestPaths.Golden(Path.Combine("contract-v1", file))).TrimEnd();

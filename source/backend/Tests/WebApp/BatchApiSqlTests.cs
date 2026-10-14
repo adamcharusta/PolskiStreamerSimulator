@@ -31,4 +31,56 @@ public sealed class BatchApiSqlTests(SqlServerFixture sql)
         Assert.Equal(log[^1].StateVersionAfter, stored.StateVersion);
         Assert.Equal(log[^1].StateHashAfter, stored.StateHash);
     }
+
+    [Fact]
+    public async Task Parallel_repeats_of_one_batch_store_thirteen_weeks_and_answer_alike()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var connection = sql.NewDatabase();
+        await using var api = new SqlApiFactory(connection);
+        var client = api.CreateClient();
+        var (id, secret, career) = await client.CreateCareerAsync(ct);
+        var body = new { commandId = Guid.NewGuid(), expectedVersion = career.GetProperty("version").GetInt64(), weeks = 13 };
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => client.PostBatchAsync(id, secret, body, ct)));
+        var bodies = await Task.WhenAll(responses.Select(r => r.Content.ReadAsStringAsync(ct)));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        Assert.Single(bodies.Distinct(StringComparer.Ordinal));
+        Assert.Contains("\"stopReason\":\"completed\"", bodies[0], StringComparison.Ordinal);
+        await using var db = new GameDbContext(SqlServerFixture.Options(connection));
+        Assert.Equal(13, await db.CareerActions.CountAsync(a => a.CareerId == id, ct));
+    }
+
+    [Fact]
+    public async Task A_manual_week_and_a_batch_survive_a_restart_and_repeat_alike()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var connection = sql.NewDatabase();
+        Guid id;
+        string secret;
+        object body;
+        string batch;
+        string before;
+        await using (var first = new SqlApiFactory(connection))
+        {
+            var client = first.CreateClient();
+            var created = await client.CreateCareerAsync(ct);
+            (id, secret) = (created.Id, created.Secret);
+            var week = await client.PlayWeekAsync(id, secret, created.Career, ct);
+            body = new { commandId = Guid.NewGuid(), expectedVersion = week.GetProperty("career").GetProperty("version").GetInt64(), weeks = 13 };
+            batch = await (await client.PostBatchAsync(id, secret, body, ct)).Content.ReadAsStringAsync(ct);
+            before = await (await client.GetCareerAsync(id, secret, ct)).Content.ReadAsStringAsync(ct);
+        }
+
+        await using var second = new SqlApiFactory(connection);
+        var again = second.CreateClient();
+        var after = await (await again.GetCareerAsync(id, secret, ct)).Content.ReadAsStringAsync(ct);
+        var repeat = await (await again.PostBatchAsync(id, secret, body, ct)).Content.ReadAsStringAsync(ct);
+
+        Assert.Contains("\"stopReason\":\"completed\"", batch, StringComparison.Ordinal);
+        Assert.Contains("\"lastSettledWeek\":14", before, StringComparison.Ordinal);
+        Assert.Equal(before, after);
+        Assert.Equal(batch, repeat);
+    }
 }
