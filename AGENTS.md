@@ -35,3 +35,16 @@ Application code belongs under `source/`, infrastructure under `k8s/`, and GitHu
 - Record the date, source (`Owner decision` or `Agent proposal/default`), previous plan, new decision, reason, and impact or open questions. Put product decisions in the GDD decision log and technical/workflow/operations decisions in the technical decision register. Clearly distinguish confirmed owner choices from agent proposals that still need validation.
 - When a new decision replaces an old one, mark the old guidance as superseded or update it so two conflicting instructions do not appear current. If a related GitHub issue or milestone exists, bring its description into line with the documentation.
 - Do not silently change ranked rules, scoring, random odds, or published content versions; follow the versioning and season rules in the specifications.
+
+## Code quality
+
+- Keep SonarQube Cloud at **zero open issues** on `develop` and on every PR, not only in the new-code quality gate. Before asking to merge a PR, check its count with `https://sonarcloud.io/api/issues/search?componentKeys=adamcharusta_PolskiStreamerSimulator&pullRequest=<number>&resolved=false`; after a merge into `develop`, check `&branch=develop`. Fix an issue in the PR that introduces it. Mark an issue as not applicable in SonarQube Cloud only with the owner's yes and a written reason.
+
+## Issues, milestones and releases
+
+The full flow is in [Development and Delivery § Issues, milestones and releases](docs/development-and-delivery.md#issues-milestones-and-releases) (TD-96).
+
+- Open a GitHub issue with a description (scope, acceptance criteria, source) for every topic that was not planned before, before starting work on it. Add work that is not a bug to the milestone it belongs to, or create a new milestone when none fits.
+- A bug is a plain issue with the `bug` label and no milestone. Fix it with a regression test and passing checks. If the bug exists on `main`, branch `hotfix/*` from `main`, merge it into `main` by PR, then reconcile `main` into `develop` by PR. If it exists only on `develop`, branch `bugfix/*` from `develop` and merge it into `develop` by PR; it reaches `main` with the next release.
+- Close an issue as done only after its change is merged into `main`, not when it reaches `develop`.
+- When every issue of a milestone is merged into `develop`, cut `release/m<N>` from `develop` and open a PR into `main` that lists `Closes #<n>` for every issue it delivers, including bugs fixed on `develop` since the last release. After the merge, close any issue still open as done, close the milestone and reconcile `main` into `develop` by PR.

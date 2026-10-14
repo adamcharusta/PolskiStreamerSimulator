@@ -74,4 +74,4 @@ dotnet format PolskiStreamerSimulator.slnx --verify-no-changes
 dotnet test PolskiStreamerSimulator.slnx -c Release --coverlet --coverlet-threshold 80 --coverlet-threshold-type line --coverlet-threshold-stat total
 ```
 
-Changes reach `develop` and `main` only through pull requests; see [development and delivery](docs/development-and-delivery.md).
+Changes reach `develop` and `main` only through pull requests; see [development and delivery](docs/development-and-delivery.md). Every change has a GitHub issue, which closes when the change reaches `main` with its milestone release, and SonarQube Cloud stays at zero open issues ([issues, milestones and releases](docs/development-and-delivery.md#issues-milestones-and-releases)).
