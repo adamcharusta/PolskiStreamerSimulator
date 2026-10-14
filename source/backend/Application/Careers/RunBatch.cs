@@ -220,12 +220,14 @@ public sealed class RunBatchHandler(
             records.Count,
             records.Sum(r => r.Week.Report.FollowersNet),
             records.Sum(r => r.Week.Report.CashDelta),
-            records.Sum(r => r.Week.Report.Income.Sum(l => l.AmountPln ?? 0)),
-            records.Sum(r => r.Week.Report.Costs.Sum(l => l.AmountPln ?? 0)),
+            records.Sum(r => Total(r.Week.Report.Income)),
+            records.Sum(r => Total(r.Week.Report.Costs)),
             records.Count > 0 ? records[0].Before : now,
             records.Count > 0 ? records[^1].After : now);
         return new BatchOutcome(records.Count, stop, [.. records.Select(r => r.Week)], summary, views.Build(current.Id, current.Nickname, current.State, c, lastReport));
     }
+
+    private static long Total(IReadOnlyList<ReportLineView> lines) => lines.Sum(l => l.AmountPln ?? 0);
 
     private static ReasonView Reason(PolicyReason reason) => new(reason.Code, reason.Args);
 
