@@ -30,11 +30,7 @@ public static class CareerRunner
             var week = $"week {s.Week.Value}";
             if (policy.ShouldRetire(s))
             {
-                if (Accept(engine.Retire(s, c, s.StateVersion), $"{week} retire", violations, ref s))
-                {
-                    Check(s, $"{week} retire", violations);
-                }
-
+                Retire(engine, c, week, violations, ref s);
                 break;
             }
 
@@ -70,6 +66,14 @@ public static class CareerRunner
         }
 
         return new CareerRunResult(s, weeks, violations, StateHash.Of(s));
+    }
+
+    private static void Retire(WeekEngine engine, ContentSnapshot c, string week, List<string> violations, ref CareerState s)
+    {
+        if (Accept(engine.Retire(s, c, s.StateVersion), $"{week} retire", violations, ref s))
+        {
+            Check(s, $"{week} retire", violations);
+        }
     }
 
     private static bool ResolveEvents(WeekEngine engine, ContentSnapshot c, IChoicePolicy policy, string week, List<string> violations, ref CareerState s)

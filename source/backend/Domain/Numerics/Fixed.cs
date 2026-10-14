@@ -39,7 +39,15 @@ public readonly record struct Fixed(long Raw) : IComparable<Fixed>
 
     public int CompareTo(Fixed other) => Raw.CompareTo(other.Raw);
 
-    public Fixed Clamp(Fixed min, Fixed max) => this < min ? min : this > max ? max : this;
+    public Fixed Clamp(Fixed min, Fixed max)
+    {
+        if (this < min)
+        {
+            return min;
+        }
+
+        return this > max ? max : this;
+    }
 
     public long RoundToLong() => DivideRounded(Raw, Scale);
 

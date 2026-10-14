@@ -23,7 +23,7 @@ public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
             return plan;
         }
 
-        (var target, rng) = rng.NextInt(0, CategoryValues<int>.Count - 1);
+        (var target, rng) = rng.NextInt(0, CategoryValues.Count - 1);
         return plan with { TrainTarget = (Category)target };
     }
 

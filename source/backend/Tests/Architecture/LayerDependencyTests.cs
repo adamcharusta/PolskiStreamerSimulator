@@ -5,7 +5,7 @@ namespace PolskiStreamerSimulator.Tests.Architecture;
 
 public class LayerDependencyTests
 {
-    private static readonly Assembly DomainAssembly = typeof(PolskiStreamerSimulator.Domain.AssemblyMarker).Assembly;
+    private static readonly Assembly DomainAssembly = typeof(PolskiStreamerSimulator.Domain.Careers.CareerState).Assembly;
 
     private static readonly HashSet<string> ForbiddenTypes =
     [

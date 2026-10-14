@@ -39,7 +39,7 @@ public static class FixedMath
 
         var log2Raw = ((Int128)k << FractionBits) + (Int128)fraction;
 
-        // log10(x) = log2(raw) * log10(2) - log10(10^6)
+        // The base-10 logarithm of x is log2 of the raw value times log10 of 2, less 6 for the 10^6 scale.
         var log10Raw = Fixed.DivideRounded(log2Raw * Log10Of2, (Int128)(Log10Of2Scale / Fixed.Scale) << FractionBits);
         return new Fixed(log10Raw - (6 * Fixed.Scale));
     }

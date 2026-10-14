@@ -2,16 +2,20 @@ using System.Collections.Immutable;
 
 namespace PolskiStreamerSimulator.Domain.Careers;
 
+/// <summary>The number of categories, shared by every <see cref="CategoryValues{T}"/>.</summary>
+public static class CategoryValues
+{
+    public static readonly int Count = Enum.GetValues<Category>().Length;
+}
+
 /// <summary>One value per <see cref="Category"/>, indexed by the enum; equality compares the sequence.</summary>
 public sealed record CategoryValues<T>
 {
-    public static readonly int Count = Enum.GetValues<Category>().Length;
-
     public CategoryValues(ImmutableArray<T> values)
     {
-        if (values.IsDefault || values.Length != Count)
+        if (values.IsDefault || values.Length != CategoryValues.Count)
         {
-            throw new ArgumentException($"Expected {Count} category values.", nameof(values));
+            throw new ArgumentException($"Expected {CategoryValues.Count} category values.", nameof(values));
         }
 
         Values = values;
@@ -21,7 +25,7 @@ public sealed record CategoryValues<T>
 
     public T this[Category category] => Values[(int)category];
 
-    public static CategoryValues<T> Uniform(T value) => new([.. Enumerable.Repeat(value, Count)]);
+    public static CategoryValues<T> Uniform(T value) => new([.. Enumerable.Repeat(value, CategoryValues.Count)]);
 
     public CategoryValues<T> With(Category category, T value) => new(Values.SetItem((int)category, value));
 
