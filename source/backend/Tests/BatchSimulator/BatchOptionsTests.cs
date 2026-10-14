@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.BatchSimulator;
+using PolskiStreamerSimulator.Infrastructure.Content;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.BatchSimulator;
@@ -12,7 +13,8 @@ public class BatchOptionsTests
         Assert.Equal(1000, o.Careers);
         Assert.Equal(42UL, o.Seed);
         Assert.Equal(["Balanced", "Grinder", "RestHeavy", "Specialist", "Rotator"], o.Policies);
-        Assert.Equal(Path.GetFullPath(TestPaths.ContentM1), Path.GetFullPath(o.ContentDirectory));
+        // The nearest content/m1 may be the repository's or the identical copy WebApp places next to the test binaries.
+        Assert.Equal(new JsonContentSource(TestPaths.ContentM1).Load().Digest, new JsonContentSource(o.ContentDirectory).Load().Digest);
         Assert.Null(o.OutputDirectory);
         Assert.Null(o.MaxDegreeOfParallelism);
     }
