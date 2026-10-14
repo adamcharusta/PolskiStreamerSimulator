@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Infrastructure.Content;
 using PolskiStreamerSimulator.Infrastructure.Persistence;
+using PolskiStreamerSimulator.Infrastructure.Security;
 
 namespace PolskiStreamerSimulator.Infrastructure;
 
@@ -21,6 +23,7 @@ public static class InfrastructureServices
         services.AddSingleton<ICareerStore, EfCareerStore>();
         services.AddSingleton<IContentStore, EfContentStore>();
         services.AddSingleton<ICurrentContent, DirectoryCurrentContent>();
+        services.AddSingleton<ISecretHasher, Sha256SecretHasher>();
         services.AddHostedService<DatabaseInitializer>();
         return services;
     }

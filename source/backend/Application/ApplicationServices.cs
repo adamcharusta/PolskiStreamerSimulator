@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Domain.Rulesets;
 using PolskiStreamerSimulator.Domain.Simulation;
 
@@ -11,6 +12,8 @@ public static class ApplicationServices
     {
         services.AddSingleton(new WeekEngine(new RulesetRegistry([new M1Ruleset()])));
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<CareerViewBuilder>();
+        services.AddSingleton<CareerAccess>();
         return services;
     }
 }
