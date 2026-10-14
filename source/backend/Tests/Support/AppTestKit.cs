@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Application.Careers;
+using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
@@ -31,6 +32,12 @@ public sealed class AppTestKit(WeekEngine? engine = null)
     public CreateCareerHandler CreateHandler() => new(Store, Current, Secrets, Views, Time);
 
     public GetCareerHandler GetHandler() => new(Access, Store, Contents, Views);
+
+    public SubmitActionHandler SubmitHandler(ICareerStore? store = null)
+    {
+        var s = store ?? Store;
+        return new SubmitActionHandler(new CareerAccess(s, Secrets), s, Contents, Engine, Views, Time);
+    }
 
     public async Task<CreatedCareer> NewCareerAsync(string nickname = "Streamer", Background background = Background.DormRoomNewcomer)
         => (await CreateHandler().Handle(
