@@ -95,4 +95,33 @@ public sealed class JsonContentSourceTests : IDisposable
         var error = Assert.Throws<InvalidDataException>(() => new JsonContentSource(dir).Load());
         Assert.Contains("weight-nonpositive:chat-raid", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Parsing_the_file_bytes_gives_the_loaded_snapshot()
+    {
+        var parsed = JsonContentSource.Parse(TestContentFiles.Balance, TestContentFiles.Events, "bytes");
+        var loaded = new JsonContentSource(TestPaths.ContentM1).Load();
+
+        Assert.Equal(loaded.Digest, parsed.Digest);
+        Assert.Equal(loaded.Events.Select(e => e.Id), parsed.Events.Select(e => e.Id));
+    }
+
+    [Fact]
+    public void Any_byte_change_changes_the_digest()
+    {
+        var padded = TestContentFiles.Balance.Concat("\n"u8.ToArray()).ToArray();
+
+        Assert.NotEqual(
+            JsonContentSource.Parse(TestContentFiles.Balance, TestContentFiles.Events, "a").Digest,
+            JsonContentSource.Parse(padded, TestContentFiles.Events, "b").Digest);
+    }
+
+    [Fact]
+    public void Invalid_bytes_name_their_source()
+    {
+        var error = Assert.Throws<InvalidDataException>(
+            () => JsonContentSource.Parse(TestContentFiles.Balance, """{"events":[]}"""u8.ToArray(), "stored snapshot x"));
+
+        Assert.Contains("'stored snapshot x'", error.Message, StringComparison.Ordinal);
+    }
 }
