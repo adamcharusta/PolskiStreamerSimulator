@@ -16,3 +16,7 @@ dotnet_diagnostic.IDE0005.severity = warning
 [*.{csproj,props,targets}]
 indent_size = 2
 
+# EF Core writes migrations without an auto-generated header; analyzers and dotnet format must skip them.
+[**/Persistence/Migrations/*.cs]
+generated_code = true
+
