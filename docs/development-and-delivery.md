@@ -66,6 +66,8 @@ The owner may publish event and balance data through `/admin` without a code dep
 
 ## Local Docker Compose
 
+**Current state (M2-B).** Until C adds `compose.yaml`, run the API with `ConnectionStrings__Game` pointing at a SQL Server instance (`dotnet run --project WebApp` from `source/backend`). In Development the API applies EF Core migrations at startup; every environment stores the current content snapshot at startup. No connection string or password is committed.
+
 Keep a root `compose.yaml` as the **development-only** entry point and document its command in `docs/`; put any reusable local helper under root `scripts/` only if needed. One documented command should start a local SQL Server, WebApp API and React development server with health checks and persistent development volumes. Use a root `.env.example` with placeholders; local `.env` and database files are ignored. Development credentials and data must never point at production, release candidate or staging. Seed only fictional test data and a clearly local-only admin account when needed.
 
 If the API requires Vault during local runs, add a disposable local Vault development profile or a documented local configuration adapter. Do not require access to the production Vault. Compose does not replace k3s on the VPS; the same app contracts and EF migrations must work in both environments, while ingress, storage and autoscaling differ. Add a local smoke check for career creation, one decision, save reload and admin authentication. [Docker Compose profiles](https://docs.docker.com/compose/how-tos/profiles/).
