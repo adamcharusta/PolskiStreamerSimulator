@@ -23,7 +23,7 @@ source/
   frontend/                React client (later milestone)
 k8s/                       Ansible, Helm and environment values (later milestone)
 .github/
-  workflows/               CI (backend, SonarQube Cloud, PR policy)
+  workflows/               CI (backend, backend integration, SonarQube Cloud, PR policy)
   rulesets/                main and develop branch rules
   scripts/                 CI helper scripts
 ```

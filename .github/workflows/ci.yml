@@ -50,6 +50,7 @@ jobs:
       - name: Test with coverage gate
         run: >-
           dotnet test PolskiStreamerSimulator.slnx -c Release --no-build
+          --filter-not-trait "Category=Integration"
           --results-directory "$RUNNER_TEMP/test-results"
           --coverlet --coverlet-threshold 80 --coverlet-threshold-type line --coverlet-threshold-stat total
       # coverlet.MTP only sets a non-zero exit code when the gate fails, so state the measured value here.
@@ -73,6 +74,31 @@ jobs:
           name: backend-coverage
           path: ${{ runner.temp }}/test-results/coverage.cobertura.*.xml
           if-no-files-found: warn
+
+  backend-integration:
+    name: backend-integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: source/backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: source/backend/global.json
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('source/backend/Directory.Packages.props', 'source/backend/**/*.csproj', 'source/backend/.config/dotnet-tools.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - name: Restore
+        run: dotnet restore PolskiStreamerSimulator.slnx
+      - name: Build
+        run: dotnet build PolskiStreamerSimulator.slnx -c Release --no-restore
+      # SQL Server runs in Testcontainers; ubuntu-latest has Docker.
+      - name: Integration tests
+        run: dotnet test PolskiStreamerSimulator.slnx -c Release --no-build --filter-trait "Category=Integration"
 
   sonar:
     name: sonar
@@ -116,8 +142,8 @@ jobs:
           /d:sonar.host.url="https://sonarcloud.io"
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.cs.opencover.reportsPaths="$RUNNER_TEMP/sonar-results/coverage.opencover.*.xml"
-          /d:sonar.coverage.exclusions="**/Tools/BatchSimulator/Program.cs,**/*.g.cs"
-          /d:sonar.exclusions="**/Tests/Golden/**"
+          /d:sonar.coverage.exclusions="**/Tools/BatchSimulator/Program.cs,**/*.g.cs,**/Persistence/Migrations/**"
+          /d:sonar.exclusions="**/Tests/Golden/**,**/Persistence/Migrations/**"
           /d:sonar.qualitygate.wait=true
       - name: Build
         run: dotnet build PolskiStreamerSimulator.slnx -c Release

@@ -19,9 +19,17 @@ public sealed class JsonContentSource(string directory) : IContentSource
     public const string EventsFile = "events.json";
 
     public ContentSnapshot Load()
+        => Parse(
+            File.ReadAllBytes(Path.Combine(directory, BalanceFile)),
+            File.ReadAllBytes(Path.Combine(directory, EventsFile)),
+            directory);
+
+    /// <summary>
+    /// Parses and validates content from the bytes of <c>balance.json</c> and <c>events.json</c>. The digest is the
+    /// SHA-256 of exactly these bytes, so a stored copy reproduces it; <paramref name="source"/> names the origin in errors.
+    /// </summary>
+    public static ContentSnapshot Parse(byte[] balanceBytes, byte[] eventsBytes, string source)
     {
-        var balanceBytes = File.ReadAllBytes(Path.Combine(directory, BalanceFile));
-        var eventsBytes = File.ReadAllBytes(Path.Combine(directory, EventsFile));
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         hash.AppendData(balanceBytes);
         hash.AppendData(eventsBytes);
@@ -38,7 +46,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var violations = ContentValidator.Validate(snapshot);
         if (violations.Count > 0)
         {
-            throw new InvalidDataException($"Content in '{directory}' is invalid: {string.Join(", ", violations)}");
+            throw new InvalidDataException($"Content in '{source}' is invalid: {string.Join(", ", violations)}");
         }
 
         return snapshot;
