@@ -49,14 +49,21 @@ public sealed class EfCareerStoreTests(SqlServerFixture sql) : CareerStoreContra
     }
 
     [Fact]
-    public async Task A_career_survives_a_new_store_on_the_same_database()
+    public async Task A_confirmed_step_survives_a_new_store_on_the_same_database()
     {
         var factory = await ContentReadyAsync();
         var career = SampleCareer();
-        await new EfCareerStore(factory).CreateAsync(career, Ct);
+        var first = new EfCareerStore(factory);
+        await first.CreateAsync(career, Ct);
+        var settled = career.State with { StateVersion = career.State.StateVersion + 1 };
+        var command = Guid.NewGuid();
+        await first.AppendAsync(
+            career.Id, career.State.StateVersion, settled, new NewAction(command, 0, ActionKind.SettleWeek, "{}", "{}", """{"week":1}"""), DateTimeOffset.UnixEpoch, Ct);
 
-        var reopened = await new EfCareerStore(new TestDbContextFactory(factory.Options)).FindAsync(career.Id, Ct);
+        var reopened = new EfCareerStore(new TestDbContextFactory(factory.Options));
 
-        Assert.Equal(StateHash.Of(career.State), StateHash.Of(reopened!.State));
+        Assert.Equal(StateHash.Of(settled), StateHash.Of((await reopened.FindAsync(career.Id, Ct))!.State));
+        Assert.Equal(settled.StateVersion, Assert.Single(await reopened.FindCommandAsync(career.Id, command, Ct)).StateVersionAfter);
+        Assert.Equal("""{"week":1}""", (await reopened.FindLatestReportAsync(career.Id, Ct))!.ReportJson);
     }
 }

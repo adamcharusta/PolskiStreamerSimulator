@@ -117,6 +117,19 @@ public sealed class JsonContentSourceTests : IDisposable
     }
 
     [Fact]
+    public void The_stored_m1_1_snapshot_still_parses_to_its_digest()
+    {
+        // Careers pin the digest of the content they started with, and stored snapshots are re-parsed on load,
+        // so the reader must keep accepting this frozen copy of the first published content (TD-91).
+        var balance = File.ReadAllBytes(TestPaths.Golden(Path.Combine("content-m1.1", JsonContentSource.BalanceFile)));
+        var events = File.ReadAllBytes(TestPaths.Golden(Path.Combine("content-m1.1", JsonContentSource.EventsFile)));
+
+        var snapshot = JsonContentSource.Parse(balance, events, "frozen content m1.1");
+
+        Assert.Equal("37e4f6d0a7a4c4a175b0383613b8fe5dfc5393bca08c94dca76c126b054c4bb2", snapshot.Digest);
+    }
+
+    [Fact]
     public void Invalid_bytes_name_their_source()
     {
         var error = Assert.Throws<InvalidDataException>(

@@ -22,7 +22,7 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 | `source/frontend/.prettierignore` | Keep generated Orval client and build/test output out of formatting checks. |
 | `package.json` and `package-lock.json` (root) | Repository tooling only: the exact Lefthook version installed by `npm install` in the root, with Lefthook's install script approved under npm `allowScripts` (TD-88). The React app keeps its own `package.json` in `source/frontend`. |
 | `lefthook.yml` | `pre-commit` hook. Runs `dotnet format` on staged backend C# files and rejects the commit if anything changes, then fast backend tests without `Category=Integration`. Frontend lint is added with the React app (TD-88). |
-| `.github/workflows/ci.yml` | Required CI jobs `backend`, `sonar` and `pr-policy`; third-party actions pinned to commit SHAs (TD-86). |
+| `.github/workflows/ci.yml` | Required CI jobs `backend`, `backend-integration` (TD-93), `sonar` and `pr-policy`; third-party actions pinned to commit SHAs (TD-86). |
 | `.github/scripts/` | Bash helpers used by CI, each with a self-test (`check-pr-source.sh`, `check-pr-source.test.sh`). |
 | `.github/rulesets/` | Versioned definitions of the `main` and `develop` repository rulesets (TD-87). |
 | `source/backend/.config/dotnet-tools.json` | Local .NET tool manifest pinning SonarScanner for .NET (TD-86) and `dotnet-ef` 10.0.13 for migrations (TD-93). |
