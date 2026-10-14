@@ -24,3 +24,11 @@ Read and follow [AGENTS.md](AGENTS.md); it is the canonical agent guide for this
 | `docs/polski-pilkarz-simulator-code-analysis.md` | Historical reference-game code analysis, not an implementation plan. |
 
 Write documentation and decision records in **English** regardless of the conversation language, unless the owner explicitly requests another language. Record every owner or agent decision that changes the documented plan in the relevant documentation during the same task, including its source, reason, impact, and any superseded guidance. Update affected specifications and acceptance criteria; keep related GitHub tasks aligned. See [AGENTS.md](AGENTS.md) for the full procedure. Player-facing game copy remains Polish unless the product specification changes.
+
+Working rules from [AGENTS.md](AGENTS.md) (TD-96):
+
+- Keep SonarQube Cloud at **zero open issues** on `develop` and on every PR; check the count before asking to merge and after each merge into `develop`.
+- Open a GitHub issue with a description for every topic that was not planned before. Add work that is not a bug to an existing or new milestone; a bug is a plain `bug` issue without a milestone.
+- Fix a bug that exists on `main` on `hotfix/*` (PR into `main`, then `main` into `develop`); fix a bug that exists only on `develop` on `bugfix/*` (PR into `develop`), and it reaches `main` with the next release.
+- Close issues as done only after their change is merged into `main`.
+- When a milestone is complete, cut `release/m<N>` from `develop` and merge it into `main` by PR with `Closes #<n>` for every delivered issue; then close the milestone and reconcile `main` into `develop`.
