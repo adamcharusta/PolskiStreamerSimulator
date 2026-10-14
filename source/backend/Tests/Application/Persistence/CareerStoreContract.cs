@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Serialization;
@@ -15,8 +16,9 @@ public abstract class CareerStoreContract
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
+    // A secret hash is always a 32-byte SHA-256; the SQL column is binary(32).
     protected static NewCareer SampleCareer(ulong seed = 1)
-        => new(Guid.CreateVersion7(Created), "Streamer", TestCareers.For(Background.DormRoomNewcomer, Difficulty.Normal, seed), [1, 2, 3], Created);
+        => new(Guid.CreateVersion7(Created), "Streamer", TestCareers.For(Background.DormRoomNewcomer, Difficulty.Normal, seed), SHA256.HashData("secret"u8), Created);
 
     private static CareerState Advanced(CareerState s) => s with { StateVersion = s.StateVersion + 1 };
 
