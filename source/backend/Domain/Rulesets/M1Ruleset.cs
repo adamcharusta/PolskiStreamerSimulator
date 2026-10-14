@@ -150,9 +150,16 @@ public sealed class M1Ruleset : IRuleset
         };
 
         // Insolvency is checked at the end of settlement, after all income and costs, before completion.
-        EndingReason? ending = state.CashPln <= b.InsolvencyThresholdPln ? EndingReason.Insolvency
-            : s.Week.IsLast ? EndingReason.Completed
-            : null;
+        EndingReason? ending = null;
+        if (state.CashPln <= b.InsolvencyThresholdPln)
+        {
+            ending = EndingReason.Insolvency;
+        }
+        else if (s.Week.IsLast)
+        {
+            ending = EndingReason.Completed;
+        }
+
         state = state with
         {
             Achievements = Achievements.Evaluate(state, completed: ending == EndingReason.Completed),

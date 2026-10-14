@@ -5,17 +5,18 @@ namespace PolskiStreamerSimulator.Domain.Rulesets;
 /// <summary>Keeps every supported ruleset by ID; never falls back to another version.</summary>
 public sealed class RulesetRegistry
 {
-    private readonly Dictionary<string, IRuleset> rulesets = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IRuleset> rulesets;
 
     public RulesetRegistry(IEnumerable<IRuleset> rulesets)
     {
-        foreach (var ruleset in rulesets)
+        var byId = rulesets.GroupBy(r => r.Id, StringComparer.Ordinal).ToList();
+        var duplicate = byId.Find(g => g.Skip(1).Any());
+        if (duplicate is not null)
         {
-            if (!this.rulesets.TryAdd(ruleset.Id, ruleset))
-            {
-                throw new ArgumentException($"Duplicate ruleset ID '{ruleset.Id}'.", nameof(rulesets));
-            }
+            throw new ArgumentException($"Duplicate ruleset ID '{duplicate.Key}'.", nameof(rulesets));
         }
+
+        this.rulesets = byId.ToDictionary(g => g.Key, g => g.Single(), StringComparer.Ordinal);
     }
 
     public Result<IRuleset> Resolve(string rulesetId)

@@ -78,8 +78,8 @@ public class FullCareerTests
     public void Runner_records_rejected_commands()
     {
         var r = CareerRunner.Run(TestWorld.Engine, TestWorld.Content with { Digest = "other" }, TestCareers.Dorm(3), BuiltInPolicies.Balanced);
-        Assert.Single(r.InvariantViolations);
-        Assert.StartsWith("week 1 legal-plans: ContentMismatch", r.InvariantViolations[0], StringComparison.Ordinal);
+        var violation = Assert.Single(r.InvariantViolations);
+        Assert.StartsWith("week 1 legal-plans: ContentMismatch", violation, StringComparison.Ordinal);
     }
 
     [Fact]

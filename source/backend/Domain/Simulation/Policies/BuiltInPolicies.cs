@@ -104,7 +104,7 @@ public static class BuiltInPolicies
         {
             if (categoryMode == CategoryMode.Rotate)
             {
-                return (Category)(s.Week.Value % CategoryValues<int>.Count);
+                return (Category)(s.Week.Value % CategoryValues.Count);
             }
 
             var startingSkill = c.Profiles[s.Background].Skill;

@@ -18,6 +18,34 @@ public static class CareerInvariants
             violations.Add("week-range");
         }
 
+        CheckStats(violations, s);
+        if (s.Followers < 0)
+        {
+            violations.Add("followers-negative");
+        }
+
+        if (s.LastLiveViewers < 0)
+        {
+            violations.Add("viewers-negative");
+        }
+
+        violations.AddRange(Enum.GetValues<EquipmentSlot>()
+            .Where(slot => !s.Equipment.TryGetValue(slot, out var tier) || tier is < 0 or > MaxEquipmentTier)
+            .Select(slot => $"equipment-tier:{slot}"));
+        if (s.Status == CareerStatus.Ended)
+        {
+            CheckEnded(violations, s);
+        }
+        else
+        {
+            CheckActive(violations, s);
+        }
+
+        return violations;
+    }
+
+    private static void CheckStats(List<string> violations, CareerState s)
+    {
         CheckStat(violations, "Drama", s.Drama);
         CheckStat(violations, "Credibility", s.Credibility);
         CheckStat(violations, "Energy", s.Energy);
@@ -31,56 +59,37 @@ public static class CareerInvariants
         {
             CheckStat(violations, $"Boredom.{category}", s.Boredom[category]);
         }
+    }
 
-        if (s.Followers < 0)
+    private static void CheckEnded(List<string> violations, CareerState s)
+    {
+        if (s.Ending is null)
         {
-            violations.Add("followers-negative");
+            violations.Add("ended-without-reason");
         }
 
-        if (s.LastLiveViewers < 0)
+        if (s.FinalScore is null)
         {
-            violations.Add("viewers-negative");
+            violations.Add("ended-without-score");
         }
 
-        foreach (var slot in Enum.GetValues<EquipmentSlot>())
+        if (s.Pending is not null)
         {
-            if (!s.Equipment.TryGetValue(slot, out var tier) || tier is < 0 or > MaxEquipmentTier)
-            {
-                violations.Add($"equipment-tier:{slot}");
-            }
+            violations.Add("pending-on-ended");
+        }
+    }
+
+    private static void CheckActive(List<string> violations, CareerState s)
+    {
+        if (s.Ending is not null || s.FinalScore is not null)
+        {
+            violations.Add("active-with-ending");
         }
 
-        if (s.Status == CareerStatus.Ended)
+        if (s.CashPln <= InsolvencyThresholdPln)
         {
-            if (s.Ending is null)
-            {
-                violations.Add("ended-without-reason");
-            }
-
-            if (s.FinalScore is null)
-            {
-                violations.Add("ended-without-score");
-            }
-
-            if (s.Pending is not null)
-            {
-                violations.Add("pending-on-ended");
-            }
+            violations.Add("active-insolvent");
         }
-        else
-        {
-            if (s.Ending is not null || s.FinalScore is not null)
-            {
-                violations.Add("active-with-ending");
-            }
-
-            if (s.CashPln <= InsolvencyThresholdPln)
-            {
-                violations.Add("active-insolvent");
-            }
-        }
-
-        return violations;
     }
 
     private static void CheckStat(List<string> violations, string name, Fixed value)

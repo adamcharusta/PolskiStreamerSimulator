@@ -102,7 +102,7 @@ public static class ReportWriter
                 CareerCount = o.Careers,
                 o.Seed,
                 o.Policies,
-                RulesetId = M1Ruleset.RulesetId,
+                M1Ruleset.RulesetId,
                 r.ContentVersion,
                 r.ContentDigest,
                 ByPolicy = BatchStatistics.By(r.Careers, c => c.Policy),

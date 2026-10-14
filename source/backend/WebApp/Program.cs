@@ -36,6 +36,3 @@ if (app.Environment.IsDevelopment())
 app.MapWolverineEndpoints(options => options.UseFluentValidationProblemDetailMiddleware());
 
 return await app.RunJasperFxCommands(args);
-
-/// <summary>Entry point type; public so tests can host the API.</summary>
-public partial class Program;

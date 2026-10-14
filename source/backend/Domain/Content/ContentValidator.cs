@@ -30,14 +30,9 @@ public static class ContentValidator
         }
 
         ValidateWeeklySupply(c, violations);
-        foreach (var background in Enum.GetValues<Background>())
-        {
-            if (!c.Profiles.ContainsKey(background))
-            {
-                violations.Add($"missing-profile:{background}");
-            }
-        }
-
+        violations.AddRange(Enum.GetValues<Background>()
+            .Where(background => !c.Profiles.ContainsKey(background))
+            .Select(background => $"missing-profile:{background}"));
         return violations;
     }
 
