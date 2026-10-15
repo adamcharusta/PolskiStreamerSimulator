@@ -24,7 +24,7 @@ public static class CareerEndpoints
 
     [WolverineGet("/v1/career-options", OperationId = "getCareerOptions")]
     public static async Task<Ok<CareerOptionsView>> GetOptions(IMessageBus bus, CancellationToken cancellationToken)
-        => TypedResults.Ok(await bus.InvokeAsync<CareerOptionsView>(new GetCareerOptions(), cancellationToken));
+        => TypedResults.Ok(await bus.InvokeAsync<CareerOptionsView>(GetCareerOptions.Current, cancellationToken));
 
     [WolverineGet("/v1/careers/{id}", OperationId = "getCareer")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]

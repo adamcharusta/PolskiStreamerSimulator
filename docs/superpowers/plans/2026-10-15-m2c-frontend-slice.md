@@ -1045,7 +1045,7 @@ In `.github/workflows/ci.yml`, after the `backend-integration` job, add:
           cache: npm
           cache-dependency-path: source/frontend/package-lock.json
       - name: Install
-        run: npm ci
+        run: npm ci --ignore-scripts
       # The client must match the committed contract; untracked output counts as drift too.
       - name: Verify generated API client
         run: |
@@ -1079,7 +1079,7 @@ In the `sonar` job:
 ```yaml
       - name: Install frontend
         working-directory: source/frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
 ```
 
 2. In `Begin analysis`, add these lines to the `dotnet sonarscanner begin` arguments (the base directory moves to the repository root so the TypeScript source is in scope):
@@ -5763,7 +5763,7 @@ In `.github/workflows/ci.yml`, after the `frontend` job:
           cache-dependency-path: source/frontend/package-lock.json
       - name: Install
         working-directory: source/frontend
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Install Chromium
         working-directory: source/frontend
         run: npx playwright install --with-deps chromium

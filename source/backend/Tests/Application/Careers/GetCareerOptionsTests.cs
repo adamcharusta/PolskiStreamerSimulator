@@ -6,7 +6,7 @@ namespace PolskiStreamerSimulator.Tests.Application.Careers;
 
 public sealed class GetCareerOptionsTests
 {
-    private static CareerOptionsView Options() => new GetCareerOptionsHandler(new AppTestKit().Current).Handle(new GetCareerOptions());
+    private static CareerOptionsView Options() => new GetCareerOptionsHandler(new AppTestKit().Current).Handle(GetCareerOptions.Current);
 
     [Fact]
     public void Every_background_difficulty_and_pronoun_set_is_offered_in_enum_order()

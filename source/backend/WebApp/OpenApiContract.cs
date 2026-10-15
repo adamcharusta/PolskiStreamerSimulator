@@ -52,7 +52,7 @@ public static class OpenApiContract
                 operation.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(SecurityScheme, context.Document)] = [] }];
             }
 
-            operation.Responses ??= new OpenApiResponses();
+            operation.Responses ??= [];
             operation.Responses["500"] = new OpenApiResponse
             {
                 Description = "Internal Server Error",

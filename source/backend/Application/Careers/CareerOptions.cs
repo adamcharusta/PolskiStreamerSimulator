@@ -22,7 +22,10 @@ public sealed record CareerOptionsView(
     IReadOnlyList<DifficultyOptionView> Difficulties,
     IReadOnlyList<PronounSet> Pronouns);
 
-public sealed record GetCareerOptions;
+public sealed record GetCareerOptions
+{
+    public static GetCareerOptions Current { get; } = new();
+}
 
 public sealed class GetCareerOptionsHandler(ICurrentContent current)
 {

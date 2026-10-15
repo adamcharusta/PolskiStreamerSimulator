@@ -11,7 +11,7 @@ export class ApiRequestError extends Error {
     readonly detail: string | null,
     readonly errors: Record<string, string[]>,
   ) {
-    super(`${code}${status === null ? '' : ` (${status})`}`);
+    super(status === null ? code : `${code} (${status})`);
     this.name = 'ApiRequestError';
   }
 
