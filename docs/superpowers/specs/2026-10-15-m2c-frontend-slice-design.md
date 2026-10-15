@@ -82,7 +82,7 @@ Success means:
 
 - The career is the TanStack Query entry `getCareer(careerId)`. The stage renders the view for `next.kind` (`planWeek`, `resolveEvent`, `settleWeek`, `ended`); there are no per-step routes.
 - A step or batch gets its `commandId` (`crypto.randomUUID()`) when the player confirms it. A retry after a network failure sends the same request with the same ID, so the server returns the stored result instead of rolling again. Retries happen only for network errors and timeouts, at most twice, then the player sees a retry button that reuses the ID.
-- `POST /v1/careers` has no idempotency key in M2, so it does not automatically retry after a network failure (TD-106). A lost creation response can still strand its secret until a later recovery or idempotent-creation design is available.
+- `POST /v1/careers` has no idempotency key in M2, so it does not automatically retry after a network failure (TD-106). A lost creation response can still strand its secret until a later recovery or idempotent-creation design is available ([#64](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/64), M4).
 - The response's career view replaces the cached career at once. A reload simply fetches the career again, so the screen always shows server-confirmed state; the query cache is not a save.
 - Transient results the next view needs — the roll just revealed, the report of the week just settled, the batch result — live in component state until the player moves on. After a reload, the plan view shows the career's `lastReport` instead.
 - Primary actions are disabled while their request is pending, and the mutation ignores a second activation, so a double click sends one request.
