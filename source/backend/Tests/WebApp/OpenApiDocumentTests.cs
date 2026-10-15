@@ -1,9 +1,13 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.WebApp;
 
-public sealed class OpenApiDocumentTests
+public sealed class OpenApiDocumentTests(ApiFactory api) : IClassFixture<ApiFactory>
 {
     private static readonly string DocumentPath = Path.Combine(TestPaths.RepositoryRoot, "source", "backend", "WebApp", "openapi", "v1.json");
 
@@ -69,5 +73,28 @@ public sealed class OpenApiDocumentTests
         Assert.True(problem.GetProperty("properties").TryGetProperty("code", out _));
         Assert.True(problem.GetProperty("properties").TryGetProperty("errors", out _));
         Assert.Contains("code", problem.GetProperty("required").EnumerateArray().Select(v => v.GetString()));
+    }
+
+    [Fact]
+    public async Task The_served_document_is_the_committed_document()
+    {
+        var provider = api.Services.GetRequiredKeyedService<IOpenApiDocumentProvider>("v1");
+        var document = await provider.GetOpenApiDocumentAsync(TestContext.Current.CancellationToken);
+        await using var text = new StringWriter();
+        document.SerializeAsV31(new OpenApiJsonWriter(text));
+
+        var served = JsonNode.Parse(text.ToString());
+        var committed = JsonNode.Parse(File.ReadAllText(DocumentPath));
+
+        Assert.True(JsonNode.DeepEquals(served, committed), "The served OpenAPI document differs from WebApp/openapi/v1.json; regenerate it.");
+    }
+
+    [Fact]
+    public void Schemas_keep_their_xml_documentation()
+    {
+        using var document = Load();
+        var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+
+        Assert.StartsWith("What character creation may choose", schemas.GetProperty("CareerOptionsView").GetProperty("description").GetString(), StringComparison.Ordinal);
     }
 }

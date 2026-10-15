@@ -469,7 +469,8 @@
               "string"
             ]
           }
-        }
+        },
+        "description": "Only the fields of the chosen ActionType ActionRequest.Type are needed; the others may be omitted."
       },
       "ActionType": {
         "enum": [
@@ -719,7 +720,8 @@
               "$ref": "#/components/schemas/PronounSet"
             }
           }
-        }
+        },
+        "description": "What character creation may choose, with the numbers of the content new careers start on."
       },
       "CareerStatsView": {
         "required": [
@@ -857,7 +859,8 @@
               }
             ]
           }
-        }
+        },
+        "description": "A career as the client sees it at one version; also the stored response of each step."
       },
       "Category": {
         "enum": [
@@ -986,7 +989,8 @@
           "career": {
             "$ref": "#/components/schemas/CareerView"
           }
-        }
+        },
+        "description": "The new career; string CreatedCareer.Secret is returned only here and never stored."
       },
       "Difficulty": {
         "enum": [
@@ -1089,7 +1093,8 @@
           "manageCommunity",
           "noAction"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "M1 between-stream main actions; exactly one per week."
       },
       "ModifierView": {
         "required": [
@@ -1114,7 +1119,8 @@
           "settleWeek",
           "ended"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "What the player can do next."
       },
       "NextStepView": {
         "required": [
@@ -1143,7 +1149,8 @@
               }
             ]
           }
-        }
+        },
+        "description": "IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent."
       },
       "PlanOptionView": {
         "required": [
@@ -1259,7 +1266,8 @@
           "man",
           "nonbinary"
         ],
-        "type": "string"
+        "type": "string",
+        "description": "Grammatical form only; no rule may read it."
       },
       "ReasonView": {
         "required": [

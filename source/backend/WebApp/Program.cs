@@ -27,7 +27,8 @@ builder.Services.ConfigureHttpJsonOptions(options => ContractJson.Configure(opti
 builder.Services.AddGameApplication();
 builder.Services.AddGameInfrastructure(builder.Configuration);
 builder.Services.PostConfigure<ContentOptions>(options => options.Directory = Path.GetFullPath(options.Directory, AppContext.BaseDirectory));
-builder.Services.AddOpenApi(OpenApiContract.Configure);
+// A lambda, not a method group: the XML-comment source generator only intercepts a lambda (schema descriptions).
+builder.Services.AddOpenApi(options => OpenApiContract.Configure(options));
 
 var app = builder.Build();
 

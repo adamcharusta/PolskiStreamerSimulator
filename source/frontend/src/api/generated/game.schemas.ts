@@ -39,6 +39,9 @@ export const Difficulty = {
   normal: 'normal',
 } as const;
 
+/**
+ * Grammatical form only; no rule may read it.
+ */
 export type PronounSet = typeof PronounSet[keyof typeof PronounSet];
 
 
@@ -76,6 +79,9 @@ export interface CareerStatsView {
   equipment: EquipmentView;
 }
 
+/**
+ * What the player can do next.
+ */
 export type NextStepKind = typeof NextStepKind[keyof typeof NextStepKind];
 
 
@@ -86,6 +92,9 @@ export const NextStepKind = {
   ended: 'ended',
 } as const;
 
+/**
+ * M1 between-stream main actions; exactly one per week.
+ */
 export type MainAction = typeof MainAction[keyof typeof MainAction];
 
 
@@ -154,6 +163,9 @@ export interface EventView {
   choices: ChoiceView[];
 }
 
+/**
+ * IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent.
+ */
 export interface NextStepView {
   kind: NextStepKind;
   plans: PlanOptionView[];
@@ -206,6 +218,9 @@ export interface WeekReportView {
   ending: null | EndingReason;
 }
 
+/**
+ * A career as the client sees it at one version; also the stored response of each step.
+ */
 export interface CareerView {
   careerId: string;
   nickname: string;
@@ -237,6 +252,9 @@ export const ActionType = {
   settleWeek: 'settleWeek',
 } as const;
 
+/**
+ * Only the fields of the chosen ActionType ActionRequest.Type are needed; the others may be omitted.
+ */
 export interface ActionRequest {
   commandId: string;
   expectedVersion: number;
@@ -322,6 +340,9 @@ export interface DifficultyOptionView {
   scoreMultiplier: number;
 }
 
+/**
+ * What character creation may choose, with the numbers of the content new careers start on.
+ */
 export interface CareerOptionsView {
   backgrounds: BackgroundOptionView[];
   difficulties: DifficultyOptionView[];
@@ -335,6 +356,9 @@ export interface CreateCareerRequest {
   pronouns: PronounSet;
 }
 
+/**
+ * The new career; string CreatedCareer.Secret is returned only here and never stored.
+ */
 export interface CreatedCareer {
   careerId: string;
   secret: string;
