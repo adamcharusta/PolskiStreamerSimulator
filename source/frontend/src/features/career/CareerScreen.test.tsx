@@ -5,9 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 import { knownCareers } from '@/careers/knownCareers';
 
-import { captureActions, problem, serveCareer } from '../../../test/api';
+import { captureActions, captureBatches, problem, serveCareer } from '../../../test/api';
 import {
   actionOutcome,
+  batchOutcome,
   careerView,
   endedNext,
   eventNext,
@@ -62,6 +63,23 @@ describe('game screen', () => {
     expect(await screen.findByRole('heading', { name: 'Plan tygodnia' })).toBeInTheDocument();
     expect(desk()).toHaveTextContent('Tydzień 2');
     expect(desk()).toHaveTextContent('Zapisano');
+  });
+
+  it('runs a 13-week batch from the week plan and returns to the next plan', async () => {
+    rememberTestCareer();
+    serveCareer(careerView());
+    captureBatches(() => HttpResponse.json(batchOutcome()));
+    const { user } = renderApp(path);
+
+    await user.click(await screen.findByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Wynik automatycznych tygodni' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Dalej' }));
+
+    expect(await screen.findByRole('heading', { name: 'Plan tygodnia' })).toBeInTheDocument();
+    expect(desk()).toHaveTextContent('Tydzień 4');
   });
 
   it('shows the server-confirmed state and the last report after a reload', async () => {

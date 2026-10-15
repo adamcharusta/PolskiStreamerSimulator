@@ -1,5 +1,8 @@
 import {
+  type AutoWeekView,
   Background,
+  type BatchOutcome,
+  BatchStopReason,
   type CareerOptionsView,
   type CareerStatsView,
   type CareerView,
@@ -230,4 +233,50 @@ export function actionOutcome(
   extras: { roll?: RollView; report?: WeekReportView } = {},
 ) {
   return { career, roll: extras.roll ?? null, report: extras.report ?? null };
+}
+
+export function batchOutcome(
+  stopReason: BatchStopReason = BatchStopReason.completed,
+  weeks = 2,
+): BatchOutcome {
+  const ledger: AutoWeekView[] = Array.from({ length: weeks }, (_, index) => ({
+    week: index + 2,
+    plan: {
+      mainAction: MainAction.rest,
+      category: Category.fps,
+      trainTarget: null,
+      upgradeSlot: null,
+    },
+    planReason: {
+      code: 'rest-low-energy',
+      args: { energy: '20.000000', threshold: '30', category: 'fps', categoryRule: 'bonus' },
+    },
+    choices: [
+      {
+        eventId: 'chat-raid',
+        choiceId: 'welcome',
+        reason: {
+          code: 'gamble-best-odds',
+          args: { probability: '0.600000', threshold: '0.500000' },
+        },
+        roll: roll(),
+      },
+    ],
+    report: weekReport(index + 2),
+  }));
+  return {
+    weeksCommitted: weeks,
+    stopReason,
+    weeks: ledger,
+    summary: {
+      weeksCommitted: weeks,
+      followersNet: 12,
+      cashDelta: -120,
+      incomePln: 80,
+      costsPln: 200,
+      start: stats(),
+      end: stats({ cashPln: 1880, followers: 12 }),
+    },
+    career: careerView({ version: 30, week: 2 + weeks, lastSettledWeek: 1 + weeks }),
+  };
 }
