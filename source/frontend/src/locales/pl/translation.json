@@ -42,6 +42,7 @@
   "create": {
     "title": "Nowa kariera",
     "loading": "Wczytuję opcje…",
+    "optionsFailed": "Nie udało się wczytać opcji kariery.",
     "nickname": "Nick",
     "nicknameHint": "3–20 znaków: litery, cyfry, spacja, _ - .",
     "background": "Pochodzenie",

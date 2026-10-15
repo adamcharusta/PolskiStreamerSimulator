@@ -79,7 +79,7 @@ export function AgeGate({ children }: { readonly children: ReactNode }) {
         >
           <AlertDialog.Title className="panel-title text-2xl">{t('gate.title')}</AlertDialog.Title>
           <AlertDialog.Description>{t('gate.body')}</AlertDialog.Description>
-          <ul>
+          <ul className="list-disc space-y-1 pl-5">
             {gameThemes.map((name) => (
               <li key={name}>{t(`gate.themes.${name}`)}</li>
             ))}

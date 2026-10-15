@@ -247,6 +247,7 @@ This is a chronological record. Later entries supersede earlier ones when they c
 | 2026-10-14 | The M2 slice creates only unranked careers; its 13-week batch plays one fixed strategy (`Balanced`) and shows the reason for each decision; player-configured strategies, mandatory crises and the ranked choice arrive later. | Owner decision (M2-B brainstorming, TD-90) |
 | 2026-10-15 | Offer three selectable visual themes — a cheap OBS overlay from old streams (default), Windows 98 shareware and a 2005 fan site — with a deliberately amateur look and sound usability; the theme changes presentation only. | Owner decision (M2-C brainstorming) |
 | 2026-10-15 | Keep the M2 slice on the M1 content; the representative events for each adult theme and the tone check with players move to M3, where the full content schema arrives. | Owner decision (M2-C brainstorming) |
+| 2026-10-15 | If career options cannot be loaded, show a Polish error and retry action on character creation. Previously the screen kept showing its loading message after a failed request. The retry prevents a dead end; the form still uses only server-supplied profile numbers (TD-104). No open product question; owner validation pending. | Agent proposal/default (M2-C PR 2) |
 
 ## 7. Next Step
 
