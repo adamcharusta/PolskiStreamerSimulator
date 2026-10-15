@@ -4477,7 +4477,7 @@ git commit -m "feat(frontend): play live events with visible odds and show each 
 - Modify: `docs/requirements-traceability.md`
 - Modify: `source/frontend/src/styles/index.css` and the components that carry a decoration (theme decorations, below)
 
-**Theme decorations (added 2026-10-15 after the PR 2 review).** Spec §5 names decorations that no earlier task builds: `win98` blue title bars on panels, a dotted focus ring and block progress bars; `web2005` glossy gradients on frames and buttons, a visitor counter and red `NOWE!` labels. This task builds them with the game screen, where the bars and panels they decorate appear. Decorations stay presentation only: the visitor counter and labels are `aria-hidden`, and the token contrast tests in `src/styles/index.test.ts` cover any new colour pair.
+**Theme decorations (added 2026-10-15 after the PR 2 review).** Spec §5 names decorations that no earlier task builds: `win98` blue title bars on panels, a dotted focus ring and block progress bars; `web2005` glossy gradients on buttons and the top bar, a visitor counter and red `NOWE!` labels. This task builds them with the game screen, where the bars and panels they decorate appear. Decorations stay presentation only: the visitor counter and labels are `aria-hidden`, and the token contrast tests in `src/styles/index.test.ts` cover any new colour pair.
 
 **Interfaces:**
 - Consumes: everything from Tasks 10–13; `forgetCareer` (Task 7).

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type CareerView, Category, EquipmentSlot } from '@/api/generated/game.schemas';
@@ -11,13 +12,24 @@ export function StatsRail({ career }: { readonly career: CareerView }) {
   const { t } = useTranslation();
   const open = useDesk((state) => state.statsOpen);
   const stats = career.stats;
+  const heading = useRef<HTMLHeadingElement>(null);
+  const wasOpen = useRef(open);
+  // Opening the drawer moves focus into it, so the player lands on the statistics on a phone.
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      heading.current?.focus();
+    }
+    wasOpen.current = open;
+  }, [open]);
   return (
     <aside
       id="stats-rail"
       className={open ? 'rail panel open' : 'rail panel'}
       aria-label={t('career.stats')}
     >
-      <h2 className="panel-title">{t('career.stats')}</h2>
+      <h2 ref={heading} tabIndex={-1} className="panel-title">
+        {t('career.stats')}
+      </h2>
       {bars.map((bar) => {
         const id = `stat-${bar}`;
         return (

@@ -18,7 +18,12 @@ export function statLabel(t: TFunction, code: string): string {
     return code;
   }
 
-  return category === undefined ? t(key) : `${t(key)} · ${t(`category.${camel(category)}`)}`;
+  if (category === undefined) {
+    return t(key);
+  }
+
+  const categoryKey = `category.${camel(category)}`;
+  return `${t(key)} · ${t(categoryKey)}`;
 }
 
 /** Why a stat changed: the week's action, the stream, practice, or an event by its title. */

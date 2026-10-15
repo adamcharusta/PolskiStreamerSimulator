@@ -140,6 +140,10 @@ describe('the stylesheet cascade', () => {
     expect(getComputedStyle(cell).paddingRight).toBe('6px');
   });
 
+  it('opens the statistics drawer above the stage on narrow screens', () => {
+    expect(styled('rail open', 'overlay', 'aside').order).toBe('-1');
+  });
+
   it('makes a step heading stand out from body text', () => {
     // 1.4rem at jsdom's 16px root font size.
     expect(styled('step-heading', 'overlay', 'h2').fontSize).toBe('22.4px');

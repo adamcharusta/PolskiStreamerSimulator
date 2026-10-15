@@ -32,3 +32,19 @@ it('settles the week and reveals its report', async () => {
   });
   expect(received[0]?.body).toMatchObject({ expectedVersion: 1, type: 'settleWeek' });
 });
+
+it('waits for the retry instead of settling again after a lost connection', async () => {
+  captureActions(() => HttpResponse.error());
+  const { user } = renderWithClient(
+    <SettleWeek
+      career={careerView({ next: settleNext() })}
+      secret="secret-1"
+      onSettled={vi.fn()}
+    />,
+  );
+
+  await user.click(screen.getByRole('button', { name: 'Kończę tydzień' }));
+
+  expect(await screen.findByRole('button', { name: 'Spróbuj ponownie' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Kończę tydzień' })).toBeDisabled();
+});

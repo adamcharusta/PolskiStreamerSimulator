@@ -17,6 +17,8 @@ export interface CareerCommand<TBody> {
   readonly retry: () => void;
   readonly pending: boolean;
   readonly failure: ApiRequestError | null;
+  /** A lost connection left the last intent unanswered: the screen waits for its retry, not for a new choice. */
+  readonly stalled: boolean;
 }
 
 /**
@@ -73,6 +75,7 @@ export function useCareerCommand<TBody, TResult>(
     },
     pending: mutation.isPending,
     failure: mutation.error,
+    stalled: mutation.error?.isNetwork === true,
   };
 }
 

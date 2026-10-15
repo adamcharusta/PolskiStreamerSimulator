@@ -32,13 +32,15 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
   const [slot, setSlot] = useState<EquipmentSlot | null>(null);
   const chosen = action === null ? undefined : optionFor(plans, action, category, slot);
   const ready = chosen?.disabledReason === null;
+  // While a step is sent or waits for its retry, the shown choice is the one the server answers.
+  const locked = command.pending || command.stalled;
   const reason = (code: string) => t(`disabled.${code}`, { defaultValue: t('disabled.unknown') });
 
   return (
     <div className="grid gap-3">
       <StepHeading>{t('plan.title')}</StepHeading>
 
-      <fieldset className="choices">
+      <fieldset className="choices" disabled={locked}>
         <legend className="font-bold">{t('plan.action')}</legend>
         {Object.values(MainAction).map((option) => {
           const block = actionBlock(plans, option, category);
@@ -68,7 +70,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
         })}
       </fieldset>
 
-      <fieldset className="choices">
+      <fieldset className="choices" disabled={locked}>
         <legend className="font-bold">{t('plan.category')}</legend>
         {Object.values(Category).map((option) => (
           <label key={option} className="choice">
@@ -87,7 +89,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
       </fieldset>
 
       {action === MainAction.improveProduction && (
-        <fieldset className="choices">
+        <fieldset className="choices" disabled={locked}>
           <legend className="font-bold">{t('plan.slot')}</legend>
           {Object.values(EquipmentSlot).map((option) => {
             const block = optionFor(plans, action, category, option)?.disabledReason ?? null;
@@ -124,7 +126,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
       <div className="flex flex-wrap gap-2">
         <Button
           variant="primary"
-          disabled={!ready}
+          disabled={!ready || command.stalled}
           pending={command.pending}
           onClick={() => {
             if (action !== null) {

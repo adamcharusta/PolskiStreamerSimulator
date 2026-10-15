@@ -28,6 +28,7 @@ export function SettleWeek({ career, secret, onSettled }: SettleWeekProps) {
       <RetryBanner command={command} />
       <Button
         variant="primary"
+        disabled={command.stalled}
         pending={command.pending}
         onClick={() => {
           command.run({ expectedVersion: career.version, type: ActionType.settleWeek });

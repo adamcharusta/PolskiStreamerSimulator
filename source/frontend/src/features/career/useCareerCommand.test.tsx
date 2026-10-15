@@ -1,4 +1,4 @@
-import { type QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { onlineManager, type QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { delay, HttpResponse } from 'msw';
 import type { ReactNode } from 'react';
@@ -100,6 +100,28 @@ describe('career commands', () => {
     expect(result.current.failure).toBeNull();
     expect(received).toHaveLength(4);
     expect(new Set(received.map((r) => r.body.commandId)).size).toBe(1);
+  });
+
+  it('sends the step and reports the lost connection when the browser says it is offline', async () => {
+    const received = captureActions(() => HttpResponse.error());
+    const { Wrapper } = setup();
+    const { result } = renderHook(() => useActionCommand(TEST_CAREER_ID, 'secret-1'), {
+      wrapper: Wrapper,
+    });
+    onlineManager.setOnline(false);
+    try {
+      act(() => {
+        result.current.run(settle);
+      });
+
+      await waitFor(() => {
+        expect(result.current.failure?.isNetwork).toBe(true);
+      });
+      expect(result.current.stalled).toBe(true);
+      expect(received).toHaveLength(3);
+    } finally {
+      onlineManager.setOnline(true);
+    }
   });
 
   it('gives every new intent a new command id', async () => {

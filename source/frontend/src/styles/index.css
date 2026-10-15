@@ -244,8 +244,10 @@ body {
   display: none;
 }
 
+/* On a phone the open drawer comes right under the top bar, above the stage. */
 .rail.open {
   display: block;
+  order: -1;
 }
 
 @media (min-width: 48rem) {
@@ -253,8 +255,10 @@ body {
     grid-template-columns: minmax(0, 3fr) minmax(0, 1.2fr);
   }
 
-  .rail {
+  .rail,
+  .rail.open {
     display: block;
+    order: 0;
   }
 
   .rail-toggle {

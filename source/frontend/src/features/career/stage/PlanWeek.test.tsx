@@ -116,6 +116,26 @@ describe('week plan', () => {
     expect(new Set(received.map((r) => r.body.commandId)).size).toBe(1);
   });
 
+  it('locks the plan and moves focus to the retry after a lost connection', async () => {
+    const received = captureActions((_, call) => (call <= 3 ? HttpResponse.error() : answer()));
+    const { user } = renderWithClient(<PlanWeek career={careerView()} secret="secret-1" />);
+
+    await user.click(screen.getByRole('radio', { name: 'Odpoczynek' }));
+    await user.click(screen.getByRole('button', { name: 'Zaczynam stream' }));
+    const retry = await screen.findByRole('button', { name: 'Spróbuj ponownie' });
+
+    expect(retry).toHaveFocus();
+    expect(screen.getByRole('radio', { name: 'Zwykły stream' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'MOBA' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Zaczynam stream' })).toBeDisabled();
+    await user.click(retry);
+
+    await waitFor(() => {
+      expect(received).toHaveLength(4);
+    });
+    expect(received[3]?.body).toMatchObject({ mainAction: 'rest' });
+  });
+
   it('keeps the last report folded away', () => {
     renderWithClient(
       <PlanWeek

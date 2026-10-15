@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from 'class-variance-authority';
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
 import { cn } from './cn';
 
@@ -8,8 +8,7 @@ const button = cva('btn', {
   defaultVariants: { variant: 'secondary' },
 });
 
-export interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof button> {
+export interface ButtonProps extends ComponentPropsWithRef<'button'>, VariantProps<typeof button> {
   /** A request for this action is running: the button stays visible but cannot be activated again. */
   readonly pending?: boolean;
 }

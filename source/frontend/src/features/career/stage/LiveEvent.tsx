@@ -36,7 +36,7 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
       </p>
       <StepHeading>{t(event.titleKey, { defaultValue: t('event.untitled') })}</StepHeading>
       <p>{event.textPl}</p>
-      <fieldset className="choices">
+      <fieldset className="choices" disabled={command.pending || command.stalled}>
         <legend className="font-bold">{t('event.choices')}</legend>
         {event.choices.map((choice) => (
           <label key={choice.choiceId} className="choice">
@@ -73,7 +73,7 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
       <RetryBanner command={command} />
       <Button
         variant="primary"
-        disabled={choiceId === null}
+        disabled={choiceId === null || command.stalled}
         pending={command.pending}
         onClick={() => {
           if (choiceId !== null) {

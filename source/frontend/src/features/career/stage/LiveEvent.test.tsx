@@ -53,6 +53,20 @@ describe('live event', () => {
     });
   });
 
+  it('locks the choices after a lost connection so the retry sends what is shown', async () => {
+    captureActions(() => HttpResponse.error());
+    const { user } = renderWithClient(
+      <LiveEvent career={careerView({ next: eventNext() })} secret="secret-1" onRolled={vi.fn()} />,
+    );
+
+    await user.click(screen.getByRole('radio', { name: /Graj dalej/u }));
+    await user.click(screen.getByRole('button', { name: 'Wybieram' }));
+
+    expect(await screen.findByRole('button', { name: 'Spróbuj ponownie' })).toHaveFocus();
+    expect(screen.getByRole('radio', { name: /Przywitaj gości/u })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Wybieram' })).toBeDisabled();
+  });
+
   it('confirms a choice once on a double click', async () => {
     const received = captureActions(async () => {
       await delay(50);

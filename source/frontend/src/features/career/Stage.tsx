@@ -73,7 +73,7 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
 
   switch (career.next.kind) {
     case NextStepKind.planWeek: {
-      return <PlanWeek career={career} secret={secret} />;
+      return <PlanWeek key={career.version} career={career} secret={secret} />;
     }
     case NextStepKind.resolveEvent: {
       return (
