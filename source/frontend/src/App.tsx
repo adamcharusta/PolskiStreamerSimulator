@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { createQueryClient } from './app/queryClient';
 import { type AppRouter, createAppRouter } from './app/router';
+import { AgeGate } from './features/age-gate/AgeGate';
 
 export interface AppProps {
   readonly router?: AppRouter;
@@ -15,7 +16,9 @@ export function App(props: AppProps) {
   const [queryClient] = useState(() => props.queryClient ?? createQueryClient());
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AgeGate>
+        <RouterProvider router={router} />
+      </AgeGate>
     </QueryClientProvider>
   );
 }
