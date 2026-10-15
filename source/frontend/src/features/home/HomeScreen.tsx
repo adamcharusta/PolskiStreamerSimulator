@@ -36,6 +36,9 @@ export function HomeScreen() {
           <Link className="btn btn-primary" to="/nowa-kariera">
             {t('home.new')}
           </Link>
+          <span className="new-label" aria-hidden="true">
+            {t('decor.new')}
+          </span>
         </p>
         <p className="muted">{t('home.accessNotice')}</p>
       </Panel>

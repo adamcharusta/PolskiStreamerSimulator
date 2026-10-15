@@ -19,6 +19,11 @@ export function RootLayout() {
       <main id="main">
         <Outlet />
       </main>
+      <div className="py-3 text-center">
+        <span className="visitor-counter" aria-hidden="true">
+          {t('decor.visitors')}
+        </span>
+      </div>
     </div>
   );
 }
