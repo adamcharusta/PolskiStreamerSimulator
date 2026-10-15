@@ -7,7 +7,7 @@ base="${BASE_REF:-}"
 head="${HEAD_REF:-}"
 
 if [[ -z "$base" || -z "$head" ]]; then
-  echo "::error::BASE_REF and HEAD_REF must be set to the pull request's base and head branches."
+  echo "::error::BASE_REF and HEAD_REF must be set to the pull request's base and head branches." >&2
   exit 1
 fi
 
@@ -21,7 +21,7 @@ case "$head" in
     echo "OK: '$head' may open a pull request into main."
     ;;
   *)
-    echo "::error::Only release/* and hotfix/* branches may open pull requests into main; target develop with '$head' instead."
+    echo "::error::Only release/* and hotfix/* branches may open pull requests into main; target develop with '$head' instead." >&2
     exit 1
     ;;
 esac

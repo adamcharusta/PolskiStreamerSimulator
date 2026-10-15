@@ -11,9 +11,22 @@ expect() {
   (cd "$work" && BASE_REF="$base" HEAD_REF="$head" bash "$script" >/dev/null 2>&1)
   got=$?
   if [[ $got -ne $want ]]; then
-    echo "FAIL $name: base='$base' head='$head' exited $got, want $want"
+    echo "FAIL $name: base='$base' head='$head' exited $got, want $want" >&2
     failures=$((failures + 1))
   fi
+  return 0
+}
+
+# A rejection writes its ::error:: annotation to stderr and nothing to stdout.
+expect_error_on_stderr() {
+  local name=$1 base=$2 head=$3 out err
+  out="$(cd "$work" && BASE_REF="$base" HEAD_REF="$head" bash "$script" 2>"$work/stderr")"
+  err="$(cat "$work/stderr")"
+  if [[ -n "$out" || "$err" != "::error::"* ]]; then
+    echo "FAIL $name: stdout='$out' stderr='$err', want the error on stderr only" >&2
+    failures=$((failures + 1))
+  fi
+  return 0
 }
 
 expect release-into-main 0 main release/1.0.0
@@ -28,15 +41,17 @@ expect feature-into-develop 0 develop feature/x
 expect main-into-develop 0 develop main
 expect release-into-develop 0 develop release/1.0.0
 expect missing-head 1 main ''
+expect_error_on_stderr feature-into-main-stderr main feature/x
+expect_error_on_stderr missing-head-stderr main ''
 
 if [[ -e "$work/pwned" ]]; then
-  echo "FAIL injection: the branch name was executed"
+  echo "FAIL injection: the branch name was executed" >&2
   failures=$((failures + 1))
 fi
 rm -rf "$work"
 
 if [[ $failures -ne 0 ]]; then
-  echo "$failures case(s) failed"
+  echo "$failures case(s) failed" >&2
   exit 1
 fi
 echo "All check-pr-source cases passed"

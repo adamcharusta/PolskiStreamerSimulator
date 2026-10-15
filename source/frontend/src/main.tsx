@@ -1,4 +1,8 @@
 import './styles/index.css';
+import '@fontsource/anton/400.css';
+import '@fontsource/comic-relief/400.css';
+import '@fontsource/comic-relief/700.css';
+import './i18n';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

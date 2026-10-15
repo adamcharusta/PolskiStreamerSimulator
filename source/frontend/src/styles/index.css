@@ -1,1 +1,281 @@
 @import 'tailwindcss';
+
+/* Theme tokens (TD-98): every theme meets WCAG 2.2 AA for text and focus; neon and gradients stay on frames. */
+:root,
+[data-theme='overlay'] {
+  --bg: #111111;
+  --page-text: #ffffff;
+  --surface: #1b1b1b;
+  --text: #ffffff;
+  --muted: #c9c9c9;
+  --frame: #ff2bd6;
+  --frame-2: #00e5ff;
+  --bar: #00b140;
+  --bar-text: #000000;
+  --accent: #ffe600;
+  --accent-text: #000000;
+  --live: #c8102e;
+  --good: #3ddc84;
+  --bad: #ff8a8a;
+  --focus: #00e5ff;
+  --field-bg: #1b1b1b;
+  --field-text: #ffffff;
+  --field-border: var(--frame-2);
+  --border: 3px solid var(--frame);
+  --radius: 0;
+  --tilt: -0.6deg;
+  --font-heading: 'Anton', Impact, 'Arial Narrow', sans-serif;
+  --font-body: system-ui, 'Segoe UI', Arial, sans-serif;
+}
+
+[data-theme='win98'] {
+  --bg: #008080;
+  --page-text: #ffffff;
+  --surface: #c0c0c0;
+  --text: #000000;
+  --muted: #404040;
+  --frame: #404040;
+  --frame-2: #ffffff;
+  --bar: #000080;
+  --bar-text: #ffffff;
+  --accent: #c0c0c0;
+  --accent-text: #000000;
+  --live: #8b0000;
+  --good: #005000;
+  --bad: #8b0000;
+  --focus: #000000;
+  --field-bg: #ffffff;
+  --field-text: #000000;
+  --field-border: #404040;
+  --border: 2px outset #dfdfdf;
+  --radius: 0;
+  --tilt: 0deg;
+  --font-heading: Tahoma, Verdana, sans-serif;
+  --font-body: Tahoma, Verdana, sans-serif;
+}
+
+[data-theme='web2005'] {
+  --bg: #e9eef7;
+  --page-text: #1b1b1b;
+  --surface: #ffffff;
+  --text: #1b1b1b;
+  --muted: #4a4a4a;
+  --frame: #2f6fd0;
+  --frame-2: #7a9cd6;
+  --bar: #2f6fd0;
+  --bar-text: #ffffff;
+  --accent: #dbe8ff;
+  --accent-text: #0a2a66;
+  --live: #c00000;
+  --good: #1d6b1d;
+  --bad: #c00000;
+  --focus: #c00000;
+  --field-bg: #ffffff;
+  --field-text: #1b1b1b;
+  --field-border: var(--frame);
+  --border: 1px dashed var(--frame-2);
+  --radius: 10px;
+  --tilt: 0deg;
+  --font-heading: 'Comic Relief', 'Comic Sans MS', Verdana, sans-serif;
+  --font-body: Verdana, Tahoma, sans-serif;
+}
+
+/* Text on the page background (win98: white on teal) differs from text on panels. */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--page-text);
+  font: 16px/1.45 var(--font-body);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.heading,
+.panel-title,
+.step-heading {
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
+  margin: 0 0 0.5rem;
+}
+
+.shell {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.75rem;
+}
+
+.panel {
+  background: var(--surface);
+  color: var(--text);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.9rem;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  transform: rotate(var(--tilt));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.choices {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+}
+
+/* A choice group drawn as a panel keeps the panel's frame and padding. */
+.choices:not(.panel) {
+  border: 0;
+  padding: 0;
+}
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.5rem;
+  border: var(--border);
+  border-radius: var(--radius);
+}
+
+/* A text field is marked out by its own border, so that border meets 3:1 against the panel (WCAG 1.4.11). */
+.field {
+  display: block;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 2px solid var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  color: var(--field-text);
+  font: inherit;
+}
+
+[data-theme='win98'] .field {
+  border-style: inset;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.badge-live {
+  background: var(--live);
+  color: #ffffff;
+  padding: 0 0.4rem;
+  font-weight: 700;
+}
+
+.good {
+  color: var(--good);
+}
+
+.bad {
+  color: var(--bad);
+}
+
+.topbar {
+  /* The page focus colour can match the bar; inside it the ring takes the bar's text colour. */
+  --focus: var(--bar-text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  align-items: center;
+  background: var(--bar);
+  color: var(--bar-text);
+  padding: 0.4rem 0.75rem;
+  font-family: var(--font-heading);
+}
+
+.desk {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rail {
+  display: none;
+}
+
+.rail.open {
+  display: block;
+}
+
+@media (min-width: 48rem) {
+  .desk {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1.2fr);
+  }
+
+  .rail {
+    display: block;
+  }
+
+  .rail-toggle {
+    display: none;
+  }
+}
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 70%);
+}
+
+.dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(32rem, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 1.5rem);
+  overflow: auto;
+  transform: translate(-50%, -50%);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The skip link must be visible when it has focus. */
+.sr-only:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary {
+    transform: none;
+  }
+}

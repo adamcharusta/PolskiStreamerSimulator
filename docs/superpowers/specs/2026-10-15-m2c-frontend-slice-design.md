@@ -82,6 +82,7 @@ Success means:
 
 - The career is the TanStack Query entry `getCareer(careerId)`. The stage renders the view for `next.kind` (`planWeek`, `resolveEvent`, `settleWeek`, `ended`); there are no per-step routes.
 - A step or batch gets its `commandId` (`crypto.randomUUID()`) when the player confirms it. A retry after a network failure sends the same request with the same ID, so the server returns the stored result instead of rolling again. Retries happen only for network errors and timeouts, at most twice, then the player sees a retry button that reuses the ID.
+- `POST /v1/careers` has no idempotency key in M2, so it does not automatically retry after a network failure (TD-106). A lost creation response can still strand its secret until a later recovery or idempotent-creation design is available ([#64](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/64), M4).
 - The response's career view replaces the cached career at once. A reload simply fetches the career again, so the screen always shows server-confirmed state; the query cache is not a save.
 - Transient results the next view needs — the roll just revealed, the report of the week just settled, the batch result — live in component state until the player moves on. After a reload, the plan view shows the career's `lastReport` instead.
 - Primary actions are disabled while their request is pending, and the mutation ignores a second activation, so a double click sends one request.
@@ -107,7 +108,7 @@ Success means:
 
 1. **18+ gate.** A blocking dialog over a neutral background states the 18+ rating and names gambling, adult creator work, privacy incidents and strong language as themes. Actions: `Mam 18 lat lub więcej — wchodzę` and `Wychodzę`. Escape, clicking outside and navigating back never confirm. The acknowledgment is stored locally; cleared storage shows the gate again. After confirming, a one-time notice explains that play needs a connection and careers are saved on the server.
 2. **Home.** Careers known to this browser (nickname, start date, `Kontynuuj`) and `Nowa kariera`. A notice says that access to a career lives only in this browser and is lost if site data is cleared; recovery keys follow in M4. A `Ustawienia` button opens settings.
-3. **Character creation.** Nickname; four background cards with starting cash, followers, equipment, strongest category and score multiplier from `GET /v1/career-options`; difficulty with its multiplier; pronouns (`ona`, `on`, neutral form); a summary before `Zaczynam karierę`. On success the career joins the known list and the game screen opens.
+3. **Character creation.** Nickname; four background cards with starting cash, followers, equipment, strongest category and score multiplier from `GET /v1/career-options`; difficulty with its multiplier; pronouns (`ona`, `on`, neutral form); a summary before `Zaczynam karierę`. On success the career joins the known list and the game screen opens. A failed options request shows an error and retry action (TD-104). If browser storage cannot save the access secret, show an error and do not send the creation request (TD-105).
 4. **Game screen** (layout A).
    - **Top bar:** week, cash, followers, last-stream viewers, save status (`Zapisano`, `Zapisuję…`, `Brak połączenia`), settings.
    - **Statistics rail:** energy, burnout, drama and credibility as labelled bars with numbers; skill and boredom per category; equipment tiers. On mobile it collapses to a `Statystyki` drawer.
@@ -132,7 +133,7 @@ The game looks deliberately cheap and amateur; its usability does not. Three the
 | `win98` | Windows 98 shareware: grey bevelled windows, a blue title bar, dotted focus, block progress bars. |
 | `web2005` | A 2005 fan site: glossy gradients, a Comic-style heading font, dashed boxes, a visitor counter, red `NOWE!` labels. |
 
-- Heading fonts: Anton (OFL) for `overlay` and Comic Neue (OFL) for `web2005`, both self-hosted with their Polish glyphs (the plan verifies the coverage before use); `win98` uses a Tahoma/Verdana system stack. Body text, odds and numbers use a readable system font in every theme. Font files ship with the app; no third-party font CDN.
+- Heading fonts: Anton (OFL) for `overlay` and Comic Relief (OFL) for `web2005`, both self-hosted with their Polish glyphs (the plan verifies the coverage before use); `win98` uses a Tahoma/Verdana system stack. Body text, odds and numbers use a readable system font in every theme. Font files ship with the app; no third-party font CDN. Comic Relief replaced Comic Neue, which has no Polish letters (TD-107).
 - Every theme meets WCAG 2.2 AA contrast for text and focus indicators on its own; neon and gradients are borders and accents, not text backgrounds that fail contrast.
 - The choice is stored in `localStorage`, applied before the first paint to avoid a flash, and never sent to the server. It changes presentation only.
 
@@ -211,6 +212,7 @@ Documentation updates: `validation-and-delivery.md` (vertical-slice criterion: a
 | #11 Escape and outside clicks cannot bypass the gate | Vitest tests for Escape, outside click and back navigation; the Playwright journey starts at the gate. |
 | #11 Declining shows a neutral exit | Vitest test of the exit view; no game request is made before confirmation. |
 | #11 The starting profile reaches the API | MSW asserts the creation request body; the Playwright journey creates a real career. |
+| #11 A lost creation response does not trigger duplicate requests | The creation component test returns a network error and asserts exactly one `POST /v1/careers` (TD-106). |
 | #12 A full week can be played in the browser | The Playwright journey plays plan, every event and settlement. |
 | #12 Choices cannot be submitted twice | Vitest: a double activation sends one request; retries reuse the `commandId`. |
 | #12 Refreshing restores the server-confirmed state | The Playwright journey reloads and compares the visible state. |

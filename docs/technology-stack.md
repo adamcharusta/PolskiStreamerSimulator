@@ -66,6 +66,10 @@ Infrastructure automation belongs under `k8s/ansible/`, with pinned Helm charts 
 
 Orval generates TypeScript DTOs and API functions from the OpenAPI artifact. Use TanStack Query (React Query) for career state, decisions, leaderboard and admin data, with Axios as the HTTP transport and one configured client for timeouts, cancellation and error normalization. Orval supports React Query output with Axios. The server database is authoritative; Zustand holds only transient UI state and the browser retains a separate secret for each locally known career plus optional per-career recovery-key exports. A query cache is not a save. Decision mutations use idempotency keys and a state-version precondition so a lost response or second tab cannot repeat a random draw. [Orval output configuration](https://orval.dev/docs/reference/configuration/output/).
 
+The selected visual theme and the age acknowledgment are browser state. If browser storage is unavailable, the app uses the default overlay and shows the 18+ gate on load; explicit theme and gate choices still apply for the current page without crashing (TD-103). Persistence resumes when storage becomes available.
+
+Before creating a server career, the client checks that browser storage can save its access secret. A denied write blocks the creation request and shows an error, because recovery keys do not arrive until M4 (TD-105). `POST /v1/careers` does not use automatic network retries because it has no idempotency key (TD-106); gameplay commands with command IDs retain their repeat-safe retry policy.
+
 This is a good fit for the requested stack: TanStack Query handles server cache and request lifecycle, Axios provides a configurable transport, and Orval keeps FE contracts tied to the API. Configure mutation retry per endpoint, especially for decisions that roll outcomes; retry only with the same idempotency key. The browser and API should normally share one HTTPS origin in production.
 
 ## React application
@@ -93,7 +97,7 @@ The admin route is hidden from normal navigation and protected by Identity, but 
 | Runtime and build | Node 24.22.0 LTS (`.nvmrc`), React/React DOM 19.3.1, TypeScript 6.0.3, Vite 8.3.4 with `@vitejs/plugin-react` 6.1.2 |
 | Routing, data and state | `@tanstack/react-router` 1.170.44, `@tanstack/react-query` 5.104.2, Axios 1.20.0, Orval 8.43.0, Zustand 5.0.15 |
 | Forms and copy | React Hook Form 7.90.0, Zod 4.6.7, `@hookform/resolvers` 5.9.1, i18next 26.4.5, `react-i18next` 17.0.16 |
-| UI | Tailwind CSS 4.3.3, `radix-ui` 1.8.1, `class-variance-authority` 0.7.1, `clsx` 2.1.1, `tailwind-merge` 3.7.0, `@fontsource/anton` and `@fontsource/comic-neue` 5.3.0 |
+| UI | Tailwind CSS 4.3.3, `radix-ui` 1.8.1, `class-variance-authority` 0.7.1, `clsx` 2.1.1, `tailwind-merge` 3.7.0, `@fontsource/anton` and `@fontsource/comic-relief` 5.3.0 (TD-107) |
 | Tests | Vitest 5.0.4 with V8 coverage, jsdom 30.1.2, Testing Library (React 16.3.3, DOM 10.4.2, user-event 14.6.8, jest-dom 7.0.1), MSW 3.0.3, Playwright 1.64.1, `@axe-core/playwright` 4.13.0 |
 | Lint and format | ESLint 9.39.5 with the owner's plugin set (see repository standards), `typescript-eslint` 8.71.2, Prettier 3.9.10 |
 

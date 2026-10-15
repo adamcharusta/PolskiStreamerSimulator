@@ -1,0 +1,291 @@
+{
+  "app": {
+    "title": "Polski Streamer Simulator",
+    "settings": "Ustawienia",
+    "skip": "Przejdź do treści"
+  },
+  "theme": {
+    "legend": "Wygląd",
+    "overlay": "Overlay z OBS-a",
+    "win98": "Shareware z Windowsa 98",
+    "web2005": "Strona fanowska 2005",
+    "close": "Zamknij"
+  },
+  "gate": {
+    "title": "Gra tylko dla osób pełnoletnich (18+)",
+    "body": "W tej grze pojawiają się tematy dla dorosłych:",
+    "themes": {
+      "gambling": "hazard za fikcyjną walutę gry",
+      "adult": "praca twórcy treści dla dorosłych (bez treści erotycznych)",
+      "privacy": "wycieki prywatności",
+      "language": "mocny język"
+    },
+    "note": "Potwierdzenie zapisze się w tej przeglądarce. To nie jest weryfikacja wieku.",
+    "confirm": "Mam 18 lat lub więcej — wchodzę",
+    "leave": "Wychodzę",
+    "exitTitle": "Do zobaczenia",
+    "exitBody": "Ta gra jest przeznaczona tylko dla osób pełnoletnich. Możesz zamknąć tę kartę."
+  },
+  "fallback": {
+    "notFound": "Nie ma takiej strony",
+    "error": "Coś poszło nie tak",
+    "errorBody": "Ten ekran się nie wczytał. Twoja kariera jest zapisana na serwerze.",
+    "home": "Wróć na start"
+  },
+  "notice": {
+    "online": "Gra wymaga połączenia z internetem. Kariera zapisuje się na serwerze po każdym kroku.",
+    "dismiss": "Rozumiem"
+  },
+  "home": {
+    "careers": "Twoje kariery",
+    "empty": "W tej przeglądarce nie masz jeszcze żadnej kariery.",
+    "started": "Start: {{date}}",
+    "continue": "Kontynuuj",
+    "continueNamed": "Kontynuuj karierę {{nickname}}",
+    "new": "Nowa kariera",
+    "accessNotice": "Dostęp do kariery jest zapisany tylko w tej przeglądarce. Wyczyszczenie danych strony odbiera dostęp. Klucze odzyskiwania pojawią się w kolejnej wersji."
+  },
+  "create": {
+    "title": "Nowa kariera",
+    "loading": "Wczytuję opcje…",
+    "optionsFailed": "Nie udało się wczytać opcji kariery.",
+    "nickname": "Nick",
+    "nicknameHint": "3–20 znaków: litery, cyfry, spacja, _ - .",
+    "background": "Pochodzenie",
+    "difficulty": "Poziom trudności",
+    "pronouns": "Zaimki",
+    "summary": "Podsumowanie",
+    "submit": "Zaczynam karierę",
+    "cash": "Kasa: {{value}}",
+    "followers": "Obserwujący: {{value}}",
+    "strongest": "Mocna strona: {{value}}",
+    "strongestNone": "Mocna strona: brak — żadna kategoria się nie wyróżnia",
+    "equipment": "Sprzęt: poziom {{value}}",
+    "multiplier": "Mnożnik punktów: ×{{value}}",
+    "errors": {
+      "nickname": "Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .",
+      "generic": "Nie udało się założyć kariery. Spróbuj ponownie.",
+      "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
+    }
+  },
+  "background": {
+    "dormRoomNewcomer": "Świeżak z akademika",
+    "localMemeCreator": "Lokalny memiarz",
+    "chessClubRegular": "Bywalec klubu szachowego",
+    "industryInsider": "Człowiek z branży"
+  },
+  "difficulty": { "easy": "Łatwy", "normal": "Normalny" },
+  "pronouns": { "woman": "ona/jej", "man": "on/jego", "nonbinary": "forma neutralna" },
+  "category": {
+    "justChatting": "Just Chatting",
+    "fps": "FPS",
+    "moba": "MOBA",
+    "chess": "Szachy",
+    "gambling": "Hazard"
+  },
+  "action": {
+    "rest": "Odpoczynek",
+    "trainCategory": "Trening",
+    "improveProduction": "Ulepszenie sprzętu",
+    "manageCommunity": "Ogarnianie społeczności",
+    "noAction": "Zwykły stream"
+  },
+  "slot": {
+    "microphone": "Mikrofon",
+    "camera": "Kamera",
+    "computer": "Komputer",
+    "connection": "Łącze"
+  },
+  "stat": {
+    "energy": "Energia",
+    "burnout": "Wypalenie",
+    "drama": "Drama",
+    "credibility": "Wiarygodność",
+    "skill": "Umiejętności",
+    "boredom": "Znudzenie",
+    "equipment": "Sprzęt",
+    "tier": "poziom {{value}}"
+  },
+  "modifier": {
+    "credibility": "Wiarygodność",
+    "primary-skill": "Umiejętność w kategorii",
+    "drama": "Drama"
+  },
+  "career": {
+    "summaryLabel": "Stan kariery",
+    "loading": "Wczytuję karierę…",
+    "week": "Tydzień {{week}}",
+    "cash": "Kasa",
+    "followers": "Obserwujący",
+    "viewers": "Widzowie ostatniego streamu",
+    "stats": "Statystyki",
+    "saved": "Zapisano",
+    "saving": "Zapisuję…",
+    "offline": "Brak połączenia",
+    "notFound": "Nie znaleziono kariery",
+    "notFoundBody": "Ta przeglądarka nie ma dostępu do tej kariery albo kariera nie istnieje.",
+    "forget": "Usuń z listy",
+    "backHome": "Wróć na start",
+    "loadFailed": "Nie udało się wczytać kariery.",
+    "reload": "Odśwież",
+    "retry": "Spróbuj ponownie",
+    "networkFailed": "Wybór nie został zapisany — spróbuj ponownie.",
+    "endedTitle": "Koniec kariery",
+    "ending": {
+      "completed": "Kariera ukończona — dwadzieścia lat streamowania za tobą.",
+      "insolvency": "Bankructwo — kasa skończyła się na dobre.",
+      "earlyRetirement": "Wcześniejsza emerytura."
+    },
+    "errors": {
+      "stale-version": "Kariera zmieniła się w innej karcie. Pokazuję aktualny stan.",
+      "career-ended": "Ta kariera już się zakończyła.",
+      "week-in-progress": "Tydzień już trwa.",
+      "illegal-action": "Ta akcja jest teraz niedostępna.",
+      "unknown-choice": "Tej odpowiedzi już nie ma.",
+      "events-unresolved": "Najpierw rozegraj zdarzenia tego tygodnia.",
+      "no-pending-week": "Nie ma trwającego tygodnia.",
+      "generic": "Coś poszło nie tak. Odśwież stronę."
+    }
+  },
+  "plan": {
+    "title": "Plan tygodnia",
+    "action": "Akcja",
+    "category": "Kategoria",
+    "slot": "Sprzęt do ulepszenia",
+    "start": "Zaczynam stream",
+    "lastReport": "Ostatni raport (tydzień {{week}})"
+  },
+  "disabled": {
+    "forced-rest": "Musisz odpocząć",
+    "unaffordable": "Nie stać cię",
+    "max-tier": "Maksymalny poziom",
+    "missing-slot": "Wybierz sprzęt",
+    "negative-cash": "Masz debet",
+    "career-ended": "Kariera zakończona",
+    "week-in-progress": "Tydzień już trwa",
+    "unknown": "Niedostępne"
+  },
+  "event": {
+    "live": "Na żywo",
+    "choices": "Odpowiedzi",
+    "chance": "Szansa: {{value}}",
+    "certain": "pewne",
+    "critical": "Możliwy wynik krytyczny",
+    "modifiers": "Modyfikatory",
+    "points": "{{value}} pp",
+    "choose": "Wybieram",
+    "untitled": "Zdarzenie na streamie",
+    "chat-raid": {
+      "title": "Rajd na czat",
+      "welcome": "Przywitaj gości i odpal dla nich szybkie show",
+      "ignore": "Graj dalej, jakby nic się nie stało"
+    },
+    "tech-failure": {
+      "title": "Awaria sprzętu",
+      "fix-live": "Napraw to na żywo i komentuj każdy krok",
+      "restart": "Zrestartuj wszystko i przeproś za przerwę"
+    },
+    "troll-wave": {
+      "title": "Fala trolli",
+      "banter": "Odpowiedz żartem i zrób z nich część contentu",
+      "moderate": "Włącz tryb tylko dla obserwujących i banuj bez dyskusji"
+    },
+    "donation-goal": {
+      "title": "Cel donejtów",
+      "push": "Podbijaj licznik i rozkręcaj czat do końca streamu",
+      "skip": "Podziękuj i wróć do normalnego streamu"
+    },
+    "collab-ping": {
+      "title": "Zaproszenie do kolaboracji",
+      "accept": "Zaproś na stream bez przygotowania",
+      "decline": "Grzecznie odmów i trzymaj się planu"
+    }
+  },
+  "roll": {
+    "title": "Wynik: {{outcome}}",
+    "rolled": "Rzut {{roll}} przy progu {{threshold}}",
+    "noRoll": "Pewny wybór — bez rzutu",
+    "outcome": {
+      "success": "Sukces",
+      "failure": "Porażka",
+      "criticalSuccess": "Krytyczny sukces",
+      "criticalFailure": "Krytyczna porażka"
+    },
+    "next": "Dalej"
+  },
+  "settle": {
+    "title": "Koniec streamu",
+    "body": "Wszystkie zdarzenia tego tygodnia za tobą.",
+    "action": "Kończę tydzień"
+  },
+  "report": {
+    "title": "Raport — tydzień {{week}}",
+    "viewers": "Widzowie",
+    "followersGained": "Nowi obserwujący",
+    "followersLost": "Odeszło",
+    "followersNet": "Bilans obserwujących",
+    "income": "Przychody",
+    "costs": "Koszty",
+    "cashDelta": "Zmiana kasy",
+    "statChanges": "Zmiany statystyk",
+    "none": "Brak",
+    "next": "Następny tydzień",
+    "line": {
+      "income": {
+        "subscriptions": "Suby",
+        "donations": "Donejty",
+        "ads": "Reklamy",
+        "event": "Zdarzenie"
+      },
+      "cost": {
+        "living": "Życie",
+        "equipment-upkeep": "Utrzymanie sprzętu",
+        "equipment": "Zakup sprzętu",
+        "event": "Zdarzenie"
+      }
+    },
+    "cause": { "action": "akcja tygodnia", "stream": "stream", "practice": "praktyka" }
+  },
+  "batch": {
+    "launch": "Auto: 13 tygodni",
+    "confirmTitle": "Streamować automatycznie 13 tygodni?",
+    "confirmBody": "Grę poprowadzi strategia „Zbalansowana”. Każdy tydzień zapisuje się osobno, a gra zatrzyma się przed decyzją, która należy do ciebie.",
+    "confirm": "Streamuj 13 tygodni",
+    "cancel": "Anuluj",
+    "running": "Streamujesz 13 tygodni…",
+    "title": "Wynik automatycznych tygodni",
+    "weeksCommitted": "Rozegrane tygodnie: {{value}}",
+    "stop": {
+      "completed": "Wszystkie 13 tygodni rozegrane.",
+      "pausedForDecision": "Gra czeka na twoją decyzję.",
+      "careerEnded": "Kariera zakończyła się w trakcie.",
+      "interrupted": "Kariera zmieniła się w innej karcie — automat się zatrzymał."
+    },
+    "summary": "Podsumowanie",
+    "start": "Na starcie",
+    "end": "Na końcu",
+    "ledger": "Tydzień po tygodniu",
+    "week": "Tydzień {{week}}",
+    "plan": "{{action}} · {{category}}",
+    "choice": "{{event}}: {{choice}}",
+    "next": "Dalej"
+  },
+  "reason": {
+    "forced-rest": "Brak energii albo pełne wypalenie — tylko odpoczynek.",
+    "train-every-week": "Trening co tydzień.",
+    "rest-low-energy": "Energia {{energy}} poniżej {{threshold}} — odpoczynek.",
+    "rest-high-burnout": "Wypalenie {{burnout}} powyżej {{limit}} — odpoczynek.",
+    "upgrade-equipment": "{{slot}} za {{pricePln}} przy kasie {{cashPln}} — ulepszenie.",
+    "train-scheduled": "Co {{everyWeeks}} tygodnie trening.",
+    "manage-community-drama": "Drama {{drama}} powyżej {{limit}} — ogarnianie społeczności.",
+    "no-action-default": "Nic pilnego — zwykły stream.",
+    "fallback-rest": "„{{preferred}}” niedostępne — odpoczynek.",
+    "gamble-best-odds": "Szansa {{probability}} (próg {{threshold}}) — ryzyk-fizyk.",
+    "take-guaranteed": "Najlepsza szansa {{bestProbability}} to za mało — pewny wybór.",
+    "take-guaranteed-only": "Do wyboru tylko pewna opcja.",
+    "only-gambles": "Same ryzykowne opcje — szansa {{probability}}.",
+    "unknown": "Decyzja automatu.",
+    "category": "Kategoria {{category}}: {{rule}}.",
+    "rule": { "bonus": "mocna strona", "least-bored": "najmniej nudna", "rotation": "rotacja" }
+  }
+}
