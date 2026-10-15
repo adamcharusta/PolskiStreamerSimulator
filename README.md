@@ -20,10 +20,10 @@ source/
     WebApp/                ASP.NET Core host
     Tests/                 xUnit, FsCheck and architecture tests
     Tools/BatchSimulator/  console runner for seeded careers and reports
-  frontend/                React client (later milestone)
+  frontend/                React client (M2-C; TD-98)
 k8s/                       Ansible, Helm and environment values (later milestone)
 .github/
-  workflows/               CI (backend, backend integration, SonarQube Cloud, PR policy)
+  workflows/               CI (backend, backend integration, frontend, SonarQube Cloud, PR policy)
   rulesets/                main and develop branch rules
   scripts/                 CI helper scripts
 ```

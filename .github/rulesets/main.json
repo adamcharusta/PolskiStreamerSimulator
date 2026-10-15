@@ -37,6 +37,7 @@
         "required_status_checks": [
           { "context": "backend", "integration_id": 15368 },
           { "context": "backend-integration", "integration_id": 15368 },
+          { "context": "frontend", "integration_id": 15368 },
           { "context": "sonar", "integration_id": 15368 },
           { "context": "pr-policy", "integration_id": 15368 }
         ]
