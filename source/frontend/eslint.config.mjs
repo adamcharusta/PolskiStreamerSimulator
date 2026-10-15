@@ -67,16 +67,22 @@ export default defineConfig(
   },
   {
     files: ['src/**/*.{ts,tsx}', 'test/**/*.{ts,tsx}'],
-    ...react.configs.flat.recommended,
-    ...react.configs.flat['jsx-runtime'],
+    plugins: {
+      ...react.configs.flat.recommended.plugins,
+      ...react.configs.flat['jsx-runtime'].plugins,
+    },
     languageOptions: {
       ...react.configs.flat.recommended.languageOptions,
       globals: globals.browser,
     },
     settings: { react: { version: 'detect' } },
+    rules: {
+      ...react.configs.flat.recommended.rules,
+      ...react.configs.flat['jsx-runtime'].rules,
+      // TypeScript types replace prop-types.
+      'react/prop-types': 'off',
+    },
   },
-  // TypeScript types replace prop-types.
-  { files: ['src/**/*.{ts,tsx}', 'test/**/*.{ts,tsx}'], rules: { 'react/prop-types': 'off' } },
   { files: ['src/**/*.{ts,tsx}'], ...jsxA11y.flatConfigs.recommended },
   { files: ['src/**/*.{ts,tsx}'], ...reactHooks.configs.flat.recommended },
   { files: ['src/**/*.tsx'], ...reactRefresh.configs.vite },
