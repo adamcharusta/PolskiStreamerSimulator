@@ -91,21 +91,68 @@ describe.each(themes)('the %s theme (WCAG 2.2 AA)', (theme) => {
   });
 });
 
-/** A fieldset with the given classes, styled by the whole stylesheet in jsdom. */
-function styled(className: string): CSSStyleDeclaration {
+describe('the theme decorations (spec §5)', () => {
+  it.each([
+    ['win98', '--title-text', '--title-bar', 4.5],
+    ['win98', '--meter-fill', '--meter-track', 3],
+    ['web2005', '--new-text', '--new-bg', 4.5],
+    ['web2005', '--counter-text', '--counter-bg', 4.5],
+  ] as const)('keeps the %s decoration %s on %s at %s:1 or more', (theme, front, back, ratio) => {
+    const scope = tokens(theme);
+    expect(contrast(colour(scope, front), colour(scope, back))).toBeGreaterThanOrEqual(ratio);
+  });
+});
+
+/** An element with the given classes, styled by the whole stylesheet in jsdom under a theme. */
+function styled(className: string, theme?: Theme, tag = 'fieldset'): CSSStyleDeclaration {
   const style = document.createElement('style');
   style.textContent = css.replaceAll(/@import[^;]+;/gu, '');
   document.head.append(style);
-  const fieldset = document.createElement('fieldset');
-  fieldset.className = className;
-  document.body.append(fieldset);
-  return getComputedStyle(fieldset);
+  if (theme !== undefined) {
+    document.documentElement.dataset.theme = theme;
+  }
+  const element = document.createElement(tag);
+  element.className = className;
+  document.body.append(element);
+  return getComputedStyle(element);
 }
 
 describe('the stylesheet cascade', () => {
   afterEach(() => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
+    delete document.documentElement.dataset.theme;
+  });
+
+  it.each(['overlay', 'win98'] as const)(
+    'hides the web2005 visitor counter and new labels in the %s theme',
+    (theme) => {
+      expect(styled('visitor-counter', theme, 'span').display).toBe('none');
+      expect(styled('new-label', theme, 'span').display).toBe('none');
+    },
+  );
+
+  it('keeps the columns of a statistics table apart', () => {
+    const table = styled('stat-table', 'win98', 'table');
+    const cell = document.createElement('td');
+    document.querySelector('table.stat-table')?.append(cell);
+    expect(table.display).toBe('table');
+    expect(getComputedStyle(cell).paddingRight).toBe('6px');
+  });
+
+  it('makes a step heading stand out from body text', () => {
+    // 1.4rem at jsdom's 16px root font size.
+    expect(styled('step-heading', 'overlay', 'h2').fontSize).toBe('22.4px');
+  });
+
+  it('draws the step heading as a window title bar in the win98 theme', () => {
+    // The title bar's 0.15rem padding, which only the win98 decoration adds.
+    expect(styled('step-heading', 'win98', 'h2').paddingTop).toBe('2.4px');
+  });
+
+  it('shows the visitor counter and new labels in the web2005 theme', () => {
+    expect(styled('visitor-counter', 'web2005', 'span').display).toBe('inline-block');
+    expect(styled('new-label', 'web2005', 'span').display).toBe('inline-block');
   });
 
   it('keeps the panel padding on a choice group drawn as a panel', () => {

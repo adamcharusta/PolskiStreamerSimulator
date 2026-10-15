@@ -47,6 +47,10 @@
   --field-bg: #ffffff;
   --field-text: #000000;
   --field-border: #404040;
+  --title-bar: #000080;
+  --title-text: #ffffff;
+  --meter-fill: #000080;
+  --meter-track: #ffffff;
   --border: 2px outset #dfdfdf;
   --radius: 0;
   --tilt: 0deg;
@@ -73,6 +77,10 @@
   --field-bg: #ffffff;
   --field-text: #1b1b1b;
   --field-border: var(--frame);
+  --new-bg: #c00000;
+  --new-text: #ffffff;
+  --counter-bg: #000000;
+  --counter-text: #39ff14;
   --border: 1px dashed var(--frame-2);
   --radius: 10px;
   --tilt: 0deg;
@@ -99,6 +107,12 @@ body {
   font-family: var(--font-heading);
   letter-spacing: 0.02em;
   margin: 0 0 0.5rem;
+}
+
+/* Tailwind's reset leaves headings at body size; the current step's title leads the stage. */
+.step-heading {
+  font-size: 1.4rem;
+  line-height: 1.2;
 }
 
 .shell {
@@ -179,6 +193,13 @@ body {
 
 [data-theme='win98'] .field {
   border-style: inset;
+}
+
+/* Numbers in a statistics table keep a gap from the next column in every font. */
+.stat-table th,
+.stat-table td {
+  padding: 0 0.375rem 0 0;
+  text-align: left;
 }
 
 .muted {
@@ -272,6 +293,108 @@ body {
   width: auto;
   height: auto;
   clip-path: none;
+}
+
+/* Theme decorations (spec §5): presentation only; decorative text is aria-hidden in the markup. */
+.visitor-counter,
+.new-label {
+  display: none;
+}
+
+[data-theme='win98'] .panel-title,
+[data-theme='win98'] .step-heading {
+  display: block;
+  padding: 0.15rem 0.4rem;
+  background: var(--title-bar);
+  color: var(--title-text);
+  font-weight: 700;
+}
+
+[data-theme='win98'] .step-heading {
+  font-size: 1.1rem;
+}
+
+[data-theme='win98'] :focus-visible {
+  outline-style: dotted;
+}
+
+[data-theme='win98'] meter {
+  appearance: none;
+  height: 1rem;
+  border: 2px inset var(--field-border);
+  background: var(--meter-track);
+}
+
+[data-theme='win98'] meter::-webkit-meter-bar {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: var(--meter-track);
+}
+
+/* Block progress bars: separate rules, because one unknown pseudo-element drops a whole selector list. */
+[data-theme='win98'] meter::-webkit-meter-optimum-value {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--meter-fill) 0 0.5rem,
+    transparent 0.5rem 0.65rem
+  );
+}
+
+[data-theme='win98'] meter::-webkit-meter-suboptimum-value {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--meter-fill) 0 0.5rem,
+    transparent 0.5rem 0.65rem
+  );
+}
+
+[data-theme='win98'] meter::-webkit-meter-even-less-good-value {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--meter-fill) 0 0.5rem,
+    transparent 0.5rem 0.65rem
+  );
+}
+
+[data-theme='win98'] meter::-moz-meter-bar {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--meter-fill) 0 0.5rem,
+    transparent 0.5rem 0.65rem
+  );
+}
+
+/* Gloss only lightens dark-on-light buttons and only shades the bar under white text, so contrast never drops. */
+[data-theme='web2005'] .btn {
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 85%) 0%,
+    rgb(255 255 255 / 35%) 50%,
+    transparent 51%
+  );
+}
+
+[data-theme='web2005'] .topbar {
+  background-image: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / 30%) 100%);
+}
+
+[data-theme='web2005'] .visitor-counter {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: var(--counter-bg);
+  color: var(--counter-text);
+  font-family: 'Courier New', monospace;
+}
+
+[data-theme='web2005'] .new-label {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.3rem;
+  background: var(--new-bg);
+  color: var(--new-text);
+  font-weight: 700;
+  transform: rotate(-6deg);
 }
 
 @media (prefers-reduced-motion: reduce) {

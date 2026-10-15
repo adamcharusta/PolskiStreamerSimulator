@@ -26,6 +26,10 @@
     "exitTitle": "Do zobaczenia",
     "exitBody": "Ta gra jest przeznaczona tylko dla osób pełnoletnich. Możesz zamknąć tę kartę."
   },
+  "decor": {
+    "visitors": "Jesteś 001337. gościem tej strony!",
+    "new": "NOWE!"
+  },
   "fallback": {
     "notFound": "Nie ma takiej strony",
     "error": "Coś poszło nie tak",

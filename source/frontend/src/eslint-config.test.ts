@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 const severity = (entry: unknown): unknown => (Array.isArray(entry) ? entry[0] : entry);
 
-describe('the ESLint configuration (repository standards)', () => {
+// Resolving the type-aware configuration takes several seconds, longer under coverage.
+describe('the ESLint configuration (repository standards)', { timeout: 30_000 }, () => {
   it('applies the React, hooks and accessibility rules to components', async () => {
     const config = (await new ESLint().calculateConfigForFile('src/App.tsx')) as {
       rules: Record<string, unknown>;
