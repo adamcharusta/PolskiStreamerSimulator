@@ -26,6 +26,12 @@
     "exitTitle": "Do zobaczenia",
     "exitBody": "Ta gra jest przeznaczona tylko dla osób pełnoletnich. Możesz zamknąć tę kartę."
   },
+  "fallback": {
+    "notFound": "Nie ma takiej strony",
+    "error": "Coś poszło nie tak",
+    "errorBody": "Ten ekran się nie wczytał. Twoja kariera jest zapisana na serwerze.",
+    "home": "Wróć na start"
+  },
   "notice": {
     "online": "Gra wymaga połączenia z internetem. Kariera zapisuje się na serwerze po każdym kroku.",
     "dismiss": "Rozumiem"
@@ -53,11 +59,11 @@
     "cash": "Kasa: {{value}}",
     "followers": "Obserwujący: {{value}}",
     "strongest": "Mocna strona: {{value}}",
+    "strongestNone": "Mocna strona: brak — żadna kategoria się nie wyróżnia",
     "equipment": "Sprzęt: poziom {{value}}",
     "multiplier": "Mnożnik punktów: ×{{value}}",
     "errors": {
       "nickname": "Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .",
-      "field": "Popraw to pole.",
       "generic": "Nie udało się założyć kariery. Spróbuj ponownie.",
       "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
     }

@@ -21,7 +21,7 @@ export function Button({
   type = 'button',
   disabled = false,
   ...props
-}: ButtonProps) {
+}: Readonly<ButtonProps>) {
   return (
     <button
       type={type === 'submit' ? 'submit' : 'button'}

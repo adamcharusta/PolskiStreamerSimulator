@@ -40,7 +40,16 @@ export function AgeGate({ children }: { readonly children: ReactNode }) {
   if (state === 'declined') {
     return (
       <main className="shell grid min-h-screen place-content-center gap-2 text-center">
-        <h1 className="heading text-3xl">{t('gate.exitTitle')}</h1>
+        {/* The dialog took focus with it; the farewell receives it so that it is announced. */}
+        <h1
+          ref={(heading) => {
+            heading?.focus();
+          }}
+          tabIndex={-1}
+          className="heading text-3xl"
+        >
+          {t('gate.exitTitle')}
+        </h1>
         <p>{t('gate.exitBody')}</p>
       </main>
     );
@@ -50,8 +59,8 @@ export function AgeGate({ children }: { readonly children: ReactNode }) {
     return (
       <>
         {noticeOpen && (
-          <div role="status" className="topbar justify-between">
-            <span>{t('notice.online')}</span>
+          <div className="topbar justify-between">
+            <output>{t('notice.online')}</output>
             <Button
               onClick={() => {
                 rememberValue(noticeKey, 'dismissed');

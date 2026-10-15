@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -20,29 +20,35 @@ import { count, multiplier, pln } from '@/format';
 
 import { type CreateCareerForm, createCareerSchema } from './schema';
 
-const fields = ['nickname', 'background', 'difficulty', 'pronouns'] as const;
+/** The category with the highest starting skill, or null when none stands out. */
+function strongest(option: BackgroundOptionView): string | null {
+  const [best, next] = Object.entries(option.skill).toSorted((a, b) => b[1] - a[1]);
+  return best === undefined || best[1] === next?.[1] ? null : best[0];
+}
 
-function strongest(option: BackgroundOptionView): string {
-  const [best] = Object.entries(option.skill).toSorted((a, b) => b[1] - a[1]);
-  return best?.[0] ?? 'justChatting';
+/** Only a rejected nickname has a place on the form; every other rejection shows the generic error. */
+function rejectsNickname(error: ApiRequestError | null): boolean {
+  return error !== null && isApiError(error) && 'nickname' in error.errors;
 }
 
 export function CreateCareerScreen() {
   const { t } = useTranslation();
   const options = useGetCareerOptions();
+  let body: ReactNode = <output className="block">{t('create.loading')}</output>;
+  if (options.data) {
+    body = <CreateCareerForm options={options.data} />;
+  } else if (options.isError) {
+    body = (
+      <div>
+        <p role="alert">{t('create.optionsFailed')}</p>
+        <Button onClick={() => void options.refetch()}>{t('career.retry')}</Button>
+      </div>
+    );
+  }
   return (
     <div className="grid gap-3">
       <h1 className="heading text-3xl">{t('create.title')}</h1>
-      {options.data ? (
-        <CreateCareerForm options={options.data} />
-      ) : options.isError ? (
-        <div>
-          <p role="alert">{t('create.optionsFailed')}</p>
-          <Button onClick={() => void options.refetch()}>{t('career.retry')}</Button>
-        </div>
-      ) : (
-        <p role="status">{t('create.loading')}</p>
-      )}
+      {body}
     </div>
   );
 }
@@ -50,6 +56,8 @@ export function CreateCareerScreen() {
 function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) {
   const { t } = useTranslation();
   const [storageError, setStorageError] = useState(false);
+  // Set before the request, so a second activation in the same moment cannot create a second career.
+  const submitting = useRef(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm<CreateCareerForm, unknown, CreateCareerRequest>({
@@ -75,12 +83,9 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
       await navigate({ to: '/kariera/$careerId', params: { careerId: created.careerId } });
     },
     onError: (error) => {
-      for (const field of fields) {
-        if (isApiError(error) && field in error.errors) {
-          form.setError(field, {
-            message: field === 'nickname' ? 'create.errors.nickname' : 'create.errors.field',
-          });
-        }
+      submitting.current = false;
+      if (rejectsNickname(error)) {
+        form.setError('nickname', { message: 'create.errors.nickname' });
       }
     },
   });
@@ -98,11 +103,15 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
       className="grid gap-3"
       onSubmit={(event) => {
         void form.handleSubmit((request) => {
+          if (submitting.current) {
+            return;
+          }
           if (!canStoreCareer()) {
             setStorageError(true);
             return;
           }
           setStorageError(false);
+          submitting.current = true;
           creation.mutate(request);
         })(event);
       }}
@@ -113,7 +122,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
         </label>
         <input
           id="nickname"
-          className="choice w-full"
+          className="field w-full"
           autoComplete="off"
           aria-describedby="nickname-hint"
           aria-invalid={nicknameError ? true : undefined}
@@ -130,17 +139,24 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
 
       <fieldset className="choices panel">
         <legend className="panel-title">{t('create.background')}</legend>
-        {options.backgrounds.map((option) => (
-          <label key={option.background} className="choice">
-            <input type="radio" value={option.background} {...form.register('background')} />
-            <span className="font-bold">{t(`background.${option.background}`)}</span>
-            <span>{t('create.cash', { value: pln(option.cashPln) })}</span>
-            <span>{t('create.followers', { value: count(option.followers) })}</span>
-            <span>{t('create.strongest', { value: t(`category.${strongest(option)}`) })}</span>
-            <span>{t('create.equipment', { value: option.equipment.microphone })}</span>
-            <span>{t('create.multiplier', { value: multiplier(option.scoreMultiplier) })}</span>
-          </label>
-        ))}
+        {options.backgrounds.map((option) => {
+          const best = strongest(option);
+          return (
+            <label key={option.background} className="choice">
+              <input type="radio" value={option.background} {...form.register('background')} />
+              <span className="font-bold">{t(`background.${option.background}`)}</span>
+              <span>{t('create.cash', { value: pln(option.cashPln) })}</span>
+              <span>{t('create.followers', { value: count(option.followers) })}</span>
+              <span>
+                {best === null
+                  ? t('create.strongestNone')
+                  : t('create.strongest', { value: t(`category.${best}`) })}
+              </span>
+              <span>{t('create.equipment', { value: option.equipment.microphone })}</span>
+              <span>{t('create.multiplier', { value: multiplier(option.scoreMultiplier) })}</span>
+            </label>
+          );
+        })}
       </fieldset>
 
       <fieldset className="choices panel">
@@ -174,13 +190,11 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
             {t('create.errors.storage')}
           </p>
         )}
-        {!storageError &&
-          creation.error !== null &&
-          creation.error.code !== 'validation-failed' && (
-            <p role="alert" className="bad">
-              {t('create.errors.generic')}
-            </p>
-          )}
+        {!storageError && creation.error !== null && !rejectsNickname(creation.error) && (
+          <p role="alert" className="bad">
+            {t('create.errors.generic')}
+          </p>
+        )}
         <Button type="submit" variant="primary" pending={creation.isPending}>
           {t('create.submit')}
         </Button>

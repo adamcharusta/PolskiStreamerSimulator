@@ -42,6 +42,14 @@ describe('the 18+ gate', () => {
     expect(localStorage.getItem('pss.ageGate.v1')).toBeNull();
   });
 
+  it('moves focus to the farewell so that it is announced', async () => {
+    const { user } = renderApp('/', { confirmed: false });
+
+    await user.click(await screen.findByRole('button', { name: 'Wychodzę' }));
+
+    expect(screen.getByRole('heading', { name: 'Do zobaczenia' })).toHaveFocus();
+  });
+
   it('opens the game after confirmation, remembers it and shows the online notice once', async () => {
     const { user } = renderApp('/', { confirmed: false });
 
@@ -68,6 +76,22 @@ describe('the 18+ gate', () => {
     renderApp(`/kariera/${TEST_CAREER_ID}`, { confirmed: false });
 
     expect(await gate()).toBeInTheDocument();
+    expect(requests).toBe(0);
+  });
+
+  it('shows the gate first on a deep link to character creation and makes no request', async () => {
+    let requests = 0;
+    server.use(
+      http.all('*', () => {
+        requests += 1;
+        return HttpResponse.error();
+      }),
+    );
+
+    renderApp('/nowa-kariera', { confirmed: false });
+
+    expect(await gate()).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nick')).not.toBeInTheDocument();
     expect(requests).toBe(0);
   });
 

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -82,6 +82,53 @@ describe('character creation', () => {
     expect(
       screen.getByRole('radio', { name: /Człowiek z branży/u }).closest('label'),
     ).toHaveTextContent('×0,90');
+  });
+
+  it('names no strong side for a background with even skills', async () => {
+    serveOptions();
+    renderApp('/nowa-kariera');
+
+    const insider = await screen.findByRole('radio', { name: /Człowiek z branży/u });
+
+    expect(insider.closest('label')).toHaveTextContent(
+      'Mocna strona: brak — żadna kategoria się nie wyróżnia',
+    );
+  });
+
+  it('creates one career when the start button is activated twice at once', async () => {
+    serveOptions();
+    const bodies = captureCreation(() =>
+      HttpResponse.json(
+        { careerId: TEST_CAREER_ID, secret: 'fresh-secret', career: careerView() },
+        { status: 201 },
+      ),
+    );
+    const { user, router } = renderApp('/nowa-kariera');
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+
+    const submit = screen.getByRole('button', { name: 'Zaczynam karierę' });
+    fireEvent.click(submit);
+    fireEvent.click(submit);
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(`/kariera/${TEST_CAREER_ID}`);
+    });
+    expect(bodies).toHaveLength(1);
+  });
+
+  it('shows the generic error when the server rejects a field the form does not show', async () => {
+    serveOptions();
+    captureCreation(() =>
+      problem(400, 'validation-failed', { errors: { background: ['Unknown background.'] } }),
+    );
+    const { user } = renderApp('/nowa-kariera');
+
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+    await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Nie udało się założyć kariery. Spróbuj ponownie.',
+    );
   });
 
   it('rejects an invalid nickname before sending anything', async () => {
