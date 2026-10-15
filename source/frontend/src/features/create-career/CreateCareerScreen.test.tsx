@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { CreateCareerRequest } from '@/api/generated/game.schemas';
 import { knownCareers } from '@/careers/knownCareers';
@@ -37,6 +37,26 @@ describe('character creation', () => {
     await user.click(screen.getByRole('button', { name: 'Spróbuj ponownie' }));
 
     expect(await screen.findByLabelText('Nick')).toBeInTheDocument();
+  });
+
+  it('does not create a career when this browser cannot save its access secret', async () => {
+    serveOptions();
+    const bodies = captureCreation(() => HttpResponse.json({ careerId: TEST_CAREER_ID }));
+    const { user } = renderApp('/nowa-kariera');
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Storage disabled', 'SecurityError');
+    });
+    try {
+      await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'Nie można zapisać dostępu do kariery',
+      );
+      expect(bodies).toEqual([]);
+    } finally {
+      setItem.mockRestore();
+    }
   });
 
   it('shows each background with its starting numbers from the API', async () => {

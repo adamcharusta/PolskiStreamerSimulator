@@ -10,6 +10,17 @@ export interface KnownCareer {
 
 const storageKey = 'pss.careers.v1';
 
+/** Check persistence before creating a server career whose only access key must be saved here. */
+export function canStoreCareer(): boolean {
+  try {
+    const current = localStorage.getItem(storageKey);
+    localStorage.setItem(storageKey, current ?? '[]');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function isKnownCareer(value: unknown): value is KnownCareer {
   if (typeof value !== 'object' || value === null) {
     return false;

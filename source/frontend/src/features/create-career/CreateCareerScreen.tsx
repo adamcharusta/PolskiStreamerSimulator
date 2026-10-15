@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -11,8 +12,8 @@ import type {
   CreateCareerRequest,
   CreatedCareer,
 } from '@/api/generated/game.schemas';
-import type { ApiRequestError } from '@/api/http';
-import { rememberCareer } from '@/careers/knownCareers';
+import { type ApiRequestError, isApiError } from '@/api/http';
+import { canStoreCareer, rememberCareer } from '@/careers/knownCareers';
 import { Button } from '@/components/ui/Button';
 import { Panel } from '@/components/ui/Panel';
 import { count, multiplier, pln } from '@/format';
@@ -48,6 +49,7 @@ export function CreateCareerScreen() {
 
 function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) {
   const { t } = useTranslation();
+  const [storageError, setStorageError] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const form = useForm<CreateCareerForm, unknown, CreateCareerRequest>({
@@ -73,7 +75,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
     },
     onError: (error) => {
       for (const field of fields) {
-        if (field in error.errors) {
+        if (isApiError(error) && field in error.errors) {
           form.setError(field, {
             message: field === 'nickname' ? 'create.errors.nickname' : 'create.errors.field',
           });
@@ -95,6 +97,11 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
       className="grid gap-3"
       onSubmit={(event) => {
         void form.handleSubmit((request) => {
+          if (!canStoreCareer()) {
+            setStorageError(true);
+            return;
+          }
+          setStorageError(false);
           creation.mutate(request);
         })(event);
       }}
@@ -161,11 +168,18 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
           {nickname.trim() || '—'} · {t(`background.${background}`)} ·{' '}
           {t(`difficulty.${difficulty}`)} · {t(`pronouns.${pronouns}`)}
         </p>
-        {creation.error !== null && creation.error.code !== 'validation-failed' && (
+        {storageError && (
           <p role="alert" className="bad">
-            {t('create.errors.generic')}
+            {t('create.errors.storage')}
           </p>
         )}
+        {!storageError &&
+          creation.error !== null &&
+          creation.error.code !== 'validation-failed' && (
+            <p role="alert" className="bad">
+              {t('create.errors.generic')}
+            </p>
+          )}
         <Button type="submit" variant="primary" pending={creation.isPending}>
           {t('create.submit')}
         </Button>

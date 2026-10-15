@@ -58,7 +58,8 @@
     "errors": {
       "nickname": "Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .",
       "field": "Popraw to pole.",
-      "generic": "Nie udało się założyć kariery. Spróbuj ponownie."
+      "generic": "Nie udało się założyć kariery. Spróbuj ponownie.",
+      "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
     }
   },
   "background": {
