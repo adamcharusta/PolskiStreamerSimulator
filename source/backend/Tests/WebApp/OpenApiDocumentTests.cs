@@ -17,6 +17,7 @@ public sealed class OpenApiDocumentTests
         Assert.True(paths.TryGetProperty("/v1/careers/{id}", out _));
         Assert.True(paths.TryGetProperty("/v1/careers/{id}/actions", out _));
         Assert.True(paths.TryGetProperty("/v1/careers/{id}/batches", out _));
+        Assert.True(paths.TryGetProperty("/v1/career-options", out _));
         Assert.Contains("dormRoomNewcomer", document.RootElement.GetRawText(), StringComparison.Ordinal);
     }
 

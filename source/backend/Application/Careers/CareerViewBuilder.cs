@@ -37,18 +37,20 @@ public sealed class CareerViewBuilder(WeekEngine engine)
         Decimals.Of(s.Burnout),
         Categories(s.Skill),
         Categories(s.Boredom),
-        new EquipmentView(
-            s.Equipment[EquipmentSlot.Microphone],
-            s.Equipment[EquipmentSlot.Camera],
-            s.Equipment[EquipmentSlot.Computer],
-            s.Equipment[EquipmentSlot.Connection]));
+        Equipment(s.Equipment));
 
-    private static CategoryValuesView Categories(CategoryValues<Fixed> v) => new(
+    public static CategoryValuesView Categories(CategoryValues<Fixed> v) => new(
         Decimals.Of(v[Category.JustChatting]),
         Decimals.Of(v[Category.Fps]),
         Decimals.Of(v[Category.Moba]),
         Decimals.Of(v[Category.Chess]),
         Decimals.Of(v[Category.Gambling]));
+
+    public static EquipmentView Equipment(IReadOnlyDictionary<EquipmentSlot, int> tiers) => new(
+        tiers[EquipmentSlot.Microphone],
+        tiers[EquipmentSlot.Camera],
+        tiers[EquipmentSlot.Computer],
+        tiers[EquipmentSlot.Connection]);
 
     private NextStepView Next(CareerState s, ContentSnapshot c)
     {

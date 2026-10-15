@@ -47,6 +47,28 @@
         }
       }
     },
+    "/v1/career-options": {
+      "get": {
+        "tags": [
+          "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
+        ],
+        "summary": "GET_v1_career_options",
+        "description": "GET_v1_career_options",
+        "operationId": "getCareerOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerOptionsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/careers/{id}": {
       "get": {
         "tags": [
@@ -478,6 +500,55 @@
           "industryInsider"
         ]
       },
+      "BackgroundOptionView": {
+        "required": [
+          "background",
+          "cashPln",
+          "followers",
+          "drama",
+          "credibility",
+          "energy",
+          "skill",
+          "equipment",
+          "scoreMultiplier"
+        ],
+        "type": "object",
+        "properties": {
+          "background": {
+            "$ref": "#/components/schemas/Background"
+          },
+          "cashPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "drama": {
+            "type": "number",
+            "format": "double"
+          },
+          "credibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "energy": {
+            "type": "number",
+            "format": "double"
+          },
+          "skill": {
+            "$ref": "#/components/schemas/CategoryValuesView"
+          },
+          "equipment": {
+            "$ref": "#/components/schemas/EquipmentView"
+          },
+          "scoreMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "BatchOutcome": {
         "required": [
           "weeksCommitted",
@@ -578,6 +649,35 @@
             "$ref": "#/components/schemas/CareerStatsView"
           }
         }
+      },
+      "CareerOptionsView": {
+        "required": [
+          "backgrounds",
+          "difficulties",
+          "pronouns"
+        ],
+        "type": "object",
+        "properties": {
+          "backgrounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackgroundOptionView"
+            }
+          },
+          "difficulties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DifficultyOptionView"
+            }
+          },
+          "pronouns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PronounSet"
+            }
+          }
+        },
+        "description": "What character creation may choose, with the numbers of the content new careers start on."
       },
       "CareerStatsView": {
         "required": [
@@ -851,6 +951,22 @@
           "easy",
           "normal"
         ]
+      },
+      "DifficultyOptionView": {
+        "required": [
+          "difficulty",
+          "scoreMultiplier"
+        ],
+        "type": "object",
+        "properties": {
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "scoreMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       },
       "EndingReason": {
         "enum": [
