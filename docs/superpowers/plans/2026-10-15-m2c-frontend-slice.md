@@ -17,7 +17,7 @@
 - Node `24.22.0` (`source/frontend/.nvmrc`; `engines.node` `>=24.15.0 <25`); Docker images `node:24.22.0-alpine`, `mcr.microsoft.com/dotnet/sdk:10.0.402-noble`, `mcr.microsoft.com/dotnet/aspnet:10.0.13-noble`, `mcr.microsoft.com/mssql/server:2025-RTM-ubuntu-22.04`.
 - Routes: `/`, `/nowa-kariera`, `/kariera/$careerId`. API calls only through `src/api/generated` (never edited by hand) and the mutator `src/api/http.ts`.
 - Local storage keys: `pss.ageGate.v1` (`"confirmed"`), `pss.onlineNotice.v1` (`"dismissed"`), `pss.theme` (`overlay` | `win98` | `web2005`, default `overlay`), `pss.careers.v1` (JSON array of `{ careerId, nickname, secret, createdAt }`).
-- Every confirmed step or batch gets `commandId = crypto.randomUUID()` once; a retry sends the identical request. Automatic retries only for network errors and timeouts, at most 2.
+- Every confirmed step or batch gets `commandId = crypto.randomUUID()` once; a retry sends the identical request. Automatic retries only for network errors and timeouts, at most 2. `POST /v1/careers` is an exception: it has no idempotency key, so Task 9 disables its automatic retries (TD-106).
 - All player-visible copy is Polish and comes from `src/locales/pl/translation.json` or from API content (`textPl`, `labelPl`); no hard-coded UI strings in components. Documentation stays English.
 - WCAG 2.2 AA in every theme; 320 CSS pixels without horizontal scrolling; gains/losses always carry a sign and text; nicknames render as text.
 - Test-driven development ([TD-58](../../technical-decisions.md)): every production change starts with a failing test. Frontend line coverage ≥ 80% on its own; SonarQube Cloud zero open issues (TD-96).

@@ -59,6 +59,18 @@ describe('character creation', () => {
     }
   });
 
+  it('does not repeat a career creation request after a lost connection', async () => {
+    serveOptions();
+    const bodies = captureCreation(() => HttpResponse.error());
+    const { user } = renderApp('/nowa-kariera');
+
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+    await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się założyć kariery.');
+    expect(bodies).toHaveLength(1);
+  });
+
   it('shows each background with its starting numbers from the API', async () => {
     serveOptions();
     renderApp('/nowa-kariera');

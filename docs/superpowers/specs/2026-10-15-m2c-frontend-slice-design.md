@@ -82,6 +82,7 @@ Success means:
 
 - The career is the TanStack Query entry `getCareer(careerId)`. The stage renders the view for `next.kind` (`planWeek`, `resolveEvent`, `settleWeek`, `ended`); there are no per-step routes.
 - A step or batch gets its `commandId` (`crypto.randomUUID()`) when the player confirms it. A retry after a network failure sends the same request with the same ID, so the server returns the stored result instead of rolling again. Retries happen only for network errors and timeouts, at most twice, then the player sees a retry button that reuses the ID.
+- `POST /v1/careers` has no idempotency key in M2, so it does not automatically retry after a network failure (TD-106). A lost creation response can still strand its secret until a later recovery or idempotent-creation design is available.
 - The response's career view replaces the cached career at once. A reload simply fetches the career again, so the screen always shows server-confirmed state; the query cache is not a save.
 - Transient results the next view needs — the roll just revealed, the report of the week just settled, the batch result — live in component state until the player moves on. After a reload, the plan view shows the career's `lastReport` instead.
 - Primary actions are disabled while their request is pending, and the mutation ignores a second activation, so a double click sends one request.
@@ -211,6 +212,7 @@ Documentation updates: `validation-and-delivery.md` (vertical-slice criterion: a
 | #11 Escape and outside clicks cannot bypass the gate | Vitest tests for Escape, outside click and back navigation; the Playwright journey starts at the gate. |
 | #11 Declining shows a neutral exit | Vitest test of the exit view; no game request is made before confirmation. |
 | #11 The starting profile reaches the API | MSW asserts the creation request body; the Playwright journey creates a real career. |
+| #11 A lost creation response does not trigger duplicate requests | The creation component test returns a network error and asserts exactly one `POST /v1/careers` (TD-106). |
 | #12 A full week can be played in the browser | The Playwright journey plays plan, every event and settlement. |
 | #12 Choices cannot be submitted twice | Vitest: a double activation sends one request; retries reuse the `commandId`. |
 | #12 Refreshing restores the server-confirmed state | The Playwright journey reloads and compares the visible state. |

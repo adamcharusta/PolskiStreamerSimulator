@@ -68,7 +68,7 @@ Orval generates TypeScript DTOs and API functions from the OpenAPI artifact. Use
 
 The selected visual theme and the age acknowledgment are browser state. If browser storage is unavailable, the app uses the default overlay and shows the 18+ gate on load; explicit theme and gate choices still apply for the current page without crashing (TD-103). Persistence resumes when storage becomes available.
 
-Before creating a server career, the client checks that browser storage can save its access secret. A denied write blocks the creation request and shows an error, because recovery keys do not arrive until M4 (TD-105).
+Before creating a server career, the client checks that browser storage can save its access secret. A denied write blocks the creation request and shows an error, because recovery keys do not arrive until M4 (TD-105). `POST /v1/careers` does not use automatic network retries because it has no idempotency key (TD-106); gameplay commands with command IDs retain their repeat-safe retry policy.
 
 This is a good fit for the requested stack: TanStack Query handles server cache and request lifecycle, Axios provides a configurable transport, and Orval keeps FE contracts tied to the API. Configure mutation retry per endpoint, especially for decisions that roll outcomes; retry only with the same idempotency key. The browser and API should normally share one HTTPS origin in production.
 

@@ -63,6 +63,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
   });
   const creation = useMutation<CreatedCareer, ApiRequestError, CreateCareerRequest>({
     mutationFn: (request) => createCareer(request),
+    retry: false,
     onSuccess: async (created) => {
       rememberCareer({
         careerId: created.careerId,
