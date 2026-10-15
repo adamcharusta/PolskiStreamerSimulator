@@ -105,6 +105,46 @@ jobs:
       - name: Integration tests
         run: dotnet test PolskiStreamerSimulator.slnx -c Release --no-build --filter-trait "Category=Integration"
 
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: source/frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: source/frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: source/frontend/package-lock.json
+      - name: Install
+        run: npm ci --ignore-scripts
+      # The client must match the committed contract; untracked output counts as drift too.
+      - name: Verify generated API client
+        run: |
+          npm run api:generate
+          if [ -n "$(git status --porcelain -- src/api/generated)" ]; then
+            git status --porcelain -- src/api/generated
+            echo "::error::src/api/generated differs from the OpenAPI document. Run npm run api:generate and commit the result."
+            exit 1
+          fi
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Check formatting
+        run: npm run format:check
+      - name: Test with coverage gate
+        run: npm run test:coverage
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: frontend-coverage
+          path: source/frontend/coverage/lcov.info
+          if-no-files-found: warn
+
   sonar:
     name: sonar
     # The SonarQube Cloud Free plan analyses only its main branch, `develop` (TD-89), and PRs; pushes to `main` skip the job.
@@ -130,6 +170,14 @@ jobs:
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: source/backend/global.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: source/frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: source/frontend/package-lock.json
+      - name: Install frontend
+        working-directory: source/frontend
+        run: npm ci --ignore-scripts
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.nuget/packages
@@ -146,9 +194,11 @@ jobs:
           /o:"$SONAR_ORGANIZATION"
           /d:sonar.host.url="https://sonarcloud.io"
           /d:sonar.token="$SONAR_TOKEN"
+          /d:sonar.projectBaseDir="$GITHUB_WORKSPACE"
           /d:sonar.cs.opencover.reportsPaths="$RUNNER_TEMP/sonar-results/coverage.opencover.*.xml"
-          /d:sonar.coverage.exclusions="**/Tools/BatchSimulator/Program.cs,**/*.g.cs,**/Persistence/Migrations/**"
-          /d:sonar.exclusions="**/Tests/Golden/**,**/Persistence/Migrations/**"
+          /d:sonar.javascript.lcov.reportPaths="$GITHUB_WORKSPACE/source/frontend/coverage/lcov.info"
+          /d:sonar.coverage.exclusions="**/Tools/BatchSimulator/Program.cs,**/*.g.cs,**/Persistence/Migrations/**,source/frontend/src/main.tsx,source/frontend/src/api/generated/**"
+          /d:sonar.exclusions="**/Tests/Golden/**,**/Persistence/Migrations/**,source/frontend/src/api/generated/**,source/frontend/**/*.test.ts,source/frontend/**/*.test.tsx,source/frontend/test/**,source/frontend/e2e/**,**/node_modules/**,**/coverage/**,**/dist/**"
           /d:sonar.qualitygate.wait=true
       - name: Build
         run: dotnet build PolskiStreamerSimulator.slnx -c Release
@@ -160,6 +210,9 @@ jobs:
             echo "::error::No OpenCover report in $RUNNER_TEMP/sonar-results; SonarQube Cloud would see 0% coverage."
             exit 1
           fi
+      - name: Test frontend with LCOV coverage
+        working-directory: source/frontend
+        run: npm run test:coverage
       - name: End analysis and wait for the quality gate
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

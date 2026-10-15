@@ -18,3 +18,13 @@ pre-commit:
         - "content/*"
         - "content/**/*"
       run: cd source/backend && dotnet test PolskiStreamerSimulator.slnx --filter-not-trait "Category=Integration"
+    - name: frontend-lint
+      root: "source/frontend/"
+      glob: "source/frontend/**/*.{ts,tsx,mjs}"
+      # Same rule as backend-format: a fix the developer has not reviewed fails the commit.
+      run: npx eslint --fix --max-warnings 0 --no-warn-ignored {staged_files} && git diff --exit-code -- {staged_files}
+    - name: frontend-tests
+      glob:
+        - "source/frontend/*"
+        - "source/frontend/**/*"
+      run: cd source/frontend && npm test

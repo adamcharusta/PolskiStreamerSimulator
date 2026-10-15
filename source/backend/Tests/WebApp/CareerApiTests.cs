@@ -29,6 +29,27 @@ public sealed class CareerApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Validation_errors_name_fields_in_camel_case()
+    {
+        var response = await client.PostAsJsonAsync("/v1/careers", new { nickname = "x", background = "dormRoomNewcomer", difficulty = "normal", pronouns = "woman" }, Ct);
+
+        var errors = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("errors");
+        Assert.True(errors.TryGetProperty("nickname", out _), errors.GetRawText());
+    }
+
+    [Fact]
+    public async Task Career_options_need_no_secret()
+    {
+        var response = await client.GetAsync("/v1/career-options", Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>(Ct);
+        Assert.Equal("dormRoomNewcomer", body.GetProperty("backgrounds")[0].GetProperty("background").GetString());
+        Assert.Equal(1.1m, body.GetProperty("difficulties")[1].GetProperty("scoreMultiplier").GetDecimal());
+        Assert.Equal("nonbinary", body.GetProperty("pronouns")[2].GetString());
+    }
+
+    [Fact]
     public async Task An_invalid_nickname_returns_400_validation_failed_with_field_errors()
     {
         var response = await client.PostAsJsonAsync("/v1/careers", new { nickname = "x", background = "dormRoomNewcomer", difficulty = "normal", pronouns = "woman" }, Ct);

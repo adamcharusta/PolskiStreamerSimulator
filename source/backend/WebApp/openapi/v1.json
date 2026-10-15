@@ -1,17 +1,16 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "PolskiStreamerSimulator.WebApp | v1",
-    "version": "1.0.0"
+    "title": "Polski Streamer Simulator API",
+    "version": "v1"
   },
   "paths": {
     "/v1/careers": {
       "post": {
         "tags": [
-          "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
+          "careers"
         ],
-        "summary": "POST_v1_careers",
-        "description": "POST_v1_careers",
+        "summary": "Create a career and receive its secret once",
         "operationId": "createCareer",
         "requestBody": {
           "content": {
@@ -43,6 +42,47 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/career-options": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "List the starting profiles and difficulties",
+        "operationId": "getCareerOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerOptionsView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
         }
       }
@@ -50,10 +90,9 @@
     "/v1/careers/{id}": {
       "get": {
         "tags": [
-          "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
+          "careers"
         ],
-        "summary": "GET_v1_careers_id",
-        "description": "GET_v1_careers_id",
+        "summary": "Read a career and its next step",
         "operationId": "getCareer",
         "parameters": [
           {
@@ -96,17 +135,31 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
       }
     },
     "/v1/careers/{id}/actions": {
       "post": {
         "tags": [
-          "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
+          "careers"
         ],
-        "summary": "POST_v1_careers_id_actions",
-        "description": "POST_v1_careers_id_actions",
+        "summary": "Settle one manual step",
         "operationId": "submitAction",
         "parameters": [
           {
@@ -189,17 +242,31 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
       }
     },
     "/v1/careers/{id}/batches": {
       "post": {
         "tags": [
-          "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
+          "careers"
         ],
-        "summary": "POST_v1_careers_id_batches",
-        "description": "POST_v1_careers_id_batches",
+        "summary": "Play up to 13 weeks automatically",
         "operationId": "runBatch",
         "parameters": [
           {
@@ -282,27 +349,23 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/health": {
-      "get": {
-        "tags": [
-          "PolskiStreamerSimulator.WebApp"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
-              "text/plain": {
+              "application/problem+json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
       }
     }
   },
@@ -414,7 +477,8 @@
           "startWeek",
           "resolveEvent",
           "settleWeek"
-        ]
+        ],
+        "type": "string"
       },
       "AutoChoiceView": {
         "required": [
@@ -476,7 +540,57 @@
           "localMemeCreator",
           "chessClubRegular",
           "industryInsider"
-        ]
+        ],
+        "type": "string"
+      },
+      "BackgroundOptionView": {
+        "required": [
+          "background",
+          "cashPln",
+          "followers",
+          "drama",
+          "credibility",
+          "energy",
+          "skill",
+          "equipment",
+          "scoreMultiplier"
+        ],
+        "type": "object",
+        "properties": {
+          "background": {
+            "$ref": "#/components/schemas/Background"
+          },
+          "cashPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "drama": {
+            "type": "number",
+            "format": "double"
+          },
+          "credibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "energy": {
+            "type": "number",
+            "format": "double"
+          },
+          "skill": {
+            "$ref": "#/components/schemas/CategoryValuesView"
+          },
+          "equipment": {
+            "$ref": "#/components/schemas/EquipmentView"
+          },
+          "scoreMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       },
       "BatchOutcome": {
         "required": [
@@ -537,7 +651,8 @@
           "pausedForDecision",
           "careerEnded",
           "interrupted"
-        ]
+        ],
+        "type": "string"
       },
       "BatchSummaryView": {
         "required": [
@@ -578,6 +693,35 @@
             "$ref": "#/components/schemas/CareerStatsView"
           }
         }
+      },
+      "CareerOptionsView": {
+        "required": [
+          "backgrounds",
+          "difficulties",
+          "pronouns"
+        ],
+        "type": "object",
+        "properties": {
+          "backgrounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackgroundOptionView"
+            }
+          },
+          "difficulties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DifficultyOptionView"
+            }
+          },
+          "pronouns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PronounSet"
+            }
+          }
+        },
+        "description": "What character creation may choose, with the numbers of the content new careers start on."
       },
       "CareerStatsView": {
         "required": [
@@ -637,7 +781,8 @@
         "enum": [
           "active",
           "ended"
-        ]
+        ],
+        "type": "string"
       },
       "CareerView": {
         "required": [
@@ -724,7 +869,8 @@
           "moba",
           "chess",
           "gambling"
-        ]
+        ],
+        "type": "string"
       },
       "CategoryValuesView": {
         "required": [
@@ -850,24 +996,41 @@
         "enum": [
           "easy",
           "normal"
-        ]
+        ],
+        "type": "string"
+      },
+      "DifficultyOptionView": {
+        "required": [
+          "difficulty",
+          "scoreMultiplier"
+        ],
+        "type": "object",
+        "properties": {
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "scoreMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       },
       "EndingReason": {
         "enum": [
           "completed",
           "insolvency",
-          "earlyRetirement",
-          null
-        ]
+          "earlyRetirement"
+        ],
+        "type": "string"
       },
       "EquipmentSlot": {
         "enum": [
           "microphone",
           "camera",
           "computer",
-          "connection",
-          null
-        ]
+          "connection"
+        ],
+        "type": "string"
       },
       "EquipmentView": {
         "required": [
@@ -930,6 +1093,7 @@
           "manageCommunity",
           "noAction"
         ],
+        "type": "string",
         "description": "M1 between-stream main actions; exactly one per week."
       },
       "ModifierView": {
@@ -955,6 +1119,7 @@
           "settleWeek",
           "ended"
         ],
+        "type": "string",
         "description": "What the player can do next."
       },
       "NextStepView": {
@@ -1043,6 +1208,9 @@
         }
       },
       "ProblemDetails": {
+        "required": [
+          "code"
+        ],
         "type": "object",
         "properties": {
           "type": {
@@ -1075,6 +1243,20 @@
               "null",
               "string"
             ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable error code, for example stale-version."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Field errors of validation-failed, keyed by camelCase field name."
           }
         }
       },
@@ -1084,6 +1266,7 @@
           "man",
           "nonbinary"
         ],
+        "type": "string",
         "description": "Grammatical form only; no rule may read it."
       },
       "ReasonView": {
@@ -1145,7 +1328,8 @@
           "criticalSuccess",
           "criticalFailure",
           "guaranteed"
-        ]
+        ],
+        "type": "string"
       },
       "RollView": {
         "required": [
@@ -1266,14 +1450,19 @@
           }
         }
       }
+    },
+    "securitySchemes": {
+      "careerSecret": {
+        "type": "http",
+        "description": "The career secret returned once by createCareer, sent as Authorization: Bearer <secret>.",
+        "scheme": "bearer"
+      }
     }
   },
   "tags": [
     {
-      "name": "PolskiStreamerSimulator.WebApp.Careers.CareerEndpoints"
-    },
-    {
-      "name": "PolskiStreamerSimulator.WebApp"
+      "name": "careers",
+      "description": "Anonymous careers: creation, reading, steps and batches."
     }
   ]
 }

@@ -22,9 +22,15 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 | `source/backend/Tests/testconfig.json` | Microsoft.Testing.Platform settings, including coverlet.MTP coverage filters (tests and the batch tool entry point excluded, generated `*.g.cs`, EF Core migrations (`**/Persistence/Migrations/*.cs`) and `[GeneratedCode]`/`[CompilerGenerated]` code excluded) and Cobertura (CI artifact) plus OpenCover (SonarQube Cloud) output (TD-82, TD-86). |
 | `source/frontend/.prettierrc.json` | Initial two-space, LF, single-quote, semicolon and 100-column formatting defaults; review with the first React code. |
 | `source/frontend/.prettierignore` | Keep generated Orval client and build/test output out of formatting checks. |
+| `source/frontend/package.json` and `package-lock.json` | The React app's exact dependency versions (no ranges) and lockfile; install with `npm ci`. npm 11 leaves the install scripts of `esbuild` and `unrs-resolver` unapproved; the tools work without them (TD-98). |
+| `source/frontend/.nvmrc` | Node version for local use and CI (`24.22.0`). |
+| `source/frontend/tsconfig.json` and `tsconfig.node.json` | Strict TypeScript for the app and tests, and for the Node-side config files (Vite, Vitest, Orval, Playwright). |
+| `source/frontend/vite.config.ts` and `vitest.config.ts` | Vite with the `/v1` proxy (`API_PROXY_TARGET`, `VITE_POLLING` for Compose) and Vitest with jsdom, MSW setup and the 80% line gate; LCOV paths are relative to the repository root for SonarQube Cloud. |
+| `source/frontend/eslint.config.mjs` | The executable flat config of the owner's ESLint package set. |
+| `source/frontend/orval.config.ts` and `src/api/generated/` | Orval configuration and its generated client: committed, never edited by hand, regenerated in CI (TD-101). |
 | `package.json` and `package-lock.json` (root) | Repository tooling only: the exact Lefthook version installed by `npm install` in the root, with Lefthook's install script approved under npm `allowScripts` (TD-88). The React app keeps its own `package.json` in `source/frontend`. |
-| `lefthook.yml` | `pre-commit` hook. Runs `dotnet format` on staged backend C# files and rejects the commit if anything changes, then fast backend tests without `Category=Integration`. Frontend lint is added with the React app (TD-88). |
-| `.github/workflows/ci.yml` | Required CI jobs `backend`, `backend-integration` (TD-93), `sonar` and `pr-policy`; third-party actions pinned to commit SHAs (TD-86). |
+| `lefthook.yml` | `pre-commit` hook. Runs `dotnet format` on staged backend C# files and rejects the commit if anything changes, then fast backend tests without `Category=Integration`; staged frontend files trigger ESLint and Vitest (TD-88, TD-100). |
+| `.github/workflows/ci.yml` | Required CI jobs `backend`, `backend-integration` (TD-93), `frontend` (TD-100), `sonar` and `pr-policy`; third-party actions pinned to commit SHAs (TD-86). |
 | `.github/scripts/` | Bash helpers used by CI, each with a self-test (`check-pr-source.sh`, `check-pr-source.test.sh`). |
 | `.github/rulesets/` | Versioned definitions of the `main` and `develop` repository rulesets (TD-87). |
 | `source/backend/.config/dotnet-tools.json` | Local .NET tool manifest pinning SonarScanner for .NET (TD-86) and `dotnet-ef` 10.0.13 for migrations (TD-93). |
