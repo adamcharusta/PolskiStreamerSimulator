@@ -18,6 +18,9 @@
   --good: #3ddc84;
   --bad: #ff8a8a;
   --focus: #00e5ff;
+  --field-bg: #1b1b1b;
+  --field-text: #ffffff;
+  --field-border: var(--frame-2);
   --border: 3px solid var(--frame);
   --radius: 0;
   --tilt: -0.6deg;
@@ -41,6 +44,9 @@
   --good: #005000;
   --bad: #8b0000;
   --focus: #000000;
+  --field-bg: #ffffff;
+  --field-text: #000000;
+  --field-border: #404040;
   --border: 2px outset #dfdfdf;
   --radius: 0;
   --tilt: 0deg;
@@ -64,10 +70,13 @@
   --good: #1d6b1d;
   --bad: #c00000;
   --focus: #c00000;
+  --field-bg: #ffffff;
+  --field-text: #1b1b1b;
+  --field-border: var(--frame);
   --border: 1px dashed var(--frame-2);
   --radius: 10px;
   --tilt: 0deg;
-  --font-heading: 'Comic Neue', 'Comic Sans MS', Verdana, sans-serif;
+  --font-heading: 'Comic Relief', 'Comic Sans MS', Verdana, sans-serif;
   --font-body: Verdana, Tahoma, sans-serif;
 }
 
@@ -137,8 +146,12 @@ body {
 .choices {
   display: grid;
   gap: 0.5rem;
-  border: 0;
   margin: 0 0 0.75rem;
+}
+
+/* A choice group drawn as a panel keeps the panel's frame and padding. */
+.choices:not(.panel) {
+  border: 0;
   padding: 0;
 }
 
@@ -150,6 +163,22 @@ body {
   padding: 0.5rem;
   border: var(--border);
   border-radius: var(--radius);
+}
+
+/* A text field is marked out by its own border, so that border meets 3:1 against the panel (WCAG 1.4.11). */
+.field {
+  display: block;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 2px solid var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  color: var(--field-text);
+  font: inherit;
+}
+
+[data-theme='win98'] .field {
+  border-style: inset;
 }
 
 .muted {
@@ -172,6 +201,8 @@ body {
 }
 
 .topbar {
+  /* The page focus colour can match the bar; inside it the ring takes the bar's text colour. */
+  --focus: var(--bar-text);
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;

@@ -133,7 +133,7 @@ The game looks deliberately cheap and amateur; its usability does not. Three the
 | `win98` | Windows 98 shareware: grey bevelled windows, a blue title bar, dotted focus, block progress bars. |
 | `web2005` | A 2005 fan site: glossy gradients, a Comic-style heading font, dashed boxes, a visitor counter, red `NOWE!` labels. |
 
-- Heading fonts: Anton (OFL) for `overlay` and Comic Neue (OFL) for `web2005`, both self-hosted with their Polish glyphs (the plan verifies the coverage before use); `win98` uses a Tahoma/Verdana system stack. Body text, odds and numbers use a readable system font in every theme. Font files ship with the app; no third-party font CDN.
+- Heading fonts: Anton (OFL) for `overlay` and Comic Relief (OFL) for `web2005`, both self-hosted with their Polish glyphs (the plan verifies the coverage before use); `win98` uses a Tahoma/Verdana system stack. Body text, odds and numbers use a readable system font in every theme. Font files ship with the app; no third-party font CDN. Comic Relief replaced Comic Neue, which has no Polish letters (TD-107).
 - Every theme meets WCAG 2.2 AA contrast for text and focus indicators on its own; neon and gradients are borders and accents, not text backgrounds that fail contrast.
 - The choice is stored in `localStorage`, applied before the first paint to avoid a flash, and never sent to the server. It changes presentation only.
 

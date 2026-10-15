@@ -10,6 +10,8 @@ export default mergeConfig(
       setupFiles: ['./test/setup.ts'],
       include: ['src/**/*.test.{ts,tsx}'],
       restoreMocks: true,
+      // Stylesheets stay empty in tests, except raw imports that check theme tokens and the cascade.
+      css: { include: [/\.css\?raw$/u] },
       coverage: {
         provider: 'v8',
         // LCOV paths relative to the repository root, SonarQube Cloud's base directory (TD-100).
