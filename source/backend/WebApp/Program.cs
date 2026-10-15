@@ -1,3 +1,5 @@
+using System.Text.Json;
+using FluentValidation;
 using JasperFx;
 using PolskiStreamerSimulator.Application;
 using PolskiStreamerSimulator.Application.Careers;
@@ -8,6 +10,9 @@ using Wolverine;
 using Wolverine.FluentValidation;
 using Wolverine.Http;
 using Wolverine.Http.FluentValidation;
+
+// Field errors use the contract's camelCase names, so clients map them onto their fields.
+ValidatorOptions.Global.PropertyNameResolver = (_, member, _) => member is null ? null : JsonNamingPolicy.CamelCase.ConvertName(member.Name);
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,12 +27,12 @@ builder.Services.ConfigureHttpJsonOptions(options => ContractJson.Configure(opti
 builder.Services.AddGameApplication();
 builder.Services.AddGameInfrastructure(builder.Configuration);
 builder.Services.PostConfigure<ContentOptions>(options => options.Directory = Path.GetFullPath(options.Directory, AppContext.BaseDirectory));
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(OpenApiContract.Configure);
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.MapGet("/health", () => "ok");
+app.MapGet("/health", () => "ok").ExcludeFromDescription();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

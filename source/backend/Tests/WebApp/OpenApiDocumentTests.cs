@@ -30,4 +30,44 @@ public sealed class OpenApiDocumentTests
         Assert.Equal("integer", careerView.GetProperty("version").GetProperty("type").GetString());
         Assert.Equal("integer", careerView.GetProperty("week").GetProperty("type").GetString());
     }
+
+    private static JsonDocument Load() => JsonDocument.Parse(File.ReadAllText(DocumentPath));
+
+    [Fact]
+    public void Career_operations_require_the_bearer_secret_and_every_operation_lists_a_500()
+    {
+        using var document = Load();
+        var root = document.RootElement;
+        var paths = root.GetProperty("paths");
+
+        Assert.Equal("bearer", root.GetProperty("components").GetProperty("securitySchemes").GetProperty("careerSecret").GetProperty("scheme").GetString());
+        Assert.True(paths.GetProperty("/v1/careers/{id}").GetProperty("get").GetProperty("security")[0].TryGetProperty("careerSecret", out _));
+        Assert.False(paths.GetProperty("/v1/careers").GetProperty("post").TryGetProperty("security", out _));
+        Assert.False(paths.TryGetProperty("/health", out _));
+        foreach (var path in paths.EnumerateObject())
+        {
+            foreach (var operation in path.Value.EnumerateObject())
+            {
+                var op = operation.Value;
+                Assert.True(op.GetProperty("responses").TryGetProperty("500", out _), $"{operation.Name} {path.Name} has no 500");
+                Assert.Equal("careers", op.GetProperty("tags")[0].GetString());
+                Assert.DoesNotContain('_', op.GetProperty("summary").GetString() ?? "_");
+            }
+        }
+    }
+
+    [Fact]
+    public void Enums_are_strings_without_null_and_problems_carry_a_code()
+    {
+        using var document = Load();
+        var schemas = document.RootElement.GetProperty("components").GetProperty("schemas");
+
+        var ending = schemas.GetProperty("EndingReason");
+        Assert.Equal("string", ending.GetProperty("type").GetString());
+        Assert.DoesNotContain(ending.GetProperty("enum").EnumerateArray(), v => v.ValueKind == JsonValueKind.Null);
+        var problem = schemas.GetProperty("ProblemDetails");
+        Assert.True(problem.GetProperty("properties").TryGetProperty("code", out _));
+        Assert.True(problem.GetProperty("properties").TryGetProperty("errors", out _));
+        Assert.Contains("code", problem.GetProperty("required").EnumerateArray().Select(v => v.GetString()));
+    }
 }

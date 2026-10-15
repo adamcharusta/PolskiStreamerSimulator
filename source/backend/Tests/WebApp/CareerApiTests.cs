@@ -29,6 +29,15 @@ public sealed class CareerApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Validation_errors_name_fields_in_camel_case()
+    {
+        var response = await client.PostAsJsonAsync("/v1/careers", new { nickname = "x", background = "dormRoomNewcomer", difficulty = "normal", pronouns = "woman" }, Ct);
+
+        var errors = (await response.Content.ReadFromJsonAsync<JsonElement>(Ct)).GetProperty("errors");
+        Assert.True(errors.TryGetProperty("nickname", out _), errors.GetRawText());
+    }
+
+    [Fact]
     public async Task Career_options_need_no_secret()
     {
         var response = await client.GetAsync("/v1/career-options", Ct);
