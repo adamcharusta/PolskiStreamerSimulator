@@ -3,7 +3,7 @@ namespace PolskiStreamerSimulator.Domain.Content;
 /// <summary>
 /// Validates the ICU MessageFormat subset used by event text: literal text with <c>''</c> escapes and
 /// <c>'…'</c> quoting, and <c>{gender, select, female {…} male {…} other {…}}</c> whose branches may nest the
-/// same subset. Every other argument form is rejected so the browser's <c>intl-messageformat</c> renders exactly
+/// same subset. Every other argument form, including simple <c>{name}</c> arguments and duplicate branch keys, is rejected so the browser's <c>intl-messageformat</c> renders exactly
 /// what was validated.
 /// </summary>
 public static class IcuMessage
@@ -33,12 +33,20 @@ public static class IcuMessage
                 return nested ? null : "unbalanced";
             }
 
-            var problem = ch switch
+            string? problem = null;
+            if (ch == '\'')
             {
-                '\'' => SkipQuote(m, ref i),
-                '{' => ParseArgument(m, ref i),
-                _ => Advance(ref i),
-            };
+                problem = SkipQuote(m, ref i);
+            }
+            else if (ch == '{')
+            {
+                problem = ParseArgument(m, ref i);
+            }
+            else
+            {
+                i++;
+            }
+
             if (problem is not null)
             {
                 return problem;
@@ -46,12 +54,6 @@ public static class IcuMessage
         }
 
         return nested ? "unbalanced" : null;
-    }
-
-    private static string? Advance(ref int i)
-    {
-        i++;
-        return null;
     }
 
     /// <summary>
@@ -68,18 +70,35 @@ public static class IcuMessage
 
         if (i + 1 < m.Length && (m[i + 1] == '{' || m[i + 1] == '}'))
         {
-            var end = m.IndexOf('\'', i + 1);
-            if (end < 0)
-            {
-                return "unterminated-quote";
-            }
-
-            i = end + 1;
-            return null;
+            return SkipQuotedLiteral(m, ref i);
         }
 
         i++;
         return null;
+    }
+
+    /// <summary>Skips a quoted literal; inside it <c>''</c> is an escaped apostrophe, a lone apostrophe closes it.</summary>
+    private static string? SkipQuotedLiteral(string m, ref int i)
+    {
+        var j = i + 1;
+        while (j < m.Length)
+        {
+            if (m[j] != '\'')
+            {
+                j++;
+            }
+            else if (j + 1 < m.Length && m[j + 1] == '\'')
+            {
+                j += 2;
+            }
+            else
+            {
+                i = j + 1;
+                return null;
+            }
+        }
+
+        return "unterminated-quote";
     }
 
     private static string? ParseArgument(string m, ref int i)
@@ -90,13 +109,13 @@ public static class IcuMessage
             return "unbalanced";
         }
 
-        var name = m[(i + 1)..close].Trim();
         if (m[close] == '}')
         {
-            // A simple {name} argument; the content uses none, but ICU allows it.
-            i = close + 1;
-            return name.Length == 0 ? "unsupported-argument" : null;
+            // A simple {name} argument: the browser formats with `gender` only, so it would fail at render.
+            return "unsupported-argument";
         }
+
+        var name = m[(i + 1)..close].Trim();
 
         var typeEnd = m.IndexOf(',', close + 1);
         if (typeEnd < 0 || m[(close + 1)..typeEnd].Trim() != "select")
@@ -153,7 +172,11 @@ public static class IcuMessage
             return $"unknown-branch:{key}";
         }
 
-        seen.Add(key);
+        if (!seen.Add(key))
+        {
+            return $"duplicate-branch:{key}";
+        }
+
         SkipWhitespace(m, ref i);
         if (i >= m.Length || m[i] != '{')
         {
