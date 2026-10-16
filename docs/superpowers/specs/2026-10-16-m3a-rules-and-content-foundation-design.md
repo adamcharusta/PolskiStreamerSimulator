@@ -1,7 +1,7 @@
 # M3-A Rules and Content Foundation — Design
 
 Date: 2026-10-16
-Status: **Design for owner review (2026-10-16 brainstorming session).** The owner approved the M3 split, approach A for rulesets, the representative content set, ICU MessageFormat for grammatical forms and §4 in conversation, then asked the agent to complete the design with its recommendations (§5–§9). The written spec awaits the owner's review.
+Status: **Approved design (owner, 2026-10-16 brainstorming session).** The owner approved the M3 split, approach A for rulesets, the representative content set, ICU MessageFormat for grammatical forms and §4 in conversation, asked the agent to complete the design with its recommendations (§5–§9), and approved the written spec.
 Milestone: [M3 — Complete gameplay systems](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3), sub-project A, delivering [#21](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/21), [#17](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/17) and [#16](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/16), and preparing the material for [#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7).
 Builds on: [M1 simulation prototype](2026-10-12-m1-simulation-prototype-design.md), [M2-B backend slice](2026-10-14-m2b-backend-slice-design.md) and [M2-C frontend slice](2026-10-15-m2c-frontend-slice-design.md).
 
@@ -39,7 +39,7 @@ Sub-projects A–C each ship their own API change and the minimal UI that makes 
 | Rulesets | Approach A: a new ruleset `m3-systems.1` with `content/m3`; shared rule code is extracted into helpers used by both rulesets; M1 behaviour is frozen by regression tests; M2 careers continue on M1. Rejected: evolving M1 in place (breaks REQ-29) and one feature-flagged engine (version branches inside rules). |
 | Content volume | The agent writes about 40 representative Polish events in the satirical launch tone (§4.5). Launch content stays in M5. The owner uses this schema and these events for the #7 measurement. |
 | Grammatical forms | ICU MessageFormat `select` on `gender` inside the event text stored in the content snapshot, rendered in the browser with `intl-messageformat`. Rejected: custom markers and i18next context keys (text must live in the database snapshot, not in the frontend bundle). |
-| Nonbinary wording | Gender-neutral Polish forms (`zrobiłoś`, `byłoś`), not underscores or asterisks, because screen readers read them correctly. Agent recommendation accepted by the owner together with the design. |
+| Nonbinary wording | Gender-neutral Polish forms (`zrobiłoś`, `byłoś`), not underscores or asterisks, because screen readers read them correctly. Agent recommendation, approved with the written spec. |
 
 ## 3. Scope
 
