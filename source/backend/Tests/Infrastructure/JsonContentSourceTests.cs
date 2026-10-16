@@ -208,4 +208,14 @@ public sealed class JsonContentSourceTests : IDisposable
         Assert.Equal(("chat-raid", Fixed.FromRatio(6, 100), Fixed.FromInt(15)), (b.RecoveryCrisisEventId, b.DecisionChancePerWeek, b.NetworkEnergyCost));
         Assert.Equal(("network", "Współpraca"), (b.NetworkCollaborate!.Id, b.NetworkCollaborate.LabelPl));
     }
+
+    [Theory]
+    [InlineData("""{ "schema": 3, "events": [] }""", "events.json.schema")]
+    [InlineData("""{ "schema": 2, "events": [ { "id": "x", "version": 1, "phase": "boss", "title": "T", "text": "t", "weight": 1, "eligibility": { "fromWeek": 1, "toWeek": 2 }, "choices": [] } ] }""", "events[x].phase")]
+    [InlineData("""{ "schema": 2, "events": [ { "id": "x", "version": 1, "phase": "live", "title": "T", "text": "t", "weight": 1, "eligibility": { "fromWeek": 1, "toWeek": 2 }, "choices": [ { "id": "c", "label": "L", "guaranteed": true, "requires": {}, "outcomes": {} } ] } ] }""", "events[x].choices[0]/c.requires")]
+    public void Invalid_schema_two_input_names_its_path(string json, string path)
+    {
+        var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.ParseEvents(System.Text.Encoding.UTF8.GetBytes(json)));
+        Assert.StartsWith(path, error.Message, StringComparison.Ordinal);
+    }
 }

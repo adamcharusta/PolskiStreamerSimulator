@@ -105,7 +105,15 @@ public sealed record Eligibility(
     ImmutableDictionary<StatKey, Fixed> Max,
     ImmutableArray<Category> Categories = default,
     ImmutableArray<string> RequiresFlags = default,
-    ImmutableArray<string> ForbidsFlags = default);
+    ImmutableArray<string> ForbidsFlags = default)
+{
+    /// <summary>Allowed categories; empty (never default) means every category.</summary>
+    public ImmutableArray<Category> Categories { get; init; } = Categories.IsDefault ? [] : Categories;
+
+    public ImmutableArray<string> RequiresFlags { get; init; } = RequiresFlags.IsDefault ? [] : RequiresFlags;
+
+    public ImmutableArray<string> ForbidsFlags { get; init; } = ForbidsFlags.IsDefault ? [] : ForbidsFlags;
+}
 
 /// <summary>
 /// An event. Schema 1 uses <see cref="TitleKey"/> and plain <see cref="TextPl"/>; schema 2 uses <see cref="Title"/> and
@@ -123,4 +131,8 @@ public sealed record EventDefinition(
     EventPhase Phase = EventPhase.Live,
     string? Title = null,
     bool OneTime = false,
-    ImmutableArray<string> Tags = default);
+    ImmutableArray<string> Tags = default)
+{
+    /// <summary>Content tags; empty (never default) when the event has none.</summary>
+    public ImmutableArray<string> Tags { get; init; } = Tags.IsDefault ? [] : Tags;
+}

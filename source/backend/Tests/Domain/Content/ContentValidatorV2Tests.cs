@@ -131,9 +131,52 @@ public class ContentValidatorV2Tests
     }
 
     [Fact]
-    public void Decision_event_outside_career_weeks_is_unreachable_unless_triggered()
+    public void Untriggered_decision_event_outside_career_weeks_is_unreachable()
     {
         var c = WithEvent("test-crisis", e => e with { Eligibility = e.Eligibility with { FromWeek = 0 } });
         Assert.Contains("unreachable-decision:test-crisis", ContentValidator.Validate(c));
+    }
+
+    [Fact]
+    public void Optional_event_arrays_are_empty_not_default_in_both_schemas()
+    {
+        var m1Event = TestContent.Valid().Events[0];
+        var m3Live = Valid.Events.First(e => e.Phase == EventPhase.Live);
+        foreach (var e in new[] { m1Event, m3Live })
+        {
+            Assert.Equal((false, false, false, false), (e.Eligibility.Categories.IsDefault, e.Eligibility.RequiresFlags.IsDefault, e.Eligibility.ForbidsFlags.IsDefault, e.Tags.IsDefault));
+            Assert.Empty(e.Eligibility.Categories);
+            Assert.Empty(e.Tags);
+        }
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3)]
+    public void Unknown_schema_is_reported(int schema)
+        => Assert.Contains($"schema:{schema}", ContentValidator.Validate(Valid with { Schema = schema }));
+
+    public static TheoryData<Effect> StrayEffectFields() => new()
+    {
+        new Effect(EffectKind.CashDelta, null, Fixed.FromInt(10), Target: "x"),
+        new Effect(EffectKind.StatDelta, StatKey.Drama, Fixed.One, PolskiStreamerSimulator.Domain.Careers.Category.Fps),
+        new Effect(EffectKind.FollowersPercent, StatKey.Drama, Fixed.One),
+        new Effect(EffectKind.FollowersPercent, null, Fixed.One, Weeks: 2),
+        new Effect(EffectKind.ViralChance, null, Fixed.One, Target: "x"),
+        new Effect(EffectKind.SkillDelta, null, Fixed.One, PolskiStreamerSimulator.Domain.Careers.Category.Fps, Target: "x"),
+        new Effect(EffectKind.SetFlag, null, Fixed.Zero, PolskiStreamerSimulator.Domain.Careers.Category.Fps, Target: "x"),
+        new Effect(EffectKind.ClearFlag, null, Fixed.Zero, Target: "x", Weeks: 1),
+        new Effect(EffectKind.FollowUp, StatKey.Energy, Fixed.Zero, Target: "chat-raid", Weeks: 1),
+    };
+
+    [Theory]
+    [MemberData(nameof(StrayEffectFields))]
+    public void Effect_with_fields_its_kind_does_not_use_is_rejected(Effect effect)
+    {
+        var c = WithEvent("chat-raid", e => e with
+        {
+            Choices = e.Choices.SetItem(0, e.Choices[0] with { Outcomes = e.Choices[0].Outcomes with { Success = [effect] } }),
+        });
+        Assert.Contains($"effect-invalid:chat-raid/{Valid.Events[0].Choices[0].Id}", ContentValidator.Validate(c));
     }
 }

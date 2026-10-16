@@ -34,13 +34,17 @@ public static class ContentValidator
             ValidateChoice(NetworkChoiceOwner, network, c.Schema, new HashSet<string>(StringComparer.Ordinal), violations);
         }
 
-        if (c.Schema == 2)
+        switch (c.Schema)
         {
-            ValidateSchemaTwo(c, violations);
-        }
-        else
-        {
-            ValidateWeeklySupply(c, violations);
+            case 1:
+                ValidateWeeklySupply(c, violations);
+                break;
+            case 2:
+                ValidateSchemaTwo(c, violations);
+                break;
+            default:
+                violations.Add($"schema:{c.Schema}");
+                break;
         }
 
         violations.AddRange(Enum.GetValues<Background>()
@@ -123,23 +127,38 @@ public static class ContentValidator
             && e.Eligibility.ToWeek <= CareerWeek.Last
             && e.Eligibility.FromWeek <= e.Eligibility.ToWeek;
 
-    /// <summary>Checks one effect's shape; the six M3 kinds and stat deltas on followers are valid only where allowed.</summary>
+    /// <summary>
+    /// Checks one effect's shape: its amount range and that only the fields its kind uses are set. The six M3 kinds are
+    /// valid only in schema 2, and a stat delta on followers is never valid.
+    /// </summary>
     private static bool IsValidEffect(Effect effect, int schema) => effect.Kind switch
     {
-        EffectKind.StatDelta => effect.Stat is { } stat && stat != StatKey.Followers && Abs(effect.Amount) <= Fixed.Hundred,
+        EffectKind.StatDelta => effect.Stat is { } stat && stat != StatKey.Followers && UsesOnly(effect) && Abs(effect.Amount) <= Fixed.Hundred,
         EffectKind.CashDelta => effect.Stat is null
+            && UsesOnly(effect)
             && effect.Amount.Raw % Fixed.Scale == 0
             && Abs(effect.Amount) <= Fixed.FromInt(MaxCashEffectPln),
-        EffectKind.AudienceMultiplier => effect.Stat is null && effect.Amount > Fixed.Zero && effect.Amount <= Fixed.FromInt(10),
-        EffectKind.EventQuality => effect.Stat is null && Abs(effect.Amount) <= Fixed.Hundred,
-        EffectKind.FollowersPercent => schema == 2 && Abs(effect.Amount) <= Fixed.FromInt(20),
-        EffectKind.SkillDelta => schema == 2 && effect.Category is not null && Abs(effect.Amount) <= Fixed.FromInt(10),
-        EffectKind.ViralChance => schema == 2 && effect.Amount >= Fixed.Zero && effect.Amount <= Fixed.FromInt(30),
-        EffectKind.SetFlag => schema == 2 && !string.IsNullOrEmpty(effect.Target) && effect.Weeks is null or >= 1,
-        EffectKind.ClearFlag => schema == 2 && !string.IsNullOrEmpty(effect.Target),
-        EffectKind.FollowUp => schema == 2 && !string.IsNullOrEmpty(effect.Target) && effect.Weeks is >= 1 and <= 52,
+        EffectKind.AudienceMultiplier => effect.Stat is null && UsesOnly(effect) && effect.Amount > Fixed.Zero && effect.Amount <= Fixed.FromInt(10),
+        EffectKind.EventQuality => effect.Stat is null && UsesOnly(effect) && Abs(effect.Amount) <= Fixed.Hundred,
+        _ => schema == 2 && effect.Stat is null && IsValidSchemaTwoEffect(effect),
+    };
+
+    private static bool IsValidSchemaTwoEffect(Effect effect) => effect.Kind switch
+    {
+        EffectKind.FollowersPercent => UsesOnly(effect) && Abs(effect.Amount) <= Fixed.FromInt(20),
+        EffectKind.SkillDelta => effect.Category is not null && UsesOnly(effect, category: true) && Abs(effect.Amount) <= Fixed.FromInt(10),
+        EffectKind.ViralChance => UsesOnly(effect) && effect.Amount >= Fixed.Zero && effect.Amount <= Fixed.FromInt(30),
+        EffectKind.SetFlag => HasTarget(effect) && UsesOnly(effect, target: true, weeks: true) && effect.Weeks is null or >= 1,
+        EffectKind.ClearFlag => HasTarget(effect) && UsesOnly(effect, target: true),
+        EffectKind.FollowUp => HasTarget(effect) && UsesOnly(effect, target: true, weeks: true) && effect.Weeks is >= 1 and <= 52,
         _ => false,
     };
+
+    private static bool HasTarget(Effect effect) => !string.IsNullOrEmpty(effect.Target);
+
+    /// <summary>True when every optional field that the kind does not use is null.</summary>
+    private static bool UsesOnly(Effect effect, bool category = false, bool target = false, bool weeks = false)
+        => (category || effect.Category is null) && (target || effect.Target is null) && (weeks || effect.Weeks is null);
 
     private static Fixed Abs(Fixed value) => value < Fixed.Zero ? -value : value;
 
@@ -154,7 +173,7 @@ public static class ContentValidator
         var live = c.Events.Where(e => e.Phase == EventPhase.Live && HasValidWeeks(e)).ToArray();
         foreach (var category in Enum.GetValues<Category>())
         {
-            var eligible = live.Where(e => e.Eligibility.Categories.IsDefaultOrEmpty || e.Eligibility.Categories.Contains(category));
+            var eligible = live.Where(e => e.Eligibility.Categories.IsEmpty || e.Eligibility.Categories.Contains(category));
             violations.AddRange(ShortRunStarts(eligible, c.Balance.EventsPerWeekMax)
                 .Select(week => $"too-few-eligible:{category}:week-{week}"));
         }
@@ -190,7 +209,7 @@ public static class ContentValidator
         {
             ValidateDecisionShape(e, violations);
             ValidateTexts(e.Id, Texts(e), violations);
-            violations.AddRange((e.Eligibility.RequiresFlags.IsDefault ? [] : e.Eligibility.RequiresFlags)
+            violations.AddRange(e.Eligibility.RequiresFlags
                 .Where(flag => !setFlags.Contains(flag))
                 .Select(flag => $"unset-flag:{e.Id}/{flag}"));
             ValidateChoiceLinks(e, ids, violations);

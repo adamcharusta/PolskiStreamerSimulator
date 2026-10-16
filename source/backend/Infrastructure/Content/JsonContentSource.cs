@@ -245,12 +245,19 @@ public sealed class JsonContentSource(string directory) : IContentSource
                 ReadEffects(outcomes, "criticalFailure", path)));
         return schema == 1 ? choice : choice with
         {
-            Requires = c.TryGetProperty("requires", out var requires) && requires.ValueKind != JsonValueKind.Null
-                ? new ChoiceRequirement(OptionalLong(requires, "minCashPln", $"{path}.requires"), OptionalFixed(requires, "minEnergy", $"{path}.requires"))
-                : null,
+            Requires = Optional(c, "requires") is { } requires ? ReadRequirement(requires, $"{path}.requires") : null,
             SuccessText = OptionalString(c, "successText", path),
             FailureText = OptionalString(c, "failureText", path),
         };
+    }
+
+    /// <summary>Reads a choice requirement; one that sets neither minimum is rejected rather than treated as none.</summary>
+    private static ChoiceRequirement ReadRequirement(JsonElement requires, string path)
+    {
+        var requirement = new ChoiceRequirement(OptionalLong(requires, "minCashPln", path), OptionalFixed(requires, "minEnergy", path));
+        return requirement is { MinCashPln: null, MinEnergy: null }
+            ? throw Invalid(path, "sets neither minCashPln nor minEnergy")
+            : requirement;
     }
 
     private static ChanceModifier ReadModifier(JsonElement m, string path)
