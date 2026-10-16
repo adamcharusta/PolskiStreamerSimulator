@@ -26,6 +26,23 @@ public static class RuleSteps
             c.Balance),
     };
 
+    /// <summary>Ends the career between weeks with <see cref="EndingReason.EarlyRetirement"/>.</summary>
+    public static Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion)
+    {
+        if (CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
+        if (s.Pending is not null)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "week-in-progress");
+        }
+
+        var state = s with { Achievements = Achievements.Evaluate(s, completed: false), StateVersion = s.StateVersion + 1 };
+        return Result<CareerState>.Ok(End(state, EndingReason.EarlyRetirement, c));
+    }
+
     public static ImmutableDictionary<string, long> Accumulate(ImmutableDictionary<string, long> totals, IEnumerable<ReportLine> lines)
     {
         foreach (var line in lines)
