@@ -79,17 +79,34 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
     timeout: 60_000,
   });
-  // The stop reason is also in the screen reader announcement; the visible paragraph is the one to check.
-  await expect(
-    page.getByRole('paragraph').filter({ hasText: pl.batch.stop.completed }),
-  ).toBeVisible();
+  // Every career has a random seed, so the batch may end the career early; any legitimate stop passes, and the week
+  // after it follows from the weeks the ledger lists. The stop reason is also in the screen reader announcement, so
+  // the visible paragraph is the one checked.
+  const stops = [
+    pl.batch.stop.completed,
+    pl.batch.stop.pausedForDecision,
+    pl.batch.stop.careerEnded,
+  ];
+  const stop = page.locator('p.topbar').first();
+  await expect(stop).toBeVisible();
+  expect(stops).toContain(await stop.textContent());
+  const weeks = await page
+    .getByRole('list', { name: pl.batch.ledger })
+    .locator(':scope > li')
+    .count();
+  expect(weeks).toBeGreaterThan(0);
   await expectAccessible(page, 'batch result');
   await page.getByRole('button', { name: pl.batch.next }).click();
 
   const desk = page.getByRole('region', { name: pl.career.summaryLabel });
-  await expect(desk).toContainText(fill(pl.career.week, { week: 15 }));
+  await expect(desk).toContainText(fill(pl.career.week, { week: 2 + weeks }));
+  const next = page.getByRole('heading', {
+    name: new RegExp(`^(${pl.plan.title}|${pl.career.endedTitle})$`, 'u'),
+  });
+  await expect(next).toBeVisible();
+  const step = await next.textContent();
   const before = (await desk.textContent()) ?? '';
   await page.reload();
   await expect(desk).toHaveText(before);
-  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+  await expect(page.getByRole('heading', { name: step ?? '' })).toBeVisible();
 });

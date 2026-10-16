@@ -27,8 +27,9 @@ services:
     depends_on:
       sql:
         condition: service_healthy
+    # Bound to this machine only; the development stack is not served to the local network.
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   web:
     image: node:24.22.0-alpine
@@ -45,7 +46,7 @@ services:
       api:
         condition: service_started
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     healthcheck:
       # Through the Vite proxy: healthy only when Vite and the API both answer.
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173/v1/career-options"]
