@@ -2,7 +2,7 @@
 
 Polski Streamer Simulator is a free, satirical 18+ browser career game in which the player guides a fictional Polish streamer through a 20-year (1,040-week) career. Each week the player picks one main action and a primary category, plays or automates a stream with two or three live events, and watches followers, live viewers, money, drama, credibility and burnout change. All gameplay and scoring rules run in a deterministic, server-authoritative C# `Domain`, and finished careers compete on a season-scoped global top 100.
 
-**Status:** M1 simulation prototype complete pending the content-capacity estimate ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7); [milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/1)); see the [M1 baseline simulation report](docs/reports/m1-baseline-simulation.md). The M2 vertical slice ([milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/2)) is playable locally: create an unranked career, play manual weeks and 13-week batches in the browser against the HTTP API and SQL Server.
+**Status:** M1 simulation prototype complete ([milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/1); the content-capacity estimate [#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7) moved to M3); see the [M1 baseline simulation report](docs/reports/m1-baseline-simulation.md). The M2 vertical slice ([milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/2)) is playable locally: create an unranked career, play manual weeks and 13-week batches in the browser against the HTTP API and SQL Server.
 
 ## Repository layout
 
