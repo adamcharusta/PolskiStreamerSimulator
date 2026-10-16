@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Serialization;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
@@ -64,4 +65,24 @@ public sealed record CareerState
     public ScoreBreakdown? FinalScore { get; init; }
 
     public PendingWeek? Pending { get; init; }
+
+    /// <summary>M3: flag → last week in which it is active (<see cref="CareerWeek.Last"/> for permanent).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ImmutableDictionary<string, int>? Flags { get; init; }
+
+    /// <summary>M3: follow-up events waiting for their due week, in scheduling order.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ImmutableArray<ScheduledEvent>? Scheduled { get; init; }
+
+    /// <summary>M3: mandatory decisions to answer before the next week starts, in order.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ImmutableArray<string>? PendingDecisions { get; init; }
+
+    /// <summary>M3: decision results waiting for the next week's report.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DecisionCarry? Carry { get; init; }
+
+    /// <summary>M3: one-time events already shown.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ImmutableHashSet<string>? UsedOneTime { get; init; }
 }

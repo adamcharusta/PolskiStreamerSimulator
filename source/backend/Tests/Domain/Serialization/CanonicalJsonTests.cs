@@ -1,13 +1,45 @@
+using System.Collections.Immutable;
 using System.Text;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Serialization;
+using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Serialization;
 
 public class CanonicalJsonTests
 {
+    [Fact]
+    public void Stored_m1_state_round_trips_without_new_fields()
+    {
+        var s = TestCareers.Dorm(7);
+        var json = Encoding.UTF8.GetString(CanonicalJson.Serialize(s));
+        foreach (var name in new[] { "Flags", "Scheduled", "PendingDecisions", "Carry", "UsedOneTime" })
+        {
+            Assert.DoesNotContain($"\"{name}\"", json, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(StateHash.Of(s), StateHash.Of(CanonicalJson.Deserialize(CanonicalJson.Serialize(s))));
+    }
+
+    [Fact]
+    public void M3_fields_round_trip_in_ordinal_order()
+    {
+        var s = TestCareers.Dorm(7) with
+        {
+            Flags = ImmutableDictionary<string, int>.Empty.WithComparers(StringComparer.Ordinal).Add("b", 5).Add("a", 1040),
+            Scheduled = [new ScheduledEvent("rivalry-2", 12)],
+            PendingDecisions = ["burnout-recovery"],
+            UsedOneTime = ImmutableHashSet.Create(StringComparer.Ordinal, "first-week"),
+            Carry = DecisionCarry.Empty with { CashPln = -200 },
+        };
+        var bytes = CanonicalJson.Serialize(s);
+        var json = Encoding.UTF8.GetString(bytes);
+        Assert.True(json.IndexOf("\"a\":1040", StringComparison.Ordinal) < json.IndexOf("\"b\":5", StringComparison.Ordinal));
+        Assert.Equal(bytes, CanonicalJson.Serialize(CanonicalJson.Deserialize(bytes)));
+    }
+
     [Fact]
     public void Roundtrip_is_byte_identical()
     {
