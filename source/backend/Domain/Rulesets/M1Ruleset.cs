@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
@@ -17,7 +18,7 @@ public sealed class M1Ruleset : IRuleset
 
     public Result<CareerState> StartWeek(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
-        if (CommandRejection(s, expectedVersion) is { } error)
+        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<CareerState>.Fail(error);
         }
@@ -57,7 +58,7 @@ public sealed class M1Ruleset : IRuleset
 
     public Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
     {
-        if (CommandRejection(s, expectedVersion) is { } error)
+        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<CareerState>.Fail(error);
         }
@@ -76,9 +77,9 @@ public sealed class M1Ruleset : IRuleset
 
         var odds = OddsCalculator.For(s, chosen, c.Balance);
         var rng = s.Rng;
-        var (roll, outcome, effects) = Roll(chosen, odds, ref rng);
+        var (roll, outcome, effects) = RuleSteps.Roll(chosen, odds, ref rng);
         var pending = s.Pending!;
-        var state = ApplyEffects(s, e.Id, effects, ref pending);
+        var state = EffectApplier.ToWeek(s, e.Id, effects, ref pending);
         var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
         var result = new RollResult(e.Id, chosen.Id, roll, odds.Threshold, odds.Modifiers, outcome);
         return Result<CareerState>.Ok(state with
@@ -97,7 +98,7 @@ public sealed class M1Ruleset : IRuleset
 
     public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
     {
-        if (CommandRejection(s, expectedVersion) is { } error)
+        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<(CareerState, WeekReport)>.Fail(error);
         }
@@ -146,8 +147,8 @@ public sealed class M1Ruleset : IRuleset
             {
                 Streams = s.Metrics.Streams + 1,
                 TotalLiveViews = s.Metrics.TotalLiveViews + audience.LiveViewers,
-                IncomeBySource = Accumulate(s.Metrics.IncomeBySource, finance.Income),
-                CostsBySource = Accumulate(s.Metrics.CostsBySource, finance.Costs),
+                IncomeBySource = RuleSteps.Accumulate(s.Metrics.IncomeBySource, finance.Income),
+                CostsBySource = RuleSteps.Accumulate(s.Metrics.CostsBySource, finance.Costs),
                 WeeksPerCategory = s.Metrics.WeeksPerCategory.With(primary, s.Metrics.WeeksPerCategory[primary] + 1),
             },
         };
@@ -173,7 +174,7 @@ public sealed class M1Ruleset : IRuleset
         };
         if (ending is { } reason)
         {
-            state = End(state, reason, c) with { Week = s.Week };
+            state = RuleSteps.End(state, reason, c) with { Week = s.Week };
         }
 
         var report = new WeekReport(
@@ -194,7 +195,7 @@ public sealed class M1Ruleset : IRuleset
 
     public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion)
     {
-        if (CommandRejection(s, expectedVersion) is { } error)
+        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<CareerState>.Fail(error);
         }
@@ -205,88 +206,7 @@ public sealed class M1Ruleset : IRuleset
         }
 
         var state = s with { Achievements = Achievements.Evaluate(s, completed: false), StateVersion = s.StateVersion + 1 };
-        return Result<CareerState>.Ok(End(state, EndingReason.EarlyRetirement, c));
-    }
-
-    /// <summary>Ends the career once: read-only status, reason and the final score breakdown.</summary>
-    private static CareerState End(CareerState s, EndingReason reason, ContentSnapshot c) => s with
-    {
-        Status = CareerStatus.Ended,
-        Ending = reason,
-        Pending = null,
-        FinalScore = ScoreCalculator.Compute(
-            s.Followers,
-            s.CashPln,
-            Achievements.Points(s.Achievements),
-            s.Difficulty,
-            c.Profiles[s.Background].ScoreMultiplier,
-            reason,
-            c.Balance),
-    };
-
-    private static ImmutableDictionary<string, long> Accumulate(ImmutableDictionary<string, long> totals, IEnumerable<ReportLine> lines)
-    {
-        foreach (var line in lines)
-        {
-            totals = totals.SetItem(line.Code, totals.GetValueOrDefault(line.Code) + line.AmountPln!.Value);
-        }
-
-        return totals;
-    }
-
-    /// <summary>
-    /// Guaranteed choices draw nothing. Otherwise roll 1–100: with criticals allowed, 1 is a critical success
-    /// and 100 a critical failure; any other roll succeeds when it is at most the threshold.
-    /// </summary>
-    private static (int? Roll, RollOutcome Outcome, ImmutableArray<Effect> Effects) Roll(ChoiceDefinition choice, ChoiceOdds odds, ref Pcg32 rng)
-    {
-        var outcomes = choice.Outcomes;
-        if (choice.Guaranteed)
-        {
-            return (null, RollOutcome.Guaranteed, outcomes.Success);
-        }
-
-        (var roll, rng) = rng.NextInt(1, 100);
-        return roll switch
-        {
-            1 when choice.AllowsCritical => (roll, RollOutcome.CriticalSuccess, outcomes.CriticalSuccess ?? outcomes.Success),
-            100 when choice.AllowsCritical => (roll, RollOutcome.CriticalFailure, outcomes.CriticalFailure ?? outcomes.Failure),
-            _ when roll <= odds.Threshold => (roll, RollOutcome.Success, outcomes.Success),
-            _ => (roll, RollOutcome.Failure, outcomes.Failure),
-        };
-    }
-
-    /// <summary>Stat effects change the career now; cash, audience and quality effects accumulate for settlement.</summary>
-    private static CareerState ApplyEffects(CareerState s, string eventId, ImmutableArray<Effect> effects, ref PendingWeek pending)
-    {
-        var before = s;
-        var lines = pending.Lines.ToBuilder();
-        foreach (var effect in effects)
-        {
-            switch (effect.Kind)
-            {
-                case EffectKind.StatDelta:
-                    s = Stats.Add(s, effect.Stat!.Value, effect.Amount, pending.Plan.Category);
-                    break;
-                case EffectKind.CashDelta:
-                    var amount = effect.Amount.RoundToLong();
-                    pending = pending with { CashDeltaFromEvents = pending.CashDeltaFromEvents + amount };
-                    lines.Add(new ReportLine(amount >= 0 ? "income:event" : "cost:event", AmountPln: Math.Abs(amount), Detail: eventId));
-                    break;
-                case EffectKind.AudienceMultiplier:
-                    pending = pending with { AudienceMultiplier = pending.AudienceMultiplier * effect.Amount };
-                    break;
-                case EffectKind.EventQuality:
-                    pending = pending with { EventQuality = pending.EventQuality + effect.Amount };
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(effects), effect.Kind, null);
-            }
-        }
-
-        lines.AddRange(Stats.Changes(before, s, eventId));
-        pending = pending with { Lines = lines.ToImmutable() };
-        return s;
+        return Result<CareerState>.Ok(RuleSteps.End(state, EndingReason.EarlyRetirement, c));
     }
 
     private static Result<EventDefinition> NextEvent(CareerState s, ContentSnapshot c)
@@ -301,22 +221,7 @@ public sealed class M1Ruleset : IRuleset
             return Result<EventDefinition>.Fail(DomainErrorCode.IllegalAction, "all-resolved");
         }
 
-        var id = pending.EventIds[pending.Resolved.Length];
-        return c.Events.FirstOrDefault(e => e.Id == id) is { } definition
-            ? Result<EventDefinition>.Ok(definition)
-            : Result<EventDefinition>.Fail(DomainErrorCode.ContentMismatch, $"missing-event-{id}");
-    }
-
-    private static DomainError? CommandRejection(CareerState s, long expectedVersion)
-    {
-        if (s.Status == CareerStatus.Ended)
-        {
-            return new DomainError(DomainErrorCode.CareerEnded, "career-ended");
-        }
-
-        return expectedVersion != s.StateVersion
-            ? new DomainError(DomainErrorCode.StaleVersion, $"expected-{expectedVersion}-current-{s.StateVersion}")
-            : null;
+        return RuleSteps.FindEvent(c, pending.EventIds[pending.Resolved.Length]);
     }
 
     private static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan)
