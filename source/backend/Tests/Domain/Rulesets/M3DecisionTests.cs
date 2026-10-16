@@ -86,6 +86,47 @@ public class M3DecisionTests
     }
 
     [Fact]
+    public void Retire_with_a_queued_decision_is_rejected()
+    {
+        var s = PlayWeek(Fresh());
+        Assert.NotEmpty(s.PendingDecisions!.Value);
+        var retired = Engine.Retire(s, C, s.StateVersion);
+        Assert.Equal(DomainErrorCode.DecisionPending, retired.Error.Code);
+        Assert.Equal("decision-pending", retired.Error.Detail);
+    }
+
+    [Fact]
+    public void Retire_folds_the_decision_carry_into_the_final_score()
+    {
+        var s = PlayWeek(Fresh());
+        s = Engine.ResolveDecision(s, C, "bold", s.StateVersion).Value with { Followers = 1_000 };
+        var carry = s.Carry!;
+        Assert.NotEqual(0, carry.CashPln);
+
+        var retired = Engine.Retire(s, C, s.StateVersion).Value;
+
+        var followers = 1_000 + (Fixed.FromInt(1_000) * carry.FollowersPercent / Fixed.Hundred).RoundToLong();
+        Assert.Equal(s.CashPln + carry.CashPln, retired.CashPln);
+        Assert.Equal(followers, retired.Followers);
+        Assert.Null(retired.Carry);
+        Assert.Null(retired.Scheduled);
+        var folded = s with { CashPln = s.CashPln + carry.CashPln, Followers = followers, Carry = null };
+        Assert.Equal(new M1Ruleset().Retire(folded, C, s.StateVersion).Value.FinalScore, retired.FinalScore);
+    }
+
+    [Fact]
+    public void Start_week_checks_the_command_before_queued_decisions()
+    {
+        var s = PlayWeek(Fresh());
+        Assert.NotEmpty(s.PendingDecisions!.Value);
+        var plan = new WeekPlan(MainAction.NoAction, Category.Fps);
+        Assert.Equal(DomainErrorCode.StaleVersion, Engine.StartWeek(s, C, plan, s.StateVersion - 1).Error.Code);
+        var ended = s with { Status = CareerStatus.Ended };
+        Assert.Equal(DomainErrorCode.CareerEnded, Engine.StartWeek(ended, C, plan, s.StateVersion).Error.Code);
+        Assert.Equal(DomainErrorCode.CareerEnded, Engine.Retire(ended, C, s.StateVersion).Error.Code);
+    }
+
+    [Fact]
     public void Resolve_decision_without_one_is_rejected()
         => Assert.Equal(DomainErrorCode.NoPendingDecision, Engine.ResolveDecision(Fresh(), C, "calm", 0).Error.Code);
 

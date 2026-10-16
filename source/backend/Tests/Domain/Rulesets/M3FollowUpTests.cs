@@ -66,6 +66,21 @@ public class M3FollowUpTests
     }
 
     [Fact]
+    public void Repeated_decision_follow_ups_open_once_and_missing_events_are_dropped()
+    {
+        var c = Content("m3-follow-repeated", Live("filler-a"));
+        var s = Fresh(c) with
+        {
+            Scheduled = [new ScheduledEvent("test-crisis", 2), new ScheduledEvent("gone", 2), new ScheduledEvent("test-crisis", 2)],
+        };
+
+        s = PlayWeek(s, c).Settled;
+
+        Assert.Equal(["test-crisis"], s.PendingDecisions!.Value);
+        Assert.Empty(s.Scheduled!.Value);
+    }
+
+    [Fact]
     public void Live_follow_up_takes_the_first_event_slot_of_its_due_week()
     {
         var c = Content("m3-follow-live", Live("echo", fromWeek: 500), Live("filler-a"), Live("filler-b"), Live("filler-c"));

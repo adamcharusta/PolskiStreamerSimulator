@@ -10,6 +10,7 @@ namespace PolskiStreamerSimulator.Domain.Rulesets.M3;
 /// Opens the mandatory decisions before a week, in order: due decision follow-ups, the recovery crisis when energy
 /// is 0 or burnout 100, the first eligible one-time milestone, then — only if nothing opened — one repeatable
 /// milestone or crisis after a seeded <see cref="BalanceConstants.DecisionChancePerWeek"/> roll. At most two open.
+/// Repeated due follow-ups of one decision open it once; follow-ups of events missing from the content are dropped.
 /// </summary>
 public static class DecisionQueue
 {
@@ -19,12 +20,15 @@ public static class DecisionQueue
     {
         var week = s.Week.Value;
         var queue = ImmutableArray.CreateBuilder<string>();
-        var scheduled = (s.Scheduled ?? []).ToList();
-        foreach (var due in scheduled.Where(x => x.DueWeek <= week && IsDecision(c, x.EventId)).Take(MaxPerWeek).ToList())
-        {
-            queue.Add(due.EventId);
-            scheduled.Remove(due);
-        }
+        var scheduled = (s.Scheduled ?? []).Where(x => c.Events.Any(e => e.Id == x.EventId)).ToList();
+        var due = scheduled
+            .Where(x => x.DueWeek <= week && IsDecision(c, x.EventId))
+            .Select(x => x.EventId)
+            .Distinct(StringComparer.Ordinal)
+            .Take(MaxPerWeek)
+            .ToList();
+        queue.AddRange(due);
+        scheduled.RemoveAll(x => x.DueWeek <= week && due.Contains(x.EventId));
 
         if (c.Balance.RecoveryCrisisEventId is { } recovery
             && (s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred)

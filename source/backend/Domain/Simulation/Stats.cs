@@ -10,13 +10,21 @@ public static class Stats
     public static Fixed Bounded(Fixed value) => value.Clamp(Fixed.Zero, Fixed.Hundred);
 
     /// <summary>
-    /// The category streamed in the last settled week — the only one without inactive weeks — or
-    /// <see cref="Category.JustChatting"/> before the first settlement. Primary-category stats read it between weeks.
+    /// The category streamed in the last settled week, inferred from <see cref="CareerState.InactiveWeeks"/>: settlement
+    /// resets the streamed category to 0 and increments every other one, so after a settlement it is the only category
+    /// at 0 (the state does not store the last plan). Before the first settlement, or when no category is at 0, it is
+    /// <see cref="Category.JustChatting"/>. Primary-category stats read it between weeks (decisions).
     /// </summary>
     public static Category LastPrimary(CareerState s)
-        => s.LastSettledWeek >= CareerWeek.First
-            ? Enum.GetValues<Category>().FirstOrDefault(category => s.InactiveWeeks[category] == 0)
-            : Category.JustChatting;
+    {
+        if (s.LastSettledWeek < CareerWeek.First)
+        {
+            return Category.JustChatting;
+        }
+
+        var streamed = Enum.GetValues<Category>().Where(category => s.InactiveWeeks[category] == 0).ToList();
+        return streamed.Count > 0 ? streamed[0] : Category.JustChatting;
+    }
 
     public static Fixed Get(CareerState s, StatKey key, Category primary) => key switch
     {

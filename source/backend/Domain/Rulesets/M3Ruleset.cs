@@ -26,9 +26,9 @@ public sealed class M3Ruleset : IRuleset
     /// </summary>
     public Result<CareerState> StartWeek(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
-        if (s.PendingDecisions is { Length: > 0 })
+        if (Blocked(s, expectedVersion) is { } blocked)
         {
-            return Result<CareerState>.Fail(DomainErrorCode.DecisionPending, "decision-pending");
+            return Result<CareerState>.Fail(blocked);
         }
 
         var applied = WeekActions.Apply(s, c, plan, expectedVersion);
@@ -90,7 +90,7 @@ public sealed class M3Ruleset : IRuleset
 
         var pending = settleable.Value;
         var core = ApplyFollowersPercent(WeekSettlement.Core(s, pending, c), pending.FollowersPercent);
-        var (state, ending) = WeekSettlement.Close(s, Flags.Expire(core.State, s.Week.Value), c);
+        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(core.State, s.Week.Value), c);
         if (ending is null)
         {
             var rng = state.Rng;
@@ -101,21 +101,19 @@ public sealed class M3Ruleset : IRuleset
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
 
-    public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion) => RuleSteps.Retire(s, c, expectedVersion);
+    /// <summary>
+    /// Rejected while decisions are queued. Otherwise folds the decision carry into the career first (its cash and
+    /// follower percentage would have reached the next settlement), clears the carry and the scheduled follow-ups,
+    /// then retires like M1 so the final score includes them.
+    /// </summary>
+    public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion)
+        => Blocked(s, expectedVersion) is { } blocked
+            ? Result<CareerState>.Fail(blocked)
+            : RuleSteps.Retire(FoldCarry(s), c, expectedVersion);
 
     /// <summary>Odds of the first queued decision, exactly as a live event's odds are shown.</summary>
     public Result<EventPresentation> PresentDecision(CareerState s, ContentSnapshot c)
-    {
-        if (s.Status == CareerStatus.Ended)
-        {
-            return Result<EventPresentation>.Fail(DomainErrorCode.CareerEnded, "career-ended");
-        }
-
-        var decision = NextDecision(s, c);
-        return decision.IsSuccess
-            ? Result<EventPresentation>.Ok(LiveEvents.Presentation(s, decision.Value, c))
-            : Result<EventPresentation>.Fail(decision.Error);
-    }
+        => LiveEvents.Present(s, c, NextDecision(s, c));
 
     /// <summary>
     /// Rolls the chosen answer to the first queued decision: stat, skill, flag and follow-up effects apply now; cash,
@@ -154,6 +152,27 @@ public sealed class M3Ruleset : IRuleset
             ? RuleSteps.FindEvent(c, queue[0])
             : Result<EventDefinition>.Fail(DomainErrorCode.NoPendingDecision, "no-pending-decision");
 
+    /// <summary>The command rejection (ended, stale version) first, then <c>decision-pending</c> while decisions are queued.</summary>
+    private static DomainError? Blocked(CareerState s, long expectedVersion)
+        => RuleSteps.CommandRejection(s, expectedVersion)
+            ?? (s.PendingDecisions is { Length: > 0 } ? new DomainError(DomainErrorCode.DecisionPending, "decision-pending") : null);
+
+    private static CareerState FoldCarry(CareerState s)
+    {
+        var carry = s.Carry ?? DecisionCarry.Empty;
+        return s with
+        {
+            CashPln = s.CashPln + carry.CashPln,
+            Followers = s.Followers + FollowerChange(s.Followers, carry.FollowersPercent),
+            Carry = null,
+            Scheduled = null,
+        };
+    }
+
+    /// <summary><c>round(followers × pct / 100)</c>, never taking followers below zero.</summary>
+    private static long FollowerChange(long followers, Fixed percent)
+        => Math.Max(-followers, (Fixed.FromInt(followers) * percent / Fixed.Hundred).RoundToLong());
+
     private static ImmutableHashSet<string> UsedOnce(CareerState s, string eventId)
         => (s.UsedOneTime ?? ImmutableHashSet<string>.Empty.WithComparer(StringComparer.Ordinal)).Add(eventId);
 
@@ -169,7 +188,7 @@ public sealed class M3Ruleset : IRuleset
         }
 
         var followers = core.State.Followers;
-        var change = Math.Max(-followers, (Fixed.FromInt(followers) * pct / Fixed.Hundred).RoundToLong());
+        var change = FollowerChange(followers, pct);
         return core with
         {
             State = core.State with { Followers = followers + change },

@@ -3,7 +3,6 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets;
-using PolskiStreamerSimulator.Domain.Rulesets.M3;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
@@ -55,33 +54,33 @@ public class M3FlagTests
         Assert.Equal("first-week", s.PendingDecisions!.Value[0]);
         s = Engine.ResolveDecision(s, c, "calm", s.StateVersion).Value;
         Assert.Equal(2, s.Week.Value);
-        Assert.True(Flags.IsActive(s, "x"));
+        Assert.True(CareerFlags.IsActive(s, "x"));
 
         s = ResolveAll(Start(s, c), c);
-        Assert.True(Flags.IsActive(s, "x"));
+        Assert.True(CareerFlags.IsActive(s, "x"));
 
         s = Engine.SettleWeek(s, c, s.StateVersion).Value.State;
-        Assert.False(Flags.IsActive(s, "x"));
+        Assert.False(CareerFlags.IsActive(s, "x"));
         Assert.False(s.Flags!.ContainsKey("x"));
     }
 
     [Fact]
     public void Flag_without_weeks_lasts_until_the_last_week()
     {
-        var s = Flags.Set(TestCareers.Dorm(7), "x", weeks: null);
+        var s = CareerFlags.Set(TestCareers.Dorm(7), "x", weeks: null);
         Assert.Equal(CareerWeek.Last, s.Flags!["x"]);
-        Assert.True(Flags.IsActive(s with { Week = new CareerWeek(CareerWeek.Last) }, "x"));
-        Assert.True(Flags.Expire(s, CareerWeek.Last - 1).Flags!.ContainsKey("x"));
+        Assert.True(CareerFlags.IsActive(s with { Week = new CareerWeek(CareerWeek.Last) }, "x"));
+        Assert.True(CareerFlags.Expire(s, CareerWeek.Last - 1).Flags!.ContainsKey("x"));
     }
 
     [Fact]
     public void Clear_flag_effect_removes_the_flag()
     {
-        var s = Flags.Set(TestCareers.Dorm(7), "x", weeks: 5);
-        Assert.True(Flags.IsActive(s, "x"));
+        var s = CareerFlags.Set(TestCareers.Dorm(7), "x", weeks: 5);
+        Assert.True(CareerFlags.IsActive(s, "x"));
         s = EffectApplier.ToCarry(s, "source", [new Effect(EffectKind.ClearFlag, null, Fixed.Zero, Target: "x")]);
-        Assert.False(Flags.IsActive(s, "x"));
-        Assert.Equal(s, Flags.Clear(s, "x"));
+        Assert.False(CareerFlags.IsActive(s, "x"));
+        Assert.Equal(s, CareerFlags.Clear(s, "x"));
     }
 
     [Fact]
@@ -94,7 +93,7 @@ public class M3FlagTests
             Events = [Live("needs-x", Always(requires: ["x"])), Live("no-x", Always(forbids: ["x"]))],
         };
         var without = TestCareers.Dorm(7);
-        var flagged = Flags.Set(without, "x", weeks: 1);
+        var flagged = CareerFlags.Set(without, "x", weeks: 1);
 
         for (ulong seed = 1; seed <= 20; seed++)
         {

@@ -1,10 +1,9 @@
 using System.Collections.Immutable;
-using PolskiStreamerSimulator.Domain.Careers;
 
-namespace PolskiStreamerSimulator.Domain.Rulesets.M3;
+namespace PolskiStreamerSimulator.Domain.Careers;
 
 /// <summary>Career flags: each maps to the last week in which it is active.</summary>
-public static class Flags
+public static class CareerFlags
 {
     public static bool IsActive(CareerState s, string flag)
         => s.Flags is { } flags && flags.TryGetValue(flag, out var last) && last >= s.Week.Value;

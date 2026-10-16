@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
-using PolskiStreamerSimulator.Domain.Rulesets.M3;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets.Shared;
@@ -97,9 +96,9 @@ public static class EffectApplier
                 var category = effect.Category!.Value;
                 return s with { Skill = s.Skill.With(category, Stats.Bounded(s.Skill[category] + effect.Amount)) };
             case EffectKind.SetFlag:
-                return Flags.Set(s, effect.Target!, effect.Weeks);
+                return CareerFlags.Set(s, effect.Target!, effect.Weeks);
             case EffectKind.ClearFlag:
-                return Flags.Clear(s, effect.Target!);
+                return CareerFlags.Clear(s, effect.Target!);
             case EffectKind.FollowUp:
                 return s with { Scheduled = (s.Scheduled ?? []).Add(new ScheduledEvent(effect.Target!, s.Week.Value + effect.Weeks!.Value)) };
             default:

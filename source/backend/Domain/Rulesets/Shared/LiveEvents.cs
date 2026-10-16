@@ -7,22 +7,23 @@ namespace PolskiStreamerSimulator.Domain.Rulesets.Shared;
 /// <summary>Presenting and resolving the live events of a pending week, shared by the M1 and M3 rulesets.</summary>
 public static class LiveEvents
 {
-    public static Result<EventPresentation> Present(CareerState s, ContentSnapshot c)
+    public static Result<EventPresentation> Present(CareerState s, ContentSnapshot c) => Present(s, c, Next(s, c));
+
+    /// <summary>
+    /// The odds of every choice of the looked-up <paramref name="next"/> event (live or decision); fails with
+    /// <c>CareerEnded</c> on an ended career and with the lookup error otherwise. Never draws a random value.
+    /// </summary>
+    public static Result<EventPresentation> Present(CareerState s, ContentSnapshot c, Result<EventDefinition> next)
     {
         if (s.Status == CareerStatus.Ended)
         {
             return Result<EventPresentation>.Fail(DomainErrorCode.CareerEnded, "career-ended");
         }
 
-        var next = Next(s, c);
         return next.IsSuccess
-            ? Result<EventPresentation>.Ok(Presentation(s, next.Value, c))
+            ? Result<EventPresentation>.Ok(new EventPresentation(next.Value.Id, [.. next.Value.Choices.Select(choice => OddsCalculator.For(s, choice, c.Balance))]))
             : Result<EventPresentation>.Fail(next.Error);
     }
-
-    /// <summary>The odds of every choice of <paramref name="e"/>; never draws a random value.</summary>
-    public static EventPresentation Presentation(CareerState s, EventDefinition e, ContentSnapshot c)
-        => new(e.Id, [.. e.Choices.Select(choice => OddsCalculator.For(s, choice, c.Balance))]);
 
     /// <summary>
     /// Rolls the chosen response to the next unresolved event, applies its effects to the career and the pending

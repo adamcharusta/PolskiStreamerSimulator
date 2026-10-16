@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
-using PolskiStreamerSimulator.Domain.Rulesets.M3;
 
 namespace PolskiStreamerSimulator.Domain.Simulation;
 
@@ -65,8 +64,8 @@ public static class EventSelector
             && eligibility.Min.All(bound => Stats.Get(s, bound.Key, primary) >= bound.Value)
             && eligibility.Max.All(bound => Stats.Get(s, bound.Key, primary) <= bound.Value)
             && (category is null || eligibility.Categories.IsEmpty || eligibility.Categories.Contains(category.Value))
-            && eligibility.RequiresFlags.All(flag => Flags.IsActive(s, flag))
-            && !eligibility.ForbidsFlags.Any(flag => Flags.IsActive(s, flag))
+            && eligibility.RequiresFlags.All(flag => CareerFlags.IsActive(s, flag))
+            && !eligibility.ForbidsFlags.Any(flag => CareerFlags.IsActive(s, flag))
             && !(e.OneTime && s.UsedOneTime is { } used && used.Contains(e.Id));
     }
 
