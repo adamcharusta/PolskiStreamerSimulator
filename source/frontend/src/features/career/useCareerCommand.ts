@@ -36,6 +36,8 @@ export function useCareerCommand<TBody, TResult>(
   send: (request: WithCommandId<TBody>) => Promise<TResult>,
   careerOf: (result: TResult) => CareerView,
   onDone?: (result: TResult) => void,
+  /** A coded refusal (not a lost connection), after the career was refetched. */
+  onRefused?: (error: ApiRequestError) => void,
 ): CareerCommand<TBody> {
   const queryClient = useQueryClient();
   const inFlight = useRef(false);
@@ -52,6 +54,7 @@ export function useCareerCommand<TBody, TResult>(
       if (!error.isNetwork) {
         last.current = null;
         await queryClient.invalidateQueries({ queryKey: getGetCareerQueryKey(careerId) });
+        onRefused?.(error);
       }
     },
     onSettled: () => {
@@ -124,11 +127,13 @@ export function useBatchCommand(
   careerId: string,
   secret: string,
   onDone?: (outcome: BatchOutcome) => void,
+  onRefused?: (error: ApiRequestError) => void,
 ) {
   return useCareerCommand<BatchInput, BatchOutcome>(
     careerId,
     (request) => runBatch(careerId, request, careerAuth(secret)),
     (outcome) => outcome.career,
     onDone,
+    onRefused,
   );
 }

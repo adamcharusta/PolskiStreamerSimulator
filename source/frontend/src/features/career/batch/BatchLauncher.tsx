@@ -18,15 +18,25 @@ export interface BatchLauncherProps {
 export function BatchLauncher({ career, secret, onDone }: BatchLauncherProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const command = useBatchCommand(career.careerId, secret, (outcome) => {
-    setOpen(false);
-    onDone(outcome);
-  });
+  const command = useBatchCommand(
+    career.careerId,
+    secret,
+    (outcome) => {
+      setOpen(false);
+      onDone(outcome);
+    },
+    // A refusal is explained on the stage (CommandNotice), which the dialog would cover.
+    () => {
+      setOpen(false);
+    },
+  );
+  // Running, or waiting for the retry of a batch lost in transit: only the same command may answer it.
+  const busy = command.pending || command.stalled;
   return (
     <AlertDialog.Root
       open={open}
       onOpenChange={(next) => {
-        if (!command.pending) {
+        if (!busy) {
           setOpen(next);
         }
       }}
@@ -44,6 +54,7 @@ export function BatchLauncher({ career, secret, onDone }: BatchLauncherProps) {
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               variant="primary"
+              disabled={command.stalled}
               pending={command.pending}
               onClick={() => {
                 command.run({ expectedVersion: career.version, weeks: 13 });
@@ -52,7 +63,7 @@ export function BatchLauncher({ career, secret, onDone }: BatchLauncherProps) {
               {t('batch.confirm')}
             </Button>
             <AlertDialog.Cancel asChild>
-              <Button disabled={command.pending}>{t('batch.cancel')}</Button>
+              <Button disabled={busy}>{t('batch.cancel')}</Button>
             </AlertDialog.Cancel>
           </div>
         </AlertDialog.Content>
