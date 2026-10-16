@@ -9,6 +9,15 @@ public static class Stats
 {
     public static Fixed Bounded(Fixed value) => value.Clamp(Fixed.Zero, Fixed.Hundred);
 
+    /// <summary>
+    /// The category streamed in the last settled week — the only one without inactive weeks — or
+    /// <see cref="Category.JustChatting"/> before the first settlement. Primary-category stats read it between weeks.
+    /// </summary>
+    public static Category LastPrimary(CareerState s)
+        => s.LastSettledWeek >= CareerWeek.First
+            ? Enum.GetValues<Category>().FirstOrDefault(category => s.InactiveWeeks[category] == 0)
+            : Category.JustChatting;
+
     public static Fixed Get(CareerState s, StatKey key, Category primary) => key switch
     {
         StatKey.Drama => s.Drama,

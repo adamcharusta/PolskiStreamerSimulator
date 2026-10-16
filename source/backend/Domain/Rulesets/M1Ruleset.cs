@@ -54,4 +54,13 @@ public sealed class M1Ruleset : IRuleset
     }
 
     public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion) => RuleSteps.Retire(s, c, expectedVersion);
+
+    public Result<EventPresentation> PresentDecision(CareerState s, ContentSnapshot c)
+        => Result<EventPresentation>.Fail(DomainErrorCode.NoPendingDecision, "no-pending-decision");
+
+    public Result<CareerState> ResolveDecision(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
+        => Result<CareerState>.Fail(DomainErrorCode.NoPendingDecision, "no-pending-decision");
+
+    /// <summary>M1 actions are never rolled.</summary>
+    public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => null;
 }
