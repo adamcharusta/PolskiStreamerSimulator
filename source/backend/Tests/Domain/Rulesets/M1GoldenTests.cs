@@ -39,6 +39,8 @@ public class M1GoldenTests
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Domain", "Rulesets", FileName);
         var actual = Compute();
+        // Regenerating writes the source copy, but the comparison reads the copy in the output directory, so the
+        // first regenerating run fails; run it twice (the second run picks up the new file).
         if (Environment.GetEnvironmentVariable("UPDATE_M1_GOLDEN") == "1")
         {
             File.WriteAllLines(Path.Combine(TestPaths.RepositoryRoot, "source", "backend", "Tests", "Domain", "Rulesets", FileName), actual);

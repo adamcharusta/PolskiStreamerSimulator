@@ -45,8 +45,8 @@ Sub-projects A–C each ship their own API change and the minimal UI that makes 
 
 **In scope**
 
-- `Domain`: shared rule helpers extracted from `M1Ruleset`; `M3Ruleset`; event schema v2; mandatory decisions; flags and follow-ups; `Network/collaborate`; recovery crisis; category profiles; viral clips; validator rules.
-- `Application`/`Infrastructure`: schema-v2 content loading, ICU message validation before a snapshot is stored, immutability of published event versions, the new `resolveDecision` command, new careers on `m3-systems.1`.
+- `Domain`: shared rule helpers extracted from `M1Ruleset`; `M3Ruleset`; event schema v2; mandatory decisions; flags and follow-ups; `Network/collaborate`; recovery crisis; category profiles; viral clips; validator rules; the `IcuMessage` ICU subset validator.
+- `Application`/`Infrastructure`: schema-v2 content loading, immutability of published event versions, the new `resolveDecision` command, new careers on `m3-systems.1`.
 - `WebApp`: `decision` next step, action odds on week plans, ICU strings in the career view; regenerated OpenAPI document.
 - Frontend: ICU rendering, the decision step, the new action, category hints, viral and recovery report lines.
 - `content/m3`: balance and about 40 events.
@@ -205,7 +205,7 @@ The M1 baseline report stays unchanged; an M1 regression test pins state hashes 
 
 - Domain unit tests first (TDD) for every rule above: validator cases, flags and follow-ups, decision queue order, `decision-pending` rejection, recovery crisis, network odds, burnout modifier, category profiles, mastery and viral caps.
 - Property tests on bounds: energy, burnout, drama and credibility stay within 0–100 and cash reconciles to report lines after any sequence of legal commands.
-- Application tests: ICU validation errors, immutability refusal, `resolveDecision` repeats, batch stop on a decision.
+- Domain and Application tests: ICU validation errors (`IcuMessage`), immutability refusal, `resolveDecision` repeats, batch stop on a decision.
 - Testcontainers: storing a snapshot with a changed event version fails; M1 and M3 careers coexist.
 - Frontend: ICU rendering for all three pronoun sets, decision step, network odds; the Playwright journey covers a mandatory decision through a test seed.
 - Coverage ≥ 80 % backend and frontend; SonarQube Cloud zero open issues (TD-96).
@@ -222,7 +222,7 @@ Issues #16, #17 and #21 stay open until the M3 release reaches `main`.
 
 ## 10. Decision records and documentation
 
-- Technical decision register: M3 decomposition, ruleset approach A, ICU MessageFormat in content snapshots, ICU validation in `Application`, event-version immutability, the representative-content cooldown exception.
+- Technical decision register: M3 decomposition, ruleset approach A, ICU MessageFormat in content snapshots, ICU validation by a dependency-free `Domain` subset validator (`IcuMessage`), event-version immutability, the representative-content cooldown exception.
 - GDD decision log: gender-neutral nonbinary forms; representative content written by the agent; recovery crisis replacing forced rest; `Network/collaborate` odds.
 - Gameplay systems: a new §11 for `m3-systems.1` (categories table, mastery, virals, burnout modifier, recovery crisis, decisions); the boredom rebalance as an agent proposal.
 - Content and experience §2 and §5: schema v2 fields and the ICU convention.
