@@ -103,7 +103,7 @@ Authors write Polish quotation marks („…”); an ASCII apostrophe must be do
 - a `milestone` or `crisis` event has an empty week range or is reachable neither by eligibility nor by a `FollowUp`;
 - for any category and week, fewer `live` events are eligible by week range and category than `eventsPerWeekMax`.
 
-ICU syntax is validated in `Application` before a snapshot is stored, so `Domain` keeps no package dependency: every message must parse, a `select` must be on `gender` and must contain `female`, `male` and `other`, and no message may be empty. The .NET ICU parser package is chosen in the implementation plan.
+ICU syntax is validated by `IcuMessage` in `Domain`, a dependency-free validator for the subset the content uses: plain text, `''` escapes, `{name}` arguments and `{gender, select, …}` with `female`, `male` and `other` (each branch may nest the same subset). Any other ICU construct is rejected. A frontend test formats every `content/m3` message with `intl-messageformat` for all three genders, so the two parsers cannot drift.
 
 ### 4.4 Immutability
 
@@ -145,7 +145,8 @@ The week plan returned by the API carries this odds presentation, so the player 
 - `CareerState` gains `PendingDecisions`: event IDs that must be answered before the next week starts.
 - After each settlement the ruleset enqueues, in this order: due `milestone`/`crisis` follow-ups, the recovery crisis when triggered, then at most one eligible `milestone` or `crisis` event by weight that is not cooling down. One week opens with at most two decisions.
 - `RequiresPlayerDecision` returns `true` while the queue is not empty, so the 13-week batch stops before the week (TD-90 mechanism) without consuming it.
-- New command `ResolveDecision(choiceId)`: presents the same odds as a live event, rolls, applies effects at once (cash immediately, not at settlement), records the roll and removes the decision from the queue. `StartWeek` is rejected with `decision-pending` while the queue is not empty.
+- New command `ResolveDecision(choiceId)`: presents the same odds as a live event and rolls. Stat effects apply at once. Cash and follower effects, the roll and its stat lines go into a **decision carry** that the next `StartWeek` moves into the week, so the week's report lists every cash movement and reconciles exactly. Audience, quality and viral effects are not allowed in `milestone`/`crisis` events (validator).
+- One-time milestones open as soon as they are eligible; repeatable milestones and crises open after a seeded `decisionChancePerWeek` roll (balance, proposed 6 %).
 - The action log stores it as kind `resolveDecision`; repeats with the same command ID return the stored response.
 - The proposed pacing guardrail (no more than one mandatory interruption per 13 routine weeks on average) is measured in the simulation report; content weights are tuned to meet it.
 
@@ -213,9 +214,9 @@ The M1 baseline report stays unchanged; an M1 regression test pins state hashes 
 
 Three PRs into `develop` from `feature/m3a-*` branches, each merged before the next starts:
 
-1. **Foundation:** M1 golden test, helper extraction, schema v2 with loader, validator rules, ICU validation, immutability, `M3Ruleset` with M1-equivalent rules and the decision mechanism.
-2. **Rules:** actions, energy and burnout (#17), categories, mastery and virals (#16), mandatory decisions and flags in play, simulator support and the baseline report.
-3. **Content and play:** the ~40 Polish events, API and OpenAPI changes, frontend ICU rendering and decision step, new careers on `m3-systems.1`, the Playwright journey.
+1. **Foundation:** M1 golden test, hash-neutral state fields, shared rule steps, schema v2 with loader and ICU validator, immutability, `M3Ruleset` with M1-equivalent rules, flags, follow-ups and the decision mechanism.
+2. **Rules and content:** category profiles, mastery, virals, burnout penalty, `NetworkCollaborate`, recovery crisis, decision opening rules, the ~40 Polish events in `content/m3`, simulator support and the baseline report. (Content moved here from PR 3 because the simulation needs it.)
+3. **API and play:** API and OpenAPI changes, frontend ICU rendering and decision step, new careers on `m3-systems.1`, the Playwright journey.
 
 Issues #16, #17 and #21 stay open until the M3 release reaches `main`.
 
