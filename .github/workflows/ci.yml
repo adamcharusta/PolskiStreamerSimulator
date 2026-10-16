@@ -153,9 +153,9 @@ jobs:
       # A random password for this run's throwaway database (TD-99), masked in the log; first, so the cleanup steps can read compose.yaml after any failure.
       - name: Generate the database password
         run: |
-          password="Ci-$(openssl rand -hex 16)-Aa1"
-          echo "::add-mask::$password"
-          echo "MSSQL_SA_PASSWORD=$password" >> "$GITHUB_ENV"
+          generated="Ci-$(openssl rand -hex 16)-Aa1"
+          echo "::add-mask::$generated"
+          echo "MSSQL_SA_PASSWORD=$generated" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
