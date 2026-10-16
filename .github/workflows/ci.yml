@@ -149,10 +149,13 @@ jobs:
     name: frontend-e2e
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      # A throwaway password for this run's database only (TD-99); it is not a secret.
-      MSSQL_SA_PASSWORD: Ci-${{ github.run_id }}-Sql!
     steps:
+      # A random password for this run's throwaway database (TD-99), masked in the log; first, so the cleanup steps can read compose.yaml after any failure.
+      - name: Generate the database password
+        run: |
+          password="Ci-$(openssl rand -hex 16)-Aa1"
+          echo "::add-mask::$password"
+          echo "MSSQL_SA_PASSWORD=$password" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -162,9 +165,10 @@ jobs:
       - name: Install
         working-directory: source/frontend
         run: npm ci --ignore-scripts
+      # The Playwright CLI pinned by package-lock.json, not a package npx could fetch on demand.
       - name: Install Chromium
         working-directory: source/frontend
-        run: npx playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
       - name: Start the local stack
         run: docker compose up -d --build --wait --wait-timeout 600
       - name: Browser journey
