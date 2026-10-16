@@ -58,4 +58,19 @@ public sealed class EfContentStoreTests(SqlServerFixture sql)
 
         Assert.Null(await new EfContentStore(factory, TimeProvider.System).FindAsync(new string('0', 64), Ct));
     }
+
+    [Fact]
+    public async Task A_changed_event_under_the_same_version_is_refused()
+    {
+        var factory = await sql.MigratedDatabaseAsync(Ct);
+        var store = new EfContentStore(factory, TimeProvider.System);
+        await store.EnsureStoredAsync(new ContentFiles(TestContentFiles.Balance, TestContentFiles.SchemaTwoEvents()), Ct);
+
+        var changed = new ContentFiles(TestContentFiles.Balance, TestContentFiles.SchemaTwoEvents(" Zmieniono."));
+        var error = await Assert.ThrowsAsync<InvalidDataException>(() => store.EnsureStoredAsync(changed, Ct));
+
+        Assert.Contains("event-version-changed:", error.Message, StringComparison.Ordinal);
+        await using var db = factory.CreateDbContext();
+        Assert.Equal(1, await db.ContentSnapshots.CountAsync(Ct));
+    }
 }

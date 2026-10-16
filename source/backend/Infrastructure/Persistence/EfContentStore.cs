@@ -17,6 +17,13 @@ public sealed class EfContentStore(IDbContextFactory<GameDbContext> contexts, Ti
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         if (!await db.ContentSnapshots.AnyAsync(s => s.Digest == snapshot.Digest, cancellationToken))
         {
+            var stored = await db.ContentSnapshots.AsNoTracking().Select(r => r.EventsJson).ToListAsync(cancellationToken);
+            var conflicts = EventVersions.Conflicts(files.Events, stored);
+            if (conflicts.Count > 0)
+            {
+                throw new InvalidDataException(EventVersions.Describe(conflicts));
+            }
+
             db.ContentSnapshots.Add(new ContentSnapshotRow
             {
                 Digest = snapshot.Digest,
