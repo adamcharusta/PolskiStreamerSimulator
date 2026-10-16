@@ -1,8 +1,14 @@
 import { useMutation, useMutationState, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
-import { getGetCareerQueryKey, submitAction } from '@/api/generated/game';
-import type { ActionOutcome, ActionRequest, CareerView } from '@/api/generated/game.schemas';
+import { getGetCareerQueryKey, runBatch, submitAction } from '@/api/generated/game';
+import type {
+  ActionOutcome,
+  ActionRequest,
+  BatchOutcome,
+  BatchRequest,
+  CareerView,
+} from '@/api/generated/game.schemas';
 import type { ApiRequestError } from '@/api/http';
 import { careerAuth } from '@/careers/knownCareers';
 
@@ -30,6 +36,8 @@ export function useCareerCommand<TBody, TResult>(
   send: (request: WithCommandId<TBody>) => Promise<TResult>,
   careerOf: (result: TResult) => CareerView,
   onDone?: (result: TResult) => void,
+  /** A coded refusal (not a lost connection), after the career was refetched. */
+  onRefused?: (error: ApiRequestError) => void,
 ): CareerCommand<TBody> {
   const queryClient = useQueryClient();
   const inFlight = useRef(false);
@@ -46,6 +54,7 @@ export function useCareerCommand<TBody, TResult>(
       if (!error.isNetwork) {
         last.current = null;
         await queryClient.invalidateQueries({ queryKey: getGetCareerQueryKey(careerId) });
+        onRefused?.(error);
       }
     },
     onSettled: () => {
@@ -110,4 +119,21 @@ export function useLatestCommand(careerId: string): LatestCommand {
     status: latest?.status ?? 'idle',
     error: (latest?.error as ApiRequestError | null | undefined) ?? null,
   };
+}
+
+export type BatchInput = Omit<BatchRequest, 'commandId'>;
+
+export function useBatchCommand(
+  careerId: string,
+  secret: string,
+  onDone?: (outcome: BatchOutcome) => void,
+  onRefused?: (error: ApiRequestError) => void,
+) {
+  return useCareerCommand<BatchInput, BatchOutcome>(
+    careerId,
+    (request) => runBatch(careerId, request, careerAuth(secret)),
+    (outcome) => outcome.career,
+    onDone,
+    onRefused,
+  );
 }

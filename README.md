@@ -2,7 +2,7 @@
 
 Polski Streamer Simulator is a free, satirical 18+ browser career game in which the player guides a fictional Polish streamer through a 20-year (1,040-week) career. Each week the player picks one main action and a primary category, plays or automates a stream with two or three live events, and watches followers, live viewers, money, drama, credibility and burnout change. All gameplay and scoring rules run in a deterministic, server-authoritative C# `Domain`, and finished careers compete on a season-scoped global top 100.
 
-**Status:** M1 simulation prototype complete pending the content-capacity estimate ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7); [milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/1)). The deterministic C# `Domain` plays full 1,040-week careers; see the [M1 baseline simulation report](docs/reports/m1-baseline-simulation.md). There is no playable UI, HTTP game API or database yet.
+**Status:** M1 simulation prototype complete pending the content-capacity estimate ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7); [milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/1)); see the [M1 baseline simulation report](docs/reports/m1-baseline-simulation.md). The M2 vertical slice ([milestone](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/2)) is playable locally: create an unranked career, play manual weeks and 13-week batches in the browser against the HTTP API and SQL Server.
 
 ## Repository layout
 
@@ -23,7 +23,7 @@ source/
   frontend/                React client (M2-C; TD-98)
 k8s/                       Ansible, Helm and environment values (later milestone)
 .github/
-  workflows/               CI (backend, backend integration, frontend, SonarQube Cloud, PR policy)
+  workflows/               CI (backend, backend integration, frontend, browser journey, SonarQube Cloud, PR policy)
   rulesets/                main and develop branch rules
   scripts/                 CI helper scripts
 ```
@@ -47,6 +47,18 @@ k8s/                       Ansible, Helm and environment values (later milestone
 - [Reference game analysis](docs/polski-pilkarz-simulator-analysis.md) and [reference code analysis](docs/polski-pilkarz-simulator-code-analysis.md) — historical references, not requirements.
 
 Agents start with [AGENTS.md](AGENTS.md).
+
+## Run locally
+
+Requires Docker Desktop (about 2 GB of memory for SQL Server). From the repository root:
+
+```sh
+cp .env.example .env          # then set MSSQL_SA_PASSWORD to a local-only password
+docker compose up             # SQL Server, the API on :8080 and Vite on :5173
+# open http://localhost:5173
+```
+
+`docker compose down -v` resets the local database. See [local Docker Compose](docs/development-and-delivery.md#local-docker-compose) for rebuilding the API and running the browser journey.
 
 ## Build and test
 

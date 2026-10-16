@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
+  type BatchOutcome,
   type CareerView,
   NextStepKind,
   type RollView,
   type WeekReportView,
 } from '@/api/generated/game.schemas';
 
+import { BatchLauncher } from './batch/BatchLauncher';
+import { BatchResult } from './batch/BatchResult';
 import { CommandNotice } from './CommandNotice';
 import { EndedView } from './stage/EndedView';
 import { LiveEvent } from './stage/LiveEvent';
@@ -19,7 +22,8 @@ import { WeekReport } from './stage/WeekReport';
 /** A result the player reads before the stage moves to the server's next step. */
 export type Revealed =
   | { readonly kind: 'roll'; readonly roll: RollView }
-  | { readonly kind: 'report'; readonly report: WeekReportView };
+  | { readonly kind: 'report'; readonly report: WeekReportView }
+  | { readonly kind: 'batch'; readonly outcome: BatchOutcome };
 
 interface StageViewProps {
   readonly career: CareerView;
@@ -71,9 +75,23 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
     return <WeekReport report={revealed.report} onNext={onClose} />;
   }
 
+  if (revealed?.kind === 'batch') {
+    return <BatchResult outcome={revealed.outcome} onNext={onClose} />;
+  }
+
   switch (career.next.kind) {
     case NextStepKind.planWeek: {
-      return <PlanWeek key={career.version} career={career} secret={secret} />;
+      return (
+        <PlanWeek key={career.version} career={career} secret={secret}>
+          <BatchLauncher
+            career={career}
+            secret={secret}
+            onDone={(outcome) => {
+              onReveal({ kind: 'batch', outcome }, t(`batch.stop.${outcome.stopReason}`));
+            }}
+          />
+        </PlanWeek>
+      );
     }
     case NextStepKind.resolveEvent: {
       return (
