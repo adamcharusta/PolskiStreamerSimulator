@@ -17,10 +17,14 @@ public static class Stats
         StatKey.Burnout => s.Burnout,
         StatKey.PrimarySkill => s.Skill[primary],
         StatKey.PrimaryBoredom => s.Boredom[primary],
+        StatKey.Followers => Fixed.FromInt(s.Followers),
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, null),
     };
 
-    /// <summary>Adds <paramref name="delta"/> and clamps the result to 0–100.</summary>
+    /// <summary>
+    /// Adds <paramref name="delta"/> and clamps the result to 0–100. <see cref="StatKey.Followers"/> is rejected: followers
+    /// change only through <see cref="EffectKind.FollowersPercent"/> and settlement.
+    /// </summary>
     public static CareerState Add(CareerState s, StatKey key, Fixed delta, Category primary) => key switch
     {
         StatKey.Drama => s with { Drama = Bounded(s.Drama + delta) },

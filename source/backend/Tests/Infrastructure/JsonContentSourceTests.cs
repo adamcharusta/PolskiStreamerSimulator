@@ -137,4 +137,75 @@ public sealed class JsonContentSourceTests : IDisposable
 
         Assert.Contains("'stored snapshot x'", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Schema_two_event_reads_icu_text_phase_and_flags()
+    {
+        var events = """
+            { "schema": 2, "events": [ {
+              "id": "x", "version": 2, "phase": "crisis",
+              "title": "T", "text": "{gender, select, female {a} male {b} other {c}}",
+              "weight": 1, "oneTime": true, "tags": ["rivalry"],
+              "eligibility": { "fromWeek": 1, "toWeek": 1040, "categories": ["Chess"], "requiresFlags": ["f"] },
+              "choices": [ { "id": "ok", "label": "L", "guaranteed": true,
+                "outcomes": { "success": [ { "kind": "SetFlag", "flag": "f", "weeks": 4, "amount": 0 } ] } } ] } ] }
+            """u8.ToArray();
+        var e = JsonContentSource.ParseEvents(events).Single();
+        Assert.Equal((2, EventPhase.Crisis, "T", 13, true), (e.Version, e.Phase, e.Title, e.CooldownWeeks, e.OneTime));
+        Assert.Equal([Category.Chess], e.Eligibility.Categories);
+        Assert.Equal(("f", 4), (e.Choices[0].Outcomes.Success[0].Target, e.Choices[0].Outcomes.Success[0].Weeks));
+    }
+
+    [Fact]
+    public void Schema_two_choice_reads_label_texts_requirements_and_effect_targets()
+    {
+        var events = """
+            { "schema": 2, "events": [ {
+              "id": "x", "version": 1, "phase": "live", "title": "T", "text": "Tekst",
+              "weight": 1, "cooldownWeeks": 4,
+              "eligibility": { "fromWeek": 1, "toWeek": 1040, "forbidsFlags": ["g"] },
+              "choices": [ { "id": "ok", "label": "L", "baseChance": 0.5, "successText": "S", "failureText": "F",
+                "requires": { "minCashPln": 500, "minEnergy": 12.5 },
+                "outcomes": {
+                  "success": [ { "kind": "FollowUp", "event": "y", "weeks": 2, "amount": 0 },
+                               { "kind": "SkillDelta", "category": "Fps", "amount": 3 } ],
+                  "failure": [ { "kind": "ClearFlag", "flag": "g", "amount": 0 } ] } } ] } ] }
+            """u8.ToArray();
+        var e = JsonContentSource.ParseEvents(events).Single();
+        var choice = e.Choices[0];
+        Assert.Equal((EventPhase.Live, 4, false, "Tekst"), (e.Phase, e.CooldownWeeks, e.OneTime, e.TextPl));
+        Assert.Equal(["g"], e.Eligibility.ForbidsFlags);
+        Assert.Equal((null, "L", "S", "F"), (choice.LabelKey, choice.LabelPl, choice.SuccessText, choice.FailureText));
+        Assert.Equal(new ChoiceRequirement(500, Fixed.FromRatio(25, 2)), choice.Requires);
+        Assert.Equal(new Effect(EffectKind.FollowUp, null, Fixed.Zero, Target: "y", Weeks: 2), choice.Outcomes.Success[0]);
+        Assert.Equal(new Effect(EffectKind.SkillDelta, null, Fixed.FromInt(3), Category.Fps), choice.Outcomes.Success[1]);
+        Assert.Equal("g", choice.Outcomes.Failure[0].Target);
+    }
+
+    [Fact]
+    public void Schema_one_content_defaults_to_schema_one_and_the_m1_ruleset()
+    {
+        var c = new JsonContentSource(TestPaths.ContentM1).Load();
+        Assert.Equal((1, "m1-prototype.1"), (c.Schema, c.RulesetId));
+        Assert.All(c.Events, e => Assert.Equal((1, EventPhase.Live, false), (e.Version, e.Phase, e.OneTime)));
+        Assert.Null(c.Balance.RecoveryCrisisEventId);
+        Assert.Equal(Fixed.Zero, c.Balance.DecisionChancePerWeek);
+    }
+
+    [Fact]
+    public void Balance_reads_ruleset_and_m3_settings()
+    {
+        var dir = CopyContent(b => b.Replace(
+            "\"eventsPerWeekMin\": 2,",
+            """
+            "eventsPerWeekMin": 2, "ruleset": "m1-prototype.1", "recoveryCrisisEventId": "chat-raid",
+            "decisionChancePerWeek": 0.06, "networkEnergyCost": 15,
+            "networkCollaborate": { "id": "network", "label": "Współpraca", "guaranteed": true,
+              "outcomes": { "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ] } },
+            """,
+            StringComparison.Ordinal));
+        var b = new JsonContentSource(dir).Load().Balance;
+        Assert.Equal(("chat-raid", Fixed.FromRatio(6, 100), Fixed.FromInt(15)), (b.RecoveryCrisisEventId, b.DecisionChancePerWeek, b.NetworkEnergyCost));
+        Assert.Equal(("network", "Współpraca"), (b.NetworkCollaborate!.Id, b.NetworkCollaborate.LabelPl));
+    }
 }

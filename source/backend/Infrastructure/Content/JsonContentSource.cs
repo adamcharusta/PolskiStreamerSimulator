@@ -18,6 +18,12 @@ public sealed class JsonContentSource(string directory) : IContentSource
     public const string BalanceFile = "balance.json";
     public const string EventsFile = "events.json";
 
+    /// <summary>Ruleset assumed when <c>balance.json</c> names none (M1 content).</summary>
+    private const string DefaultRulesetId = "m1-prototype.1";
+
+    /// <summary>Cooldown of a schema-2 event that does not set <c>cooldownWeeks</c>.</summary>
+    private const int DefaultCooldownWeeks = 13;
+
     public ContentSnapshot Load()
         => Parse(
             File.ReadAllBytes(Path.Combine(directory, BalanceFile)),
@@ -40,9 +46,10 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var balanceRoot = balanceDocument.RootElement;
         var balance = ReadBalance(balanceRoot);
         var profiles = ReadProfiles(Property(balanceRoot, "profiles", BalanceFile));
-        var events = ReadArray(Property(eventsDocument.RootElement, "events", EventsFile), "events", ReadEvent);
+        var (schema, events) = ReadEvents(eventsDocument.RootElement);
+        var rulesetId = OptionalString(balanceRoot, "ruleset", BalanceFile) ?? DefaultRulesetId;
 
-        var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles);
+        var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId);
         var violations = ContentValidator.Validate(snapshot);
         if (violations.Count > 0)
         {
@@ -50,6 +57,24 @@ public sealed class JsonContentSource(string directory) : IContentSource
         }
 
         return snapshot;
+    }
+
+    /// <summary>Reads the events of an <c>events.json</c> in its declared schema, without validating them.</summary>
+    public static ImmutableArray<EventDefinition> ParseEvents(byte[] eventsBytes)
+    {
+        using var document = JsonDocument.Parse(eventsBytes);
+        return ReadEvents(document.RootElement).Events;
+    }
+
+    private static (int Schema, ImmutableArray<EventDefinition> Events) ReadEvents(JsonElement root)
+    {
+        var schema = OptionalInt(root, "schema", EventsFile) ?? 1;
+        if (schema is not (1 or 2))
+        {
+            throw Invalid($"{EventsFile}.schema", $"unsupported schema {schema}");
+        }
+
+        return (schema, ReadArray(Property(root, "events", EventsFile), "events", (e, p) => ReadEvent(e, p, schema)));
     }
 
     private static BalanceConstants ReadBalance(JsonElement b)
@@ -119,6 +144,12 @@ public sealed class JsonContentSource(string directory) : IContentSource
             EasyChanceBonus = ReadFixed(b, "easyChanceBonus", f),
             EventsPerWeekMin = ReadInt(b, "eventsPerWeekMin", f),
             EventsPerWeekMax = ReadInt(b, "eventsPerWeekMax", f),
+            RecoveryCrisisEventId = OptionalString(b, "recoveryCrisisEventId", f),
+            DecisionChancePerWeek = OptionalFixed(b, "decisionChancePerWeek", f) ?? Fixed.Zero,
+            NetworkEnergyCost = OptionalFixed(b, "networkEnergyCost", f) ?? Fixed.Zero,
+            NetworkCollaborate = b.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null
+                ? ReadChoice(network, $"{f}.networkCollaborate", schema: 2)
+                : null,
         };
     }
 
@@ -147,35 +178,62 @@ public sealed class JsonContentSource(string directory) : IContentSource
         return builder.ToImmutable();
     }
 
-    private static EventDefinition ReadEvent(JsonElement e, string path)
+    /// <summary>
+    /// Reads one event. Schema 1 has <c>titleKey</c>, <c>textPl</c> and a required <c>cooldownWeeks</c>; schema 2 has
+    /// <c>version</c>, <c>phase</c>, <c>title</c>, ICU <c>text</c>, optional <c>oneTime</c>, <c>tags</c>, category and
+    /// flag eligibility, and a <c>cooldownWeeks</c> that defaults to <see cref="DefaultCooldownWeeks"/>.
+    /// </summary>
+    private static EventDefinition ReadEvent(JsonElement e, string path, int schema)
     {
         var id = ReadString(e, "id", path);
         path = $"events[{id}]";
         var eligibility = Property(e, "eligibility", path);
-        return new EventDefinition(
+        var definition = new EventDefinition(
             id,
-            ReadString(e, "titleKey", path),
-            ReadString(e, "textPl", path),
+            schema == 1 ? ReadString(e, "titleKey", path) : null,
+            ReadString(e, schema == 1 ? "textPl" : "text", path),
             ReadInt(e, "weight", path),
-            ReadInt(e, "cooldownWeeks", path),
-            new Eligibility(
-                ReadInt(eligibility, "fromWeek", path),
-                ReadInt(eligibility, "toWeek", path),
-                ReadStatBounds(eligibility, "min", path),
-                ReadStatBounds(eligibility, "max", path)),
-            ReadArray(Property(e, "choices", path), $"{path}.choices", ReadChoice));
+            schema == 1 ? ReadInt(e, "cooldownWeeks", path) : OptionalInt(e, "cooldownWeeks", path) ?? DefaultCooldownWeeks,
+            ReadEligibility(eligibility, path, schema),
+            ReadArray(Property(e, "choices", path), $"{path}.choices", (c, p) => ReadChoice(c, p, schema)));
+        return schema == 1 ? definition : definition with
+        {
+            Version = ReadInt(e, "version", path),
+            Phase = ParseEnum<EventPhase>(ToPascalCase(ReadString(e, "phase", path)), $"{path}.phase"),
+            Title = ReadString(e, "title", path),
+            OneTime = OptionalBool(e, "oneTime"),
+            Tags = OptionalStrings(e, "tags", path),
+        };
     }
 
-    private static ChoiceDefinition ReadChoice(JsonElement c, string path)
+    private static Eligibility ReadEligibility(JsonElement eligibility, string path, int schema)
+    {
+        var result = new Eligibility(
+            ReadInt(eligibility, "fromWeek", path),
+            ReadInt(eligibility, "toWeek", path),
+            ReadStatBounds(eligibility, "min", path),
+            ReadStatBounds(eligibility, "max", path));
+        return schema == 1 ? result : result with
+        {
+            Categories = eligibility.TryGetProperty("categories", out var categories)
+                ? ReadArray(categories, $"{path}.categories", (c, p) => ParseEnum<Category>(StringValue(c, p), p))
+                : [],
+            RequiresFlags = OptionalStrings(eligibility, "requiresFlags", path),
+            ForbidsFlags = OptionalStrings(eligibility, "forbidsFlags", path),
+        };
+    }
+
+    /// <summary>Reads one choice; schema 1 has <c>labelKey</c>/<c>labelPl</c>, schema 2 an ICU <c>label</c>, outcome texts and requirements.</summary>
+    private static ChoiceDefinition ReadChoice(JsonElement c, string path, int schema)
     {
         var id = ReadString(c, "id", path);
         path = $"{path}/{id}";
         var guaranteed = OptionalBool(c, "guaranteed");
         var outcomes = Property(c, "outcomes", path);
-        return new ChoiceDefinition(
+        var choice = new ChoiceDefinition(
             id,
-            ReadString(c, "labelKey", path),
-            ReadString(c, "labelPl", path),
+            schema == 1 ? ReadString(c, "labelKey", path) : null,
+            ReadString(c, schema == 1 ? "labelPl" : "label", path),
             guaranteed,
             guaranteed ? Fixed.One : ReadFixed(c, "baseChance", path),
             c.TryGetProperty("modifiers", out var modifiers) ? ReadArray(modifiers, $"{path}.modifiers", ReadModifier) : [],
@@ -185,6 +243,14 @@ public sealed class JsonContentSource(string directory) : IContentSource
                 ReadEffects(outcomes, "failure", path) ?? [],
                 ReadEffects(outcomes, "criticalSuccess", path),
                 ReadEffects(outcomes, "criticalFailure", path)));
+        return schema == 1 ? choice : choice with
+        {
+            Requires = c.TryGetProperty("requires", out var requires) && requires.ValueKind != JsonValueKind.Null
+                ? new ChoiceRequirement(OptionalLong(requires, "minCashPln", $"{path}.requires"), OptionalFixed(requires, "minEnergy", $"{path}.requires"))
+                : null,
+            SuccessText = OptionalString(c, "successText", path),
+            FailureText = OptionalString(c, "failureText", path),
+        };
     }
 
     private static ChanceModifier ReadModifier(JsonElement m, string path)
@@ -199,11 +265,15 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ? ReadArray(effects, $"{path}.{name}", ReadEffect)
             : null;
 
+    /// <summary>Reads one effect; <c>flag</c> or <c>event</c> becomes <see cref="Effect.Target"/>.</summary>
     private static Effect ReadEffect(JsonElement e, string path)
         => new(
             ParseEnum<EffectKind>(ReadString(e, "kind", path), path),
-            e.TryGetProperty("stat", out var stat) && stat.ValueKind != JsonValueKind.Null ? ParseEnum<StatKey>(stat.GetString()!, path) : null,
-            ReadFixed(e, "amount", path));
+            OptionalString(e, "stat", path) is { } stat ? ParseEnum<StatKey>(stat, path) : null,
+            ReadFixed(e, "amount", path),
+            OptionalString(e, "category", path) is { } category ? ParseEnum<Category>(category, path) : null,
+            OptionalString(e, "flag", path) ?? OptionalString(e, "event", path),
+            OptionalInt(e, "weeks", path));
 
     private static ImmutableDictionary<StatKey, Fixed> ReadStatBounds(JsonElement eligibility, string name, string path)
     {
@@ -232,24 +302,45 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ? value
             : throw Invalid($"{path}.{name}", "is missing");
 
-    private static string ReadString(JsonElement obj, string name, string path)
-    {
-        var value = Property(obj, name, path);
-        return value.ValueKind == JsonValueKind.String ? value.GetString()! : throw Invalid($"{path}.{name}", "expected a string");
-    }
+    /// <summary>Returns the property, or null when it is absent or JSON null.</summary>
+    private static JsonElement? Optional(JsonElement obj, string name)
+        => obj.TryGetProperty(name, out var value) && value.ValueKind != JsonValueKind.Null ? value : null;
+
+    private static string ReadString(JsonElement obj, string name, string path) => StringValue(Property(obj, name, path), $"{path}.{name}");
+
+    private static string? OptionalString(JsonElement obj, string name, string path)
+        => Optional(obj, name) is { } value ? StringValue(value, $"{path}.{name}") : null;
+
+    private static ImmutableArray<string> OptionalStrings(JsonElement obj, string name, string path)
+        => Optional(obj, name) is { } value ? ReadArray(value, $"{path}.{name}", StringValue) : [];
+
+    private static string StringValue(JsonElement value, string path)
+        => value.ValueKind == JsonValueKind.String ? value.GetString()! : throw Invalid(path, "expected a string");
 
     private static bool OptionalBool(JsonElement obj, string name)
         => obj.TryGetProperty(name, out var value) && value.GetBoolean();
 
     private static long ReadLong(JsonElement obj, string name, string path) => LongValue(Property(obj, name, path), $"{path}.{name}");
 
-    private static int ReadInt(JsonElement obj, string name, string path)
-    {
-        var value = Property(obj, name, path);
-        return value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var result)
+    private static long? OptionalLong(JsonElement obj, string name, string path)
+        => Optional(obj, name) is { } value ? LongValue(value, $"{path}.{name}") : null;
+
+    private static int ReadInt(JsonElement obj, string name, string path) => IntValue(Property(obj, name, path), $"{path}.{name}");
+
+    private static int? OptionalInt(JsonElement obj, string name, string path)
+        => Optional(obj, name) is { } value ? IntValue(value, $"{path}.{name}") : null;
+
+    private static int IntValue(JsonElement value, string path)
+        => value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var result)
             ? result
-            : throw Invalid($"{path}.{name}", "expected a 32-bit integer");
-    }
+            : throw Invalid(path, "expected a 32-bit integer");
+
+    private static Fixed? OptionalFixed(JsonElement obj, string name, string path)
+        => Optional(obj, name) is { } value ? FixedValue(value, $"{path}.{name}") : null;
+
+    /// <summary>Turns a camel-case JSON value such as <c>crisis</c> into its enum member name.</summary>
+    private static string ToPascalCase(string value)
+        => value.Length == 0 ? value : string.Concat(char.ToUpperInvariant(value[0]).ToString(), value[1..]);
 
     private static long LongValue(JsonElement value, string path)
         => value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var result)
