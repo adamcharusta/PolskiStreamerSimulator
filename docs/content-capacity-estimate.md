@@ -1,6 +1,6 @@
 # Content Production Capacity Estimate
 
-Status: **Agent proposal, pending owner measurement and approval**, 2026-10-13 ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7)). This document gives a method to measure how long event content takes to produce, an effort model, an agent estimate built on stated assumptions, and a proposed launch floor by career phase and category. Nothing here is a launch requirement until the owner records measured times and an approved floor in the sign-off section below and in the [content specification](content-and-experience.md#2-content-structure).
+Status: **Agent proposal, pending owner measurement and approval**, 2026-10-13 ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7)). **Scheduled for M3** (owner decision, 2026-10-16): the measurement and sign-off happen with the M3 content work, and the M2 release closes M1 without them. This document gives a method to measure how long event content takes to produce, an effort model, an agent estimate built on stated assumptions, and a proposed launch floor by career phase and category. Nothing here is a launch requirement until the owner records measured times and an approved floor in the sign-off section below and in the [content specification](content-and-experience.md#2-content-structure).
 
 ## 1. What one template is
 
