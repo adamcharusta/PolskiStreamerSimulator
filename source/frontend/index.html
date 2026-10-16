@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pl" data-theme="overlay">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Polski Streamer Simulator</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      try {
+        var stored = localStorage.getItem('pss.theme');
+        if (stored === 'win98' || stored === 'web2005')
+          document.documentElement.dataset.theme = stored;
+      } catch {
+        // Storage can be disabled; the overlay theme is already set on <html>.
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -8,6 +8,7 @@ The proposed layout applies the owner's four-project .NET solution and keeps Rea
 
 ```text
 docs/                         English project documentation
+content/                      versioned content and balance snapshots (M1: content/m1/*.json; TD-76)
 .github/
   workflows/                  GitHub Actions workflows
 source/
@@ -17,7 +18,8 @@ source/
     Application/              CQRS messages, handlers, application policies
     Infrastructure/           EF Core, Identity, SQL Server, external adapters
     WebApp/                   ASP.NET Core host, Wolverine HTTP endpoints, OpenAPI
-    Tests/                    xUnit unit and integration tests
+    Tests/                    xUnit v3 unit, property and integration tests (Microsoft.Testing.Platform; TD-82)
+    Tools/BatchSimulator/     console batch simulator for seeded careers; not deployed (TD-78)
   frontend/                   React + TypeScript + Vite, game and /admin route
     src/
       features/               feature-level components, hooks, state and screens
@@ -34,7 +36,7 @@ compose.yaml                   local development only
 
 The root directory contains cross-project configuration files and the local Compose entry point. `source/` is for backend/frontend application and test code, while `k8s/` is the infrastructure-as-code boundary. The initial versioned event catalog and balance defaults are seeded from repository data; owner edits and immutable published snapshots live in SQL Server. Polish interface translations live under frontend `locales/`; editable event copy belongs to versioned event data. Exact leaf folder names may be adjusted during scaffolding, but these top-level boundaries and four .NET layers are confirmed. `WebApp` means the **server-side REST API host**. React is the separate client project. The public game and owner-only `/admin` area share one React application; the admin route is lazy loaded.
 
-The root `.gitignore`, `.gitattributes` and `.editorconfig` govern agent/editor artifacts, line endings and deployment scripts. `source/backend/` contains its own `.gitignore`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `global.json`; `source/frontend/` contains its own `.gitignore` and Prettier defaults. The requested ESLint package set and configuration rules are documented in [Repository Standards](repository-standards.md). The executable ESLint config and dependency lockfile will be created with the React app so compatibility can be verified together.
+The root `.gitignore`, `.gitattributes` and `.editorconfig` govern agent/editor artifacts, line endings and deployment scripts. `source/backend/` contains its own `.gitignore`, `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `global.json`; `source/frontend/` contains its own `.gitignore` and Prettier defaults. The requested ESLint package set and configuration rules are documented in [Repository Standards](repository-standards.md). The executable ESLint config and the lockfile were created with the React app in M2-C (TD-98).
 
 ### Layer boundaries
 
@@ -51,7 +53,7 @@ Infrastructure automation belongs under `k8s/ansible/`, with pinned Helm charts 
 
 ## ASP.NET Core, Wolverine and data
 
-- Use Wolverine for in-process CQRS commands, queries and handlers. Use `WolverineFx.Http` for HTTP endpoints rather than MVC controller classes. Keep HTTP binding and status codes in `WebApp`; place use-case handlers in `Application`. The owner chose **no Wolverine durable queue/message store at launch**. A long batch simulation, if needed, may use a database-backed background job in the API; ordinary choices are applied transactionally and idempotently.
+- Use Wolverine for in-process CQRS commands, queries and handlers. Use `WolverineFx.Http` for HTTP endpoints rather than MVC controller classes. Keep HTTP binding and status codes in `WebApp`; place use-case handlers in `Application`. The owner chose **no Wolverine durable queue/message store at launch**. A long batch simulation, if needed, may use a database-backed background job in the API; ordinary choices are applied transactionally and idempotently. M2 generates Wolverine's handler code at runtime with `WolverineFx.RuntimeCompilation`; M6 decides whether to pre-generate it (TD-94).
 - Use FluentValidation for shape and business-input validation. Install both `WolverineFx.Http.FluentValidation` for HTTP endpoint validation and `WolverineFx.FluentValidation` for Wolverine command/query handler middleware. Their registrations must not double-register validators; service/database-dependent checks belong in explicit application validation. Return stable RFC 7807 Problem Details from API failures. [Wolverine HTTP validation](https://wolverinefx.net/guide/http/validation), [Wolverine handler validation](https://wolverinefx.net/guide/handlers/fluent-validation).
 - Use Mapster for explicit entity-to-DTO and request-to-command mapping. Mapping does not contain gameplay rules or authorization decisions. Keep OpenAPI DTO shapes stable and test any nontrivial mappings. [Mapster project](https://github.com/MapsterMapper/Mapster).
 - Use EF Core with the SQL Server provider for careers, saves, ranking and `Microsoft.AspNetCore.Identity.EntityFrameworkCore` for **owner administration only**. Public players still have no accounts. Put Identity data behind a distinct context/schema or equivalent separation from game tables; only the owner can receive an administrator account. EF Core migrations are reviewed and applied in staging before production. [EF Core SQL Server provider](https://learn.microsoft.com/en-us/ef/core/providers/sql-server/), [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-10.0).
@@ -60,9 +62,13 @@ Infrastructure automation belongs under `k8s/ansible/`, with pinned Helm charts 
 
 ### OpenAPI and client generation
 
-`WebApp` publishes a versioned OpenAPI document. Prefer the built-in `Microsoft.AspNetCore.OpenApi` generator and Wolverine's OpenAPI command, which can emit a JSON artifact without starting the host or connecting to SQL Server. CI checks that the generated document and the Orval client are in sync. An interactive Swagger/Scalar browser may be added for developer and staging use, protected from public production access. [Wolverine OpenAPI generation](https://wolverinefx.net/guide/http/metadata).
+`WebApp` publishes a versioned OpenAPI document. Prefer the built-in `Microsoft.AspNetCore.OpenApi` generator and Wolverine's OpenAPI command, which can emit a JSON artifact without starting the host or connecting to SQL Server. CI checks that the generated document and the Orval client are in sync. **Current state (TD-92):** from `source/backend`, `dotnet run --project WebApp -- openapi --document v1 --output openapi/v1.json` writes the committed `source/backend/WebApp/openapi/v1.json` (the output path is relative to `WebApp`), and the `backend` CI job fails when the file differs from the code. Endpoints return typed results, so each operation lists exactly its responses. Career requests carry `Authorization: Bearer <secret>`, which the document does not list as a parameter; the client adds it per career. **Client (TD-101):** `npm run api:generate` in `source/frontend` runs Orval on that file into `src/api/generated/` (`split` mode: `game.ts` and `game.schemas.ts`), committed and never edited by hand; the `frontend` job regenerates it and fails on any difference. Career operations declare the bearer scheme `careerSecret`, so the generated functions take the per-career `Authorization` header as request options. An interactive Swagger/Scalar browser may be added for developer and staging use, protected from public production access. [Wolverine OpenAPI generation](https://wolverinefx.net/guide/http/metadata).
 
 Orval generates TypeScript DTOs and API functions from the OpenAPI artifact. Use TanStack Query (React Query) for career state, decisions, leaderboard and admin data, with Axios as the HTTP transport and one configured client for timeouts, cancellation and error normalization. Orval supports React Query output with Axios. The server database is authoritative; Zustand holds only transient UI state and the browser retains a separate secret for each locally known career plus optional per-career recovery-key exports. A query cache is not a save. Decision mutations use idempotency keys and a state-version precondition so a lost response or second tab cannot repeat a random draw. [Orval output configuration](https://orval.dev/docs/reference/configuration/output/).
+
+The selected visual theme and the age acknowledgment are browser state. If browser storage is unavailable, the app uses the default overlay and shows the 18+ gate on load; explicit theme and gate choices still apply for the current page without crashing (TD-103). Persistence resumes when storage becomes available.
+
+Before creating a server career, the client checks that browser storage can save its access secret. A denied write blocks the creation request and shows an error, because recovery keys do not arrive until M4 (TD-105). `POST /v1/careers` does not use automatic network retries because it has no idempotency key (TD-106); gameplay commands with command IDs retain their repeat-safe retry policy.
 
 This is a good fit for the requested stack: TanStack Query handles server cache and request lifecycle, Axios provides a configurable transport, and Orval keeps FE contracts tied to the API. Configure mutation retry per endpoint, especially for decisions that roll outcomes; retry only with the same idempotency key. The browser and API should normally share one HTTPS origin in production.
 
@@ -84,12 +90,25 @@ This is a good fit for the requested stack: TanStack Query handles server cache 
 
 The admin route is hidden from normal navigation and protected by Identity, but security is enforced by the API. The owner alone can moderate scores and nicknames, manage event drafts, edit balance constants, preview/validate candidate versions and publish them. The private panel replaces the earlier CLI-only launch proposal. React 19.3.0 was checked against the [official React releases](https://github.com/facebook/react/releases).
 
+### Frontend versions (M2-C, TD-98)
+
+| Area | Packages and exact versions |
+| --- | --- |
+| Runtime and build | Node 24.22.0 LTS (`.nvmrc`), React/React DOM 19.3.1, TypeScript 6.0.3, Vite 8.3.4 with `@vitejs/plugin-react` 6.1.2 |
+| Routing, data and state | `@tanstack/react-router` 1.170.44, `@tanstack/react-query` 5.104.2, Axios 1.20.0, Orval 8.43.0, Zustand 5.0.15 |
+| Forms and copy | React Hook Form 7.90.0, Zod 4.6.7, `@hookform/resolvers` 5.9.1, i18next 26.4.5, `react-i18next` 17.0.16 |
+| UI | Tailwind CSS 4.3.3, `radix-ui` 1.8.1, `class-variance-authority` 0.7.1, `clsx` 2.1.1, `tailwind-merge` 3.7.0, `@fontsource/anton` and `@fontsource/comic-relief` 5.3.0 (TD-107) |
+| Tests | Vitest 5.0.4 with V8 coverage, jsdom 30.1.2, Testing Library (React 16.3.3, DOM 10.4.2, user-event 14.6.8, jest-dom 7.0.1), MSW 3.0.3, Playwright 1.64.1, `@axe-core/playwright` 4.13.0 |
+| Lint and format | ESLint 9.39.5 with the owner's plugin set (see repository standards), `typescript-eslint` 8.71.2, Prettier 3.9.10 |
+
+`source/frontend/package.json` pins every version exactly and `package-lock.json` locks the tree; CI installs with `npm ci`.
+
 ## Verification and package management
 
-The owner chose Vitest + Testing Library for React component and feature tests, Playwright for browser journeys, and xUnit + Testcontainers with SQL Server for backend integration tests. Test deterministic C# `Domain` transitions, concurrent/duplicate commands, score calculation, anonymous career recovery and unranked save slots. Include OpenAPI/Orval generation in CI and fail on contract drift. Test owner login, second-factor enforcement, unauthorized admin API access, SQL log-sink failure while console logging continues, and the full career-to-leaderboard path.
+The owner chose Vitest + Testing Library for React component and feature tests (with MSW answering HTTP requests, so tests run through the generated client; TD-98), Playwright for browser journeys, and xUnit + Testcontainers with SQL Server for backend integration tests. Test deterministic C# `Domain` transitions, concurrent/duplicate commands, score calculation, anonymous career recovery and unranked save slots. Include OpenAPI/Orval generation in CI and fail on contract drift. Test owner login, second-factor enforcement, unauthorized admin API access, SQL log-sink failure while console logging continues, and the full career-to-leaderboard path.
 
 Use a root Lefthook pre-commit hook for backend `dotnet format`, frontend `npm run lint -- --fix` and fast xUnit/Vitest tests. GitHub Actions checks Prettier and runs the complete suites, then submits C# and TypeScript analysis plus their coverage reports to SonarQube Cloud for PRs into `develop` and `main`. Its quality-gate job is required for merge; the independently measured backend/frontend 80% line-coverage gates still apply. The initial SonarQube Cloud setup uses one project for the repository and verifies both source trees are scanned.
 
-Implement new behavior and bug fixes using TDD: write a failing test, make it pass with the smallest production change, then refactor. Configure line-coverage reporting for xUnit backend tests and Vitest frontend tests when the projects are scaffolded. CI enforces **80% or more separately in each project**. Explicit exclusions cover tests, generated files, build output and migrations; they must be reviewed rather than expanded merely to meet the threshold. Playwright covers browser journeys in addition to these coverage-producing suites.
+Implement new behavior and bug fixes using TDD: write a failing test, make it pass with the smallest production change, then refactor. Configure line-coverage reporting for xUnit backend tests and Vitest frontend tests when the projects are scaffolded. CI enforces **80% or more separately in each project**. Explicit exclusions cover tests, generated files, build output and migrations; they must be reviewed rather than expanded merely to meet the threshold. Playwright covers browser journeys in addition to these coverage-producing suites. M2-C has one journey (`source/frontend/e2e/journey.spec.ts`) in Chromium against the Compose stack: it passes the 18+ gate, creates a career, plays a manual week, runs a 13-week batch and reloads, and runs `@axe-core/playwright` (WCAG 2.2 AA tags) on the gate, creation, week plan, live event, report and batch result in all three themes; any violation fails it. It runs without retries in the required `frontend-e2e` job (TD-100).
 
 Pin compatible package versions in lockfiles and record the exact chosen version set when code is scaffolded. The owner specified .NET 10 and React 19.3.0; use stable compatible Vite and library releases at implementation time. Do not treat library defaults as game rules; ruleset and content versions are independently frozen for ranked seasons.

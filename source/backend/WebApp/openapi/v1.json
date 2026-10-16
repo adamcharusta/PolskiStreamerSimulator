@@ -1,0 +1,1468 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Polski Streamer Simulator API",
+    "version": "v1"
+  },
+  "paths": {
+    "/v1/careers": {
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Create a career and receive its secret once",
+        "operationId": "createCareer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCareerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedCareer"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/career-options": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "List the starting profiles and difficulties",
+        "operationId": "getCareerOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerOptionsView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/careers/{id}": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Read a career and its next step",
+        "operationId": "getCareer",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CareerView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/careers/{id}/actions": {
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Settle one manual step",
+        "operationId": "submitAction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionOutcome"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/careers/{id}/batches": {
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Play up to 13 weeks automatically",
+        "operationId": "runBatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchOutcome"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActionOutcome": {
+        "required": [
+          "career",
+          "roll",
+          "report"
+        ],
+        "type": "object",
+        "properties": {
+          "career": {
+            "$ref": "#/components/schemas/CareerView"
+          },
+          "roll": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RollView"
+              }
+            ]
+          },
+          "report": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WeekReportView"
+              }
+            ]
+          }
+        }
+      },
+      "ActionRequest": {
+        "required": [
+          "commandId",
+          "expectedVersion",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ActionType"
+          },
+          "mainAction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MainAction"
+              }
+            ]
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Category"
+              }
+            ]
+          },
+          "trainTarget": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Category"
+              }
+            ]
+          },
+          "upgradeSlot": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EquipmentSlot"
+              }
+            ]
+          },
+          "choiceId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Only the fields of the chosen ActionType ActionRequest.Type are needed; the others may be omitted."
+      },
+      "ActionType": {
+        "enum": [
+          "startWeek",
+          "resolveEvent",
+          "settleWeek"
+        ],
+        "type": "string"
+      },
+      "AutoChoiceView": {
+        "required": [
+          "eventId",
+          "choiceId",
+          "reason",
+          "roll"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "choiceId": {
+            "type": "string"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReasonView"
+          },
+          "roll": {
+            "$ref": "#/components/schemas/RollView"
+          }
+        }
+      },
+      "AutoWeekView": {
+        "required": [
+          "week",
+          "plan",
+          "planReason",
+          "choices",
+          "report"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanView"
+          },
+          "planReason": {
+            "$ref": "#/components/schemas/ReasonView"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoChoiceView"
+            }
+          },
+          "report": {
+            "$ref": "#/components/schemas/WeekReportView"
+          }
+        }
+      },
+      "Background": {
+        "enum": [
+          "dormRoomNewcomer",
+          "localMemeCreator",
+          "chessClubRegular",
+          "industryInsider"
+        ],
+        "type": "string"
+      },
+      "BackgroundOptionView": {
+        "required": [
+          "background",
+          "cashPln",
+          "followers",
+          "drama",
+          "credibility",
+          "energy",
+          "skill",
+          "equipment",
+          "scoreMultiplier"
+        ],
+        "type": "object",
+        "properties": {
+          "background": {
+            "$ref": "#/components/schemas/Background"
+          },
+          "cashPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "drama": {
+            "type": "number",
+            "format": "double"
+          },
+          "credibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "energy": {
+            "type": "number",
+            "format": "double"
+          },
+          "skill": {
+            "$ref": "#/components/schemas/CategoryValuesView"
+          },
+          "equipment": {
+            "$ref": "#/components/schemas/EquipmentView"
+          },
+          "scoreMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "BatchOutcome": {
+        "required": [
+          "weeksCommitted",
+          "stopReason",
+          "weeks",
+          "summary",
+          "career"
+        ],
+        "type": "object",
+        "properties": {
+          "weeksCommitted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stopReason": {
+            "$ref": "#/components/schemas/BatchStopReason"
+          },
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoWeekView"
+            }
+          },
+          "summary": {
+            "$ref": "#/components/schemas/BatchSummaryView"
+          },
+          "career": {
+            "$ref": "#/components/schemas/CareerView"
+          }
+        }
+      },
+      "BatchRequest": {
+        "required": [
+          "commandId",
+          "expectedVersion",
+          "weeks"
+        ],
+        "type": "object",
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "weeks": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "BatchStopReason": {
+        "enum": [
+          "completed",
+          "pausedForDecision",
+          "careerEnded",
+          "interrupted"
+        ],
+        "type": "string"
+      },
+      "BatchSummaryView": {
+        "required": [
+          "weeksCommitted",
+          "followersNet",
+          "cashDelta",
+          "incomePln",
+          "costsPln",
+          "start",
+          "end"
+        ],
+        "type": "object",
+        "properties": {
+          "weeksCommitted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "followersNet": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cashDelta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "incomePln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "costsPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "start": {
+            "$ref": "#/components/schemas/CareerStatsView"
+          },
+          "end": {
+            "$ref": "#/components/schemas/CareerStatsView"
+          }
+        }
+      },
+      "CareerOptionsView": {
+        "required": [
+          "backgrounds",
+          "difficulties",
+          "pronouns"
+        ],
+        "type": "object",
+        "properties": {
+          "backgrounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackgroundOptionView"
+            }
+          },
+          "difficulties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DifficultyOptionView"
+            }
+          },
+          "pronouns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PronounSet"
+            }
+          }
+        },
+        "description": "What character creation may choose, with the numbers of the content new careers start on."
+      },
+      "CareerStatsView": {
+        "required": [
+          "cashPln",
+          "followers",
+          "lastLiveViewers",
+          "drama",
+          "credibility",
+          "energy",
+          "burnout",
+          "skill",
+          "boredom",
+          "equipment"
+        ],
+        "type": "object",
+        "properties": {
+          "cashPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastLiveViewers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "drama": {
+            "type": "number",
+            "format": "double"
+          },
+          "credibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "energy": {
+            "type": "number",
+            "format": "double"
+          },
+          "burnout": {
+            "type": "number",
+            "format": "double"
+          },
+          "skill": {
+            "$ref": "#/components/schemas/CategoryValuesView"
+          },
+          "boredom": {
+            "$ref": "#/components/schemas/CategoryValuesView"
+          },
+          "equipment": {
+            "$ref": "#/components/schemas/EquipmentView"
+          }
+        }
+      },
+      "CareerStatus": {
+        "enum": [
+          "active",
+          "ended"
+        ],
+        "type": "string"
+      },
+      "CareerView": {
+        "required": [
+          "careerId",
+          "nickname",
+          "version",
+          "status",
+          "ending",
+          "background",
+          "difficulty",
+          "pronouns",
+          "week",
+          "lastSettledWeek",
+          "stats",
+          "next",
+          "lastReport"
+        ],
+        "type": "object",
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CareerStatus"
+          },
+          "ending": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EndingReason"
+              }
+            ]
+          },
+          "background": {
+            "$ref": "#/components/schemas/Background"
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "pronouns": {
+            "$ref": "#/components/schemas/PronounSet"
+          },
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastSettledWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/CareerStatsView"
+          },
+          "next": {
+            "$ref": "#/components/schemas/NextStepView"
+          },
+          "lastReport": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WeekReportView"
+              }
+            ]
+          }
+        },
+        "description": "A career as the client sees it at one version; also the stored response of each step."
+      },
+      "Category": {
+        "enum": [
+          "justChatting",
+          "fps",
+          "moba",
+          "chess",
+          "gambling"
+        ],
+        "type": "string"
+      },
+      "CategoryValuesView": {
+        "required": [
+          "justChatting",
+          "fps",
+          "moba",
+          "chess",
+          "gambling"
+        ],
+        "type": "object",
+        "properties": {
+          "justChatting": {
+            "type": "number",
+            "format": "double"
+          },
+          "fps": {
+            "type": "number",
+            "format": "double"
+          },
+          "moba": {
+            "type": "number",
+            "format": "double"
+          },
+          "chess": {
+            "type": "number",
+            "format": "double"
+          },
+          "gambling": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "ChoiceView": {
+        "required": [
+          "choiceId",
+          "labelKey",
+          "labelPl",
+          "guaranteed",
+          "probability",
+          "threshold",
+          "modifiers",
+          "allowsCritical"
+        ],
+        "type": "object",
+        "properties": {
+          "choiceId": {
+            "type": "string"
+          },
+          "labelKey": {
+            "type": "string"
+          },
+          "labelPl": {
+            "type": "string"
+          },
+          "guaranteed": {
+            "type": "boolean"
+          },
+          "probability": {
+            "type": "number",
+            "format": "double"
+          },
+          "threshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "modifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModifierView"
+            }
+          },
+          "allowsCritical": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateCareerRequest": {
+        "required": [
+          "nickname",
+          "background",
+          "difficulty",
+          "pronouns"
+        ],
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "type": "string"
+          },
+          "background": {
+            "$ref": "#/components/schemas/Background"
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "pronouns": {
+            "$ref": "#/components/schemas/PronounSet"
+          }
+        }
+      },
+      "CreatedCareer": {
+        "required": [
+          "careerId",
+          "secret",
+          "career"
+        ],
+        "type": "object",
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "career": {
+            "$ref": "#/components/schemas/CareerView"
+          }
+        },
+        "description": "The new career; string CreatedCareer.Secret is returned only here and never stored."
+      },
+      "Difficulty": {
+        "enum": [
+          "easy",
+          "normal"
+        ],
+        "type": "string"
+      },
+      "DifficultyOptionView": {
+        "required": [
+          "difficulty",
+          "scoreMultiplier"
+        ],
+        "type": "object",
+        "properties": {
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "scoreMultiplier": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "EndingReason": {
+        "enum": [
+          "completed",
+          "insolvency",
+          "earlyRetirement"
+        ],
+        "type": "string"
+      },
+      "EquipmentSlot": {
+        "enum": [
+          "microphone",
+          "camera",
+          "computer",
+          "connection"
+        ],
+        "type": "string"
+      },
+      "EquipmentView": {
+        "required": [
+          "microphone",
+          "camera",
+          "computer",
+          "connection"
+        ],
+        "type": "object",
+        "properties": {
+          "microphone": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "camera": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "computer": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "connection": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "EventView": {
+        "required": [
+          "eventId",
+          "titleKey",
+          "textPl",
+          "choices"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "titleKey": {
+            "type": "string"
+          },
+          "textPl": {
+            "type": "string"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChoiceView"
+            }
+          }
+        }
+      },
+      "MainAction": {
+        "enum": [
+          "rest",
+          "trainCategory",
+          "improveProduction",
+          "manageCommunity",
+          "noAction"
+        ],
+        "type": "string",
+        "description": "M1 between-stream main actions; exactly one per week."
+      },
+      "ModifierView": {
+        "required": [
+          "labelKey",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "labelKey": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "NextStepKind": {
+        "enum": [
+          "planWeek",
+          "resolveEvent",
+          "settleWeek",
+          "ended"
+        ],
+        "type": "string",
+        "description": "What the player can do next."
+      },
+      "NextStepView": {
+        "required": [
+          "kind",
+          "plans",
+          "event"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/NextStepKind"
+          },
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanOptionView"
+            }
+          },
+          "event": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EventView"
+              }
+            ]
+          }
+        },
+        "description": "IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent."
+      },
+      "PlanOptionView": {
+        "required": [
+          "plan",
+          "disabledReason"
+        ],
+        "type": "object",
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/PlanView"
+          },
+          "disabledReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PlanView": {
+        "required": [
+          "mainAction",
+          "category",
+          "trainTarget",
+          "upgradeSlot"
+        ],
+        "type": "object",
+        "properties": {
+          "mainAction": {
+            "$ref": "#/components/schemas/MainAction"
+          },
+          "category": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "trainTarget": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Category"
+              }
+            ]
+          },
+          "upgradeSlot": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EquipmentSlot"
+              }
+            ]
+          }
+        }
+      },
+      "ProblemDetails": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable error code, for example stale-version."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Field errors of validation-failed, keyed by camelCase field name."
+          }
+        }
+      },
+      "PronounSet": {
+        "enum": [
+          "woman",
+          "man",
+          "nonbinary"
+        ],
+        "type": "string",
+        "description": "Grammatical form only; no rule may read it."
+      },
+      "ReasonView": {
+        "required": [
+          "code",
+          "args"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ReportLineView": {
+        "required": [
+          "code",
+          "amountPln",
+          "delta",
+          "detail"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "amountPln": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "delta": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RollOutcome": {
+        "enum": [
+          "success",
+          "failure",
+          "criticalSuccess",
+          "criticalFailure",
+          "guaranteed"
+        ],
+        "type": "string"
+      },
+      "RollView": {
+        "required": [
+          "eventId",
+          "choiceId",
+          "roll",
+          "threshold",
+          "modifiers",
+          "outcome"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "choiceId": {
+            "type": "string"
+          },
+          "roll": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "threshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "modifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModifierView"
+            }
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/RollOutcome"
+          }
+        }
+      },
+      "WeekReportView": {
+        "required": [
+          "week",
+          "plan",
+          "rolls",
+          "liveViewers",
+          "followersGained",
+          "followersLost",
+          "followersNet",
+          "income",
+          "costs",
+          "cashDelta",
+          "statChanges",
+          "ending"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanView"
+          },
+          "rolls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RollView"
+            }
+          },
+          "liveViewers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followersGained": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followersLost": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followersNet": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "income": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLineView"
+            }
+          },
+          "costs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLineView"
+            }
+          },
+          "cashDelta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "statChanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportLineView"
+            }
+          },
+          "ending": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EndingReason"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "careerSecret": {
+        "type": "http",
+        "description": "The career secret returned once by createCareer, sent as Authorization: Bearer <secret>.",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "careers",
+      "description": "Anonymous careers: creation, reading, steps and batches."
+    }
+  ]
+}

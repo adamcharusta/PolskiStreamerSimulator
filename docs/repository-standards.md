@@ -6,20 +6,39 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 
 | File | Scope and role |
 | --- | --- |
-| `.gitignore` | Ignore Codex/Claude local artifacts, OS files, Visual Studio, VS Code, JetBrains files and local deployment credentials; keep the root `AGENTS.md` and `CLAUDE.md` tracked. |
+| `.gitignore` | Ignore Codex/Claude local artifacts, OS files, Visual Studio, VS Code, JetBrains files local deployment credentials and the root tooling `node_modules/`; keep the root `AGENTS.md` and `CLAUDE.md` tracked. |
 | `AGENTS.md` and `CLAUDE.md` | Versioned agent guides with a documentation map and English decision-record policy. `AGENTS.md` is canonical; `CLAUDE.md` points to it. |
 | `source/frontend/.gitignore` | Ignore Node dependencies, Vite/TypeScript output, test reports and local frontend environment files. |
 | `source/backend/.gitignore` | Ignore .NET build/test output, local settings, certificates and local SQL data/backup files. |
 | `.gitattributes` | Normalize source, docs, workflow, Ansible and Kubernetes text to LF; retain CRLF for Windows batch files and preserve binaries. |
 | `.editorconfig` | Root UTF-8/LF/two-space conventions for GitHub Actions, YAML, JSON, shell, PowerShell, Terraform and other repository scripts. |
 | `docs/.editorconfig` | English Markdown files in UTF-8/LF; preserve intentional Markdown trailing spaces. |
-| `source/backend/.editorconfig` | Four-space C# style, file-scoped namespaces, braces and unused-import diagnostics; two-space project XML. |
-| `source/backend/Directory.Build.props` | Common `net10.0`, nullable, implicit usings, build analysis, deterministic output and CI settings for all .NET projects. |
-| `source/backend/Directory.Packages.props` | NuGet Central Package Management for every backend project. Add exact package versions as projects are scaffolded; project `PackageReference` elements omit versions. |
-| `source/backend/global.json` | Minimum .NET SDK 10.0.100, rolling to the latest installed .NET 10 feature band/patch; prerelease SDKs excluded. |
+| `source/backend/.editorconfig` | Four-space C# style, file-scoped namespaces, braces and unused-import diagnostics; two-space project XML; EF Core migrations marked as generated code (TD-93). |
+| `source/backend/Directory.Build.props` | Common `net10.0`, nullable, implicit usings, build analysis, deterministic output and CI settings for all .NET projects; `PolskiStreamerSimulator.<Project>` assembly names and root namespaces; XML documentation generation (needed for the IDE0005 unused-using check on build) with CS1591 suppressed (TD-82). |
+| `source/backend/Directory.Packages.props` | NuGet Central Package Management for every backend project. Add exact package versions as projects are scaffolded; project `PackageReference` elements omit versions. Transitive pinning is on, so a `PackageVersion` entry without a direct reference raises a vulnerable transitive package to a patched version ([TD-95](technical-decisions.md)). |
+| `source/backend/global.json` | Minimum .NET SDK 10.0.100, rolling to the latest installed .NET 10 feature band/patch; prerelease SDKs excluded. Selects Microsoft.Testing.Platform as the `dotnet test` runner (TD-82). |
+| `source/backend/WebApp/openapi/v1.json` | Generated OpenAPI document of the public API; committed so C can generate its client, never edited by hand, checked for drift in CI (TD-92). |
+| `source/backend/WebApp/appsettings*.json` | API settings without secrets; the connection string comes from `ConnectionStrings__Game`; Development applies migrations at startup. |
+| `source/backend/Tests/testconfig.json` | Microsoft.Testing.Platform settings, including coverlet.MTP coverage filters (tests and the batch tool entry point excluded, generated `*.g.cs`, EF Core migrations (`**/Persistence/Migrations/*.cs`) and `[GeneratedCode]`/`[CompilerGenerated]` code excluded) and Cobertura (CI artifact) plus OpenCover (SonarQube Cloud) output (TD-82, TD-86). |
 | `source/frontend/.prettierrc.json` | Initial two-space, LF, single-quote, semicolon and 100-column formatting defaults; review with the first React code. |
 | `source/frontend/.prettierignore` | Keep generated Orval client and build/test output out of formatting checks. |
-| `lefthook.yml` (planned with application scaffolding) | Run backend `dotnet format`, frontend ESLint `--fix` and fast unit tests before code commits. |
+| `source/frontend/package.json` and `package-lock.json` | The React app's exact dependency versions (no ranges) and lockfile; install with `npm ci`. npm 11 leaves the install scripts of `esbuild` and `unrs-resolver` unapproved; the tools work without them (TD-98). |
+| `source/frontend/.nvmrc` | Node version for local use and CI (`24.22.0`). |
+| `source/frontend/tsconfig.json` and `tsconfig.node.json` | Strict TypeScript for the app and tests, and for the Node-side config files (Vite, Vitest, Orval, Playwright). |
+| `source/frontend/vite.config.ts` and `vitest.config.ts` | Vite with the `/v1` proxy (`API_PROXY_TARGET`, `VITE_POLLING` for Compose) and Vitest with jsdom, MSW setup and the 80% line gate; LCOV paths are relative to the repository root for SonarQube Cloud. |
+| `source/frontend/eslint.config.mjs` | The executable flat config of the owner's ESLint package set. |
+| `source/frontend/orval.config.ts` and `src/api/generated/` | Orval configuration and its generated client: committed, never edited by hand, regenerated in CI (TD-101). |
+| `package.json` and `package-lock.json` (root) | Repository tooling only: the exact Lefthook version installed by `npm install` in the root, with Lefthook's install script approved under npm `allowScripts` (TD-88). The React app keeps its own `package.json` in `source/frontend`. |
+| `lefthook.yml` | `pre-commit` hook. Runs `dotnet format` on staged backend C# files and rejects the commit if anything changes, then fast backend tests without `Category=Integration`; staged frontend files trigger ESLint and Vitest (TD-88, TD-100). |
+| `.github/workflows/ci.yml` | Required CI jobs `backend`, `backend-integration` (TD-93), `frontend` and `frontend-e2e` (TD-100), `sonar` and `pr-policy`; third-party actions pinned to commit SHAs (TD-86). |
+| `.github/scripts/` | Bash helpers used by CI, each with a self-test (`check-pr-source.sh`, `check-pr-source.test.sh`). |
+| `.github/rulesets/` | Versioned definitions of the `main` and `develop` repository rulesets (TD-87). |
+| `compose.yaml` | Development-only local stack: SQL Server, the API and Vite with health checks and named volumes (TD-99). Never points at staging or production. |
+| `.env.example` | Documents the variables `compose.yaml` reads (`MSSQL_SA_PASSWORD`) without values; the local `.env` is ignored and never committed. |
+| `.dockerignore` | Keeps Git data, agent artifacts, docs, build output, `node_modules`, the frontend tree and `.env` files out of the API build context. |
+| `source/backend/WebApp/Dockerfile` | Multi-stage API image (SDK build, `aspnet` runtime, non-root, port 8080); the build context is the repository root so `content/m1` ships with it. M6 reuses it (TD-99). |
+| `source/frontend/playwright.config.ts` and `e2e/` | The browser journey: Chromium, base URL `E2E_BASE_URL` or `http://localhost:5173`, no retries, traces on failure (TD-100). |
+| `source/backend/.config/dotnet-tools.json` | Local .NET tool manifest pinning SonarScanner for .NET (TD-86) and `dotnet-ef` 10.0.13 for migrations (TD-93). |
 
 There are exactly **three `.gitignore` files**, each with a distinct responsibility. The root ignore covers editor/agent/OS and deployment-local files without hiding source or documentation; the root agent guides are explicit exceptions. Frontend and backend files cover their own generated output. Root `.editorconfig` and `.gitattributes` also cover `.github/workflows/`, `k8s/` and optional `scripts/`; infrastructure assets do not get a fourth ignore file. Verify `git status --ignored` and `git check-ignore -v` when a new tool writes files, especially before adding broad patterns. `.gitattributes` is the canonical line-ending policy; `.editorconfig` is the editor policy. GitHub Actions must validate formatting rather than silently rewrite committed files.
 

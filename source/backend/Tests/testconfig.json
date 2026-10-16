@@ -1,0 +1,12 @@
+{
+  "platformOptions": {
+    "Coverlet": {
+      "include": "[PolskiStreamerSimulator.*]*",
+      "exclude": "[PolskiStreamerSimulator.Tests]*,[PolskiStreamerSimulator.BatchSimulator]*Program",
+      "excludeByAttribute": "GeneratedCode,GeneratedCodeAttribute,ExcludeFromCodeCoverage,ExcludeFromCodeCoverageAttribute,CompilerGeneratedAttribute",
+      "excludeByFile": "**/*.g.cs,**/Persistence/Migrations/*.cs",
+      "format": "cobertura,opencover",
+      "includeTestAssembly": false
+    }
+  }
+}

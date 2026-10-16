@@ -136,6 +136,8 @@ Permanent platform bans require a clear escalating rule path or a rare severe in
 
 A strategy is a versioned object with: category rotation (specialize or weighted mix), primary weekly action sequence, sponsor acceptance threshold, financial reserve, risk appetite, drama target, rest threshold, and event-response priorities (growth, cash, credibility, safety). The UI previews example choices and explains ties. Automation chooses only legal options; if no option matches, it selects the least-risk legal option and records a fallback reason. It never silently spends beyond the reserve unless the player has explicitly allowed emergency spending. Major event pauses override policy.
 
+**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored` or `rotation`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
+
 Batch runs are incremental commits, not one opaque transaction: each completed week is recorded and autosaved. Canceling a batch leaves already completed weeks intact. Deterministic random draws and policy choices are included in the ranked action log. The manual and automated paths call the same simulation functions.
 
 ## 9. Achievements, Endings, and Ranking Score
@@ -155,3 +157,58 @@ Achievements are earned from varied career milestones (for example first 10,000 
 The user approved the 45% / 45% / 10% component split as the starting balance model. Follower and wealth components have equal maximum contribution after log normalization; achievements contribute at most 10%. Any bankruptcy cash counts as zero wealth. The end screen shows `F`, `W`, `A`, each contribution, both multipliers, and the total. This formula deliberately avoids awarding score directly for drama. Normalization thresholds and multiplier sizes remain proposed balance constants; simulate diverse careers before freezing them for ranked play. Scores tie by fewer weeks used, then earlier verified submission time, then stable run ID order.
 
 The ending uses templates driven by actual achievements, platform history, dominant category, reputation, and ending reason. The user confirmed a downloadable PDF diploma generated locally with `pdf-lib` from the server's final, read-only report for the first release. A ranked leaderboard entry is allowed only for an ended, server-authoritative ranked career; a failed or early-retired career may publish its lower score. The leaderboard holds the best 100 eligible scores globally **within the career's season**; past seasons remain viewable separately. Ranked careers cannot restore manual slots or import state.
+
+## 10. M1 Prototype Ruleset (`m1-prototype.1`)
+
+Status: **implemented for simulation only**, 2026-10-13. Milestone 1 implements the minimal mechanics core ([TD-75](technical-decisions.md)) in the C# `Domain` as ruleset `m1-prototype.1`, reading every number from the versioned content snapshot [`content/m1/balance.json`](../content/m1/balance.json) and [`content/m1/events.json`](../content/m1/events.json) ([TD-76](technical-decisions.md)). Values from the sections above apply unchanged where they exist (Czatnia factors 1.00, quality/viewer formulas, action effects, 45/45/10 score, insolvency at ≤ −1,000 PLN). The values and simplifications below fill gaps in those sections; they are **Agent proposals** recorded as [TD-83](technical-decisions.md) and remain subject to the balance work in milestone 5.
+
+### Constants added for M1 (Agent proposal)
+
+| Constant (`balance.json` key) | M1 value | Use |
+| --- | --- | --- |
+| `equipmentPricePln` | 0 / 600 / 1,500 / 3,500 / 8,000 PLN for tiers 0–4 | Price paid by `Improve production` to reach the next tier of one slot. |
+| `equipmentUpkeepPerTierPln` | 10 / 20 / 35 / 55 / 80 PLN per slot per week for tiers 0–4 | Weekly upkeep summed over the four slots (tier 0 matches the §6 opening value). |
+| `manageCommunityCredibility` / `manageCommunityDramaRelief` / `manageCommunityBoredomRelief` | +3 credibility, −4 drama, −5 boredom in the primary category | `Manage community` effects (all clamped to 0–100). |
+| `conversionRate` | 0.05 | Follower gain per live viewer, scaled by `credibility / 50` (within the §3 range 0.03–0.08). |
+| `churnRate` / `churnBoredomFactor` | 0.004 + 0.0001 × primary-category boredom | Weekly fraction of followers lost. |
+| `paidConversion`, `subPricePln` | 0.02, 10 PLN | Subscriptions: `round(live × 0.02 × platformSubYield × 10)`. |
+| `donationYield` | 0.15 PLN per live viewer | Donations (event factor 1 in M1). |
+| `adYield`, `adLoad` | 0.05 PLN per live viewer, 1.0 | Ads: `round(live × 0.05 × platformAdYield × adLoad)`. |
+| Base skill | 10 in every category | Starting skill before background bonuses (Dorm FPS 18, Meme Just Chatting 18, Chess 25). |
+| Local Meme Creator | 1,000 PLN; equipment tier 1 in every slot | Starting cash and equipment not given in §2. |
+| Chess Club Regular | 0 followers; equipment tier 1 in every slot | Starting followers and equipment not given in §2. |
+| Industry Insider | all skills 10; equipment tier 2 in every slot | No skill bonus; the sponsor lead is deferred with sponsors (M3). |
+| `eventsPerWeekMin` / `eventsPerWeekMax` | 2 / 3 | Live events drawn per manual week. |
+
+### M1 rules and simplifications (Agent proposal)
+
+- **Week order:** `StartWeek` validates and applies the main action (and pays an equipment purchase immediately), then draws the event count and picks distinct events by weight among those eligible and not cooling down. Each live event is presented (no random draw) and resolved with a 1–100 roll unless the choice is guaranteed. `SettleWeek` applies stream fatigue (−8 energy, +3 burnout), computes quality, live viewers and followers, itemises income and costs, applies skill and boredom changes, updates metrics and achievements, then checks endings.
+- **Forced rest:** at energy 0 or burnout 100 the only legal main action next week is `Rest`. This replaces the mandatory recovery choice of §5 until sponsor obligations exist (M3).
+- **Event effects:** stat deltas apply immediately (clamped to 0–100); cash, audience multiplier and event quality accumulate and apply at settlement. A resolved event cannot be selected again until `week + cooldownWeeks`. The five synthetic M1 events use a one-week cooldown because the content specification's 13-week default would starve a five-event pool; authored launch content follows the content specification.
+- **Easy difficulty:** +10 percentage points on risky choices (listed as the `difficulty.easy` modifier) and −15% on living cost and equipment upkeep.
+- **Skill decay:** an unused category loses 0.1 skill per week from its 14th consecutive inactive week, never below the background's starting skill.
+- **Endings:** insolvency (cash ≤ −1,000 PLN after settlement) takes precedence over completion in week 1,040. An ended career keeps its last settled week and rejects every command.
+- **Score rounding:** each component's points are rounded separately (`round(100,000 × weight × component)`), and the base score is their sum; this exposes every contribution exactly and differs from rounding the weighted sum by at most one point.
+
+### M1 achievements (Agent proposal)
+
+| ID | Condition | Points |
+| --- | --- | ---: |
+| `followers-1k` | Reach 1,000 followers at any settlement | 1 |
+| `followers-10k` | Reach 10,000 followers | 2 |
+| `followers-100k` | Reach 100,000 followers | 3 |
+| `career-completed` | Settle week 1,040 | 4 |
+
+Achievements are never revoked when followers later fall. Early retirement evaluates follower milestones before scoring.
+
+### M1 simulation policies (Agent proposal)
+
+The batch simulator and tests use five deterministic policies; all play through the same engine commands as manual play and never retire early.
+
+| Policy | Behaviour |
+| --- | --- |
+| Balanced | Rest when energy < 30 or burnout > 70; otherwise buy the lowest-tier slot when cash exceeds 3× its price; train every fourth week; manage the community when drama > 40; otherwise no action. Streams the background's highest starting skill, switching to the least-bored category while that category's boredom is ≥ 60. Takes the most likely gamble when its probability is ≥ 50%, otherwise the guaranteed response. |
+| Grinder | Trains the bonus category every week; rests only when forced. |
+| RestHeavy | Balanced, but rests whenever energy < 60. |
+| Specialist | Balanced on the bonus category for the whole career. |
+| Rotator | Balanced with the primary category rotating by week number. |

@@ -10,6 +10,7 @@ This file applies to the whole repository. Read the relevant current specificati
 | `docs/game-design-document.md` | Product vision, confirmed product decisions, core loop, document map, and chronological product decision log. Start here for scope. |
 | `docs/gameplay-systems.md` | Career rules, weekly loop, statistics, formulas, economy, automation, endings, and scoring. Numerical values are a prototype baseline until a ranked ruleset is frozen. |
 | `docs/content-and-experience.md` | Fictional world, event structure, Polish copy, adult themes, screen flows, accessibility, and text filters. |
+| `docs/content-capacity-estimate.md` | Content authoring measurement method, effort model, proposed launch floor by phase and category, and owner sign-off; `docs/templates/` holds the measurement CSV. |
 | `docs/technical-architecture.md` | Online/server-authoritative boundaries, career API, persistence, ranking integrity, security, and deployment architecture. |
 | `docs/technology-stack.md` | Repository layout, .NET layers, React stack, libraries, API client generation, and test tools. |
 | `docs/infrastructure-and-operations.md` | VPS and k3s topology, Ansible/Helm, SQL Server, Vault, environments, backups, and recovery. |
@@ -17,6 +18,9 @@ This file applies to the whole repository. Read the relevant current specificati
 | `docs/repository-standards.md` | Ignore files, line endings, editor rules, formatting, linting, and package configuration. |
 | `docs/technical-decisions.md` | Confirmed technical/workflow decisions, implementation defaults to validate, outstanding deployment inputs, and superseded choices. |
 | `docs/validation-and-delivery.md` | Release stages, acceptance criteria, simulation and test priorities, risks, and documentation maintenance. |
+| `docs/requirements-traceability.md` | Requirement IDs mapped to source, acceptance criterion, issue/milestone and status; superseded guidance with its replacement. |
+| `docs/reports/` | Generated simulation reports, such as the M1 baseline of 10,000 seeded careers, with dated findings and follow-ups. |
+| `docs/superpowers/` | Design specs (`specs/`) and implementation plans (`plans/`) for milestone work, such as the M1 simulation prototype. |
 | `docs/core-concept.md` | Original concept only; use the current GDD and linked specifications where they differ. |
 | `docs/polski-pilkarz-simulator-analysis.md` | Reference-game design analysis, not requirements for this game. |
 | `docs/polski-pilkarz-simulator-code-analysis.md` | Reference-game code analysis, not an implementation plan for this repository. |
@@ -31,3 +35,16 @@ Application code belongs under `source/`, infrastructure under `k8s/`, and GitHu
 - Record the date, source (`Owner decision` or `Agent proposal/default`), previous plan, new decision, reason, and impact or open questions. Put product decisions in the GDD decision log and technical/workflow/operations decisions in the technical decision register. Clearly distinguish confirmed owner choices from agent proposals that still need validation.
 - When a new decision replaces an old one, mark the old guidance as superseded or update it so two conflicting instructions do not appear current. If a related GitHub issue or milestone exists, bring its description into line with the documentation.
 - Do not silently change ranked rules, scoring, random odds, or published content versions; follow the versioning and season rules in the specifications.
+
+## Code quality
+
+- Keep SonarQube Cloud at **zero open issues** on `develop` and on every PR, not only in the new-code quality gate. Before asking to merge a PR, check its count with `https://sonarcloud.io/api/issues/search?componentKeys=adamcharusta_PolskiStreamerSimulator&pullRequest=<number>&resolved=false`; after a merge into `develop`, check `&branch=develop`. Fix an issue in the PR that introduces it. Mark an issue as not applicable in SonarQube Cloud only with the owner's yes and a written reason.
+
+## Issues, milestones and releases
+
+The full flow is in [Development and Delivery § Issues, milestones and releases](docs/development-and-delivery.md#issues-milestones-and-releases) (TD-96).
+
+- Open a GitHub issue with a description (scope, acceptance criteria, source) for every topic that was not planned before, before starting work on it. Add work that is not a bug to the milestone it belongs to, or create a new milestone when none fits.
+- A bug is a plain issue with the `bug` label and no milestone. Fix it with a regression test and passing checks. If the bug exists on `main`, branch `hotfix/*` from `main`, merge it into `main` by PR, then reconcile `main` into `develop` by PR. If it exists only on `develop`, branch `bugfix/*` from `develop` and merge it into `develop` by PR; it reaches `main` with the next release.
+- Close an issue as done only after its change is merged into `main`, not when it reaches `develop`.
+- When every issue of a milestone is merged into `develop`, cut `release/m<N>` from `develop` and open a PR into `main` that lists `Closes #<n>` for every issue it delivers, including bugs fixed on `develop` since the last release. After the merge, close any issue still open as done, close the milestone and reconcile `main` into `develop` by PR.
