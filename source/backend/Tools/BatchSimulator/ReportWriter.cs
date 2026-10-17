@@ -188,7 +188,7 @@ public static class ReportWriter
         md.AppendLine("| --- | --- | --- |");
         foreach (var c in criteria)
         {
-            md.AppendLine($"| {c.Name} | {c.Result} | {c.Evidence} |");
+            md.AppendLine(Invariant($"| {c.Name} | {c.Result} | {c.Evidence} |"));
         }
 
         md.AppendLine();

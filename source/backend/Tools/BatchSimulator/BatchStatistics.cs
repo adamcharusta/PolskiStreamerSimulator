@@ -52,6 +52,9 @@ public static class BatchStatistics
     public const double ViableCompletionRate = 0.90;
     public const double ViableFollowersShareOfRotator = 0.50;
     public const double MaxDecisionsPer13Weeks = 1.0;
+    public const string Pass = "PASS";
+    public const string Fail = "FAIL";
+    public const string NotApplicable = "n/a";
 
     /// <summary>Nearest-rank percentile of an ascending list: the value at rank <c>ceil(p × n / 100)</c>.</summary>
     public static long Percentile(IReadOnlyList<long> ascending, int percent)
@@ -120,7 +123,7 @@ public static class BatchStatistics
         const string name = "Distinct paths (#16)";
         if (specialists.Length < 2)
         {
-            return new Criterion(name, "n/a", "Needs at least two category specialists.");
+            return new Criterion(name, NotApplicable, "Needs at least two category specialists.");
         }
 
         var alike = new List<string>();
@@ -136,8 +139,8 @@ public static class BatchStatistics
         }
 
         return alike.Count == 0
-            ? new Criterion(name, "PASS", Invariant($"No two of {specialists.Length} specialists match on leading income, median drama (within {DistinctDramaPoints}), median credibility (within {DistinctCredibilityPoints}) and viewer CV (within {DistinctViewerCv:F2})."))
-            : new Criterion(name, "FAIL", $"Matching on all four measures: {string.Join("; ", alike)}.");
+            ? new Criterion(name, Pass, Invariant($"No two of {specialists.Length} specialists match on leading income, median drama (within {DistinctDramaPoints}), median credibility (within {DistinctCredibilityPoints}) and viewer CV (within {DistinctViewerCv:F2})."))
+            : new Criterion(name, Fail, $"Matching on all four measures: {string.Join("; ", alike)}.");
     }
 
     private static bool Alike(PathSummary a, PathSummary b)
@@ -151,7 +154,7 @@ public static class BatchStatistics
         const string name = "Viable specialization (#16, REQ-08)";
         if (specialists.Length == 0 || rotator is null)
         {
-            return new Criterion(name, "n/a", "Needs the category specialists and the Rotator.");
+            return new Criterion(name, NotApplicable, "Needs the category specialists and the Rotator.");
         }
 
         var failing = specialists
@@ -161,24 +164,24 @@ public static class BatchStatistics
         var lowestCompletion = specialists.MinBy(p => p.CompletionRate)!;
         var lowestFollowers = specialists.MinBy(p => p.MedianFollowers)!;
         return failing.Length == 0
-            ? new Criterion(name, "PASS", Invariant($"Lowest completion {Percent(lowestCompletion.CompletionRate)} ({lowestCompletion.Group}); lowest median followers {lowestFollowers.MedianFollowers:N0} = {FollowerShare(lowestFollowers, rotator)} of the Rotator median {rotator.MedianFollowers:N0} ({lowestFollowers.Group})."))
-            : new Criterion(name, "FAIL", Invariant($"Below {Percent(ViableCompletionRate)} completion or {Percent(ViableFollowersShareOfRotator)} of the Rotator median followers ({rotator.MedianFollowers:N0}): {string.Join("; ", failing)}."));
+            ? new Criterion(name, Pass, Invariant($"Lowest completion {Percent(lowestCompletion.CompletionRate)} ({lowestCompletion.Group}); lowest median followers {lowestFollowers.MedianFollowers:N0} = {FollowerShare(lowestFollowers, rotator)} of the Rotator median {rotator.MedianFollowers:N0} ({lowestFollowers.Group})."))
+            : new Criterion(name, Fail, Invariant($"Below {Percent(ViableCompletionRate)} completion or {Percent(ViableFollowersShareOfRotator)} of the Rotator median followers ({rotator.MedianFollowers:N0}): {string.Join("; ", failing)}."));
     }
 
     private static string FollowerShare(PathSummary p, PathSummary rotator)
-        => rotator.MedianFollowers == 0 ? "n/a" : Percent((double)p.MedianFollowers / rotator.MedianFollowers);
+        => rotator.MedianFollowers == 0 ? NotApplicable : Percent((double)p.MedianFollowers / rotator.MedianFollowers);
 
     private static Criterion Pacing(EventPaceSummary? balanced)
     {
         const string name = "Pacing";
         if (balanced is null)
         {
-            return new Criterion(name, "n/a", "Needs the Balanced policy.");
+            return new Criterion(name, NotApplicable, "Needs the Balanced policy.");
         }
 
         return new Criterion(
             name,
-            balanced.DecisionsPer13Weeks <= MaxDecisionsPer13Weeks ? "PASS" : "FAIL",
+            balanced.DecisionsPer13Weeks <= MaxDecisionsPer13Weeks ? Pass : Fail,
             Invariant($"Balanced answers {balanced.DecisionsPer13Weeks:F2} mandatory decisions per 13 weeks (limit {MaxDecisionsPer13Weeks:F0})."));
     }
 

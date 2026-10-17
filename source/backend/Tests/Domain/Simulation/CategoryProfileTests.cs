@@ -60,6 +60,20 @@ public class CategoryProfileTests
     }
 
     [Fact]
+    public void Mastery_relief_reads_the_skill_before_this_weeks_practice()
+    {
+        var b = M1 with { MasteryFromSkill = Fixed.FromInt(70), MasteryBoredomRelief = 1 };
+        var almost = TestCareers.Dorm(7) with { Skill = CategoryValues<Fixed>.Uniform(Fixed.FromRatio(699, 10)) };
+        var novice = almost with { Skill = CategoryValues<Fixed>.Uniform(Fixed.FromInt(20)) };
+        var rngA = almost.Rng;
+        var rngB = novice.Rng;
+        var a = ProgressionRules.ApplySkillAndBoredom(almost, Category.Fps, almost.Skill, ref rngA, b);
+        var n = ProgressionRules.ApplySkillAndBoredom(novice, Category.Fps, novice.Skill, ref rngB, b);
+        Assert.True(a.Skill[Category.Fps] >= b.MasteryFromSkill);
+        Assert.Equal(n.Boredom[Category.Fps], a.Boredom[Category.Fps]);
+    }
+
+    [Fact]
     public void Per_stream_reputation_effects_apply_only_to_their_category()
     {
         var b = With(Category.Gambling, p => p with { DramaPerStream = Fixed.One, CredibilityPerStream = Fixed.FromRatio(-3, 10) });

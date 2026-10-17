@@ -12,11 +12,10 @@ public static class ProgressionRules
     public static Fixed GrowthFactor(Fixed skill)
         => FixedMath.Max(MinimumGrowthFactor, (Fixed.Hundred - skill) / Fixed.Hundred);
 
-    /// <summary>A regular stream costs energy and adds burnout after the main action.</summary>
-    public static CareerState ApplyStreamFatigue(CareerState s, BalanceConstants b)
-        => ApplyStreamFatigue(s, b, Fixed.One);
-
-    /// <summary>A stream whose energy cost and burnout gain are scaled by <paramref name="factor"/> (a short stream).</summary>
+    /// <summary>
+    /// A stream costs energy and adds burnout after the main action, both scaled by <paramref name="factor"/>
+    /// (one for a regular stream, less for a short stream).
+    /// </summary>
     public static CareerState ApplyStreamFatigue(CareerState s, BalanceConstants b, Fixed factor)
         => s with
         {
@@ -25,8 +24,8 @@ public static class ProgressionRules
         };
 
     /// <summary>
-    /// M3 only: the streamed category's per-stream credibility and drama effects (stat lines use detail <c>stream</c>
-    /// through <see cref="Stats.Changes"/>); unchanged when both are zero.
+    /// M3 only: the streamed category's per-stream credibility and drama effects (the caller reports them as stat lines
+    /// with detail <c>category</c> through <see cref="Stats.Changes"/>); unchanged when both are zero.
     /// </summary>
     public static CareerState ApplyCategoryReputation(CareerState s, Category primary, BalanceConstants b)
     {
@@ -59,10 +58,11 @@ public static class ProgressionRules
         {
             if (category == primary)
             {
+                var master = skill[category] >= b.MasteryFromSkill;
                 skill = skill.With(category, Stats.Bounded(skill[category] + GrowthFactor(skill[category])));
                 var profile = b.Profile(primary);
                 (var gain, rng) = rng.NextInt(profile.BoredomGainMin, profile.BoredomGainMax);
-                if (skill[category] >= b.MasteryFromSkill && b.MasteryBoredomRelief > 0)
+                if (master && b.MasteryBoredomRelief > 0)
                 {
                     gain = Math.Max(1, gain - b.MasteryBoredomRelief);
                 }
