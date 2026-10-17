@@ -7,6 +7,8 @@ public static class TestPaths
 
     public static string ContentM1 => Path.Combine(RepositoryRoot, "content", "m1");
 
+    public static string ContentM3 => Path.Combine(RepositoryRoot, "content", "m3");
+
     public static string Golden(string fileName)
         => Path.Combine(RepositoryRoot, "source", "backend", "Tests", "Golden", fileName);
 
