@@ -253,9 +253,15 @@ public sealed class JsonContentSource(string directory) : IContentSource
                 ReadEffects(outcomes, "failure", path) ?? [],
                 ReadEffects(outcomes, "criticalSuccess", path),
                 ReadEffects(outcomes, "criticalFailure", path)));
-        return schema == 1 ? choice : choice with
+        if (schema == 1)
         {
-            Requires = Optional(c, "requires") is { } requires ? ReadRequirement(requires, $"{path}.requires") : null,
+            return choice;
+        }
+
+        var requirement = Optional(c, "requires") is { } requires ? ReadRequirement(requires, $"{path}.requires") : null;
+        return choice with
+        {
+            Requires = requirement,
             SuccessText = OptionalString(c, "successText", path),
             FailureText = OptionalString(c, "failureText", path),
         };
