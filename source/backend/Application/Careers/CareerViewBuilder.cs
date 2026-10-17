@@ -73,7 +73,7 @@ public sealed class CareerViewBuilder(WeekEngine engine)
     private static EventView Event(EventPresentation presented, ContentSnapshot c)
     {
         var definition = c.Events.First(e => string.Equals(e.Id, presented.EventId, StringComparison.Ordinal));
-        return new EventView(presented.EventId, definition.TitleKey, definition.TextPl, [.. presented.Choices.Select(o => Choice(o, definition))]);
+        return new EventView(presented.EventId, definition.TitleKey ?? string.Empty, definition.TextPl, [.. presented.Choices.Select(o => Choice(o, definition))]);
     }
 
     private static ChoiceView Choice(ChoiceOdds odds, EventDefinition definition)
@@ -81,7 +81,7 @@ public sealed class CareerViewBuilder(WeekEngine engine)
         var choice = definition.Choices.First(x => string.Equals(x.Id, odds.ChoiceId, StringComparison.Ordinal));
         return new ChoiceView(
             odds.ChoiceId,
-            choice.LabelKey,
+            choice.LabelKey ?? string.Empty,
             choice.LabelPl,
             odds.Guaranteed,
             Decimals.Of(odds.Probability),

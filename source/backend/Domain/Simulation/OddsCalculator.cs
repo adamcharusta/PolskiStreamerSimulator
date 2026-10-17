@@ -14,7 +14,7 @@ public static class OddsCalculator
 
     /// <summary>
     /// <c>p = clamp(0.05, 0.95, base + Σ min(cap, stat × perPoint) + easy bonus)</c> and
-    /// <c>threshold = round(100p)</c>. Primary-category stats read the pending week's plan.
+    /// <c>threshold = round(100p)</c>. Primary-category stats read the pending week's plan (see <see cref="PrimaryCategory"/>).
     /// </summary>
     public static ChoiceOdds For(CareerState s, ChoiceDefinition choice, BalanceConstants b)
     {
@@ -46,8 +46,12 @@ public static class OddsCalculator
         return new ChoiceOdds(choice.Id, false, probability, threshold, modifiers.ToImmutable(), choice.AllowsCritical);
     }
 
+    /// <summary>
+    /// The category primary-category stats read: the pending week's plan, or — for a decision between weeks — the
+    /// category of the last settled week (<see cref="Category.JustChatting"/> before the first one).
+    /// </summary>
     private static Category PrimaryCategory(CareerState s, StatKey stat)
         => stat is StatKey.PrimarySkill or StatKey.PrimaryBoredom
-            ? s.Pending?.Plan.Category ?? throw new InvalidOperationException("Primary-category odds need a started week.")
+            ? s.Pending?.Plan.Category ?? Stats.LastPrimary(s)
             : default;
 }

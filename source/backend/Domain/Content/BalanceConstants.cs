@@ -122,4 +122,15 @@ public sealed record BalanceConstants
     public required int EventsPerWeekMin { get; init; }
 
     public required int EventsPerWeekMax { get; init; }
+
+    /// <summary>Crisis event forced when burnout peaks (schema 2); null when content has none.</summary>
+    public string? RecoveryCrisisEventId { get; init; }
+
+    /// <summary>Weekly chance of a random milestone or crisis decision (schema 2).</summary>
+    public Fixed DecisionChancePerWeek { get; init; }
+
+    /// <summary>The networking action's collaboration choice (schema 2); null when content has none.</summary>
+    public ChoiceDefinition? NetworkCollaborate { get; init; }
+
+    public Fixed NetworkEnergyCost { get; init; }
 }

@@ -1,12 +1,32 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Scoring;
+using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Careers;
 
 public class CareerInvariantsTests
 {
+    [Fact]
+    public void Decisions_pending_during_a_week_are_reported()
+    {
+        var s = TestCareers.Dorm(1);
+        var pending = new PendingWeek(s.Week, new WeekPlan(MainAction.Rest, Category.Fps), [], [], Fixed.Zero, Fixed.One, 0, []);
+        Assert.Empty(CareerInvariants.Validate(s with { PendingDecisions = ["d"] }));
+        Assert.Empty(CareerInvariants.Validate(s with { Pending = pending, PendingDecisions = [] }));
+        Assert.Equal(["decision-during-week"], CareerInvariants.Validate(s with { Pending = pending, PendingDecisions = ["d"] }));
+    }
+
+    [Fact]
+    public void Expired_flags_are_reported_but_the_boundary_week_is_still_active()
+    {
+        var s = TestCareers.Dorm(1) with { LastSettledWeek = 10 };
+        var flags = System.Collections.Immutable.ImmutableDictionary<string, int>.Empty.WithComparers(StringComparer.Ordinal);
+        Assert.Empty(CareerInvariants.Validate(s with { Flags = flags.Add("edge", 10) }));
+        Assert.Equal(["expired-flag-kept"], CareerInvariants.Validate(s with { Flags = flags.Add("old", 9) }));
+    }
+
     [Fact]
     public void Invariants_report_each_violation()
     {

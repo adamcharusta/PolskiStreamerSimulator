@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
 
 namespace PolskiStreamerSimulator.Domain.Content;
@@ -16,6 +17,17 @@ public enum StatKey
 
     /// <summary>Boredom in the week's primary category.</summary>
     PrimaryBoredom,
+
+    /// <summary>Follower count; read-only in eligibility and modifiers, never the target of a stat delta.</summary>
+    Followers,
+}
+
+/// <summary>When an event is shown: inside a stream (live) or as a decision between weeks (milestone, crisis).</summary>
+public enum EventPhase
+{
+    Live,
+    Milestone,
+    Crisis,
 }
 
 public enum EffectKind
@@ -31,9 +43,34 @@ public enum EffectKind
 
     /// <summary>Adds to the week's stream quality.</summary>
     EventQuality,
+
+    /// <summary>Changes followers by <see cref="Effect.Amount"/> percent (schema 2).</summary>
+    FollowersPercent,
+
+    /// <summary>Adds <see cref="Effect.Amount"/> to the skill of <see cref="Effect.Category"/> (schema 2).</summary>
+    SkillDelta,
+
+    /// <summary>Adds <see cref="Effect.Amount"/> percentage points to the week's viral chance (schema 2).</summary>
+    ViralChance,
+
+    /// <summary>Sets flag <see cref="Effect.Target"/>, for <see cref="Effect.Weeks"/> weeks or permanently (schema 2).</summary>
+    SetFlag,
+
+    /// <summary>Clears flag <see cref="Effect.Target"/> (schema 2).</summary>
+    ClearFlag,
+
+    /// <summary>Schedules event <see cref="Effect.Target"/> in <see cref="Effect.Weeks"/> weeks (schema 2).</summary>
+    FollowUp,
 }
 
-public sealed record Effect(EffectKind Kind, StatKey? Stat, Fixed Amount);
+/// <summary>
+/// One change applied by an outcome. <see cref="Category"/>, <see cref="Target"/> (a flag or event ID) and
+/// <see cref="Weeks"/> are used only by the schema-2 kinds.
+/// </summary>
+public sealed record Effect(EffectKind Kind, StatKey? Stat, Fixed Amount, Category? Category = null, string? Target = null, int? Weeks = null);
+
+/// <summary>Minimum resources a choice needs to be offered (schema 2).</summary>
+public sealed record ChoiceRequirement(long? MinCashPln, Fixed? MinEnergy);
 
 /// <summary>Adds <c>min(Cap, stat × PerPoint)</c> to a choice's probability.</summary>
 public sealed record ChanceModifier(StatKey Stat, Fixed PerPoint, Fixed? Cap, string LabelKey);
@@ -46,26 +83,56 @@ public sealed record OutcomeSet(
 
 public sealed record ChoiceDefinition(
     string Id,
-    string LabelKey,
+    string? LabelKey,
     string LabelPl,
     bool Guaranteed,
     Fixed BaseChance,
     ImmutableArray<ChanceModifier> Modifiers,
     bool AllowsCritical,
-    OutcomeSet Outcomes);
+    OutcomeSet Outcomes,
+    ChoiceRequirement? Requires = null,
+    string? SuccessText = null,
+    string? FailureText = null);
 
-/// <summary>Weeks and inclusive stat bounds in which an event may be selected.</summary>
+/// <summary>
+/// Weeks and inclusive stat bounds in which an event may be selected; in schema 2 also the categories (empty means
+/// every category) and the flags that must be set or must not be set.
+/// </summary>
 public sealed record Eligibility(
     int FromWeek,
     int ToWeek,
     ImmutableDictionary<StatKey, Fixed> Min,
-    ImmutableDictionary<StatKey, Fixed> Max);
+    ImmutableDictionary<StatKey, Fixed> Max,
+    ImmutableArray<Category> Categories = default,
+    ImmutableArray<string> RequiresFlags = default,
+    ImmutableArray<string> ForbidsFlags = default)
+{
+    /// <summary>Allowed categories; empty (never default) means every category.</summary>
+    public ImmutableArray<Category> Categories { get; init; } = Categories.IsDefault ? [] : Categories;
 
+    public ImmutableArray<string> RequiresFlags { get; init; } = RequiresFlags.IsDefault ? [] : RequiresFlags;
+
+    public ImmutableArray<string> ForbidsFlags { get; init; } = ForbidsFlags.IsDefault ? [] : ForbidsFlags;
+}
+
+/// <summary>
+/// An event. Schema 1 uses <see cref="TitleKey"/> and plain <see cref="TextPl"/>; schema 2 uses <see cref="Title"/> and
+/// ICU text in <see cref="TextPl"/>, plus <see cref="Version"/>, <see cref="Phase"/>, <see cref="OneTime"/> and <see cref="Tags"/>.
+/// </summary>
 public sealed record EventDefinition(
     string Id,
-    string TitleKey,
+    string? TitleKey,
     string TextPl,
     int Weight,
     int CooldownWeeks,
     Eligibility Eligibility,
-    ImmutableArray<ChoiceDefinition> Choices);
+    ImmutableArray<ChoiceDefinition> Choices,
+    int Version = 1,
+    EventPhase Phase = EventPhase.Live,
+    string? Title = null,
+    bool OneTime = false,
+    ImmutableArray<string> Tags = default)
+{
+    /// <summary>Content tags; empty (never default) when the event has none.</summary>
+    public ImmutableArray<string> Tags { get; init; } = Tags.IsDefault ? [] : Tags;
+}

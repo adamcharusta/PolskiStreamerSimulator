@@ -26,5 +26,12 @@ public sealed class PausingRuleset(int pauseBeforeWeek) : IRuleset
 
     public Result<CareerState> Retire(CareerState s, ContentSnapshot c, long expectedVersion) => inner.Retire(s, c, expectedVersion);
 
+    public Result<EventPresentation> PresentDecision(CareerState s, ContentSnapshot c) => inner.PresentDecision(s, c);
+
+    public Result<CareerState> ResolveDecision(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
+        => inner.ResolveDecision(s, c, choiceId, expectedVersion);
+
+    public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => inner.PresentAction(s, c, plan);
+
     public static WeekEngine Engine(int pauseBeforeWeek) => new(new RulesetRegistry([new PausingRuleset(pauseBeforeWeek)]));
 }

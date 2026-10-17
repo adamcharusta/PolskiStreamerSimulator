@@ -1,13 +1,81 @@
+using System.Collections.Immutable;
 using System.Text;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Serialization;
+using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Serialization;
 
 public class CanonicalJsonTests
 {
+    private static PendingWeek BasePending() => new(
+        new CareerWeek(3),
+        new WeekPlan(MainAction.Rest, Category.Fps),
+        [],
+        [],
+        Fixed.Zero,
+        Fixed.One,
+        0,
+        []);
+
+    [Fact]
+    public void Pending_week_extras_round_trip_and_are_omitted_when_null()
+    {
+        var roll = new RollResult("e1", "c1", 42, 60, [new ModifierLine("skill", Fixed.FromInt(5))], RollOutcome.Success);
+        var carry = new DecisionCarry([roll], 150, Fixed.FromRatio(1, 3), [new ReportLine("decision-line", 150)]);
+        var full = TestCareers.Dorm(7) with
+        {
+            Pending = BasePending() with { ActionRoll = roll, FollowersPercent = Fixed.FromInt(2), ViralChance = Fixed.FromRatio(1, 4), Carry = carry },
+        };
+        var bytes = CanonicalJson.Serialize(full);
+        var json = Encoding.UTF8.GetString(bytes);
+        foreach (var name in new[] { "ActionRoll", "FollowersPercent", "ViralChance", "Carry" })
+        {
+            Assert.Contains($"\"{name}\"", json, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(bytes, CanonicalJson.Serialize(CanonicalJson.Deserialize(bytes)));
+        Assert.Equal(carry.CashPln, CanonicalJson.Deserialize(bytes).Pending!.Carry!.CashPln);
+
+        var bare = Encoding.UTF8.GetString(CanonicalJson.Serialize(TestCareers.Dorm(7) with { Pending = BasePending() }));
+        foreach (var name in new[] { "ActionRoll", "FollowersPercent", "ViralChance", "Carry" })
+        {
+            Assert.DoesNotContain($"\"{name}\"", bare, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Stored_m1_state_round_trips_without_new_fields()
+    {
+        var s = TestCareers.Dorm(7);
+        var json = Encoding.UTF8.GetString(CanonicalJson.Serialize(s));
+        foreach (var name in new[] { "Flags", "Scheduled", "PendingDecisions", "Carry", "UsedOneTime" })
+        {
+            Assert.DoesNotContain($"\"{name}\"", json, StringComparison.Ordinal);
+        }
+
+        Assert.Equal(StateHash.Of(s), StateHash.Of(CanonicalJson.Deserialize(CanonicalJson.Serialize(s))));
+    }
+
+    [Fact]
+    public void M3_fields_round_trip_in_ordinal_order()
+    {
+        var s = TestCareers.Dorm(7) with
+        {
+            Flags = ImmutableDictionary<string, int>.Empty.WithComparers(StringComparer.Ordinal).Add("b", 5).Add("a", 1040),
+            Scheduled = [new ScheduledEvent("rivalry-2", 12)],
+            PendingDecisions = ["burnout-recovery"],
+            UsedOneTime = ImmutableHashSet.Create(StringComparer.Ordinal, "first-week"),
+            Carry = DecisionCarry.Empty with { CashPln = -200 },
+        };
+        var bytes = CanonicalJson.Serialize(s);
+        var json = Encoding.UTF8.GetString(bytes);
+        Assert.True(json.IndexOf("\"a\":1040", StringComparison.Ordinal) < json.IndexOf("\"b\":5", StringComparison.Ordinal));
+        Assert.Equal(bytes, CanonicalJson.Serialize(CanonicalJson.Deserialize(bytes)));
+    }
+
     [Fact]
     public void Roundtrip_is_byte_identical()
     {

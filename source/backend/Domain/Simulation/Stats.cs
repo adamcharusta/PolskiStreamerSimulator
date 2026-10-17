@@ -9,6 +9,23 @@ public static class Stats
 {
     public static Fixed Bounded(Fixed value) => value.Clamp(Fixed.Zero, Fixed.Hundred);
 
+    /// <summary>
+    /// The category streamed in the last settled week, inferred from <see cref="CareerState.InactiveWeeks"/>: settlement
+    /// resets the streamed category to 0 and increments every other one, so after a settlement it is the only category
+    /// at 0 (the state does not store the last plan). Before the first settlement, or when no category is at 0, it is
+    /// <see cref="Category.JustChatting"/>. Primary-category stats read it between weeks (decisions).
+    /// </summary>
+    public static Category LastPrimary(CareerState s)
+    {
+        if (s.LastSettledWeek < CareerWeek.First)
+        {
+            return Category.JustChatting;
+        }
+
+        var streamed = Enum.GetValues<Category>().Where(category => s.InactiveWeeks[category] == 0).ToList();
+        return streamed.Count > 0 ? streamed[0] : Category.JustChatting;
+    }
+
     public static Fixed Get(CareerState s, StatKey key, Category primary) => key switch
     {
         StatKey.Drama => s.Drama,
@@ -17,10 +34,14 @@ public static class Stats
         StatKey.Burnout => s.Burnout,
         StatKey.PrimarySkill => s.Skill[primary],
         StatKey.PrimaryBoredom => s.Boredom[primary],
+        StatKey.Followers => Fixed.FromInt(s.Followers),
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, null),
     };
 
-    /// <summary>Adds <paramref name="delta"/> and clamps the result to 0–100.</summary>
+    /// <summary>
+    /// Adds <paramref name="delta"/> and clamps the result to 0–100. <see cref="StatKey.Followers"/> is rejected: followers
+    /// change only through <see cref="EffectKind.FollowersPercent"/> and settlement.
+    /// </summary>
     public static CareerState Add(CareerState s, StatKey key, Fixed delta, Category primary) => key switch
     {
         StatKey.Drama => s with { Drama = Bounded(s.Drama + delta) },

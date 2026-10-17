@@ -11,8 +11,8 @@ public sealed record CareerRunResult(CareerState Final, int WeeksPlayed, IReadOn
 public static class CareerRunner
 {
     /// <summary>
-    /// Plays a career to its ending through the engine (start, present and resolve every event, settle),
-    /// checking invariants after every step and stopping at the first violation or rejected command.
+    /// Plays a career to its ending through the engine (answer queued decisions, start, present and resolve every
+    /// event, settle), checking invariants after every step and stopping at the first violation or rejected command.
     /// </summary>
     public static CareerRunResult Run(
         WeekEngine engine,
@@ -28,6 +28,11 @@ public static class CareerRunner
         while (violations.Count == 0 && s.Status == CareerStatus.Active)
         {
             var week = $"week {s.Week.Value}";
+            if (!AnswerDecisions(engine, c, policy, week, violations, ref s))
+            {
+                break;
+            }
+
             if (policy.ShouldRetire(s))
             {
                 Retire(engine, c, week, violations, ref s);
@@ -74,6 +79,31 @@ public static class CareerRunner
         {
             Check(s, $"{week} retire", violations);
         }
+    }
+
+    /// <summary>Answers every queued mandatory decision with the policy's event choice before the week is planned.</summary>
+    private static bool AnswerDecisions(WeekEngine engine, ContentSnapshot c, IChoicePolicy policy, string week, List<string> violations, ref CareerState s)
+    {
+        var presentation = engine.PresentDecision(s, c);
+        while (presentation.IsSuccess)
+        {
+            var step = $"{week} decision {presentation.Value.EventId}";
+            var choice = policy.ChooseEventChoice(s, presentation.Value).ChoiceId;
+            if (!Accept(engine.ResolveDecision(s, c, choice, s.StateVersion), step, violations, ref s) || !Check(s, step, violations))
+            {
+                return false;
+            }
+
+            presentation = engine.PresentDecision(s, c);
+        }
+
+        if (presentation.Error.Code == DomainErrorCode.NoPendingDecision)
+        {
+            return true;
+        }
+
+        violations.Add($"{week} present decision: {presentation.Error.Code} ({presentation.Error.Detail})");
+        return false;
     }
 
     private static bool ResolveEvents(WeekEngine engine, ContentSnapshot c, IChoicePolicy policy, string week, List<string> violations, ref CareerState s)

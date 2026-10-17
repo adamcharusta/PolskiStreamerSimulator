@@ -41,6 +41,16 @@ public static class CareerInvariants
             CheckActive(violations, s);
         }
 
+        if (s.PendingDecisions is { Length: > 0 } && s.Pending is not null)
+        {
+            violations.Add("decision-during-week");
+        }
+
+        if (s.Flags is { } flags && flags.Any(f => f.Value < s.LastSettledWeek))
+        {
+            violations.Add("expired-flag-kept");
+        }
+
         return violations;
     }
 

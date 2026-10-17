@@ -32,4 +32,16 @@ public interface IRuleset
     /// starting the week.
     /// </summary>
     bool RequiresPlayerDecision(CareerState s, ContentSnapshot c);
+
+    /// <summary>Odds of the first queued mandatory decision; fails with <c>NoPendingDecision</c> when none is queued.</summary>
+    Result<EventPresentation> PresentDecision(CareerState s, ContentSnapshot c);
+
+    /// <summary>
+    /// Answers the first queued mandatory decision between weeks: stat effects apply now, cash, follower effects and
+    /// the roll are carried into the next week's report.
+    /// </summary>
+    Result<CareerState> ResolveDecision(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion);
+
+    /// <summary>Odds of the main action's roll for <paramref name="plan"/>, or <c>null</c> when the action is not rolled.</summary>
+    ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan);
 }
