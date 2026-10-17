@@ -1344,8 +1344,8 @@
       "phase": "live",
       "title": "Wywołanie do tablicy",
       "text": "Streamer „Kapitan Kebab” mówi na swoim kanale, że twoje wyniki to „zasługa kolegów z czatu”. Klip ma już tysiące wyświetleń.",
-      "weight": 3,
-      "cooldownWeeks": 4,
+      "weight": 1,
+      "cooldownWeeks": 52,
       "tags": ["rivalry"],
       "eligibility": {
         "fromWeek": 27,
@@ -1361,7 +1361,7 @@
           "successText": "Riposta trafia w punkt. Oba czaty szaleją, a wojna dopiero się zaczyna.",
           "failureText": "Riposta wychodzi blado. Kapitan już nagrywa odpowiedź.",
           "outcomes": {
-            "success": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "SetFlag", "flag": "rivalry", "weeks": 52, "amount": 0 }, { "kind": "FollowUp", "event": "rivalry-crisis", "weeks": 4, "amount": 0 } ],
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "SetFlag", "flag": "rivalry", "weeks": 52, "amount": 0 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "SetFlag", "flag": "rivalry", "weeks": 52, "amount": 0 }, { "kind": "FollowUp", "event": "rivalry-crisis", "weeks": 4, "amount": 0 } ]
           }
         },
