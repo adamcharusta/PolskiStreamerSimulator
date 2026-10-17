@@ -103,7 +103,7 @@ Authors write Polish quotation marks („…”); an ASCII apostrophe must be do
 - a `milestone` or `crisis` event has an empty week range or is reachable neither by eligibility nor by a `FollowUp`;
 - for any category and week, fewer `live` events are eligible by week range and category than `eventsPerWeekMax`.
 
-ICU syntax is validated by `IcuMessage` in `Domain`, a dependency-free validator for the subset the content uses: plain text, `''` escapes, `{name}` arguments and `{gender, select, …}` with `female`, `male` and `other` (each branch may nest the same subset). Any other ICU construct is rejected. A frontend test formats every `content/m3` message with `intl-messageformat` for all three genders, so the two parsers cannot drift.
+ICU syntax is validated by `IcuMessage` in `Domain`, a dependency-free validator for the subset the content uses: plain text, `''`, ICU quoting and `{gender, select, female {…} male {…} other {…}}` (each branch may nest the same subset). Simple `{name}` arguments and duplicate branch keys are rejected (`unsupported-argument`, `duplicate-branch:{key}`), because the browser formats with only `gender`. Any other ICU construct is rejected. The validator also rejects a `FollowUp` that targets a one-time event (`follow-up-one-time:{eventId}/{target}`). A frontend test formats every `content/m3` message with `intl-messageformat` for all three genders, so the two parsers cannot drift.
 
 ### 4.4 Immutability
 
@@ -146,7 +146,9 @@ The week plan returned by the API carries this odds presentation, so the player 
 - After each settlement the ruleset enqueues, in this order: due `milestone`/`crisis` follow-ups, the recovery crisis when triggered, then at most one eligible `milestone` or `crisis` event by weight that is not cooling down. One week opens with at most two decisions.
 - `RequiresPlayerDecision` returns `true` while the queue is not empty, so the 13-week batch stops before the week (TD-90 mechanism) without consuming it.
 - New command `ResolveDecision(choiceId)`: presents the same odds as a live event and rolls. Stat effects apply at once. Cash and follower effects, the roll and its stat lines go into a **decision carry** that the next `StartWeek` moves into the week, so the week's report lists every cash movement and reconciles exactly. Audience, quality and viral effects are not allowed in `milestone`/`crisis` events (validator).
-- One-time milestones open as soon as they are eligible; repeatable milestones and crises open after a seeded `decisionChancePerWeek` roll (balance, proposed 6 %).
+- One-time milestones open as soon as they are eligible, in content order (the first eligible one); repeatable milestones and crises open by weight after a seeded `decisionChancePerWeek` roll (balance, proposed 6 %).
+- The recovery crisis outranks decision follow-ups: it always opens when energy is 0 or burnout is 100, and due decision follow-ups fill the remaining slot (at most two open; the rest stay scheduled). This replaces the order stated above (follow-ups first).
+- `Retire` is rejected with `decision-pending` while decisions are queued. When it is accepted, it folds the decision carry's cash and follower percentage into the state and clears scheduled follow-ups before scoring. Follower percentage from events and decisions counts in the report's FollowersGained, FollowersLost and Net, with a `followers:event` stat line.
 - The action log stores it as kind `resolveDecision`; repeats with the same command ID return the stored response.
 - The proposed pacing guardrail (no more than one mandatory interruption per 13 routine weeks on average) is measured in the simulation report; content weights are tuned to meet it.
 
