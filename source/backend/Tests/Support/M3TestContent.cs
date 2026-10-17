@@ -29,6 +29,22 @@ public static class M3TestContent
             {
                 RecoveryCrisisEventId = "burnout-recovery",
                 DecisionChancePerWeek = Fixed.FromRatio(6, 100),
+                NetworkEnergyCost = Fixed.FromInt(10),
+                NetworkCollaborate = new ChoiceDefinition(
+                    "collaborate", null, "Zagadaj do innych twórców", false, Fixed.FromRatio(35, 100),
+                    [
+                        new ChanceModifier(StatKey.Credibility, Fixed.FromRatio(3, 1000), null, "modifier.credibility"),
+                        new ChanceModifier(StatKey.Drama, Fixed.FromRatio(-3, 1000), null, "modifier.drama"),
+                    ],
+                    true,
+                    new OutcomeSet(
+                        [new Effect(EffectKind.AudienceMultiplier, null, Fixed.FromRatio(12, 10)), new Effect(EffectKind.StatDelta, StatKey.Credibility, Fixed.One)],
+                        [new Effect(EffectKind.StatDelta, StatKey.Drama, Fixed.FromInt(4)), new Effect(EffectKind.StatDelta, StatKey.Credibility, Fixed.FromInt(-2))],
+                        [new Effect(EffectKind.SetFlag, null, Fixed.Zero, Target: "collab-friend", Weeks: 26)],
+                        [new Effect(EffectKind.FollowUp, null, Fixed.Zero, Target: "test-crisis", Weeks: 1)])),
+                BurnoutPenaltyFrom = Fixed.FromInt(60),
+                BurnoutPenaltyPerPoint = Fixed.FromRatio(25, 10000),
+                BurnoutPenaltyCap = Fixed.FromRatio(10, 100),
             },
             Events = live.AddRange(
                 Decision("first-week", EventPhase.Milestone, fromWeek: 2, toWeek: 2, oneTime: true),

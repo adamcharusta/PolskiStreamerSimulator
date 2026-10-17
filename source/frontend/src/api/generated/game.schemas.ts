@@ -93,7 +93,7 @@ export const NextStepKind = {
 } as const;
 
 /**
- * M1 between-stream main actions; exactly one per week.
+ * Between-stream main actions (network collaboration is M3 only); exactly one per week.
  */
 export type MainAction = typeof MainAction[keyof typeof MainAction];
 
@@ -104,6 +104,7 @@ export const MainAction = {
   improveProduction: 'improveProduction',
   manageCommunity: 'manageCommunity',
   noAction: 'noAction',
+  networkCollaborate: 'networkCollaborate',
 } as const;
 
 export type Category = typeof Category[keyof typeof Category];

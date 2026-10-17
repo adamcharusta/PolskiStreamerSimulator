@@ -2,7 +2,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 
 namespace PolskiStreamerSimulator.Domain.Simulation;
 
-/// <summary>M1 between-stream main actions; exactly one per week.</summary>
+/// <summary>Between-stream main actions (network collaboration is M3 only); exactly one per week.</summary>
 public enum MainAction
 {
     Rest,
@@ -10,6 +10,7 @@ public enum MainAction
     ImproveProduction,
     ManageCommunity,
     NoAction,
+    NetworkCollaborate,
 }
 
 /// <summary>

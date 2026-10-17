@@ -32,15 +32,18 @@ public sealed class M3Ruleset : IRuleset
             return Result<CareerState>.Fail(blocked);
         }
 
-        var applied = WeekActions.Apply(s, c, plan, expectedVersion);
+        var applied = WeekActions.Apply(s, c, plan, expectedVersion, network: true);
         if (!applied.IsSuccess)
         {
             return Result<CareerState>.Fail(applied.Error);
         }
 
         var rng = applied.Value.Rng;
-        var (eventIds, scheduled) = EventSelector.Select(applied.Value.State, c, plan.Category, applied.Value.State.Scheduled ?? [], ref rng);
-        var started = WeekActions.Started(s, applied.Value, plan, eventIds, rng);
+        var afterAction = plan.Action == MainAction.NetworkCollaborate
+            ? RollNetwork(s, c, plan, applied.Value, ref rng)
+            : WeekActions.Started(s, applied.Value, plan, [], rng);
+        var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
+        var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
         var pending = started.Pending!;
         if (s.Carry is { } carry)
         {
@@ -57,7 +60,7 @@ public sealed class M3Ruleset : IRuleset
     }
 
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => WeekActions.LegalPlans(s, c);
+        => WeekActions.LegalPlans(s, c, network: true);
 
     /// <summary>The next week waits while mandatory decisions are queued.</summary>
     public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c)
@@ -99,7 +102,7 @@ public sealed class M3Ruleset : IRuleset
             state = DecisionQueue.Open(state, c, ref rng) with { Rng = rng };
         }
 
-        var report = WeekSettlement.Report(s, pending, core, ending) with { DecisionRolls = pending.Carry?.Rolls ?? [] };
+        var report = WeekSettlement.Report(s, pending, core, ending) with { ActionRoll = pending.ActionRoll, DecisionRolls = pending.Carry?.Rolls ?? [] };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
 
@@ -146,8 +149,31 @@ public sealed class M3Ruleset : IRuleset
         });
     }
 
-    /// <summary>No M3 action is rolled yet.</summary>
-    public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => null;
+    /// <summary>The visible odds of the networking roll for a network plan; null for any other plan.</summary>
+    public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
+        => plan.Action == MainAction.NetworkCollaborate && c.Balance.NetworkCollaborate is { } choice
+            ? OddsCalculator.For(s, choice, c.Balance)
+            : null;
+
+    /// <summary>
+    /// Opens the network week and rolls the collaboration with the odds shown beforehand; its effects apply to the
+    /// week, the roll is recorded for the report and a critical counts in the metrics.
+    /// </summary>
+    private static CareerState RollNetwork(CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, ref Pcg32 rng)
+    {
+        var choice = c.Balance.NetworkCollaborate!;
+        var started = WeekActions.Started(s, applied, plan, [], rng);
+        var odds = OddsCalculator.For(started, choice, c.Balance);
+        var (roll, outcome, effects) = RuleSteps.Roll(choice, odds, ref rng);
+        var pending = started.Pending!;
+        var state = EffectApplier.ToWeek(started, "network", effects, ref pending);
+        var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
+        return state with
+        {
+            Pending = pending with { ActionRoll = new RollResult("network", choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
+            Metrics = state.Metrics with { Criticals = state.Metrics.Criticals + (critical ? 1 : 0) },
+        };
+    }
 
     private static Result<EventDefinition> NextDecision(CareerState s, ContentSnapshot c)
         => s.PendingDecisions is { Length: > 0 } queue

@@ -8,6 +8,7 @@ namespace PolskiStreamerSimulator.Domain.Simulation;
 public static class OddsCalculator
 {
     public const string EasyModifierLabel = "difficulty.easy";
+    public const string BurnoutModifierLabel = "modifier.burnout";
 
     private static readonly Fixed MinimumProbability = Fixed.FromRatio(5, 100);
     private static readonly Fixed MaximumProbability = Fixed.FromRatio(95, 100);
@@ -33,6 +34,11 @@ public static class OddsCalculator
             }
 
             modifiers.Add(new ModifierLine(modifier.LabelKey, value));
+        }
+
+        if (s.Burnout > b.BurnoutPenaltyFrom)
+        {
+            modifiers.Add(new ModifierLine(BurnoutModifierLabel, -FixedMath.Min(b.BurnoutPenaltyCap, (s.Burnout - b.BurnoutPenaltyFrom) * b.BurnoutPenaltyPerPoint)));
         }
 
         if (s.Difficulty == Difficulty.Easy)

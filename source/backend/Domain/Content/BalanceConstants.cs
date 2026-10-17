@@ -140,6 +140,15 @@ public sealed record BalanceConstants
     /// <summary>Skill from which a category counts as mastered; M1 default 101 is unreachable.</summary>
     public Fixed MasteryFromSkill { get; init; } = Fixed.FromInt(101);
 
+    /// <summary>Burnout above which odds lose points; M1 default 101 is unreachable.</summary>
+    public Fixed BurnoutPenaltyFrom { get; init; } = Fixed.FromInt(101);
+
+    /// <summary>Chance lost per burnout point above <see cref="BurnoutPenaltyFrom"/>.</summary>
+    public Fixed BurnoutPenaltyPerPoint { get; init; }
+
+    /// <summary>Largest chance the burnout penalty can remove.</summary>
+    public Fixed BurnoutPenaltyCap { get; init; }
+
     /// <summary>Boredom gain a master saves per stream.</summary>
     public int MasteryBoredomRelief { get; init; }
 

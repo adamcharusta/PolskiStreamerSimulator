@@ -74,4 +74,29 @@ public class OddsCalculatorTests
         Assert.Equal(100, odds.Threshold);
         Assert.Empty(odds.Modifiers);
     }
+
+    private static readonly ChoiceDefinition CredibilityChoice = new(
+        "c", null, "c", false, Fixed.FromRatio(1, 2),
+        [new ChanceModifier(StatKey.Credibility, Fixed.FromRatio(1, 1000), null, "modifier.credibility")],
+        false,
+        new OutcomeSet([], [], null, null));
+
+    [Theory]
+    [InlineData(59, 0)]
+    [InlineData(60, 0)]
+    [InlineData(80, -5)]
+    [InlineData(100, -10)]
+    public void Burnout_penalty_grows_above_sixty_and_is_capped(int burnout, int expectedPoints)
+    {
+        var s = TestCareers.Fresh() with { Burnout = Fixed.FromInt(burnout) };
+        var line = OddsCalculator.For(s, CredibilityChoice, M3Play.C.Balance).Modifiers.SingleOrDefault(m => m.LabelKey == "modifier.burnout");
+        Assert.Equal(expectedPoints, line is null ? 0 : (int)(line.Value * Fixed.Hundred).RoundToLong());
+    }
+
+    [Fact]
+    public void M1_balance_never_adds_a_burnout_modifier()
+    {
+        var s = TestCareers.Fresh() with { Burnout = Fixed.Hundred };
+        Assert.DoesNotContain(OddsCalculator.For(s, CredibilityChoice, TestWorld.Content.Balance).Modifiers, m => m.LabelKey == "modifier.burnout");
+    }
 }
