@@ -1,8 +1,10 @@
 using FsCheck;
 using FsCheck.Xunit;
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Simulation;
+using PolskiStreamerSimulator.Domain.Simulation.Policies;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Simulation;
@@ -26,7 +28,8 @@ public class InvariantProperties
         var bounded = true;
         var reconciled = true;
         var weeks = 0;
-        var r = CareerRunner.Run(M3Play.Engine, M3Play.C, start, new RandomLegalPolicy((ulong)seed.Get, retireFromWeek: 200), (s, report) =>
+        var policy = new DecisionCounter(new RandomLegalPolicy((ulong)seed.Get, retireFromWeek: 200));
+        var r = CareerRunner.Run(M3Play.Engine, M3Play.C, start, policy, (s, report) =>
         {
             weeks++;
             bounded &= new[] { s.Energy, s.Burnout, s.Drama, s.Credibility }.All(v => v >= Fixed.Zero && v <= Fixed.Hundred);
@@ -34,6 +37,30 @@ public class InvariantProperties
                 && s.CashPln - previousCash == report.CashDelta;
             previousCash = s.CashPln;
         });
-        return r.InvariantViolations.Count == 0 && bounded && reconciled && weeks > 0;
+        return r.InvariantViolations.Count == 0 && bounded && reconciled && weeks > 0
+            && policy.Decisions > 0 && r.Final.Status == CareerStatus.Ended;
+    }
+
+    /// <summary>Counts the mandatory decisions answered: event choices made while no week is pending.</summary>
+    private sealed class DecisionCounter(IChoicePolicy inner) : IChoicePolicy
+    {
+        public int Decisions { get; private set; }
+
+        public string Name => inner.Name;
+
+        public PlanDecision ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
+            => inner.ChoosePlan(s, c, legal);
+
+        public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
+        {
+            if (s.Pending is null)
+            {
+                Decisions++;
+            }
+
+            return inner.ChooseEventChoice(s, e);
+        }
+
+        public bool ShouldRetire(CareerState s) => inner.ShouldRetire(s);
     }
 }

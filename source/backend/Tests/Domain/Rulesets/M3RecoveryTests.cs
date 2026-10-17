@@ -37,7 +37,7 @@ public class M3RecoveryTests
         => Assert.Contains("burnout-recovery", InCrisis().PendingDecisions!.Value);
 
     [Fact]
-    public void Week_off_leaves_only_rest_and_shortens_the_stream()
+    public void Week_off_leaves_only_rest_and_shortens_only_that_weeks_stream()
     {
         var s = Drained(M3Play.ResolveQueued(AtRecovery(), "week-off"));
 
@@ -48,6 +48,9 @@ public class M3RecoveryTests
         var (after, report) = M3Play.SettleAll(M3Play.Start(s, MainAction.Rest));
         Assert.Equal(-Fixed.FromInt(4), report.StatChanges.Single(l => l.Code == "stat:Energy" && l.Detail == "stream").Delta);
         Assert.False(CareerFlags.IsActive(after, "sys:rest-only"));
+
+        var (_, nextReport) = M3Play.SettleAll(M3Play.Start(Drained(after), MainAction.Rest));
+        Assert.Equal(-Fixed.FromInt(8), nextReport.StatChanges.Single(l => l.Code == "stat:Energy" && l.Detail == "stream").Delta);
     }
 
     [Fact]
