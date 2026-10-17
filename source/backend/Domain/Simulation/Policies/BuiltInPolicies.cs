@@ -12,28 +12,28 @@ namespace PolskiStreamerSimulator.Domain.Simulation.Policies;
 public static class BuiltInPolicies
 {
     /// <summary>Rule-based play on the background's bonus category, switching away while it is boring.</summary>
-    public static IChoicePolicy Balanced { get; } = new RulePolicy("Balanced", CategoryMode.BonusUnlessBored, restBelowEnergy: 30);
+    public static IChoicePolicy Balanced { get; } = new RulePolicy("Balanced", CategoryRule.BonusUnlessBored, restBelowEnergy: 30);
 
     /// <summary>Trains the bonus category every week and rests only when forced.</summary>
-    public static IChoicePolicy Grinder { get; } = new RulePolicy("Grinder", CategoryMode.Bonus, restBelowEnergy: 0, grind: true);
+    public static IChoicePolicy Grinder { get; } = new RulePolicy("Grinder", CategoryRule.Bonus, restBelowEnergy: 0, PlanStyle.Grind);
 
     /// <summary>Balanced rules, but rests whenever energy is below 60.</summary>
-    public static IChoicePolicy RestHeavy { get; } = new RulePolicy("RestHeavy", CategoryMode.BonusUnlessBored, restBelowEnergy: 60);
+    public static IChoicePolicy RestHeavy { get; } = new RulePolicy("RestHeavy", CategoryRule.BonusUnlessBored, restBelowEnergy: 60);
 
     /// <summary>Balanced rules on one category for the whole career.</summary>
-    public static IChoicePolicy Specialist { get; } = new RulePolicy("Specialist", CategoryMode.Bonus, restBelowEnergy: 30);
+    public static IChoicePolicy Specialist { get; } = new RulePolicy("Specialist", CategoryRule.Bonus, restBelowEnergy: 30);
 
     /// <summary>Balanced rules with the primary category rotating by week.</summary>
-    public static IChoicePolicy Rotator { get; } = new RulePolicy("Rotator", CategoryMode.Rotate, restBelowEnergy: 30);
+    public static IChoicePolicy Rotator { get; } = new RulePolicy("Rotator", CategoryRule.Rotate, restBelowEnergy: 30);
 
     /// <summary>Balanced rules plus <see cref="MainAction.NetworkCollaborate"/> every third week with enough energy (M3).</summary>
-    public static IChoicePolicy Networker { get; } = new RulePolicy("Networker", CategoryMode.BonusUnlessBored, restBelowEnergy: 30, network: true);
+    public static IChoicePolicy Networker { get; } = new RulePolicy("Networker", CategoryRule.BonusUnlessBored, restBelowEnergy: 30, PlanStyle.Network);
 
     /// <summary>The M1 policies.</summary>
     public static IReadOnlyList<IChoicePolicy> All { get; } = [Balanced, Grinder, RestHeavy, Specialist, Rotator];
 
     private static readonly IChoicePolicy[] Specialists =
-        [.. Enum.GetValues<Category>().Select(category => new RulePolicy($"Specialist-{category}", CategoryMode.Fixed, restBelowEnergy: 30, fixedCategory: category))];
+        [.. Enum.GetValues<Category>().Select(category => new RulePolicy($"Specialist-{category}", CategoryRule.FixedOn(category), restBelowEnergy: 30))];
 
     /// <summary>The M3 policies: the M1 ones without the bonus specialist, the networker and one specialist per category.</summary>
     public static IReadOnlyList<IChoicePolicy> M3All { get; } =
@@ -54,13 +54,34 @@ public static class BuiltInPolicies
         Fixed,
     }
 
+    /// <summary>How a policy fills a week it does not have to rest: the balanced rules, training every week, or the balanced rules plus networking.</summary>
+    private enum PlanStyle
+    {
+        Balanced,
+        Grind,
+        Network,
+    }
+
+    /// <summary>How a policy picks its category; <see cref="FixedCategory"/> is set only for <see cref="CategoryMode.Fixed"/>.</summary>
+    private sealed record CategoryRule(CategoryMode Mode, Category? FixedCategory = null)
+    {
+        public static CategoryRule Bonus { get; } = new(CategoryMode.Bonus);
+
+        public static CategoryRule BonusUnlessBored { get; } = new(CategoryMode.BonusUnlessBored);
+
+        public static CategoryRule Rotate { get; } = new(CategoryMode.Rotate);
+
+        public static CategoryRule FixedOn(Category category) => new(CategoryMode.Fixed, category);
+    }
+
+    /// <summary>A preferred plan with its reason code and arguments.</summary>
+    private sealed record Preference(WeekPlan Plan, string Code, (string Name, string Value)[] Args);
+
     private sealed class RulePolicy(
         string name,
-        CategoryMode categoryMode,
+        CategoryRule categoryRule,
         int restBelowEnergy,
-        bool grind = false,
-        bool network = false,
-        Category fixedCategory = default) : IChoicePolicy
+        PlanStyle style = PlanStyle.Balanced) : IChoicePolicy
     {
         private static readonly Fixed BurnoutLimit = Fixed.FromInt(70);
         private static readonly Fixed BoredomLimit = Fixed.FromInt(60);
@@ -76,9 +97,9 @@ public static class BuiltInPolicies
 
         public PlanDecision ChoosePlan(CareerState s, ContentSnapshot c, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
         {
-            var (category, categoryRule) = ChooseCategory(s, c);
+            var (category, categoryRuleName) = ChooseCategory(s, c);
             var (preferred, code, args) = Prefer(s, c, category);
-            (string Name, string Value)[] common = [("category", PolicyReason.Name(category)), ("categoryRule", categoryRule)];
+            (string Name, string Value)[] common = [("category", PolicyReason.Name(category)), ("categoryRule", categoryRuleName)];
             var restOnly = legal.Any(l => l.DisabledReason == RestOnly);
             return !restOnly && legal.Any(l => l.Plan == preferred && l.DisabledReason is null)
                 ? new PlanDecision(preferred, PolicyReason.Of(code, [.. args, .. common]))
@@ -114,77 +135,86 @@ public static class BuiltInPolicies
 
         public bool ShouldRetire(CareerState s) => false;
 
-        private (WeekPlan Plan, string Code, (string Name, string Value)[] Args) Prefer(CareerState s, ContentSnapshot c, Category category)
+        /// <summary>Forced rest first; then a grinder trains, while the other styles try rest, networking, upgrades and the routine in turn.</summary>
+        private Preference Prefer(CareerState s, ContentSnapshot c, Category category)
+        {
+            if (s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred)
+            {
+                return new(new WeekPlan(MainAction.Rest, category), "forced-rest", [("energy", s.Energy.ToString()), ("burnout", s.Burnout.ToString())]);
+            }
+
+            return style == PlanStyle.Grind
+                ? new(new WeekPlan(MainAction.TrainCategory, category), "train-every-week", [])
+                : PreferRest(s, category) ?? PreferNetwork(s, c, category) ?? PreferUpgrade(s, c, category) ?? PreferRoutine(s, category);
+        }
+
+        private Preference? PreferRest(CareerState s, Category category)
         {
             var rest = new WeekPlan(MainAction.Rest, category);
-            var forcedRest = s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred;
-            (string Name, string Value)[] tiredness = [("energy", s.Energy.ToString()), ("burnout", s.Burnout.ToString())];
-            if (grind)
-            {
-                return forcedRest
-                    ? (rest, "forced-rest", tiredness)
-                    : (new WeekPlan(MainAction.TrainCategory, category), "train-every-week", []);
-            }
-
-            if (forcedRest)
-            {
-                return (rest, "forced-rest", tiredness);
-            }
-
             if (s.Energy < Fixed.FromInt(restBelowEnergy))
             {
-                return (rest, "rest-low-energy", [("energy", s.Energy.ToString()), ("threshold", restBelowEnergy.ToString(CultureInfo.InvariantCulture))]);
+                return new(rest, "rest-low-energy", [("energy", s.Energy.ToString()), ("threshold", restBelowEnergy.ToString(CultureInfo.InvariantCulture))]);
             }
 
-            if (s.Burnout > BurnoutLimit)
-            {
-                return (rest, "rest-high-burnout", [("burnout", s.Burnout.ToString()), ("limit", BurnoutLimit.ToString())]);
-            }
+            return s.Burnout > BurnoutLimit
+                ? new(rest, "rest-high-burnout", [("burnout", s.Burnout.ToString()), ("limit", BurnoutLimit.ToString())])
+                : null;
+        }
 
-            if (network && c.Balance.NetworkCollaborate is not null && s.Week.Value % NetworkEveryWeeks == 0 && s.Energy >= Fixed.FromInt(NetworkFromEnergy))
-            {
-                return (new WeekPlan(MainAction.NetworkCollaborate, category), "network-scheduled", [("everyWeeks", NetworkEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
-            }
+        private Preference? PreferNetwork(CareerState s, ContentSnapshot c, Category category)
+            => style == PlanStyle.Network
+                && c.Balance.NetworkCollaborate is not null
+                && s.Week.Value % NetworkEveryWeeks == 0
+                && s.Energy >= Fixed.FromInt(NetworkFromEnergy)
+                    ? new(new WeekPlan(MainAction.NetworkCollaborate, category), "network-scheduled", [("everyWeeks", NetworkEveryWeeks.ToString(CultureInfo.InvariantCulture))])
+                    : null;
 
+        /// <summary>Upgrades the lowest-tier slot that is not maxed once cash exceeds <see cref="UpgradeReserveMultiple"/> times its price.</summary>
+        private static Preference? PreferUpgrade(CareerState s, ContentSnapshot c, Category category)
+        {
             var upgradable = Enum.GetValues<EquipmentSlot>().Where(slot => s.Equipment[slot] < CareerInvariants.MaxEquipmentTier).ToArray();
-            if (upgradable.Length > 0)
+            if (upgradable.Length == 0)
             {
-                var cheapest = upgradable.MinBy(slot => s.Equipment[slot]);
-                var price = c.Balance.EquipmentPricePln[s.Equipment[cheapest] + 1];
-                if (s.CashPln > UpgradeReserveMultiple * price)
-                {
-                    return (
-                        new WeekPlan(MainAction.ImproveProduction, category, UpgradeSlot: cheapest),
-                        "upgrade-equipment",
-                        [("slot", PolicyReason.Name(cheapest)), ("pricePln", price.ToString(CultureInfo.InvariantCulture)), ("cashPln", s.CashPln.ToString(CultureInfo.InvariantCulture))]);
-                }
+                return null;
             }
 
+            var cheapest = upgradable.MinBy(slot => s.Equipment[slot]);
+            var price = c.Balance.EquipmentPricePln[s.Equipment[cheapest] + 1];
+            return s.CashPln > UpgradeReserveMultiple * price
+                ? new(
+                    new WeekPlan(MainAction.ImproveProduction, category, UpgradeSlot: cheapest),
+                    "upgrade-equipment",
+                    [("slot", PolicyReason.Name(cheapest)), ("pricePln", price.ToString(CultureInfo.InvariantCulture)), ("cashPln", s.CashPln.ToString(CultureInfo.InvariantCulture))])
+                : null;
+        }
+
+        private static Preference PreferRoutine(CareerState s, Category category)
+        {
             if (s.Week.Value % TrainEveryWeeks == 0)
             {
-                return (new WeekPlan(MainAction.TrainCategory, category), "train-scheduled", [("everyWeeks", TrainEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
+                return new(new WeekPlan(MainAction.TrainCategory, category), "train-scheduled", [("everyWeeks", TrainEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
             }
 
             return s.Drama > DramaLimit
-                ? (new WeekPlan(MainAction.ManageCommunity, category), "manage-community-drama", [("drama", s.Drama.ToString()), ("limit", DramaLimit.ToString())])
-                : (new WeekPlan(MainAction.NoAction, category), "no-action-default", []);
+                ? new(new WeekPlan(MainAction.ManageCommunity, category), "manage-community-drama", [("drama", s.Drama.ToString()), ("limit", DramaLimit.ToString())])
+                : new(new WeekPlan(MainAction.NoAction, category), "no-action-default", []);
         }
 
         private (Category Category, string Rule) ChooseCategory(CareerState s, ContentSnapshot c)
         {
-            if (categoryMode == CategoryMode.Rotate)
+            if (categoryRule.Mode == CategoryMode.Rotate)
             {
                 return ((Category)(s.Week.Value % CategoryValues.Count), "rotation");
             }
 
-            if (categoryMode == CategoryMode.Fixed)
+            if (categoryRule.FixedCategory is { } fixedCategory)
             {
                 return (fixedCategory, "fixed");
             }
 
             var startingSkill = c.Profiles[s.Background].Skill;
             var bonus = Enum.GetValues<Category>().MaxBy(category => startingSkill[category]);
-            if (categoryMode == CategoryMode.BonusUnlessBored && s.Boredom[bonus] >= BoredomLimit)
+            if (categoryRule.Mode == CategoryMode.BonusUnlessBored && s.Boredom[bonus] >= BoredomLimit)
             {
                 return (Enum.GetValues<Category>().MinBy(category => s.Boredom[category]), "least-bored");
             }
