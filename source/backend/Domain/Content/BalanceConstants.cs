@@ -161,6 +161,30 @@ public sealed record BalanceConstants
     /// <summary>Multiplier of the churn rate for a master.</summary>
     public Fixed MasteryChurnFactor { get; init; } = Fixed.One;
 
+    /// <summary>Quality above which each point adds viral chance; all viral values are zero in M1, which never draws.</summary>
+    public Fixed ViralQualityFrom { get; init; }
+
+    /// <summary>Viral chance per quality point above <see cref="ViralQualityFrom"/>.</summary>
+    public Fixed ViralPerQualityPoint { get; init; }
+
+    /// <summary>Viral chance added by each critical outcome of the week.</summary>
+    public Fixed ViralPerCritical { get; init; }
+
+    /// <summary>Largest viral chance of a stream.</summary>
+    public Fixed ViralChanceCap { get; init; }
+
+    public Fixed ViralMultiplierMin { get; init; }
+
+    public Fixed ViralMultiplierMax { get; init; }
+
+    /// <summary>Share of the follower count a viral clip can add (bounded by <see cref="ViralViewerShare"/> of the live viewers).</summary>
+    public Fixed ViralFollowerShare { get; init; }
+
+    public Fixed ViralViewerShare { get; init; }
+
+    /// <summary>Follower bonus of a viral clip for a small career.</summary>
+    public int ViralFollowerMin { get; init; }
+
     /// <summary>The profile of <paramref name="category"/>; neutral when no profiles are configured.</summary>
     public CategoryProfile Profile(Category category) => Categories is { } all ? all[category] : CategoryProfile.Neutral(this);
 }

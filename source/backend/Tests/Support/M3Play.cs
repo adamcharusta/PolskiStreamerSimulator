@@ -47,4 +47,30 @@ public static class M3Play
 
         throw new InvalidOperationException($"No seed in 1–200 gives {wanted}.");
     }
+
+    /// <summary>Plays Gambling weeks over seeds until a report has a viral clip.</summary>
+    public static (CareerState State, WeekReport Report) UntilViral()
+    {
+        for (ulong seed = 1; seed <= 200; seed++)
+        {
+            var s = Fresh(seed) with { Followers = 20_000 };
+            for (var week = 0; week < 30; week++)
+            {
+                while (s.PendingDecisions is { Length: > 0 })
+                {
+                    s = ResolveQueued(s, Engine.PresentDecision(s, C).Value.Choices[0].ChoiceId);
+                }
+
+                var settled = SettleAll(Start(s, MainAction.NoAction, Category.Gambling));
+                if (settled.Report.Viral is not null)
+                {
+                    return settled;
+                }
+
+                s = settled.State;
+            }
+        }
+
+        throw new InvalidOperationException("No viral week found.");
+    }
 }

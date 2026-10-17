@@ -19,6 +19,8 @@ public sealed class M3Ruleset : IRuleset
 
     private const string RestOnlyFlag = "sys:rest-only";
     private const string ShortStreamFlag = "sys:short-stream";
+    private const string ViralClipFlag = "viral-clip";
+    private const int ViralFlagWeeks = 4;
     private const string FollowersEventCode = "followers:event";
 
     public string Id => RulesetId;
@@ -106,8 +108,16 @@ public sealed class M3Ruleset : IRuleset
         }
 
         var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
-        var core = ApplyFollowersPercent(WeekSettlement.Core(streamed, pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) }, c, shortStream ? c.Balance.ShortStreamFatigue : Fixed.One), pending.FollowersPercent);
-        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(core.State, s.Week.Value), c);
+        var criticals = CriticalCount(pending);
+        var core = ApplyFollowersPercent(
+            WeekSettlement.Core(
+                streamed,
+                pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
+                c,
+                shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,
+                quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
+            pending.FollowersPercent);
+        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c);
         if (ending is null)
         {
             var rng = state.Rng;
@@ -117,6 +127,29 @@ public sealed class M3Ruleset : IRuleset
         var report = WeekSettlement.Report(s, pending, core, ending) with { ActionRoll = pending.ActionRoll, DecisionRolls = pending.Carry?.Rolls ?? [] };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
+
+    /// <summary>
+    /// Category base + per-point bonus above the quality threshold + bonus per critical outcome + event effects
+    /// (percentage points), capped. Gameplay §11.
+    /// </summary>
+    public static Fixed ViralChance(BalanceConstants b, Category category, Fixed quality, int criticals, Fixed fromEffects)
+    {
+        var aboveThreshold = FixedMath.Max(Fixed.Zero, quality - b.ViralQualityFrom);
+        var chance = b.Profile(category).ViralBase
+            + (aboveThreshold * b.ViralPerQualityPoint)
+            + (Fixed.FromInt(criticals) * b.ViralPerCritical)
+            + (fromEffects / Fixed.Hundred);
+        return FixedMath.Min(b.ViralChanceCap, chance);
+    }
+
+    /// <summary>Critical outcomes of the week's resolved events and its action roll.</summary>
+    private static int CriticalCount(PendingWeek pending)
+        => pending.Resolved.Concat(pending.ActionRoll is { } action ? [action] : [])
+            .Count(r => r.Outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure);
+
+    /// <summary>The state with the <c>viral-clip</c> flag set for <see cref="ViralFlagWeeks"/> weeks when the week went viral.</summary>
+    private static CareerState ViralFlag(SettledCore core)
+        => core.Audience.Viral is null ? core.State : CareerFlags.Set(core.State, ViralClipFlag, ViralFlagWeeks);
 
     /// <summary>
     /// Rejected while decisions are queued. Otherwise folds the decision carry into the career first (its cash and

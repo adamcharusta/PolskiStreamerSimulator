@@ -21,7 +21,7 @@ public static class OddsCalculator
     {
         if (choice.Guaranteed)
         {
-            return new ChoiceOdds(choice.Id, true, Fixed.One, 100, [], choice.AllowsCritical);
+            return new ChoiceOdds(choice.Id, true, Fixed.One, 100, [], choice.AllowsCritical, ViralOnCritical(choice, b));
         }
 
         var modifiers = ImmutableArray.CreateBuilder<ModifierLine>();
@@ -49,8 +49,12 @@ public static class OddsCalculator
         var probability = modifiers.Aggregate(choice.BaseChance, (sum, line) => sum + line.Value)
             .Clamp(MinimumProbability, MaximumProbability);
         var threshold = (int)(probability * Fixed.Hundred).RoundToLong();
-        return new ChoiceOdds(choice.Id, false, probability, threshold, modifiers.ToImmutable(), choice.AllowsCritical);
+        return new ChoiceOdds(choice.Id, false, probability, threshold, modifiers.ToImmutable(), choice.AllowsCritical, ViralOnCritical(choice, b));
     }
+
+    /// <summary>The viral chance a critical outcome of <paramref name="choice"/> can add (zero when it has no critical).</summary>
+    private static Fixed ViralOnCritical(ChoiceDefinition choice, BalanceConstants b)
+        => choice.AllowsCritical ? b.ViralPerCritical : Fixed.Zero;
 
     /// <summary>
     /// The category primary-category stats read: the pending week's plan, or — for a decision between weeks — the

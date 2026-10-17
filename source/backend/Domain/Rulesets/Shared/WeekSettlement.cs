@@ -41,8 +41,8 @@ public static class WeekSettlement
             : Result<PendingWeek>.Ok(pending);
     }
 
-    /// <summary>Stream fatigue (scaled by <paramref name="fatigueFactor"/>, one for a regular stream), audience, finance, practice and metrics; advances the week and clears the pending week.</summary>
-    public static SettledCore Core(CareerState s, PendingWeek pending, ContentSnapshot c, Fixed fatigueFactor)
+    /// <summary>Stream fatigue (scaled by <paramref name="fatigueFactor"/>, one for a regular stream; <paramref name="viralChanceAt"/> maps the settled stream quality to a viral chance, none draws no viral roll), audience, finance, practice and metrics; advances the week and clears the pending week.</summary>
+    public static SettledCore Core(CareerState s, PendingWeek pending, ContentSnapshot c, Fixed fatigueFactor, Func<Fixed, Fixed>? viralChanceAt = null)
     {
         var b = c.Balance;
         var primary = pending.Plan.Category;
@@ -51,7 +51,7 @@ public static class WeekSettlement
 
         var state = ProgressionRules.ApplyStreamFatigue(s, b, fatigueFactor);
         statLines.AddRange(Stats.Changes(s, state, "stream"));
-        var audience = AudienceRules.Compute(state, pending, ref rng, b);
+        var audience = AudienceRules.Compute(state, pending, ref rng, b, viralChanceAt?.Invoke(AudienceRules.Quality(state, pending, b)) ?? Fixed.Zero);
         var finance = FinanceRules.Compute(state, pending, audience.LiveViewers, b);
         var paidAtStart = pending.Lines.Where(l => l.Code == "cost:equipment").Sum(l => l.AmountPln!.Value);
         var practiced = ProgressionRules.ApplySkillAndBoredom(state, primary, c.Profiles[s.Background].Skill, ref rng, b);
@@ -127,5 +127,6 @@ public static class WeekSettlement
         core.Finance.Costs,
         core.Finance.CashDelta,
         core.StatLines,
-        ending);
+        ending,
+        Viral: core.Audience.Viral);
 }

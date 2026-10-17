@@ -13,6 +13,10 @@ public static class ContentValidator
     /// <summary>Pseudo event ID under which the balance's network choice is reported.</summary>
     public const string NetworkChoiceOwner = "balance.networkCollaborate";
 
+    /// <summary>Flags the engine sets itself, so content may require them without any event setting them (flags starting with <c>sys:</c> count too).</summary>
+    public static readonly IReadOnlySet<string> EngineFlags = new HashSet<string>(StringComparer.Ordinal) { "viral-clip" };
+
+    private const string SystemFlagPrefix = "sys:";
     private const long MaxCashEffectPln = 1_000_000;
 
     private static readonly HashSet<EffectKind> DecisionForbidden =
@@ -210,7 +214,7 @@ public static class ContentValidator
             ValidateDecisionShape(e, violations);
             ValidateTexts(e.Id, Texts(e), violations);
             violations.AddRange(e.Eligibility.RequiresFlags
-                .Where(flag => !setFlags.Contains(flag))
+                .Where(flag => !setFlags.Contains(flag) && !EngineFlags.Contains(flag) && !flag.StartsWith(SystemFlagPrefix, StringComparison.Ordinal))
                 .Select(flag => $"unset-flag:{e.Id}/{flag}"));
             ValidateChoiceLinks(e, c, ids, violations);
 

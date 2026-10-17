@@ -89,6 +89,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var difficulty = Property(b, "difficultyMultiplier", f);
         JsonElement? burnout = b.TryGetProperty("burnoutPenalty", out var burnoutElement) ? burnoutElement : null;
         JsonElement? shortStream = b.TryGetProperty("shortStream", out var shortStreamElement) ? shortStreamElement : null;
+        JsonElement? viral = b.TryGetProperty("viral", out var viralElement) ? viralElement : null;
         JsonElement? mastery = b.TryGetProperty("mastery", out var masteryElement) ? masteryElement : null;
         return new BalanceConstants
         {
@@ -164,6 +165,15 @@ public sealed class JsonContentSource(string directory) : IContentSource
             BurnoutPenaltyFrom = burnout is { } bf ? ReadFixed(bf, "from", $"{f}.burnoutPenalty") : Fixed.FromInt(101),
             BurnoutPenaltyPerPoint = burnout is { } bp ? ReadFixed(bp, "perPoint", $"{f}.burnoutPenalty") : Fixed.Zero,
             BurnoutPenaltyCap = burnout is { } bc ? ReadFixed(bc, "cap", $"{f}.burnoutPenalty") : Fixed.Zero,
+            ViralQualityFrom = viral is { } vq ? ReadFixed(vq, "qualityFrom", $"{f}.viral") : Fixed.Zero,
+            ViralPerQualityPoint = viral is { } vp ? ReadFixed(vp, "perQualityPoint", $"{f}.viral") : Fixed.Zero,
+            ViralPerCritical = viral is { } vc ? ReadFixed(vc, "perCritical", $"{f}.viral") : Fixed.Zero,
+            ViralChanceCap = viral is { } vk ? ReadFixed(vk, "chanceCap", $"{f}.viral") : Fixed.Zero,
+            ViralMultiplierMin = viral is { } vn ? ReadFixed(vn, "multiplierMin", $"{f}.viral") : Fixed.Zero,
+            ViralMultiplierMax = viral is { } vx ? ReadFixed(vx, "multiplierMax", $"{f}.viral") : Fixed.Zero,
+            ViralFollowerShare = viral is { } vf ? ReadFixed(vf, "followerShare", $"{f}.viral") : Fixed.Zero,
+            ViralViewerShare = viral is { } vv ? ReadFixed(vv, "viewerShare", $"{f}.viral") : Fixed.Zero,
+            ViralFollowerMin = viral is { } vm ? ReadInt(vm, "followerMin", $"{f}.viral") : 0,
             MasteryFromSkill = mastery is { } m ? ReadFixed(m, "fromSkill", $"{f}.mastery") : Fixed.FromInt(101),
             MasteryBoredomRelief = mastery is { } r ? ReadInt(r, "boredomRelief", $"{f}.mastery") : 0,
             MasteryChurnFactor = mastery is { } c ? ReadFixed(c, "churnFactor", $"{f}.mastery") : Fixed.One,
