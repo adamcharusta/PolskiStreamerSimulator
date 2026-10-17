@@ -7,7 +7,7 @@ using PolskiStreamerSimulator.Domain.Simulation.Policies;
 namespace PolskiStreamerSimulator.Tests.Support;
 
 /// <summary>Test policy that picks uniformly among enabled plans and offered choices, and sometimes retires late.</summary>
-public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
+public sealed class RandomLegalPolicy(ulong seed, int retireFromWeek = 900) : IChoicePolicy
 {
     private Pcg32 rng = Pcg32.Create(seed, 7);
 
@@ -35,7 +35,7 @@ public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
 
     public bool ShouldRetire(CareerState s)
     {
-        if (s.Week.Value < 900)
+        if (s.Week.Value < retireFromWeek)
         {
             return false;
         }

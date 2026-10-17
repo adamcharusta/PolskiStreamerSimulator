@@ -134,6 +134,12 @@ public sealed record BalanceConstants
 
     public Fixed NetworkEnergyCost { get; init; }
 
+    /// <summary>Share of the regular stream's energy cost and burnout gain in a short stream (M3 week off); default 1.</summary>
+    public Fixed ShortStreamFatigue { get; init; } = Fixed.One;
+
+    /// <summary>Audience multiplier of a short stream (M3 week off); default 1.</summary>
+    public Fixed ShortStreamAudience { get; init; } = Fixed.One;
+
     /// <summary>Per-category balance profiles (M3); null in M1, where every category is neutral.</summary>
     public CategoryValues<CategoryProfile>? Categories { get; init; }
 

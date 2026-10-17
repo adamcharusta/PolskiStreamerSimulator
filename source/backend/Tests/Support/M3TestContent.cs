@@ -45,6 +45,8 @@ public static class M3TestContent
                 BurnoutPenaltyFrom = Fixed.FromInt(60),
                 BurnoutPenaltyPerPoint = Fixed.FromRatio(25, 10000),
                 BurnoutPenaltyCap = Fixed.FromRatio(10, 100),
+                ShortStreamFatigue = Fixed.FromRatio(1, 2),
+                ShortStreamAudience = Fixed.FromRatio(7, 10),
             },
             Events = live.AddRange(
                 Decision("first-week", EventPhase.Milestone, fromWeek: 2, toWeek: 2, oneTime: true),

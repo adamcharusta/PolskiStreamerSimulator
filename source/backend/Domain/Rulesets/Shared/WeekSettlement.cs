@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
@@ -40,15 +41,15 @@ public static class WeekSettlement
             : Result<PendingWeek>.Ok(pending);
     }
 
-    /// <summary>Stream fatigue, audience, finance, practice and metrics; advances the week and clears the pending week.</summary>
-    public static SettledCore Core(CareerState s, PendingWeek pending, ContentSnapshot c)
+    /// <summary>Stream fatigue (scaled by <paramref name="fatigueFactor"/>, one for a regular stream), audience, finance, practice and metrics; advances the week and clears the pending week.</summary>
+    public static SettledCore Core(CareerState s, PendingWeek pending, ContentSnapshot c, Fixed fatigueFactor)
     {
         var b = c.Balance;
         var primary = pending.Plan.Category;
         var rng = s.Rng;
         var statLines = pending.Lines.Where(l => l.Code.StartsWith("stat:", StringComparison.Ordinal)).ToList();
 
-        var state = ProgressionRules.ApplyStreamFatigue(s, b);
+        var state = ProgressionRules.ApplyStreamFatigue(s, b, fatigueFactor);
         statLines.AddRange(Stats.Changes(s, state, "stream"));
         var audience = AudienceRules.Compute(state, pending, ref rng, b);
         var finance = FinanceRules.Compute(state, pending, audience.LiveViewers, b);

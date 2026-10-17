@@ -14,10 +14,14 @@ public static class ProgressionRules
 
     /// <summary>A regular stream costs energy and adds burnout after the main action.</summary>
     public static CareerState ApplyStreamFatigue(CareerState s, BalanceConstants b)
+        => ApplyStreamFatigue(s, b, Fixed.One);
+
+    /// <summary>A stream whose energy cost and burnout gain are scaled by <paramref name="factor"/> (a short stream).</summary>
+    public static CareerState ApplyStreamFatigue(CareerState s, BalanceConstants b, Fixed factor)
         => s with
         {
-            Energy = Stats.Bounded(s.Energy - b.StreamEnergyCost),
-            Burnout = Stats.Bounded(s.Burnout + b.StreamBurnoutGain),
+            Energy = Stats.Bounded(s.Energy - (b.StreamEnergyCost * factor)),
+            Burnout = Stats.Bounded(s.Burnout + (b.StreamBurnoutGain * factor)),
         };
 
     /// <summary>

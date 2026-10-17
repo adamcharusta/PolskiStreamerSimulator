@@ -13,21 +13,27 @@ public sealed record ActionApplied(CareerState State, Pcg32 Rng, ImmutableArray<
 /// <summary>Plan validation and the main actions shared by the M1 and M3 rulesets.</summary>
 public static class WeekActions
 {
-    public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => [.. AllPlans(c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan)))];
+    /// <summary>
+    /// A ruleset's own plan rule, checked after the shared ended and in-progress rules: the reason the plan cannot
+    /// start in the state, or null.
+    /// </summary>
+    public delegate string? RulesetRule(CareerState s, WeekPlan plan);
+
+    public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c, RulesetRule rule)
+        => [.. AllPlans(c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan, rule)))];
 
     /// <summary>
     /// Checks the command and the plan, then applies the main action: the result carries the changed state, the
     /// advanced RNG and the action's report lines (equipment cost and stat changes).
     /// </summary>
-    public static Result<ActionApplied> Apply(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
+    public static Result<ActionApplied> Apply(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion, RulesetRule rule)
     {
         if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<ActionApplied>.Fail(error);
         }
 
-        if (PlanRejection(s, c.Balance, plan) is { } reason)
+        if (PlanRejection(s, c.Balance, plan, rule) is { } reason)
         {
             return Result<ActionApplied>.Fail(DomainErrorCode.IllegalAction, reason);
         }
@@ -50,7 +56,7 @@ public static class WeekActions
     /// The reason the plan cannot start, or null. <see cref="MainAction.NetworkCollaborate"/> exists only in content
     /// that defines the collaboration choice (M3); otherwise it is <c>unsupported-action</c>, before any other rule.
     /// </summary>
-    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan)
+    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan, RulesetRule rule)
     {
         if (plan.Action == MainAction.NetworkCollaborate && b.NetworkCollaborate is null)
         {
@@ -67,9 +73,9 @@ public static class WeekActions
             return "week-in-progress";
         }
 
-        if ((s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred) && plan.Action != MainAction.Rest)
+        if (rule(s, plan) is { } rejected)
         {
-            return "forced-rest";
+            return rejected;
         }
 
         if (plan.Action == MainAction.NetworkCollaborate && s.Energy < b.NetworkEnergyCost)

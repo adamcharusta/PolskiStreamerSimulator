@@ -17,6 +17,8 @@ public sealed class M3Ruleset : IRuleset
 {
     public const string RulesetId = "m3-systems.1";
 
+    private const string RestOnlyFlag = "sys:rest-only";
+    private const string ShortStreamFlag = "sys:short-stream";
     private const string FollowersEventCode = "followers:event";
 
     public string Id => RulesetId;
@@ -32,7 +34,7 @@ public sealed class M3Ruleset : IRuleset
             return Result<CareerState>.Fail(blocked);
         }
 
-        var applied = WeekActions.Apply(s, c, plan, expectedVersion);
+        var applied = WeekActions.Apply(s, c, plan, expectedVersion, RestOnly);
         if (!applied.IsSuccess)
         {
             return Result<CareerState>.Fail(applied.Error);
@@ -60,7 +62,11 @@ public sealed class M3Ruleset : IRuleset
     }
 
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => WeekActions.LegalPlans(s, c);
+        => WeekActions.LegalPlans(s, c, RestOnly);
+
+    /// <summary>No forced rest in M3 (the recovery crisis replaces it); a week off allows only resting.</summary>
+    private static string? RestOnly(CareerState s, WeekPlan plan)
+        => CareerFlags.IsActive(s, RestOnlyFlag) && plan.Action != MainAction.Rest ? "rest-only" : null;
 
     /// <summary>The next week waits while mandatory decisions are queued.</summary>
     public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c)
@@ -93,8 +99,14 @@ public sealed class M3Ruleset : IRuleset
         }
 
         var pending = settleable.Value;
+        var shortStream = CareerFlags.IsActive(s, ShortStreamFlag);
+        if (shortStream)
+        {
+            pending = pending with { AudienceMultiplier = pending.AudienceMultiplier * c.Balance.ShortStreamAudience };
+        }
+
         var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
-        var core = ApplyFollowersPercent(WeekSettlement.Core(streamed, pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) }, c), pending.FollowersPercent);
+        var core = ApplyFollowersPercent(WeekSettlement.Core(streamed, pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) }, c, shortStream ? c.Balance.ShortStreamFatigue : Fixed.One), pending.FollowersPercent);
         var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(core.State, s.Week.Value), c);
         if (ending is null)
         {

@@ -88,6 +88,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var weights = Property(b, "scoreWeights", f);
         var difficulty = Property(b, "difficultyMultiplier", f);
         JsonElement? burnout = b.TryGetProperty("burnoutPenalty", out var burnoutElement) ? burnoutElement : null;
+        JsonElement? shortStream = b.TryGetProperty("shortStream", out var shortStreamElement) ? shortStreamElement : null;
         JsonElement? mastery = b.TryGetProperty("mastery", out var masteryElement) ? masteryElement : null;
         return new BalanceConstants
         {
@@ -157,6 +158,8 @@ public sealed class JsonContentSource(string directory) : IContentSource
             NetworkCollaborate = b.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null
                 ? ReadChoice(network, $"{f}.networkCollaborate", schema: 2)
                 : null,
+            ShortStreamFatigue = shortStream is { } sf ? ReadFixed(sf, "fatigue", $"{f}.shortStream") : Fixed.One,
+            ShortStreamAudience = shortStream is { } sa ? ReadFixed(sa, "audience", $"{f}.shortStream") : Fixed.One,
             Categories = b.TryGetProperty("categories", out var categories) ? ReadCategories(categories) : null,
             BurnoutPenaltyFrom = burnout is { } bf ? ReadFixed(bf, "from", $"{f}.burnoutPenalty") : Fixed.FromInt(101),
             BurnoutPenaltyPerPoint = burnout is { } bp ? ReadFixed(bp, "perPoint", $"{f}.burnoutPenalty") : Fixed.Zero,
