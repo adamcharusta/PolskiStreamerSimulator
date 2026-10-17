@@ -29,9 +29,9 @@ public static class EventVersions
     public static string Describe(IEnumerable<string> conflicts)
         => $"Content changes published events: {string.Join(", ", conflicts.Select(k => $"event-version-changed:{k}"))}";
 
-    private static IEnumerable<JsonElement> Versioned(JsonElement root)
+    private static JsonElement[] Versioned(JsonElement root)
         => root.TryGetProperty("schema", out var schema) && schema.GetInt32() == 2
-            ? root.GetProperty("events").EnumerateArray()
+            ? [.. root.GetProperty("events").EnumerateArray()]
             : [];
 
     private static string Key(JsonElement e) => $"{e.GetProperty("id").GetString()}@{e.GetProperty("version").GetInt32()}";

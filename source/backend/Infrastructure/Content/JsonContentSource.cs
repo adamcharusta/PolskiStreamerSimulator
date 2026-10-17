@@ -213,11 +213,17 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ReadInt(eligibility, "toWeek", path),
             ReadStatBounds(eligibility, "min", path),
             ReadStatBounds(eligibility, "max", path));
-        return schema == 1 ? result : result with
+        if (schema == 1)
         {
-            Categories = eligibility.TryGetProperty("categories", out var categories)
-                ? ReadArray(categories, $"{path}.categories", (c, p) => ParseEnum<Category>(StringValue(c, p), p))
-                : [],
+            return result;
+        }
+
+        var categoryList = eligibility.TryGetProperty("categories", out var categories)
+            ? ReadArray(categories, $"{path}.categories", (c, p) => ParseEnum<Category>(StringValue(c, p), p))
+            : [];
+        return result with
+        {
+            Categories = categoryList,
             RequiresFlags = OptionalStrings(eligibility, "requiresFlags", path),
             ForbidsFlags = OptionalStrings(eligibility, "forbidsFlags", path),
         };
@@ -230,13 +236,17 @@ public sealed class JsonContentSource(string directory) : IContentSource
         path = $"{path}/{id}";
         var guaranteed = OptionalBool(c, "guaranteed", path);
         var outcomes = Property(c, "outcomes", path);
+        var labelKey = schema == 1 ? ReadString(c, "labelKey", path) : null;
+        var label = ReadString(c, schema == 1 ? "labelPl" : "label", path);
+        var baseChance = guaranteed ? Fixed.One : ReadFixed(c, "baseChance", path);
+        var modifierList = c.TryGetProperty("modifiers", out var modifiers) ? ReadArray(modifiers, $"{path}.modifiers", ReadModifier) : [];
         var choice = new ChoiceDefinition(
             id,
-            schema == 1 ? ReadString(c, "labelKey", path) : null,
-            ReadString(c, schema == 1 ? "labelPl" : "label", path),
+            labelKey,
+            label,
             guaranteed,
-            guaranteed ? Fixed.One : ReadFixed(c, "baseChance", path),
-            c.TryGetProperty("modifiers", out var modifiers) ? ReadArray(modifiers, $"{path}.modifiers", ReadModifier) : [],
+            baseChance,
+            modifierList,
             OptionalBool(c, "allowsCritical", path),
             new OutcomeSet(
                 ReadEffects(outcomes, "success", path) ?? [],
@@ -325,11 +335,16 @@ public sealed class JsonContentSource(string directory) : IContentSource
         => value.ValueKind == JsonValueKind.String ? value.GetString()! : throw Invalid(path, "expected a string");
 
     private static bool OptionalBool(JsonElement obj, string name, string path)
-        => !obj.TryGetProperty(name, out var value)
-            ? false
-            : value.ValueKind is JsonValueKind.True or JsonValueKind.False
-                ? value.GetBoolean()
-                : throw Invalid($"{path}.{name}", "expected a boolean");
+    {
+        if (!obj.TryGetProperty(name, out var value))
+        {
+            return false;
+        }
+
+        return value.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? value.GetBoolean()
+            : throw Invalid($"{path}.{name}", "expected a boolean");
+    }
 
     private static long ReadLong(JsonElement obj, string name, string path) => LongValue(Property(obj, name, path), $"{path}.{name}");
 

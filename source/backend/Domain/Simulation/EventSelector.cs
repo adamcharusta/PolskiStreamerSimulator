@@ -35,10 +35,10 @@ public static class EventSelector
             .Where(x => x.DueWeek <= s.Week.Value && IsLive(c, x.EventId) && !IsCoolingDown(s, x.EventId))
             .DistinctBy(x => x.EventId, StringComparer.Ordinal)
             .Take(count);
-        foreach (var followUp in due)
+        foreach (var eventId in due.Select(followUp => followUp.EventId))
         {
-            selected.Add(followUp.EventId);
-            waiting.RemoveAll(x => x.EventId == followUp.EventId && x.DueWeek <= s.Week.Value);
+            selected.Add(eventId);
+            waiting.RemoveAll(x => x.EventId == eventId && x.DueWeek <= s.Week.Value);
         }
 
         var candidates = LiveCandidates(s, c, primary);

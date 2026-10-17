@@ -172,8 +172,8 @@ public class ContentValidatorV2Tests
     public void Unknown_schema_is_reported(int schema)
         => Assert.Contains($"schema:{schema}", ContentValidator.Validate(Valid with { Schema = schema }));
 
-    public static TheoryData<Effect> StrayEffectFields() => new()
-    {
+    private static readonly Effect[] StrayEffects =
+    [
         new Effect(EffectKind.CashDelta, null, Fixed.FromInt(10), Target: "x"),
         new Effect(EffectKind.StatDelta, StatKey.Drama, Fixed.One, PolskiStreamerSimulator.Domain.Careers.Category.Fps),
         new Effect(EffectKind.FollowersPercent, StatKey.Drama, Fixed.One),
@@ -183,12 +183,15 @@ public class ContentValidatorV2Tests
         new Effect(EffectKind.SetFlag, null, Fixed.Zero, PolskiStreamerSimulator.Domain.Careers.Category.Fps, Target: "x"),
         new Effect(EffectKind.ClearFlag, null, Fixed.Zero, Target: "x", Weeks: 1),
         new Effect(EffectKind.FollowUp, StatKey.Energy, Fixed.Zero, Target: "chat-raid", Weeks: 1),
-    };
+    ];
+
+    public static TheoryData<int> StrayEffectFields() => [.. Enumerable.Range(0, StrayEffects.Length)];
 
     [Theory]
     [MemberData(nameof(StrayEffectFields))]
-    public void Effect_with_fields_its_kind_does_not_use_is_rejected(Effect effect)
+    public void Effect_with_fields_its_kind_does_not_use_is_rejected(int index)
     {
+        var effect = StrayEffects[index];
         var c = WithEvent("chat-raid", e => e with
         {
             Choices = e.Choices.SetItem(0, e.Choices[0] with { Outcomes = e.Choices[0].Outcomes with { Success = [effect] } }),

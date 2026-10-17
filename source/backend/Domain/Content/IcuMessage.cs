@@ -8,18 +8,20 @@ namespace PolskiStreamerSimulator.Domain.Content;
 /// </summary>
 public static class IcuMessage
 {
+    private const string Unbalanced = "unbalanced";
+    private const string Empty = "empty";
     private static readonly string[] Branches = ["female", "male", "other"];
 
     public static string? Validate(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
-            return "empty";
+            return Empty;
         }
 
         var position = 0;
         var problem = ParseMessage(message, ref position, nested: false);
-        return problem ?? (position == message.Length ? null : "unbalanced");
+        return problem ?? (position == message.Length ? null : Unbalanced);
     }
 
     /// <summary>Reads literal text and arguments until the end, or until a closing brace when nested.</summary>
@@ -30,7 +32,7 @@ public static class IcuMessage
             var ch = m[i];
             if (ch == '}')
             {
-                return nested ? null : "unbalanced";
+                return nested ? null : Unbalanced;
             }
 
             string? problem = null;
@@ -53,7 +55,7 @@ public static class IcuMessage
             }
         }
 
-        return nested ? "unbalanced" : null;
+        return nested ? Unbalanced : null;
     }
 
     /// <summary>
@@ -106,7 +108,7 @@ public static class IcuMessage
         var close = m.IndexOfAny([',', '}'], i + 1);
         if (close < 0)
         {
-            return "unbalanced";
+            return Unbalanced;
         }
 
         if (m[close] == '}')
@@ -140,7 +142,7 @@ public static class IcuMessage
             SkipWhitespace(m, ref i);
             if (i >= m.Length)
             {
-                return "unbalanced";
+                return Unbalanced;
             }
 
             if (m[i] == '}')
@@ -180,7 +182,7 @@ public static class IcuMessage
         SkipWhitespace(m, ref i);
         if (i >= m.Length || m[i] != '{')
         {
-            return "unbalanced";
+            return Unbalanced;
         }
 
         i++;
