@@ -6,17 +6,12 @@ using PolskiStreamerSimulator.Domain.Rulesets.M3;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
 using PolskiStreamerSimulator.Tests.Support;
+using static PolskiStreamerSimulator.Tests.Support.M3Play;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Rulesets;
 
 public class M3DecisionTests
 {
-    private static readonly WeekEngine Engine = new(new RulesetRegistry([new M1Ruleset(), new M3Ruleset()]));
-    private static readonly ContentSnapshot C = M3TestContent.Valid();
-
-    private static CareerState Fresh(ulong seed = 3)
-        => CareerFactory.Create(M3Ruleset.RulesetId, C.Digest, C.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, seed);
-
     /// <summary>Plays a week without an action, or resting when the M1 forced-rest rule demands it.</summary>
     private static CareerState PlayWeek(CareerState s)
     {

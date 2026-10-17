@@ -11,7 +11,7 @@ namespace PolskiStreamerSimulator.Tests.Domain.Rulesets;
 
 public class M3FlagTests
 {
-    private static readonly WeekEngine Engine = new(new RulesetRegistry([new M1Ruleset(), new M3Ruleset()]));
+    private static WeekEngine Engine => M3Play.Engine;
 
     private static CareerState Fresh(ContentSnapshot c, ulong seed = 3)
         => CareerFactory.Create(M3Ruleset.RulesetId, c.Digest, c.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, seed);
