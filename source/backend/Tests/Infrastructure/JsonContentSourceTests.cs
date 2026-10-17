@@ -213,6 +213,7 @@ public sealed class JsonContentSourceTests : IDisposable
     [InlineData("""{ "schema": 3, "events": [] }""", "events.json.schema")]
     [InlineData("""{ "schema": 2, "events": [ { "id": "x", "version": 1, "phase": "boss", "title": "T", "text": "t", "weight": 1, "eligibility": { "fromWeek": 1, "toWeek": 2 }, "choices": [] } ] }""", "events[x].phase")]
     [InlineData("""{ "schema": 2, "events": [ { "id": "x", "version": 1, "phase": "live", "title": "T", "text": "t", "weight": 1, "eligibility": { "fromWeek": 1, "toWeek": 2 }, "choices": [ { "id": "c", "label": "L", "guaranteed": true, "requires": {}, "outcomes": {} } ] } ] }""", "events[x].choices[0]/c.requires")]
+    [InlineData("""{ "schema": 2, "events": [ { "id": "x", "version": 1, "phase": "live", "title": "T", "text": "t", "weight": 1, "oneTime": "yes", "eligibility": { "fromWeek": 1, "toWeek": 2 }, "choices": [] } ] }""", "events[x].oneTime")]
     public void Invalid_schema_two_input_names_its_path(string json, string path)
     {
         var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.ParseEvents(System.Text.Encoding.UTF8.GetBytes(json)));

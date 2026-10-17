@@ -212,7 +212,7 @@ public static class ContentValidator
             violations.AddRange(e.Eligibility.RequiresFlags
                 .Where(flag => !setFlags.Contains(flag))
                 .Select(flag => $"unset-flag:{e.Id}/{flag}"));
-            ValidateChoiceLinks(e, ids, violations);
+            ValidateChoiceLinks(e, c, ids, violations);
 
             var triggered = string.Equals(e.Id, c.Balance.RecoveryCrisisEventId, StringComparison.Ordinal) || followUpTargets.Contains(e.Id);
             if (e.Phase != EventPhase.Live && !HasValidWeeks(e) && !triggered)
@@ -255,13 +255,18 @@ public static class ContentValidator
         }
     }
 
-    private static void ValidateChoiceLinks(EventDefinition e, HashSet<string> ids, List<string> violations)
+    private static void ValidateChoiceLinks(EventDefinition e, ContentSnapshot c, HashSet<string> ids, List<string> violations)
     {
         foreach (var choice in ChoicesOf(e))
         {
             violations.AddRange(AllEffects(choice)
                 .Where(effect => effect.Kind == EffectKind.FollowUp && effect.Target is not null && !ids.Contains(effect.Target))
                 .Select(effect => $"broken-follow-up:{e.Id}/{effect.Target}"));
+
+            violations.AddRange(AllEffects(choice)
+                .Where(effect => effect.Kind == EffectKind.FollowUp && effect.Target is not null
+                    && c.Events.Any(x => x.Id == effect.Target && x.OneTime))
+                .Select(effect => $"follow-up-one-time:{e.Id}/{effect.Target}"));
 
             if (e.Phase != EventPhase.Live && AllEffects(choice).Any(effect => DecisionForbidden.Contains(effect.Kind)))
             {

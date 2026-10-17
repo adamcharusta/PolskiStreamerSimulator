@@ -38,7 +38,7 @@ public static class EventSelector
         foreach (var followUp in due)
         {
             selected.Add(followUp.EventId);
-            waiting.Remove(followUp);
+            waiting.RemoveAll(x => x.EventId == followUp.EventId && x.DueWeek <= s.Week.Value);
         }
 
         var candidates = LiveCandidates(s, c, primary);

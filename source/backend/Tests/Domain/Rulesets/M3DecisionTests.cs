@@ -2,6 +2,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets;
+using PolskiStreamerSimulator.Domain.Rulesets.M3;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
 using PolskiStreamerSimulator.Tests.Support;
@@ -33,6 +34,24 @@ public class M3DecisionTests
     /// <summary>Answers the first queued decision with its first choice (<c>calm</c>, or <c>week-off</c> for the recovery crisis).</summary>
     private static CareerState AnswerFirst(CareerState s)
         => Engine.ResolveDecision(s, C, Engine.PresentDecision(s, C).Value.Choices[0].ChoiceId, s.StateVersion).Value;
+
+    [Fact]
+    public void Recovery_crisis_outranks_due_decision_follow_ups()
+    {
+        var other = M3TestContent.Decision("other-crisis", EventPhase.Crisis, 1, 1040, oneTime: false);
+        var c = C with { Events = C.Events.Add(other) };
+        var s = Fresh() with
+        {
+            Energy = Fixed.Zero,
+            Scheduled = [new ScheduledEvent("test-crisis", 1), new ScheduledEvent("other-crisis", 1)],
+        };
+
+        var rng = Pcg32.Create(1UL, 1UL);
+        var opened = DecisionQueue.Open(s, c, ref rng);
+
+        Assert.Equal(["burnout-recovery", "test-crisis"], opened.PendingDecisions!.Value);
+        Assert.Equal([new ScheduledEvent("other-crisis", 1)], opened.Scheduled!.Value);
+    }
 
     [Fact]
     public void One_time_milestone_opens_before_week_two_and_blocks_start()

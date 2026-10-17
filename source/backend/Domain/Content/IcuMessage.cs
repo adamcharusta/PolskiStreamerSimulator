@@ -3,8 +3,8 @@ namespace PolskiStreamerSimulator.Domain.Content;
 /// <summary>
 /// Validates the ICU MessageFormat subset used by event text: literal text with <c>''</c> escapes and
 /// <c>'…'</c> quoting, and <c>{gender, select, female {…} male {…} other {…}}</c> whose branches may nest the
-/// same subset. Every other argument form, including simple <c>{name}</c> arguments and duplicate branch keys, is rejected so the browser's <c>intl-messageformat</c> renders exactly
-/// what was validated.
+/// same subset. Every other argument form, including simple <c>{name}</c> arguments and
+/// duplicate branch keys, is rejected so the browser's <c>intl-messageformat</c> renders exactly what was validated.
 /// </summary>
 public static class IcuMessage
 {

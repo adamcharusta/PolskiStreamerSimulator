@@ -201,7 +201,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
             Version = ReadInt(e, "version", path),
             Phase = ParseEnum<EventPhase>(ToPascalCase(ReadString(e, "phase", path)), $"{path}.phase"),
             Title = ReadString(e, "title", path),
-            OneTime = OptionalBool(e, "oneTime"),
+            OneTime = OptionalBool(e, "oneTime", path),
             Tags = OptionalStrings(e, "tags", path),
         };
     }
@@ -228,7 +228,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
     {
         var id = ReadString(c, "id", path);
         path = $"{path}/{id}";
-        var guaranteed = OptionalBool(c, "guaranteed");
+        var guaranteed = OptionalBool(c, "guaranteed", path);
         var outcomes = Property(c, "outcomes", path);
         var choice = new ChoiceDefinition(
             id,
@@ -237,7 +237,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
             guaranteed,
             guaranteed ? Fixed.One : ReadFixed(c, "baseChance", path),
             c.TryGetProperty("modifiers", out var modifiers) ? ReadArray(modifiers, $"{path}.modifiers", ReadModifier) : [],
-            OptionalBool(c, "allowsCritical"),
+            OptionalBool(c, "allowsCritical", path),
             new OutcomeSet(
                 ReadEffects(outcomes, "success", path) ?? [],
                 ReadEffects(outcomes, "failure", path) ?? [],
@@ -324,8 +324,12 @@ public sealed class JsonContentSource(string directory) : IContentSource
     private static string StringValue(JsonElement value, string path)
         => value.ValueKind == JsonValueKind.String ? value.GetString()! : throw Invalid(path, "expected a string");
 
-    private static bool OptionalBool(JsonElement obj, string name)
-        => obj.TryGetProperty(name, out var value) && value.GetBoolean();
+    private static bool OptionalBool(JsonElement obj, string name, string path)
+        => !obj.TryGetProperty(name, out var value)
+            ? false
+            : value.ValueKind is JsonValueKind.True or JsonValueKind.False
+                ? value.GetBoolean()
+                : throw Invalid($"{path}.{name}", "expected a boolean");
 
     private static long ReadLong(JsonElement obj, string name, string path) => LongValue(Property(obj, name, path), $"{path}.{name}");
 

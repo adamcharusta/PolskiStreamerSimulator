@@ -7,8 +7,8 @@ using PolskiStreamerSimulator.Domain.Simulation;
 namespace PolskiStreamerSimulator.Domain.Rulesets.M3;
 
 /// <summary>
-/// Opens the mandatory decisions before a week, in order: due decision follow-ups, the recovery crisis when energy
-/// is 0 or burnout 100, the first eligible one-time milestone, then — only if nothing opened — one repeatable
+/// Opens the mandatory decisions before a week, in order: the recovery crisis when energy is 0 or burnout 100, due decision
+/// follow-ups, the first eligible one-time milestone, then — only if nothing opened — one repeatable
 /// milestone or crisis after a seeded <see cref="BalanceConstants.DecisionChancePerWeek"/> roll. At most two open.
 /// Repeated due follow-ups of one decision open it once; follow-ups of events missing from the content are dropped.
 /// </summary>
@@ -21,21 +21,22 @@ public static class DecisionQueue
         var week = s.Week.Value;
         var queue = ImmutableArray.CreateBuilder<string>();
         var scheduled = (s.Scheduled ?? []).Where(x => c.Events.Any(e => e.Id == x.EventId)).ToList();
+        if (c.Balance.RecoveryCrisisEventId is { } recovery
+            && (s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred))
+        {
+            queue.Add(recovery);
+            scheduled.RemoveAll(x => x.DueWeek <= week && x.EventId == recovery);
+        }
+
         var due = scheduled
             .Where(x => x.DueWeek <= week && IsDecision(c, x.EventId))
             .Select(x => x.EventId)
             .Distinct(StringComparer.Ordinal)
-            .Take(MaxPerWeek)
+            .Where(id => !queue.Contains(id))
+            .Take(MaxPerWeek - queue.Count)
             .ToList();
         queue.AddRange(due);
         scheduled.RemoveAll(x => x.DueWeek <= week && due.Contains(x.EventId));
-
-        if (c.Balance.RecoveryCrisisEventId is { } recovery
-            && (s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred)
-            && queue.Count < MaxPerWeek && !queue.Contains(recovery))
-        {
-            queue.Add(recovery);
-        }
 
         var candidates = c.Events
             .Where(e => e.Phase != EventPhase.Live && e.Id != c.Balance.RecoveryCrisisEventId && !queue.Contains(e.Id))

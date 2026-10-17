@@ -94,6 +94,18 @@ public class M3FollowUpTests
     }
 
     [Fact]
+    public void Duplicate_live_follow_ups_fire_once()
+    {
+        var c = Content("m3-follow-duplicate", Live("echo", fromWeek: 500), Live("filler-a"), Live("filler-b"), Live("filler-c"));
+        var s = Fresh(c) with { Scheduled = [new ScheduledEvent("echo", 1), new ScheduledEvent("echo", 1)] };
+
+        var (started, _) = PlayWeek(s, c);
+
+        Assert.Single(started.Pending!.EventIds, "echo");
+        Assert.Empty(started.Scheduled!.Value);
+    }
+
+    [Fact]
     public void Live_follow_up_waits_while_its_event_cools_down()
     {
         var c = Content("m3-follow-cooling", Live("echo"), Live("filler-a"), Live("filler-b"));

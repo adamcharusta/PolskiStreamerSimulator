@@ -48,6 +48,22 @@ public class ContentValidatorV2Tests
     }
 
     [Fact]
+    public void Follow_up_to_a_one_time_event_is_reported()
+    {
+        var c = WithEvent("chat-raid", e => e with
+        {
+            Choices = e.Choices.SetItem(0, e.Choices[0] with
+            {
+                Outcomes = e.Choices[0].Outcomes with
+                {
+                    Success = [new Effect(EffectKind.FollowUp, null, Fixed.Zero, Target: "first-week", Weeks: 2)],
+                },
+            }),
+        });
+        Assert.Contains("follow-up-one-time:chat-raid/first-week", ContentValidator.Validate(c));
+    }
+
+    [Fact]
     public void Required_flag_that_nothing_sets_is_reported()
     {
         var c = WithEvent("chat-raid", e => e with { Eligibility = e.Eligibility with { RequiresFlags = ["ghost"] } });
