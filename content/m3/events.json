@@ -6,7 +6,7 @@
       "version": 1,
       "phase": "live",
       "title": "Gorąca teza",
-      "text": "Rzucasz na wizji, że pierogi ruskie są przereklamowane. Czat dzieli się na dwa obozy, a moderator prosi wszystkich o szklankę wody.",
+      "text": "Rzucasz na wizji, że pierogi ruskie są przereklamowane. Czat dzieli się na dwa obozy, a moderator prosi wszystkich, żeby napili się wody.",
       "weight": 3,
       "cooldownWeeks": 4,
       "tags": [],
@@ -27,7 +27,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ],
-            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "ViralChance", "amount": 8 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "ViralChance", "amount": 8 } ]
           }
         },
         {
@@ -67,7 +67,7 @@
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
             "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ],
-            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "ViralChance", "amount": 10 } ]
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         },
         {
@@ -124,7 +124,7 @@
       "version": 1,
       "phase": "live",
       "title": "Telefon do studia",
-      "text": "Mały podcast „Rozmowy przy Kablu” dzwoni w trakcie streamu i chce cię na żywo. Prowadzący ma trzystu słuchaczy i bardzo dużo pytań o twoje zarobki.",
+      "text": "Mały podcast „Rozmowy przy Kablu” dzwoni w trakcie streamu i chce cię mieć na antenie. Prowadzący ma trzystu słuchaczy i bardzo dużo pytań o twoje zarobki.",
       "weight": 3,
       "cooldownWeeks": 4,
       "tags": [],
@@ -199,7 +199,7 @@
         },
         {
           "id": "delete-links",
-          "label": "Poproś moderację o usuwanie linku",
+          "label": "Poproś moderację o usuwanie linków",
           "guaranteed": true,
           "successText": "Link znika z czatu i pojawia się w trzech innych miejscach. Rozmowa za to wraca do tematu.",
           "outcomes": {
@@ -213,7 +213,7 @@
       "version": 1,
       "phase": "live",
       "title": "Jeden na czterech",
-      "text": "W „Froncie 404” zostajesz sam przeciwko czterem. Czat już pisze „GG”, ale amunicji starczy na jedną odważną próbę.",
+      "text": "W „Froncie 404” zostajesz {gender, select, female {sama} male {sam} other {samo}} przeciwko czterem. Czat już pisze „GG”, ale amunicji starczy na jedną odważną próbę.",
       "weight": 3,
       "cooldownWeeks": 4,
       "tags": [],
@@ -234,7 +234,7 @@
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 8 }, { "kind": "AudienceMultiplier", "amount": 1.15 } ],
             "failure": [ { "kind": "EventQuality", "amount": -2 } ],
-            "criticalSuccess": [ { "kind": "EventQuality", "amount": 10 }, { "kind": "ViralChance", "amount": 15 } ]
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 10 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "ViralChance", "amount": 15 } ]
           }
         },
         {
@@ -321,7 +321,7 @@
           "successText": "Ranga uratowana. Po meczu czytasz czat i widzisz, że wszyscy trzymali kciuki.",
           "failureText": "Przegrana. Srebro III wita cię jak starego znajomego.",
           "outcomes": {
-            "success": [ { "kind": "SkillDelta", "category": "Fps", "amount": 1 }, { "kind": "EventQuality", "amount": 3 } ],
+            "success": [ { "kind": "SkillDelta", "category": "Fps", "amount": 1 }, { "kind": "EventQuality", "amount": 5 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
             "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ]
           }
         },
@@ -363,14 +363,14 @@
           "outcomes": {
             "success": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
             "failure": [ { "kind": "CashDelta", "amount": -100 } ],
-            "criticalSuccess": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "ViralChance", "amount": 10 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 } ]
+            "criticalSuccess": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         },
         {
           "id": "commentate",
           "label": "Skomentuj turniej zamiast grać",
           "guaranteed": true,
-          "successText": "Twoja komentarzowa chrypka robi furorę. Gadać umiesz, to pewne.",
+          "successText": "Twoja komentatorska chrypka robi furorę. Gadać umiesz, to pewne.",
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 3 }, { "kind": "SkillDelta", "category": "JustChatting", "amount": 1 } ]
           }
@@ -441,7 +441,7 @@
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ],
             "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ],
-            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "ViralChance", "amount": 8 } ]
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "ViralChance", "amount": 8 } ]
           }
         },
         {
@@ -530,7 +530,7 @@
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 5 }, { "kind": "SkillDelta", "category": "Moba", "amount": 1 } ],
             "failure": [ { "kind": "EventQuality", "amount": -3 } ],
-            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "ViralChance", "amount": 10 } ]
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "SkillDelta", "category": "Moba", "amount": 1 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         },
         {
@@ -646,7 +646,7 @@
           "outcomes": {
             "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "EventQuality", "amount": 4 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ],
-            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "ViralChance", "amount": 10 } ]
+            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "EventQuality", "amount": 4 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         },
         {
@@ -686,7 +686,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 5 } ],
             "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ],
-            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "ViralChance", "amount": 12 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 6 }, { "kind": "ViralChance", "amount": 12 } ]
           }
         },
         {
@@ -764,7 +764,7 @@
           "outcomes": {
             "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
-            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "ViralChance", "amount": 8 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ]
+            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 }, { "kind": "ViralChance", "amount": 8 } ]
           }
         },
         {
@@ -816,7 +816,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": -2 } ],
-            "criticalSuccess": [ { "kind": "ViralChance", "amount": 10 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         },
         {
@@ -855,7 +855,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "ViralChance", "amount": 10 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "EventQuality", "amount": -2 } ],
-            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "ViralChance", "amount": 20 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "ViralChance", "amount": 20 } ]
           }
         },
         {
@@ -941,7 +941,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": 3 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ],
-            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "ViralChance", "amount": 10 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": 3 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         }
       ]
@@ -951,7 +951,7 @@
       "version": 1,
       "phase": "live",
       "title": "Moderator ostrzega",
-      "text": "Moderator pisze prywatnie: PulsLive coraz uważniej przygląda się streamom z automatami. Kolejne zgłoszenie może zaboleć.",
+      "text": "Moderator pisze prywatnie: Czatnia coraz uważniej przygląda się streamom z automatami. Kolejne zgłoszenie może zaboleć.",
       "weight": 3,
       "cooldownWeeks": 4,
       "tags": ["gambling"],
@@ -1056,7 +1056,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "EventQuality", "amount": 5 } ],
             "failure": [ { "kind": "AudienceMultiplier", "amount": 0.95 }, { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ],
-            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "FollowersPercent", "amount": 3 }, { "kind": "ViralChance", "amount": 8 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "EventQuality", "amount": 5 }, { "kind": "FollowersPercent", "amount": 3 }, { "kind": "ViralChance", "amount": 8 } ]
           }
         },
         {
@@ -1092,8 +1092,8 @@
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 4 }, { "kind": "AudienceMultiplier", "amount": 1.05 } ],
             "failure": [ { "kind": "EventQuality", "amount": -5 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ],
-            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "ViralChance", "amount": 6 } ],
-            "criticalFailure": [ { "kind": "EventQuality", "amount": -5 }, { "kind": "CashDelta", "amount": -150 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 3 } ]
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "AudienceMultiplier", "amount": 1.05 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "ViralChance", "amount": 6 } ],
+            "criticalFailure": [ { "kind": "EventQuality", "amount": -5 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 3 }, { "kind": "CashDelta", "amount": -150 } ]
           }
         },
         {
@@ -1157,7 +1157,7 @@
           "label": "Idź do sąsiada z ciastem i negocjuj",
           "baseChance": 0.5,
           "modifiers": [ { "stat": "Credibility", "perPoint": 0.002, "labelKey": "modifier.credibility" } ],
-          "successText": "Sąsiad bierze ciasto i odkłada wiertarkę. Pokój na klatce.",
+          "successText": "Sąsiad bierze ciasto i odkłada wiertarkę. Zgoda na klatce.",
           "failureText": "Sąsiad bierze ciasto i wierci dalej. Wendeta potwierdzona.",
           "outcomes": {
             "success": [ { "kind": "EventQuality", "amount": 3 }, { "kind": "StatDelta", "stat": "Energy", "amount": -2 } ],
@@ -1175,7 +1175,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 2 } ],
             "failure": [ { "kind": "EventQuality", "amount": -4 } ],
-            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "ViralChance", "amount": 10 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 2 }, { "kind": "ViralChance", "amount": 10 } ]
           }
         },
         {
@@ -1211,7 +1211,7 @@
           "outcomes": {
             "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 1 }, { "kind": "EventQuality", "amount": -2 } ],
-            "criticalSuccess": [ { "kind": "ViralChance", "amount": 10 }, { "kind": "FollowersPercent", "amount": 2 } ]
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "ViralChance", "amount": 10 }, { "kind": "FollowersPercent", "amount": 2 } ]
           }
         },
         {
@@ -1280,7 +1280,7 @@
         },
         {
           "id": "hum",
-          "label": "Nuć melodię sam, to przecież nie to samo",
+          "label": "Zanuć melodię, to przecież nie to samo",
           "baseChance": 0.5,
           "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
           "successText": "Nucenie staje się koncertem życzeń. Czat zamawia kolejne utwory.",
@@ -1292,7 +1292,7 @@
         },
         {
           "id": "buy-library",
-          "label": "Kup pakiet muzyki bez praw autorskich za 200 zł",
+          "label": "Kup pakiet muzyki z licencją do streamów za 200 zł",
           "guaranteed": true,
           "requires": { "minCashPln": 200 },
           "successText": "Nowa muzyka jest legalna i nawet całkiem przyjemna.",
@@ -1324,7 +1324,7 @@
           "outcomes": {
             "success": [ { "kind": "CashDelta", "amount": 200 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
-            "criticalSuccess": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "ViralChance", "amount": 8 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ]
+            "criticalSuccess": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 }, { "kind": "ViralChance", "amount": 8 } ]
           }
         },
         {
@@ -1398,11 +1398,11 @@
           "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
           "allowsCritical": true,
           "successText": "Wygrywasz. Kapitan podaje rękę na wizji i temat jest zamknięty.",
-          "failureText": "Przegrywasz, ale z klasą. Oba czaty i tak oglądały do końca.",
+          "failureText": "Przegrywasz, a Kapitan nie daje o tym zapomnieć.",
           "outcomes": {
             "success": [ { "kind": "ClearFlag", "flag": "rivalry", "amount": 0 }, { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
-            "criticalSuccess": [ { "kind": "ClearFlag", "flag": "rivalry", "amount": 0 }, { "kind": "ViralChance", "amount": 15 }, { "kind": "FollowersPercent", "amount": 3 } ]
+            "criticalSuccess": [ { "kind": "ClearFlag", "flag": "rivalry", "amount": 0 }, { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "ViralChance", "amount": 15 }, { "kind": "FollowersPercent", "amount": 3 } ]
           }
         },
         {
@@ -1620,7 +1620,7 @@
           "baseChance": 0.55,
           "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" }, { "stat": "Drama", "perPoint": -0.002, "labelKey": "modifier.drama" } ],
           "successText": "Fakty bronią się same. Część komentujących zmienia zdanie.",
-          "failureText": "Nikt nie czyta zrzutów ekranu. Wszyscy wolą muzykę dramatyczną.",
+          "failureText": "Nikt nie czyta zrzutów ekranu. Wszyscy wolą dramatyczną muzykę.",
           "outcomes": {
             "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 5 }, { "kind": "StatDelta", "stat": "Drama", "amount": -3 } ],
             "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 } ]
@@ -1642,7 +1642,7 @@
       "version": 1,
       "phase": "crisis",
       "title": "Po wspólnym streamie",
-      "text": "Twórca, z którym {gender, select, female {nagrałaś} male {nagrałeś} other {nagrałoś}} wspólny stream, publikuje film o tym, jak źle mu się z tobą pracowało. Oba czaty już wybrały strony.",
+      "text": "Twórca, z którym {gender, select, female {zrobiłaś} male {zrobiłeś} other {zrobiłoś}} wspólny stream, publikuje film o tym, jak źle mu się z tobą pracowało. Oba czaty już wybrały strony.",
       "weight": 1,
       "cooldownWeeks": 26,
       "tags": ["rivalry"],
@@ -1689,7 +1689,7 @@
       "version": 1,
       "phase": "crisis",
       "title": "Czat się martwi",
-      "text": "Ktoś na czacie robi ankietę „Czy streamer potrzebuje urlopu?”. 87% głosuje na tak, a reszta pyta, skąd te podkrążone oczy.",
+      "text": "Ktoś na czacie robi ankietę „Czy naszemu kanałowi należy się urlop?”. 87% głosuje na tak, a reszta pyta, skąd te podkrążone oczy.",
       "weight": 2,
       "cooldownWeeks": 13,
       "tags": ["community"],

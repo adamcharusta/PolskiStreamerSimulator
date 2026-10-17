@@ -115,7 +115,8 @@
     "credibility": "Wiarygodność",
     "primary-skill": "Umiejętność w kategorii",
     "drama": "Drama",
-    "burnout": "Wypalenie"
+    "burnout": "Wypalenie",
+    "energy": "Energia"
   },
   "career": {
     "summaryLabel": "Stan kariery",
