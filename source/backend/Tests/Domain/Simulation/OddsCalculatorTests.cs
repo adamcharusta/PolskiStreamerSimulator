@@ -94,6 +94,17 @@ public class OddsCalculatorTests
     }
 
     [Fact]
+    public void Burnout_penalty_and_easy_bonus_are_both_listed_and_summed()
+    {
+        var s = TestCareers.Fresh() with { Burnout = Fixed.Hundred, Difficulty = Difficulty.Easy };
+        var odds = OddsCalculator.For(s, CredibilityChoice, M3Play.C.Balance);
+        Assert.Contains(odds.Modifiers, m => m.LabelKey == "modifier.burnout");
+        Assert.Contains(odds.Modifiers, m => m.LabelKey == OddsCalculator.EasyModifierLabel);
+        // 0.5 + 0.001 x 50 credibility - 0.10 burnout + 0.10 easy
+        Assert.Equal(55, odds.Threshold);
+    }
+
+    [Fact]
     public void M1_balance_never_adds_a_burnout_modifier()
     {
         var s = TestCareers.Fresh() with { Burnout = Fixed.Hundred };

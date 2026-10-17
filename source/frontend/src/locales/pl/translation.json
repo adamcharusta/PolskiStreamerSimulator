@@ -92,7 +92,8 @@
     "trainCategory": "Trening",
     "improveProduction": "Ulepszenie sprzętu",
     "manageCommunity": "Ogarnianie społeczności",
-    "noAction": "Zwykły stream"
+    "noAction": "Zwykły stream",
+    "networkCollaborate": "Networking i kolaboracje"
   },
   "slot": {
     "microphone": "Mikrofon",
@@ -113,7 +114,8 @@
   "modifier": {
     "credibility": "Wiarygodność",
     "primary-skill": "Umiejętność w kategorii",
-    "drama": "Drama"
+    "drama": "Drama",
+    "burnout": "Wypalenie"
   },
   "career": {
     "summaryLabel": "Stan kariery",
@@ -167,6 +169,8 @@
     "negative-cash": "Masz debet",
     "career-ended": "Kariera zakończona",
     "week-in-progress": "Tydzień już trwa",
+    "unsupported-action": "Niedostępne w tej karierze",
+    "not-enough-energy": "Za mało energii",
     "unknown": "Niedostępne"
   },
   "event": {

@@ -200,13 +200,26 @@ public sealed class JsonContentSourceTests : IDisposable
             """
             "eventsPerWeekMin": 2, "ruleset": "m1-prototype.1", "recoveryCrisisEventId": "chat-raid",
             "decisionChancePerWeek": 0.06, "networkEnergyCost": 15,
-            "networkCollaborate": { "id": "network", "label": "Współpraca", "guaranteed": true,
-              "outcomes": { "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ] } },
             """,
             StringComparison.Ordinal));
         var b = new JsonContentSource(dir).Load().Balance;
         Assert.Equal(("chat-raid", Fixed.FromRatio(6, 100), Fixed.FromInt(15)), (b.RecoveryCrisisEventId, b.DecisionChancePerWeek, b.NetworkEnergyCost));
-        Assert.Equal(("network", "Współpraca"), (b.NetworkCollaborate!.Id, b.NetworkCollaborate.LabelPl));
+        Assert.Null(b.NetworkCollaborate);
+    }
+
+    [Fact]
+    public void Schema_one_content_rejects_a_network_collaboration()
+    {
+        var dir = CopyContent(b => b.Replace(
+            "\"eventsPerWeekMin\": 2,",
+            """
+            "eventsPerWeekMin": 2,
+            "networkCollaborate": { "id": "network", "label": "Współpraca", "guaranteed": true,
+              "outcomes": { "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ] } },
+            """,
+            StringComparison.Ordinal));
+        var error = Assert.Throws<InvalidDataException>(() => new JsonContentSource(dir).Load());
+        Assert.Contains("balance.json.networkCollaborate", error.Message, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -47,6 +47,11 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var balance = ReadBalance(balanceRoot);
         var profiles = ReadProfiles(Property(balanceRoot, "profiles", BalanceFile));
         var (schema, events) = ReadEvents(eventsDocument.RootElement);
+        if (schema == 1 && balanceRoot.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null)
+        {
+            throw Invalid($"{BalanceFile}.networkCollaborate", "is not allowed with schema 1 events");
+        }
+
         var rulesetId = OptionalString(balanceRoot, "ruleset", BalanceFile) ?? DefaultRulesetId;
 
         var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId);

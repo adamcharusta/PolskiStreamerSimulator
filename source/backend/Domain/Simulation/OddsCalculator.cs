@@ -15,9 +15,9 @@ public static class OddsCalculator
 
     /// <summary>
     /// <c>p = clamp(0.05, 0.95, base + Σ min(cap, stat × perPoint) + easy bonus)</c> and
-    /// <c>threshold = round(100p)</c>. Primary-category stats read the pending week's plan (see <see cref="PrimaryCategory"/>).
+    /// <c>threshold = round(100p)</c>. <paramref name="primary"/> overrides the category primary-category stats read (a plan not yet started). Primary-category stats read the pending week's plan (see <see cref="PrimaryCategory"/>).
     /// </summary>
-    public static ChoiceOdds For(CareerState s, ChoiceDefinition choice, BalanceConstants b)
+    public static ChoiceOdds For(CareerState s, ChoiceDefinition choice, BalanceConstants b, Category? primary = null)
     {
         if (choice.Guaranteed)
         {
@@ -27,7 +27,7 @@ public static class OddsCalculator
         var modifiers = ImmutableArray.CreateBuilder<ModifierLine>();
         foreach (var modifier in choice.Modifiers)
         {
-            var value = Stats.Get(s, modifier.Stat, PrimaryCategory(s, modifier.Stat)) * modifier.PerPoint;
+            var value = Stats.Get(s, modifier.Stat, PrimaryCategory(s, modifier.Stat, primary)) * modifier.PerPoint;
             if (modifier.Cap is { } cap)
             {
                 value = FixedMath.Min(cap, value);
@@ -56,8 +56,8 @@ public static class OddsCalculator
     /// The category primary-category stats read: the pending week's plan, or — for a decision between weeks — the
     /// category of the last settled week (<see cref="Category.JustChatting"/> before the first one).
     /// </summary>
-    private static Category PrimaryCategory(CareerState s, StatKey stat)
+    private static Category PrimaryCategory(CareerState s, StatKey stat, Category? explicitPrimary)
         => stat is StatKey.PrimarySkill or StatKey.PrimaryBoredom
-            ? s.Pending?.Plan.Category ?? Stats.LastPrimary(s)
+            ? explicitPrimary ?? s.Pending?.Plan.Category ?? Stats.LastPrimary(s)
             : default;
 }

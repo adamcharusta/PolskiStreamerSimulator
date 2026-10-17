@@ -13,21 +13,21 @@ public sealed record ActionApplied(CareerState State, Pcg32 Rng, ImmutableArray<
 /// <summary>Plan validation and the main actions shared by the M1 and M3 rulesets.</summary>
 public static class WeekActions
 {
-    public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c, bool network = false)
-        => [.. AllPlans(network).Select(plan => (plan, PlanRejection(s, c.Balance, plan, network)))];
+    public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
+        => [.. AllPlans(c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan)))];
 
     /// <summary>
     /// Checks the command and the plan, then applies the main action: the result carries the changed state, the
     /// advanced RNG and the action's report lines (equipment cost and stat changes).
     /// </summary>
-    public static Result<ActionApplied> Apply(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion, bool network = false)
+    public static Result<ActionApplied> Apply(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
         if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<ActionApplied>.Fail(error);
         }
 
-        if (PlanRejection(s, c.Balance, plan, network) is { } reason)
+        if (PlanRejection(s, c.Balance, plan) is { } reason)
         {
             return Result<ActionApplied>.Fail(DomainErrorCode.IllegalAction, reason);
         }
@@ -47,12 +47,12 @@ public static class WeekActions
     }
 
     /// <summary>
-    /// The reason the plan cannot start, or null. <paramref name="network"/> says whether the ruleset offers
-    /// <see cref="MainAction.NetworkCollaborate"/> (M3); otherwise it is rejected as <c>unsupported-action</c> before any other rule.
+    /// The reason the plan cannot start, or null. <see cref="MainAction.NetworkCollaborate"/> exists only in content
+    /// that defines the collaboration choice (M3); otherwise it is <c>unsupported-action</c>, before any other rule.
     /// </summary>
-    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan, bool network = false)
+    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan)
     {
-        if (plan.Action == MainAction.NetworkCollaborate && (!network || b.NetworkCollaborate is null))
+        if (plan.Action == MainAction.NetworkCollaborate && b.NetworkCollaborate is null)
         {
             return "unsupported-action";
         }
@@ -133,7 +133,7 @@ public static class WeekActions
         }
     }
 
-    private static IEnumerable<WeekPlan> AllPlans(bool network)
+    private static IEnumerable<WeekPlan> AllPlans(BalanceConstants b)
     {
         foreach (var category in Enum.GetValues<Category>())
         {
@@ -146,7 +146,7 @@ public static class WeekActions
 
             yield return new WeekPlan(MainAction.ManageCommunity, category);
             yield return new WeekPlan(MainAction.NoAction, category);
-            if (network)
+            if (b.NetworkCollaborate is not null)
             {
                 yield return new WeekPlan(MainAction.NetworkCollaborate, category);
             }

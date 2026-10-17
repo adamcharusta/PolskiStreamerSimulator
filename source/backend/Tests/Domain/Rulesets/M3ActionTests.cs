@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets;
 using PolskiStreamerSimulator.Domain.Simulation;
@@ -43,8 +44,31 @@ public class M3ActionTests
     {
         var m1 = TestWorld.Content;
         var s = CareerFactory.Create(M1Ruleset.RulesetId, m1.Digest, m1.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, 3);
-        var result = M3Play.Engine.StartWeek(s, m1, new WeekPlan(MainAction.NetworkCollaborate, Category.Fps), 0);
+        var engine = new WeekEngine(new RulesetRegistry([new M1Ruleset()]));
+        Assert.DoesNotContain(engine.LegalPlans(s, m1).Value, p => p.Plan.Action == MainAction.NetworkCollaborate);
+        var result = engine.StartWeek(s, m1, new WeekPlan(MainAction.NetworkCollaborate, Category.Fps), 0);
         Assert.Equal((DomainErrorCode.IllegalAction, "unsupported-action"), (result.Error.Code, result.Error.Detail));
+    }
+
+    [Fact]
+    public void Shown_odds_equal_rolled_odds_even_when_the_action_costs_energy_the_odds_read()
+    {
+        var c = M3Play.C;
+        var choice = c.Balance.NetworkCollaborate! with
+        {
+            Modifiers =
+            [
+                new ChanceModifier(StatKey.PrimarySkill, Fixed.FromRatio(5, 1000), null, "modifier.primary-skill"),
+                new ChanceModifier(StatKey.Energy, Fixed.FromRatio(2, 1000), null, "modifier.energy"),
+            ],
+        };
+        c = c with { Balance = c.Balance with { NetworkCollaborate = choice } };
+        var s = M3Play.Fresh();
+        var plan = new WeekPlan(MainAction.NetworkCollaborate, Category.Fps);
+        var shown = M3Play.Engine.PresentAction(s, c, plan).Value!;
+        var started = M3Play.Engine.StartWeek(s, c, plan, s.StateVersion).Value;
+        Assert.Equal(shown.Threshold, started.Pending!.ActionRoll!.Threshold);
+        Assert.Equal(shown.Modifiers, started.Pending.ActionRoll.Modifiers);
     }
 
     [Fact]

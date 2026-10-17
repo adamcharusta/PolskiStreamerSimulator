@@ -32,7 +32,7 @@ public sealed class M3Ruleset : IRuleset
             return Result<CareerState>.Fail(blocked);
         }
 
-        var applied = WeekActions.Apply(s, c, plan, expectedVersion, network: true);
+        var applied = WeekActions.Apply(s, c, plan, expectedVersion);
         if (!applied.IsSuccess)
         {
             return Result<CareerState>.Fail(applied.Error);
@@ -60,7 +60,7 @@ public sealed class M3Ruleset : IRuleset
     }
 
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => WeekActions.LegalPlans(s, c, network: true);
+        => WeekActions.LegalPlans(s, c);
 
     /// <summary>The next week waits while mandatory decisions are queued.</summary>
     public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c)
@@ -152,8 +152,15 @@ public sealed class M3Ruleset : IRuleset
     /// <summary>The visible odds of the networking roll for a network plan; null for any other plan.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
         => plan.Action == MainAction.NetworkCollaborate && c.Balance.NetworkCollaborate is { } choice
-            ? OddsCalculator.For(s, choice, c.Balance)
+            ? NetworkOdds(s, choice, c.Balance, plan)
             : null;
+
+    /// <summary>
+    /// The one place the networking odds are computed: from the state before the action with the plan's category,
+    /// so the odds shown are the odds rolled and the action's own energy cost does not change them.
+    /// </summary>
+    private static ChoiceOdds NetworkOdds(CareerState before, ChoiceDefinition choice, BalanceConstants b, WeekPlan plan)
+        => OddsCalculator.For(before, choice, b, plan.Category);
 
     /// <summary>
     /// Opens the network week and rolls the collaboration with the odds shown beforehand; its effects apply to the
@@ -162,9 +169,9 @@ public sealed class M3Ruleset : IRuleset
     private static CareerState RollNetwork(CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, ref Pcg32 rng)
     {
         var choice = c.Balance.NetworkCollaborate!;
-        var started = WeekActions.Started(s, applied, plan, [], rng);
-        var odds = OddsCalculator.For(started, choice, c.Balance);
+        var odds = NetworkOdds(s, choice, c.Balance, plan);
         var (roll, outcome, effects) = RuleSteps.Roll(choice, odds, ref rng);
+        var started = WeekActions.Started(s, applied, plan, [], rng);
         var pending = started.Pending!;
         var state = EffectApplier.ToWeek(started, "network", effects, ref pending);
         var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
