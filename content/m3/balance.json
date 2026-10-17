@@ -91,8 +91,8 @@
     "outcomes": {
       "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
       "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 } ],
-      "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "SetFlag", "flag": "collab-friend", "weeks": 26, "amount": 0 } ],
-      "criticalFailure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "FollowUp", "event": "collab-fallout", "weeks": 1, "amount": 0 } ]
+      "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "SetFlag", "flag": "collab-friend", "weeks": 26, "amount": 0 } ],
+      "criticalFailure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "FollowUp", "event": "collab-fallout", "weeks": 1, "amount": 0 } ]
     }
   },
   "profiles": {
