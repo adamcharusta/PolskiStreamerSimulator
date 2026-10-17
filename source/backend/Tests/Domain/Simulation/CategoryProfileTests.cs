@@ -68,4 +68,23 @@ public class CategoryProfileTests
         Assert.Equal((s.Drama + Fixed.One, s.Credibility - Fixed.FromRatio(3, 10)), (after.Drama, after.Credibility));
         Assert.Equal(s, ProgressionRules.ApplyCategoryReputation(s, Category.Fps, b));
     }
+
+    [Fact]
+    public void M3_week_report_lists_the_category_reputation_change()
+    {
+        var c = M3Play.C;
+        var all = new CategoryValues<CategoryProfile>([.. Enum.GetValues<Category>().Select(c.Balance.Profile)]);
+        c = c with { Balance = c.Balance with { Categories = all.With(Category.Gambling, c.Balance.Profile(Category.Gambling) with { DramaPerStream = Fixed.One }) } };
+        var s = M3Play.Fresh();
+        var started = M3Play.Engine.StartWeek(s, c, new WeekPlan(MainAction.NoAction, Category.Gambling), s.StateVersion).Value;
+        while (started.Pending!.Resolved.Length < started.Pending.EventIds.Length)
+        {
+            started = M3Play.Engine.ResolveEvent(started, c, M3Play.Engine.PresentEvent(started, c).Value.Choices[^1].ChoiceId, started.StateVersion).Value;
+        }
+
+        var (after, report) = M3Play.Engine.SettleWeek(started, c, started.StateVersion).Value;
+        var drama = report.StatChanges.Where(l => l.Code == "stat:Drama").ToList();
+        Assert.Contains(drama, l => l.Detail == "category" && l.Delta == Fixed.One);
+        Assert.Equal(after.Drama - s.Drama, new Fixed(drama.Sum(l => l.Delta!.Value.Raw)));
+    }
 }

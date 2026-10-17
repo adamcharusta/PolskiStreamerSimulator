@@ -91,7 +91,7 @@ public sealed class M3Ruleset : IRuleset
 
         var pending = settleable.Value;
         var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
-        var core = ApplyFollowersPercent(WeekSettlement.Core(streamed, pending, c), pending.FollowersPercent);
+        var core = ApplyFollowersPercent(WeekSettlement.Core(streamed, pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) }, c), pending.FollowersPercent);
         var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(core.State, s.Week.Value), c);
         if (ending is null)
         {
