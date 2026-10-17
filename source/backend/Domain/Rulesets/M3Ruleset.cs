@@ -130,7 +130,7 @@ public sealed class M3Ruleset : IRuleset
 
     /// <summary>
     /// Category base + per-point bonus above the quality threshold + bonus per critical outcome + event effects
-    /// (percentage points), capped. Gameplay §11.
+    /// (percentage points), kept between zero and the cap. Gameplay §11.
     /// </summary>
     public static Fixed ViralChance(BalanceConstants b, Category category, Fixed quality, int criticals, Fixed fromEffects)
     {
@@ -139,7 +139,7 @@ public sealed class M3Ruleset : IRuleset
             + (aboveThreshold * b.ViralPerQualityPoint)
             + (Fixed.FromInt(criticals) * b.ViralPerCritical)
             + (fromEffects / Fixed.Hundred);
-        return FixedMath.Min(b.ViralChanceCap, chance);
+        return chance.Clamp(Fixed.Zero, b.ViralChanceCap);
     }
 
     /// <summary>Critical outcomes of the week's resolved events and its action roll.</summary>

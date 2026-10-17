@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets;
 using PolskiStreamerSimulator.Domain.Simulation;
@@ -79,8 +80,29 @@ public class ViralTests
     }
 
     [Fact]
-    public void Engine_flags_count_as_set_for_the_validator()
+    public void Viral_flag_is_active_for_exactly_the_next_four_weeks()
     {
-        Assert.Contains("viral-clip", PolskiStreamerSimulator.Domain.Content.ContentValidator.EngineFlags);
+        var (state, report) = M3Play.UntilViral();
+        var active = Enumerable.Range(0, 8)
+            .Select(offset => CareerFlags.IsActive(state with { Week = new CareerWeek(report.Week.Value + 1 + offset) }, "viral-clip"))
+            .ToArray();
+        Assert.Equal([true, true, true, true, false, false, false, false], active);
     }
+
+    [Theory]
+    [InlineData("viral-clip", false)]
+    [InlineData("sys:rest-only", false)]
+    [InlineData("ghost", true)]
+    public void Engine_flags_are_known_to_the_unset_flag_check(string flag, bool reported)
+    {
+        var c = M3Play.C;
+        var first = c.Events[0];
+        var required = first with { Id = "needs-flag", Eligibility = first.Eligibility with { RequiresFlags = [flag] } };
+        var violations = ContentValidator.Validate(c with { Events = c.Events.Add(required) });
+        Assert.Equal(reported, violations.Contains($"unset-flag:needs-flag/{flag}"));
+    }
+
+    [Fact]
+    public void Negative_event_effects_cannot_push_the_chance_below_zero()
+        => Assert.Equal(Fixed.Zero, M3Ruleset.ViralChance(M3Play.C.Balance, Category.Chess, Fixed.Zero, 0, Fixed.FromInt(-50)));
 }
