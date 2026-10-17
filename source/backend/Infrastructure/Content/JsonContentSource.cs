@@ -87,10 +87,10 @@ public sealed class JsonContentSource(string directory) : IContentSource
         const string f = BalanceFile;
         var weights = Property(b, "scoreWeights", f);
         var difficulty = Property(b, "difficultyMultiplier", f);
-        JsonElement? burnout = b.TryGetProperty("burnoutPenalty", out var burnoutElement) ? burnoutElement : null;
-        JsonElement? shortStream = b.TryGetProperty("shortStream", out var shortStreamElement) ? shortStreamElement : null;
-        JsonElement? viral = b.TryGetProperty("viral", out var viralElement) ? viralElement : null;
-        JsonElement? mastery = b.TryGetProperty("mastery", out var masteryElement) ? masteryElement : null;
+        var burnout = Section(b, "burnoutPenalty");
+        var shortStream = Section(b, "shortStream");
+        var viral = Section(b, "viral");
+        var mastery = Section(b, "mastery");
         return new BalanceConstants
         {
             Version = ReadString(b, "version", f),
@@ -156,29 +156,42 @@ public sealed class JsonContentSource(string directory) : IContentSource
             RecoveryCrisisEventId = OptionalString(b, "recoveryCrisisEventId", f),
             DecisionChancePerWeek = OptionalFixed(b, "decisionChancePerWeek", f) ?? Fixed.Zero,
             NetworkEnergyCost = OptionalFixed(b, "networkEnergyCost", f) ?? Fixed.Zero,
-            NetworkCollaborate = b.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null
-                ? ReadChoice(network, $"{f}.networkCollaborate", schema: 2)
-                : null,
-            ShortStreamFatigue = shortStream is { } sf ? ReadFixed(sf, "fatigue", $"{f}.shortStream") : Fixed.One,
-            ShortStreamAudience = shortStream is { } sa ? ReadFixed(sa, "audience", $"{f}.shortStream") : Fixed.One,
-            Categories = b.TryGetProperty("categories", out var categories) ? ReadCategories(categories) : null,
-            BurnoutPenaltyFrom = burnout is { } bf ? ReadFixed(bf, "from", $"{f}.burnoutPenalty") : Fixed.FromInt(101),
-            BurnoutPenaltyPerPoint = burnout is { } bp ? ReadFixed(bp, "perPoint", $"{f}.burnoutPenalty") : Fixed.Zero,
-            BurnoutPenaltyCap = burnout is { } bc ? ReadFixed(bc, "cap", $"{f}.burnoutPenalty") : Fixed.Zero,
-            ViralQualityFrom = viral is { } vq ? ReadFixed(vq, "qualityFrom", $"{f}.viral") : Fixed.Zero,
-            ViralPerQualityPoint = viral is { } vp ? ReadFixed(vp, "perQualityPoint", $"{f}.viral") : Fixed.Zero,
-            ViralPerCritical = viral is { } vc ? ReadFixed(vc, "perCritical", $"{f}.viral") : Fixed.Zero,
-            ViralChanceCap = viral is { } vk ? ReadFixed(vk, "chanceCap", $"{f}.viral") : Fixed.Zero,
-            ViralMultiplierMin = viral is { } vn ? ReadFixed(vn, "multiplierMin", $"{f}.viral") : Fixed.Zero,
-            ViralMultiplierMax = viral is { } vx ? ReadFixed(vx, "multiplierMax", $"{f}.viral") : Fixed.Zero,
-            ViralFollowerShare = viral is { } vf ? ReadFixed(vf, "followerShare", $"{f}.viral") : Fixed.Zero,
-            ViralViewerShare = viral is { } vv ? ReadFixed(vv, "viewerShare", $"{f}.viral") : Fixed.Zero,
-            ViralFollowerMin = viral is { } vm ? ReadInt(vm, "followerMin", $"{f}.viral") : 0,
-            MasteryFromSkill = mastery is { } m ? ReadFixed(m, "fromSkill", $"{f}.mastery") : Fixed.FromInt(101),
-            MasteryBoredomRelief = mastery is { } r ? ReadInt(r, "boredomRelief", $"{f}.mastery") : 0,
-            MasteryChurnFactor = mastery is { } c ? ReadFixed(c, "churnFactor", $"{f}.mastery") : Fixed.One,
+            NetworkCollaborate = ReadNetworkChoice(b),
+            ShortStreamFatigue = SectionFixed(shortStream, "fatigue", "shortStream", Fixed.One),
+            ShortStreamAudience = SectionFixed(shortStream, "audience", "shortStream", Fixed.One),
+            Categories = Section(b, "categories") is { } categories ? ReadCategories(categories) : null,
+            BurnoutPenaltyFrom = SectionFixed(burnout, "from", "burnoutPenalty", Fixed.FromInt(101)),
+            BurnoutPenaltyPerPoint = SectionFixed(burnout, "perPoint", "burnoutPenalty", Fixed.Zero),
+            BurnoutPenaltyCap = SectionFixed(burnout, "cap", "burnoutPenalty", Fixed.Zero),
+            ViralQualityFrom = SectionFixed(viral, "qualityFrom", "viral", Fixed.Zero),
+            ViralPerQualityPoint = SectionFixed(viral, "perQualityPoint", "viral", Fixed.Zero),
+            ViralPerCritical = SectionFixed(viral, "perCritical", "viral", Fixed.Zero),
+            ViralChanceCap = SectionFixed(viral, "chanceCap", "viral", Fixed.Zero),
+            ViralMultiplierMin = SectionFixed(viral, "multiplierMin", "viral", Fixed.Zero),
+            ViralMultiplierMax = SectionFixed(viral, "multiplierMax", "viral", Fixed.Zero),
+            ViralFollowerShare = SectionFixed(viral, "followerShare", "viral", Fixed.Zero),
+            ViralViewerShare = SectionFixed(viral, "viewerShare", "viral", Fixed.Zero),
+            ViralFollowerMin = SectionInt(viral, "followerMin", "viral", 0),
+            MasteryFromSkill = SectionFixed(mastery, "fromSkill", "mastery", Fixed.FromInt(101)),
+            MasteryBoredomRelief = SectionInt(mastery, "boredomRelief", "mastery", 0),
+            MasteryChurnFactor = SectionFixed(mastery, "churnFactor", "mastery", Fixed.One),
         };
     }
+
+    /// <summary>The balance's optional network choice; absent or JSON null means the action is unavailable.</summary>
+    private static ChoiceDefinition? ReadNetworkChoice(JsonElement b)
+        => Optional(b, "networkCollaborate") is { } network ? ReadChoice(network, $"{BalanceFile}.networkCollaborate", schema: 2) : null;
+
+    /// <summary>An optional top-level balance section; absent means every value in it takes its M1-neutral default.</summary>
+    private static JsonElement? Section(JsonElement b, string name) => b.TryGetProperty(name, out var section) ? section : null;
+
+    /// <summary>A number inside an optional section, required once the section exists; <paramref name="fallback"/> when it does not.</summary>
+    private static Fixed SectionFixed(JsonElement? section, string name, string sectionName, Fixed fallback)
+        => section is { } s ? ReadFixed(s, name, $"{BalanceFile}.{sectionName}") : fallback;
+
+    /// <summary>An integer inside an optional section, required once the section exists; <paramref name="fallback"/> when it does not.</summary>
+    private static int SectionInt(JsonElement? section, string name, string sectionName, int fallback)
+        => section is { } s ? ReadInt(s, name, $"{BalanceFile}.{sectionName}") : fallback;
 
     /// <summary>Reads the optional per-category profiles; every category is required once the section exists.</summary>
     private static CategoryValues<CategoryProfile> ReadCategories(JsonElement categories)
