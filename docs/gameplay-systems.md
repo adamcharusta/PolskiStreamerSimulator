@@ -245,7 +245,7 @@ The profiles differ from the first proposal in the design spec (§7.1) because t
 ### Mastery and the boredom rebalance (REQ-08)
 
 - **Audience boredom factor:** `1 − boredom / 600` (M1: `/ 250`). **Churn:** `churnRate + 0.00001 × primary-category boredom` (M1: `0.0001`).
-- **Mastery:** from skill 70 in the primary category, the boredom gain drops by 2 (minimum 1) and churn is multiplied by 0.85.
+- **Mastery:** from skill 70 in the primary category (measured before the week's practice gain), the boredom gain drops by 2 (minimum 1) and churn is multiplied by 0.85.
 - Training, practice gains and skill decay keep the M1 rules.
 
 ### Burnout penalty
@@ -260,8 +260,10 @@ The action `NetworkCollaborate` (label "Zagadaj do innych twórców") costs 10 e
 | --- | --- |
 | Success | This week's audience ×1.2, +1 credibility |
 | Failure | +4 drama, −2 credibility |
-| Critical success | Audience ×1.2 and flag `collab-friend` for 26 weeks |
-| Critical failure | +6 drama and the follow-up event `collab-fallout` in 1 week |
+| Critical success | Audience ×1.2, +1 credibility and flag `collab-friend` for 26 weeks |
+| Critical failure | +6 drama, −2 credibility and the follow-up event `collab-fallout` in 1 week |
+
+A critical outcome replaces the plain one, so each critical row repeats the plain outcome's effects (ruling R25).
 
 ### Recovery crisis and short stream
 
@@ -284,7 +286,7 @@ Once per stream, after live viewers are computed:
 
 `viralChance = min(30 %, category base + 0.2 points × max(0, quality − 70) + 5 points × critical outcomes + ViralChance effects)`
 
-A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, never above 3× baseline (`viralCapMultiplier`), and adds `max(100, min(10 % of followers, 20 % of the stream's live viewers))` followers. The report has a `viral` line with the roll and the threshold, and the career gets the flag `viral-clip` (used by the first-viral milestone). Gained, lost and net followers stay separate from live viewers (REQ-06).
+A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, never above 3× baseline (`viralCapMultiplier`), and adds `max(100, min(10 % of followers, 20 % of the stream's live viewers))` followers. The report has a `viral` line with the roll and the threshold, and the career gets the flag `viral-clip` for 4 weeks (used by the `first-viral` milestone). Gained, lost and net followers stay separate from live viewers (REQ-06).
 
 ### Flags and follow-ups
 
