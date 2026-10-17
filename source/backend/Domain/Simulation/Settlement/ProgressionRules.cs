@@ -21,6 +21,22 @@ public static class ProgressionRules
         };
 
     /// <summary>
+    /// M3 only: the streamed category's per-stream credibility and drama effects (stat lines use detail <c>stream</c>
+    /// through <see cref="Stats.Changes"/>); unchanged when both are zero.
+    /// </summary>
+    public static CareerState ApplyCategoryReputation(CareerState s, Category primary, BalanceConstants b)
+    {
+        var profile = b.Profile(primary);
+        if (profile.CredibilityPerStream == Fixed.Zero && profile.DramaPerStream == Fixed.Zero)
+        {
+            return s;
+        }
+
+        var withCredibility = Stats.Add(s, StatKey.Credibility, profile.CredibilityPerStream, primary);
+        return Stats.Add(withCredibility, StatKey.Drama, profile.DramaPerStream, primary);
+    }
+
+    /// <summary>
     /// The streamed category gains <c>max(0.2, (100 − skill)/100)</c> skill and 2–4 boredom and resets its
     /// inactivity; every other category loses 1–2 boredom, counts one more inactive week and, after
     /// <see cref="BalanceConstants.SkillDecayAfterWeeks"/> inactive weeks, decays toward its starting skill.
@@ -40,7 +56,13 @@ public static class ProgressionRules
             if (category == primary)
             {
                 skill = skill.With(category, Stats.Bounded(skill[category] + GrowthFactor(skill[category])));
-                (var gain, rng) = rng.NextInt(b.BoredomGainMin, b.BoredomGainMax);
+                var profile = b.Profile(primary);
+                (var gain, rng) = rng.NextInt(profile.BoredomGainMin, profile.BoredomGainMax);
+                if (skill[category] >= b.MasteryFromSkill && b.MasteryBoredomRelief > 0)
+                {
+                    gain = Math.Max(1, gain - b.MasteryBoredomRelief);
+                }
+
                 boredom = boredom.With(category, Stats.Bounded(boredom[category] + Fixed.FromInt(gain)));
                 inactive = inactive.With(category, 0);
                 continue;

@@ -16,13 +16,14 @@ public static class AudienceRules
     public static AudienceResult Compute(CareerState s, PendingWeek p, ref Pcg32 rng, BalanceConstants b)
     {
         var primary = p.Plan.Category;
+        var profile = b.Profile(primary);
         var skill = s.Skill[primary];
         var boredom = s.Boredom[primary];
         var followers = Fixed.FromInt(s.Followers);
         var equipmentAverage = Fixed.FromRatio(s.Equipment.Values.Sum(), s.Equipment.Count);
 
         var quality = (b.QualityBase
-            + (b.QualitySkill * skill)
+            + ((b.QualitySkill * profile.QualitySkillWeight) * skill)
             + (b.QualityEquipment * equipmentAverage)
             + p.EventQuality
             - (b.QualityBurnout * s.Burnout)
@@ -32,14 +33,15 @@ public static class AudienceRules
             + (b.ViewersSkill * skill)
             + (b.ViewersSqrtFollowers * FixedMath.Sqrt(followers))
             + (b.ViewersLinearFollowers * followers);
-        var baseline = FixedMath.Max(b.ViewersMin, reach * b.PlatformReach * (QualityOffset + (quality / Fixed.Hundred)));
+        var baseline = FixedMath.Max(b.ViewersMin, reach * b.PlatformReach * profile.Reach * (QualityOffset + (quality / Fixed.Hundred)));
 
-        (var noise, rng) = rng.NextFixed(b.NoiseMin, b.NoiseMax);
+        (var noise, rng) = rng.NextFixed(profile.NoiseMin, profile.NoiseMax);
         var uncapped = baseline * (Fixed.One - (boredom / b.BoredomDivisor)) * p.AudienceMultiplier * noise;
         var live = FixedMath.Max(Fixed.Zero, FixedMath.Min(b.ViralCapMultiplier * baseline, uncapped)).RoundToLong();
 
-        var gained = (Fixed.FromInt(live) * b.ConversionRate * (s.Credibility / CredibilityNeutral)).RoundToLong();
-        var lost = (followers * (b.ChurnRate + (b.ChurnBoredomFactor * boredom))).RoundToLong();
+        var gained = (Fixed.FromInt(live) * b.ConversionRate * (s.Credibility / CredibilityNeutral) * profile.Conversion).RoundToLong();
+        var mastery = skill >= b.MasteryFromSkill ? b.MasteryChurnFactor : Fixed.One;
+        var lost = (followers * ((b.ChurnRate + (b.ChurnBoredomFactor * boredom)) * profile.Churn * mastery)).RoundToLong();
         return new AudienceResult(quality, live, gained, lost, gained - lost);
     }
 }

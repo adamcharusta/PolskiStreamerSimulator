@@ -5,6 +5,7 @@ using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets.M3;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
+using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets;
 
@@ -89,7 +90,8 @@ public sealed class M3Ruleset : IRuleset
         }
 
         var pending = settleable.Value;
-        var core = ApplyFollowersPercent(WeekSettlement.Core(s, pending, c), pending.FollowersPercent);
+        var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
+        var core = ApplyFollowersPercent(WeekSettlement.Core(streamed, pending, c), pending.FollowersPercent);
         var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(core.State, s.Week.Value), c);
         if (ending is null)
         {

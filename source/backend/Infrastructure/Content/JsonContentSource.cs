@@ -82,6 +82,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
         const string f = BalanceFile;
         var weights = Property(b, "scoreWeights", f);
         var difficulty = Property(b, "difficultyMultiplier", f);
+        JsonElement? mastery = b.TryGetProperty("mastery", out var masteryElement) ? masteryElement : null;
         return new BalanceConstants
         {
             Version = ReadString(b, "version", f),
@@ -150,8 +151,32 @@ public sealed class JsonContentSource(string directory) : IContentSource
             NetworkCollaborate = b.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null
                 ? ReadChoice(network, $"{f}.networkCollaborate", schema: 2)
                 : null,
+            Categories = b.TryGetProperty("categories", out var categories) ? ReadCategories(categories) : null,
+            MasteryFromSkill = mastery is { } m ? ReadFixed(m, "fromSkill", $"{f}.mastery") : Fixed.FromInt(101),
+            MasteryBoredomRelief = mastery is { } r ? ReadInt(r, "boredomRelief", $"{f}.mastery") : 0,
+            MasteryChurnFactor = mastery is { } c ? ReadFixed(c, "churnFactor", $"{f}.mastery") : Fixed.One,
         };
     }
+
+    /// <summary>Reads the optional per-category profiles; every category is required once the section exists.</summary>
+    private static CategoryValues<CategoryProfile> ReadCategories(JsonElement categories)
+        => new([.. Enum.GetValues<Category>().Select(c => ReadCategory(Property(categories, c.ToString(), $"{BalanceFile}.categories"), $"{BalanceFile}.categories.{c}"))]);
+
+    private static CategoryProfile ReadCategory(JsonElement p, string path) => new(
+        ReadFixed(p, "reach", path),
+        ReadFixed(p, "noiseMin", path),
+        ReadFixed(p, "noiseMax", path),
+        ReadFixed(p, "conversion", path),
+        ReadFixed(p, "churn", path),
+        ReadInt(p, "boredomGainMin", path),
+        ReadInt(p, "boredomGainMax", path),
+        ReadFixed(p, "subYield", path),
+        ReadFixed(p, "donationYield", path),
+        ReadFixed(p, "adYield", path),
+        ReadFixed(p, "qualitySkillWeight", path),
+        ReadFixed(p, "credibilityPerStream", path),
+        ReadFixed(p, "dramaPerStream", path),
+        ReadFixed(p, "viralBase", path));
 
     private static ImmutableDictionary<Background, StartingProfile> ReadProfiles(JsonElement profiles)
     {

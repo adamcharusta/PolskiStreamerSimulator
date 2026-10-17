@@ -133,4 +133,19 @@ public sealed record BalanceConstants
     public ChoiceDefinition? NetworkCollaborate { get; init; }
 
     public Fixed NetworkEnergyCost { get; init; }
+
+    /// <summary>Per-category balance profiles (M3); null in M1, where every category is neutral.</summary>
+    public CategoryValues<CategoryProfile>? Categories { get; init; }
+
+    /// <summary>Skill from which a category counts as mastered; M1 default 101 is unreachable.</summary>
+    public Fixed MasteryFromSkill { get; init; } = Fixed.FromInt(101);
+
+    /// <summary>Boredom gain a master saves per stream.</summary>
+    public int MasteryBoredomRelief { get; init; }
+
+    /// <summary>Multiplier of the churn rate for a master.</summary>
+    public Fixed MasteryChurnFactor { get; init; } = Fixed.One;
+
+    /// <summary>The profile of <paramref name="category"/>; neutral when no profiles are configured.</summary>
+    public CategoryProfile Profile(Category category) => Categories is { } all ? all[category] : CategoryProfile.Neutral(this);
 }
