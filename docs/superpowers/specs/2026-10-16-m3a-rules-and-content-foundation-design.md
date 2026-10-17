@@ -167,6 +167,8 @@ The week plan returned by the API carries this odds presentation, so the player 
 
 No category is intrinsically losing: the higher-reach categories pay with volatility, churn or reputation.
 
+**Tuned by the M3-A baseline simulation (2026-10-17, agent, [report](../../reports/m3a-baseline-simulation.md#tuning-log)).** The proposed income tilts never changed the leading income source, because per live viewer the base yields are 0.20 PLN subscriptions, 0.15 donations and 0.05 ads. To meet the distinct-path criterion, `content/m3/balance.json` sets Just Chatting to subscriptions ×0.90 and donations ×1.40, and FPS to subscriptions ×0.65, donations ×0.80 and ads ×2.80. The other values in the table are unchanged.
+
 ### 7.2 Skill, decay and specialization
 
 - Training and practice gains keep the M1 rule (`max(0.2, (100 − skill)/100) × factor`); decay keeps 0.1 per week after 13 inactive weeks down to the starting skill.
@@ -183,7 +185,7 @@ A viral stream multiplies live viewers by a seeded 1.5–3.0, capped at 3× base
 
 ## 8. Simulation and acceptance
 
-The batch simulator gains `--ruleset m3-systems.1` and two policies: `Networker` (Balanced with `NetworkCollaborate` every third free week) and one `Specialist` per category. A 10,000-career run writes `docs/reports/m3a-baseline-simulation.md`.
+The batch simulator gains the `m3-systems.1` ruleset (taken from the content directory's `ruleset`, so `--content content/m3` selects it; no separate `--ruleset` flag) and two policies: `Networker` (Balanced with `NetworkCollaborate` every third free week) and one `Specialist` per category. A 10,000-career run writes `docs/reports/m3a-baseline-simulation.md`.
 
 Measurable criteria for the M3-A part of the issues:
 
