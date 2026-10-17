@@ -5,7 +5,10 @@ using PolskiStreamerSimulator.Domain.Numerics;
 
 namespace PolskiStreamerSimulator.Domain.Simulation.Policies;
 
-/// <summary>The M1 simulation policies used by tests and the batch simulator. None of them retires early.</summary>
+/// <summary>
+/// The simulation policies used by tests and the batch simulator: <see cref="All"/> for M1 content and
+/// <see cref="M3All"/> for M3 content. None of them retires early.
+/// </summary>
 public static class BuiltInPolicies
 {
     /// <summary>Rule-based play on the background's bonus category, switching away while it is boring.</summary>
@@ -23,7 +26,21 @@ public static class BuiltInPolicies
     /// <summary>Balanced rules with the primary category rotating by week.</summary>
     public static IChoicePolicy Rotator { get; } = new RulePolicy("Rotator", CategoryMode.Rotate, restBelowEnergy: 30);
 
+    /// <summary>Balanced rules plus <see cref="MainAction.NetworkCollaborate"/> every third week with enough energy (M3).</summary>
+    public static IChoicePolicy Networker { get; } = new RulePolicy("Networker", CategoryMode.BonusUnlessBored, restBelowEnergy: 30, network: true);
+
+    /// <summary>The M1 policies.</summary>
     public static IReadOnlyList<IChoicePolicy> All { get; } = [Balanced, Grinder, RestHeavy, Specialist, Rotator];
+
+    private static readonly IChoicePolicy[] Specialists =
+        [.. Enum.GetValues<Category>().Select(category => new RulePolicy($"Specialist-{category}", CategoryMode.Fixed, restBelowEnergy: 30, fixedCategory: category))];
+
+    /// <summary>The M3 policies: the M1 ones without the bonus specialist, the networker and one specialist per category.</summary>
+    public static IReadOnlyList<IChoicePolicy> M3All { get; } =
+        [Balanced, Grinder, RestHeavy, Rotator, Networker, .. Enum.GetValues<Category>().Select(SpecialistOf)];
+
+    /// <summary>Balanced rules on <paramref name="category"/> for the whole career, however bored (name <c>Specialist-{Category}</c>).</summary>
+    public static IChoicePolicy SpecialistOf(Category category) => Specialists[(int)category];
 
     public static IChoicePolicy ByName(string name)
         => All.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.Ordinal))
@@ -34,9 +51,16 @@ public static class BuiltInPolicies
         Bonus,
         BonusUnlessBored,
         Rotate,
+        Fixed,
     }
 
-    private sealed class RulePolicy(string name, CategoryMode categoryMode, int restBelowEnergy, bool grind = false) : IChoicePolicy
+    private sealed class RulePolicy(
+        string name,
+        CategoryMode categoryMode,
+        int restBelowEnergy,
+        bool grind = false,
+        bool network = false,
+        Category fixedCategory = default) : IChoicePolicy
     {
         private static readonly Fixed BurnoutLimit = Fixed.FromInt(70);
         private static readonly Fixed BoredomLimit = Fixed.FromInt(60);
@@ -44,6 +68,9 @@ public static class BuiltInPolicies
         private static readonly Fixed GambleThreshold = Fixed.FromRatio(1, 2);
         private const int UpgradeReserveMultiple = 3;
         private const int TrainEveryWeeks = 4;
+        private const int NetworkEveryWeeks = 3;
+        private const int NetworkFromEnergy = 40;
+        private const string RestOnly = "rest-only";
 
         public string Name => name;
 
@@ -52,7 +79,8 @@ public static class BuiltInPolicies
             var (category, categoryRule) = ChooseCategory(s, c);
             var (preferred, code, args) = Prefer(s, c, category);
             (string Name, string Value)[] common = [("category", PolicyReason.Name(category)), ("categoryRule", categoryRule)];
-            return legal.Any(l => l.Plan == preferred && l.DisabledReason is null)
+            var restOnly = legal.Any(l => l.DisabledReason == RestOnly);
+            return !restOnly && legal.Any(l => l.Plan == preferred && l.DisabledReason is null)
                 ? new PlanDecision(preferred, PolicyReason.Of(code, [.. args, .. common]))
                 : new PlanDecision(
                     new WeekPlan(MainAction.Rest, category),
@@ -113,6 +141,11 @@ public static class BuiltInPolicies
                 return (rest, "rest-high-burnout", [("burnout", s.Burnout.ToString()), ("limit", BurnoutLimit.ToString())]);
             }
 
+            if (network && c.Balance.NetworkCollaborate is not null && s.Week.Value % NetworkEveryWeeks == 0 && s.Energy >= Fixed.FromInt(NetworkFromEnergy))
+            {
+                return (new WeekPlan(MainAction.NetworkCollaborate, category), "network-scheduled", [("everyWeeks", NetworkEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
+            }
+
             var upgradable = Enum.GetValues<EquipmentSlot>().Where(slot => s.Equipment[slot] < CareerInvariants.MaxEquipmentTier).ToArray();
             if (upgradable.Length > 0)
             {
@@ -142,6 +175,11 @@ public static class BuiltInPolicies
             if (categoryMode == CategoryMode.Rotate)
             {
                 return ((Category)(s.Week.Value % CategoryValues.Count), "rotation");
+            }
+
+            if (categoryMode == CategoryMode.Fixed)
+            {
+                return (fixedCategory, "fixed");
             }
 
             var startingSkill = c.Profiles[s.Background].Skill;

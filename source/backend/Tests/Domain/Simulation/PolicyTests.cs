@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
+using PolskiStreamerSimulator.Infrastructure.Content;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Simulation;
@@ -104,4 +105,71 @@ public class PolicyTests
     [Fact]
     public void Built_in_policies_never_retire()
         => Assert.All(BuiltInPolicies.All, p => Assert.False(p.ShouldRetire(TestCareers.Dorm(1) with { Week = new CareerWeek(1000) })));
+
+    [Fact]
+    public void M3All_lists_the_m3_policies_and_one_specialist_per_category()
+    {
+        Assert.Equal(
+            ["Balanced", "Grinder", "RestHeavy", "Rotator", "Networker", "Specialist-JustChatting", "Specialist-Fps", "Specialist-Moba", "Specialist-Chess", "Specialist-Gambling"],
+            BuiltInPolicies.M3All.Select(p => p.Name));
+        Assert.Equal("Specialist-Chess", BuiltInPolicies.SpecialistOf(Category.Chess).Name);
+        Assert.Same(BuiltInPolicies.SpecialistOf(Category.Moba), BuiltInPolicies.SpecialistOf(Category.Moba));
+    }
+
+    [Fact]
+    public void Networker_networks_every_third_free_week()
+    {
+        var s = M3Play.Fresh() with { Week = new CareerWeek(3), Energy = Fixed.FromInt(80) };
+        var decision = BuiltInPolicies.Networker.ChoosePlan(s, M3Play.C, M3Play.Engine.LegalPlans(s, M3Play.C).Value);
+        Assert.Equal(MainAction.NetworkCollaborate, decision.Plan.Action);
+        Assert.Equal("network-scheduled", decision.Reason.Code);
+        Assert.Equal("3", decision.Reason.Args["everyWeeks"]);
+    }
+
+    [Fact]
+    public void Networker_skips_networking_when_tired_off_schedule_or_without_the_action()
+    {
+        IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> Legal(CareerState s) => M3Play.Engine.LegalPlans(s, M3Play.C).Value;
+        var tired = M3Play.Fresh() with { Week = new CareerWeek(3), Energy = Fixed.FromInt(39), CashPln = 500 };
+        var offSchedule = M3Play.Fresh() with { Week = new CareerWeek(4), Energy = Fixed.FromInt(80), CashPln = 500 };
+        Assert.NotEqual(MainAction.NetworkCollaborate, BuiltInPolicies.Networker.ChoosePlan(tired, M3Play.C, Legal(tired)).Plan.Action);
+        Assert.NotEqual(MainAction.NetworkCollaborate, BuiltInPolicies.Networker.ChoosePlan(offSchedule, M3Play.C, Legal(offSchedule)).Plan.Action);
+        Assert.Equal(MainAction.NoAction, Choose(BuiltInPolicies.Networker, Poor(9)).Action);
+    }
+
+    [Fact]
+    public void Specialist_streams_only_its_category_even_when_bored()
+    {
+        var policy = BuiltInPolicies.SpecialistOf(Category.Chess);
+        var s = M3Play.Fresh() with { Boredom = CategoryValues<Fixed>.Uniform(Fixed.FromInt(90)) };
+        var decision = policy.ChoosePlan(s, M3Play.C, M3Play.Engine.LegalPlans(s, M3Play.C).Value);
+        Assert.Equal(Category.Chess, decision.Plan.Category);
+        Assert.Equal("fixed", decision.Reason.Args["categoryRule"]);
+    }
+
+    [Fact]
+    public void A_rest_only_week_makes_every_policy_rest_with_fallback_rest()
+    {
+        var s = CareerFlags.Set(M3Play.Fresh() with { Week = new CareerWeek(3), Energy = Fixed.FromInt(20) }, "sys:rest-only", 1);
+        var legal = M3Play.Engine.LegalPlans(s, M3Play.C).Value;
+        Assert.All(BuiltInPolicies.M3All, policy =>
+        {
+            var decision = policy.ChoosePlan(s, M3Play.C, legal);
+            Assert.Equal(MainAction.Rest, decision.Plan.Action);
+            Assert.Equal("fallback-rest", decision.Reason.Code);
+        });
+    }
+
+    [Fact]
+    public void M3_policies_finish_careers_without_invariant_violations()
+    {
+        var c = new JsonContentSource(TestPaths.ContentM3).Load();
+        foreach (var policy in BuiltInPolicies.M3All)
+        {
+            var start = CareerFactory.Create(c.RulesetId, c.Digest, c.Profiles[Background.ChessClubRegular], Background.ChessClubRegular, Difficulty.Normal, PronounSet.Nonbinary, 11);
+            var run = CareerRunner.Run(M3Play.Engine, c, start, policy);
+            Assert.Empty(run.InvariantViolations);
+            Assert.Equal(CareerStatus.Ended, run.Final.Status);
+        }
+    }
 }

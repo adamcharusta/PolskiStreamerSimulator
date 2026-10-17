@@ -286,6 +286,7 @@
     "rest-high-burnout": "Wypalenie {{burnout}} powyżej {{limit}} — odpoczynek.",
     "upgrade-equipment": "{{slot}} za {{pricePln}} przy kasie {{cashPln}} — ulepszenie.",
     "train-scheduled": "Co {{everyWeeks}} tygodnie trening.",
+    "network-scheduled": "Co {{everyWeeks}} tygodnie networking.",
     "manage-community-drama": "Drama {{drama}} powyżej {{limit}} — ogarnianie społeczności.",
     "no-action-default": "Nic pilnego — zwykły stream.",
     "fallback-rest": "„{{preferred}}” niedostępne — odpoczynek.",
@@ -295,6 +296,11 @@
     "only-gambles": "Same ryzykowne opcje — szansa {{probability}}.",
     "unknown": "Decyzja automatu.",
     "category": "Kategoria {{category}}: {{rule}}.",
-    "rule": { "bonus": "mocna strona", "least-bored": "najmniej nudna", "rotation": "rotacja" }
+    "rule": {
+      "bonus": "mocna strona",
+      "least-bored": "najmniej nudna",
+      "rotation": "rotacja",
+      "fixed": "stała specjalizacja"
+    }
   }
 }

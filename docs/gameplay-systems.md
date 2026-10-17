@@ -136,7 +136,7 @@ Permanent platform bans require a clear escalating rule path or a rare severe in
 
 A strategy is a versioned object with: category rotation (specialize or weighted mix), primary weekly action sequence, sponsor acceptance threshold, financial reserve, risk appetite, drama target, rest threshold, and event-response priorities (growth, cash, credibility, safety). The UI previews example choices and explains ties. Automation chooses only legal options; if no option matches, it selects the least-risk legal option and records a fallback reason. It never silently spends beyond the reserve unless the player has explicitly allowed emergency spending. Major event pauses override policy.
 
-**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored` or `rotation`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
+**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `network-scheduled` (`everyWeeks`; M3 `Networker` only), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`; in M3 also every plan of a week the recovery crisis limits to `rest-only`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored`, `rotation` or, for the M3 category specialists, `fixed`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
 
 Batch runs are incremental commits, not one opaque transaction: each completed week is recorded and autosaved. Canceling a batch leaves already completed weeks intact. Deterministic random draws and policy choices are included in the ranked action log. The manual and automated paths call the same simulation functions.
 
@@ -212,3 +212,14 @@ The batch simulator and tests use five deterministic policies; all play through 
 | RestHeavy | Balanced, but rests whenever energy < 60. |
 | Specialist | Balanced on the bonus category for the whole career. |
 | Rotator | Balanced with the primary category rotating by week number. |
+
+### M3 simulation policies (Agent proposal)
+
+For `m3-systems.1` content the batch simulator defaults to ten policies (`BuiltInPolicies.M3All`, spec 2026-10-16 §8): Balanced, Grinder, RestHeavy and Rotator as above, plus:
+
+| Policy | Behaviour |
+| --- | --- |
+| Networker | Balanced, but in every third week (`week mod 3 = 0`) with energy ≥ 40 it plays `NetworkCollaborate` when no rest rule fires (reason `network-scheduled` with `everyWeeks`). |
+| Specialist-{Category} | One per category: Balanced on that fixed category for the whole career, however bored (category rule `fixed`). |
+
+The M1 `Specialist` (bonus category) stays in the M1 list only. In a week the recovery crisis limits to `Rest` (`rest-only`), every policy rests with reason `fallback-rest`.
