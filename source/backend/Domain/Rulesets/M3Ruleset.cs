@@ -48,7 +48,7 @@ public sealed class M3Ruleset : IRuleset
             : WeekActions.Started(s, applied.Value, plan, [], rng);
         var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
         var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
-        var pending = started.Pending!;
+        var pending = started.Pending;
         if (s.Carry is { } carry)
         {
             pending = pending with

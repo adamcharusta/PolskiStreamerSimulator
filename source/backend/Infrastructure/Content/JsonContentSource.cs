@@ -23,6 +23,9 @@ public sealed class JsonContentSource(string directory) : IContentSource
 
     /// <summary>Cooldown of a schema-2 event that does not set <c>cooldownWeeks</c>.</summary>
     private const int DefaultCooldownWeeks = 13;
+    private const string BurnoutPenaltySection = "burnoutPenalty";
+    private const string ViralSection = "viral";
+    private const string MasterySection = "mastery";
 
     public ContentSnapshot Load()
         => Parse(
@@ -87,10 +90,10 @@ public sealed class JsonContentSource(string directory) : IContentSource
         const string f = BalanceFile;
         var weights = Property(b, "scoreWeights", f);
         var difficulty = Property(b, "difficultyMultiplier", f);
-        var burnout = Section(b, "burnoutPenalty");
+        var burnout = Section(b, BurnoutPenaltySection);
         var shortStream = Section(b, "shortStream");
-        var viral = Section(b, "viral");
-        var mastery = Section(b, "mastery");
+        var viral = Section(b, ViralSection);
+        var mastery = Section(b, MasterySection);
         return new BalanceConstants
         {
             Version = ReadString(b, "version", f),
@@ -160,21 +163,21 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ShortStreamFatigue = SectionFixed(shortStream, "fatigue", "shortStream", Fixed.One),
             ShortStreamAudience = SectionFixed(shortStream, "audience", "shortStream", Fixed.One),
             Categories = Section(b, "categories") is { } categories ? ReadCategories(categories) : null,
-            BurnoutPenaltyFrom = SectionFixed(burnout, "from", "burnoutPenalty", Fixed.FromInt(101)),
-            BurnoutPenaltyPerPoint = SectionFixed(burnout, "perPoint", "burnoutPenalty", Fixed.Zero),
-            BurnoutPenaltyCap = SectionFixed(burnout, "cap", "burnoutPenalty", Fixed.Zero),
-            ViralQualityFrom = SectionFixed(viral, "qualityFrom", "viral", Fixed.Zero),
-            ViralPerQualityPoint = SectionFixed(viral, "perQualityPoint", "viral", Fixed.Zero),
-            ViralPerCritical = SectionFixed(viral, "perCritical", "viral", Fixed.Zero),
-            ViralChanceCap = SectionFixed(viral, "chanceCap", "viral", Fixed.Zero),
-            ViralMultiplierMin = SectionFixed(viral, "multiplierMin", "viral", Fixed.Zero),
-            ViralMultiplierMax = SectionFixed(viral, "multiplierMax", "viral", Fixed.Zero),
-            ViralFollowerShare = SectionFixed(viral, "followerShare", "viral", Fixed.Zero),
-            ViralViewerShare = SectionFixed(viral, "viewerShare", "viral", Fixed.Zero),
-            ViralFollowerMin = SectionInt(viral, "followerMin", "viral", 0),
-            MasteryFromSkill = SectionFixed(mastery, "fromSkill", "mastery", Fixed.FromInt(101)),
-            MasteryBoredomRelief = SectionInt(mastery, "boredomRelief", "mastery", 0),
-            MasteryChurnFactor = SectionFixed(mastery, "churnFactor", "mastery", Fixed.One),
+            BurnoutPenaltyFrom = SectionFixed(burnout, "from", BurnoutPenaltySection, Fixed.FromInt(101)),
+            BurnoutPenaltyPerPoint = SectionFixed(burnout, "perPoint", BurnoutPenaltySection, Fixed.Zero),
+            BurnoutPenaltyCap = SectionFixed(burnout, "cap", BurnoutPenaltySection, Fixed.Zero),
+            ViralQualityFrom = SectionFixed(viral, "qualityFrom", ViralSection, Fixed.Zero),
+            ViralPerQualityPoint = SectionFixed(viral, "perQualityPoint", ViralSection, Fixed.Zero),
+            ViralPerCritical = SectionFixed(viral, "perCritical", ViralSection, Fixed.Zero),
+            ViralChanceCap = SectionFixed(viral, "chanceCap", ViralSection, Fixed.Zero),
+            ViralMultiplierMin = SectionFixed(viral, "multiplierMin", ViralSection, Fixed.Zero),
+            ViralMultiplierMax = SectionFixed(viral, "multiplierMax", ViralSection, Fixed.Zero),
+            ViralFollowerShare = SectionFixed(viral, "followerShare", ViralSection, Fixed.Zero),
+            ViralViewerShare = SectionFixed(viral, "viewerShare", ViralSection, Fixed.Zero),
+            ViralFollowerMin = SectionInt(viral, "followerMin", ViralSection, 0),
+            MasteryFromSkill = SectionFixed(mastery, "fromSkill", MasterySection, Fixed.FromInt(101)),
+            MasteryBoredomRelief = SectionInt(mastery, "boredomRelief", MasterySection, 0),
+            MasteryChurnFactor = SectionFixed(mastery, "churnFactor", MasterySection, Fixed.One),
         };
     }
 
