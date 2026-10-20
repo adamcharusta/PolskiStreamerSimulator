@@ -27,5 +27,11 @@ public static class ReportViews
         [.. report.Costs.Select(Line)],
         report.CashDelta,
         [.. report.StatChanges.Select(Line)],
-        report.Ending);
+        report.Ending,
+        report.DecisionRolls.IsDefault ? [] : [.. report.DecisionRolls.Select(Roll)],
+        report.ActionRoll is { } action ? Roll(action) : null,
+        report.Viral is { } viral ? Viral(viral) : null);
+
+    public static ViralView Viral(ViralResult viral)
+        => new(viral.Roll, viral.Threshold, Decimals.Of(viral.Multiplier), viral.FollowersBonus);
 }

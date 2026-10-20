@@ -9,11 +9,20 @@ using PolskiStreamerSimulator.Application.Content;
 
 namespace PolskiStreamerSimulator.Tests.Support;
 
-/// <summary>The API over in-memory stores: no database and no Docker.</summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>
+/// <summary>The API over in-memory stores with the M1 content: no database and no Docker.</summary>
+public class ApiFactory : WebApplicationFactory<Program>
 {
+    private readonly string contentDirectory;
+
     // Program ends with RunJasperFxCommands; the test host must still start.
     static ApiFactory() => JasperFxEnvironment.AutoStartHost = true;
+
+    public ApiFactory()
+        : this(TestPaths.ContentM1)
+    {
+    }
+
+    protected ApiFactory(string contentDirectory) => this.contentDirectory = contentDirectory;
 
     public InMemoryCareerStore Store { get; } = new();
 
@@ -22,13 +31,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Game", "Server=unused;Database=unused");
         builder.UseSetting("Database:InitializeOnStartup", "false");
-        builder.UseSetting("Content:Directory", TestPaths.ContentM1);
+        builder.UseSetting("Content:Directory", contentDirectory);
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<ICareerStore>();
             services.AddSingleton<ICareerStore>(Store);
             services.RemoveAll<IContentStore>();
-            services.AddSingleton<IContentStore>(new InMemoryContentStore(TestContent.Valid()));
+            services.AddSingleton<IContentStore>(new InMemoryContentStore(TestContent.Of(contentDirectory)));
         });
     }
 }
+
+/// <summary>The API over in-memory stores with the M3 content, which new careers pin in production.</summary>
+public sealed class M3ApiFactory() : ApiFactory(TestPaths.ContentM3);

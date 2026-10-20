@@ -188,4 +188,46 @@ public class M3DecisionTests
             Assert.True(decisions > 0, policy.Name);
         }
     }
+
+    [Fact]
+    public void A_decision_choice_whose_requirement_is_not_met_is_shown_unavailable_and_rejected()
+    {
+        var s = PlayWeek(Fresh());
+        var c = WithRequirement(C, "first-week", "bold", new ChoiceRequirement(s.CashPln + 1, null));
+
+        var shown = Engine.PresentDecision(s, c).Value;
+        var rejected = Engine.ResolveDecision(s, c, "bold", s.StateVersion);
+
+        Assert.Equal([null, "needs-cash"], shown.Choices.Select(o => o.UnavailableReason));
+        Assert.Equal(new DomainError(DomainErrorCode.IllegalAction, "choice-unavailable"), rejected.Error);
+        Assert.True(Engine.ResolveDecision(s, c, "calm", s.StateVersion).IsSuccess);
+        Assert.True(Engine.ResolveDecision(s, WithRequirement(C, "first-week", "bold", new ChoiceRequirement(s.CashPln, null)), "bold", s.StateVersion).IsSuccess);
+    }
+
+    [Fact]
+    public void A_live_choice_needing_more_energy_is_shown_unavailable_and_rejected()
+    {
+        var s = Start(Fresh(), MainAction.NoAction);
+        var eventId = s.Pending!.EventIds[0];
+        var choiceId = C.Events.Single(e => e.Id == eventId).Choices[0].Id;
+        var c = WithRequirement(C, eventId, choiceId, new ChoiceRequirement(null, s.Energy + Fixed.One));
+
+        var shown = Engine.PresentEvent(s, c).Value;
+        var rejected = Engine.ResolveEvent(s, c, choiceId, s.StateVersion);
+
+        Assert.Equal("needs-energy", shown.Choices[0].UnavailableReason);
+        Assert.Equal(new DomainError(DomainErrorCode.IllegalAction, "choice-unavailable"), rejected.Error);
+        Assert.Equal(DomainErrorCode.StaleVersion, Engine.ResolveEvent(s, c, choiceId, s.StateVersion + 1).Error.Code);
+    }
+
+    private static ContentSnapshot WithRequirement(ContentSnapshot c, string eventId, string choiceId, ChoiceRequirement requirement)
+        => c with
+        {
+            Events =
+            [
+                .. c.Events.Select(e => e.Id != eventId
+                    ? e
+                    : e with { Choices = [.. e.Choices.Select(ch => ch.Id == choiceId ? ch with { Requires = requirement } : ch)] }),
+            ],
+        };
 }

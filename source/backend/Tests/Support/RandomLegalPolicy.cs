@@ -29,8 +29,9 @@ public sealed class RandomLegalPolicy(ulong seed, int retireFromWeek = 900) : IC
 
     public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
     {
-        (var index, rng) = rng.NextInt(0, e.Choices.Length - 1);
-        return new ChoiceDecision(e.Choices[index].ChoiceId, PolicyReason.Of("random"));
+        var available = e.Choices.Where(o => o.UnavailableReason is null).ToArray();
+        (var index, rng) = rng.NextInt(0, available.Length - 1);
+        return new ChoiceDecision(available[index].ChoiceId, PolicyReason.Of("random"));
     }
 
     public bool ShouldRetire(CareerState s)

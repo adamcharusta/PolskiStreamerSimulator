@@ -15,6 +15,7 @@ public sealed class CareerViewBuilder(WeekEngine engine)
         => new(
             careerId,
             nickname,
+            s.RulesetId,
             s.StateVersion,
             s.Status,
             s.Ending,
@@ -59,36 +60,50 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             return new NextStepView(NextStepKind.Ended, [], null);
         }
 
+        // A pause that queues no decision event leaves the week to be planned by hand.
         if (s.Pending is null)
         {
-            var plans = Expect(engine.LegalPlans(s, c)).Select(l => new PlanOptionView(ReportViews.Plan(l.Plan), l.DisabledReason));
-            return new NextStepView(NextStepKind.PlanWeek, [.. plans], null);
+            return Expect(engine.RequiresPlayerDecision(s, c)) && engine.PresentDecision(s, c) is { IsSuccess: true } decision
+                ? new NextStepView(NextStepKind.ResolveDecision, [], Event(decision.Value, c, mandatory: true))
+                : new NextStepView(NextStepKind.PlanWeek, Plans(s, c), null);
         }
 
         return s.Pending.Resolved.Length < s.Pending.EventIds.Length
-            ? new NextStepView(NextStepKind.ResolveEvent, [], Event(Expect(engine.PresentEvent(s, c)), c))
+            ? new NextStepView(NextStepKind.ResolveEvent, [], Event(Expect(engine.PresentEvent(s, c)), c, mandatory: false))
             : new NextStepView(NextStepKind.SettleWeek, [], null);
     }
 
-    private static EventView Event(EventPresentation presented, ContentSnapshot c)
+    /// <summary>Every plan with its disabled reason and, for a rolled action (networking), the odds of its roll.</summary>
+    private PlanOptionView[] Plans(CareerState s, ContentSnapshot c)
+        => [.. Expect(engine.LegalPlans(s, c)).Select(l => new PlanOptionView(
+            ReportViews.Plan(l.Plan),
+            l.DisabledReason,
+            Expect(engine.PresentAction(s, c, l.Plan)) is { } odds ? Choice(odds, c.Balance.NetworkCollaborate!) : null))];
+
+    private static EventView Event(EventPresentation presented, ContentSnapshot c, bool mandatory)
     {
         var definition = c.Events.First(e => string.Equals(e.Id, presented.EventId, StringComparison.Ordinal));
-        return new EventView(presented.EventId, definition.TitleKey ?? string.Empty, definition.TextPl, [.. presented.Choices.Select(o => Choice(o, definition))]);
+        return new EventView(
+            presented.EventId,
+            definition.TitleKey,
+            definition.Title,
+            definition.TextPl,
+            [.. presented.Choices.Select(o => Choice(o, definition.Choices.First(x => string.Equals(x.Id, o.ChoiceId, StringComparison.Ordinal))))],
+            mandatory);
     }
 
-    private static ChoiceView Choice(ChoiceOdds odds, EventDefinition definition)
-    {
-        var choice = definition.Choices.First(x => string.Equals(x.Id, odds.ChoiceId, StringComparison.Ordinal));
-        return new ChoiceView(
+    private static ChoiceView Choice(ChoiceOdds odds, ChoiceDefinition choice)
+        => new(
             odds.ChoiceId,
-            choice.LabelKey ?? string.Empty,
+            choice.LabelKey,
             choice.LabelPl,
             odds.Guaranteed,
             Decimals.Of(odds.Probability),
             odds.Threshold,
             [.. odds.Modifiers.Select(ReportViews.Modifier)],
-            odds.AllowsCritical);
-    }
+            odds.AllowsCritical,
+            Decimals.Of(odds.ViralOnCritical),
+            odds.UnavailableReason);
 
     private static T Expect<T>(Result<T> result)
         => result.IsSuccess ? result.Value : throw new InvalidOperationException($"Career view failed: {result.Error.Code} ({result.Error.Detail}).");

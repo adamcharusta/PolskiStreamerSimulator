@@ -8,7 +8,8 @@ public sealed record ModifierLine(string LabelKey, Fixed Value);
 
 /// <summary>
 /// Odds shown before a choice: success when the 1–100 roll is at most <see cref="Threshold"/>.
-/// A guaranteed choice has probability 1 and threshold 100 and is never rolled.
+/// A guaranteed choice has probability 1 and threshold 100 and is never rolled. <see cref="UnavailableReason"/>
+/// (<c>needs-cash</c>, <c>needs-energy</c>) is set when the career does not meet the choice's requirement.
 /// </summary>
 public sealed record ChoiceOdds(
     string ChoiceId,
@@ -17,7 +18,8 @@ public sealed record ChoiceOdds(
     int Threshold,
     ImmutableArray<ModifierLine> Modifiers,
     bool AllowsCritical,
-    Fixed ViralOnCritical = default);
+    Fixed ViralOnCritical = default,
+    string? UnavailableReason = null);
 
 /// <summary>The next unresolved live event of the pending week with the odds of each choice.</summary>
 public sealed record EventPresentation(string EventId, ImmutableArray<ChoiceOdds> Choices);

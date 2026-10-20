@@ -13,6 +13,8 @@ public sealed class ApiProblemsTests
         { ErrorCodes.CareerNotFound, 404 },
         { ErrorCodes.StaleVersion, 409 },
         { ErrorCodes.CareerEnded, 409 },
+        { ErrorCodes.DecisionPending, 409 },
+        { ErrorCodes.NoPendingDecision, 409 },
         { ErrorCodes.IllegalAction, 422 },
         { ErrorCodes.UnknownChoice, 422 },
         { ErrorCodes.EventsUnresolved, 422 },

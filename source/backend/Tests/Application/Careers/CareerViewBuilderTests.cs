@@ -49,8 +49,9 @@ public sealed class CareerViewBuilderTests
         Assert.Equal(NextStepKind.ResolveEvent, view.Next.Kind);
         var shown = view.Next.Event!;
         var definition = Content.Events.Single(e => e.Id == shown.EventId);
-        Assert.Equal(definition.TextPl, shown.TextPl);
-        Assert.Equal(definition.Choices.Select(c => c.LabelPl), shown.Choices.Select(c => c.LabelPl));
+        Assert.Equal((definition.TitleKey, (string?)null, definition.TextPl, false), (shown.TitleKey, shown.Title, shown.Text, shown.Mandatory));
+        Assert.Equal(definition.Choices.Select(c => c.LabelPl), shown.Choices.Select(c => c.Label));
+        Assert.All(shown.Choices, c => Assert.Null(c.UnavailableReason));
         Assert.All(shown.Choices, c => Assert.InRange(c.Probability, 0m, 1m));
         Assert.Empty(view.Next.Plans);
     }

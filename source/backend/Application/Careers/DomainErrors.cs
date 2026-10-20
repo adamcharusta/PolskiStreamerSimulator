@@ -13,6 +13,8 @@ public static class DomainErrors
         DomainErrorCode.EventsUnresolved => new AppError(ErrorCodes.EventsUnresolved, error.Detail),
         DomainErrorCode.CareerEnded => new AppError(ErrorCodes.CareerEnded, error.Detail),
         DomainErrorCode.UnknownChoice => new AppError(ErrorCodes.UnknownChoice, error.Detail),
+        DomainErrorCode.DecisionPending => new AppError(ErrorCodes.DecisionPending, error.Detail),
+        DomainErrorCode.NoPendingDecision => new AppError(ErrorCodes.NoPendingDecision, error.Detail),
         _ => throw new InvalidOperationException($"Server fault: {error.Code} ({error.Detail})."),
     };
 }

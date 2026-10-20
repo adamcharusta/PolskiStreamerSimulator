@@ -108,10 +108,14 @@ public static class BuiltInPolicies
                     PolicyReason.Of("fallback-rest", [("preferred", PolicyReason.Name(preferred.Action)), .. common]));
         }
 
-        /// <summary>Highest-probability gamble when it is at least even odds, otherwise the guaranteed response.</summary>
+        /// <summary>
+        /// Among the choices the career can take: the highest-probability gamble when it is at least even odds,
+        /// otherwise the guaranteed response.
+        /// </summary>
         public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
         {
-            var bestGamble = e.Choices.Where(o => !o.Guaranteed).OrderByDescending(o => o.Probability).FirstOrDefault();
+            var available = e.Choices.Where(o => o.UnavailableReason is null).ToArray();
+            var bestGamble = available.Where(o => !o.Guaranteed).OrderByDescending(o => o.Probability).FirstOrDefault();
             if (bestGamble is not null && bestGamble.Probability >= GambleThreshold)
             {
                 return new ChoiceDecision(
@@ -119,7 +123,7 @@ public static class BuiltInPolicies
                     PolicyReason.Of("gamble-best-odds", ("probability", bestGamble.Probability.ToString()), ("threshold", GambleThreshold.ToString())));
             }
 
-            var guaranteed = e.Choices.FirstOrDefault(o => o.Guaranteed);
+            var guaranteed = available.FirstOrDefault(o => o.Guaranteed);
             if (guaranteed is not null)
             {
                 return new ChoiceDecision(
@@ -129,7 +133,7 @@ public static class BuiltInPolicies
                         : PolicyReason.Of("take-guaranteed", ("bestProbability", bestGamble.Probability.ToString())));
             }
 
-            var only = bestGamble ?? e.Choices[0];
+            var only = bestGamble ?? available[0];
             return new ChoiceDecision(only.ChoiceId, PolicyReason.Of("only-gambles", ("probability", only.Probability.ToString())));
         }
 

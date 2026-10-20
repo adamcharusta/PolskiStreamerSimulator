@@ -125,7 +125,7 @@ public sealed class RunBatchHandler(
     }
 
     private static List<AutoWeekRecord> Records(IReadOnlyList<StoredAction> stored)
-        => [.. stored.Select(a => ContractJson.Deserialize<AutoWeekRecord>(a.ResponseJson))];
+        => [.. stored.Select(a => StoredContract.ReadAutoWeek(a.ResponseJson))];
 
     /// <summary>Whether the career's latest change is this command's last week, so no other command moved it since.</summary>
     private static bool Owns(StoredCareer career, IReadOnlyList<StoredAction> stored)

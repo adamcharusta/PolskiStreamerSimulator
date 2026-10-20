@@ -1,4 +1,4 @@
-# Multi-stage build of the API (TD-99). The build context is the repository root, so content/m1 ships with the app.
+# Multi-stage build of the API (TD-99). The build context is the repository root, so content/m1 and content/m3 ship with the app.
 # M6 reuses this file for the production image.
 FROM mcr.microsoft.com/dotnet/sdk:10.0.402-noble AS build
 WORKDIR /repo

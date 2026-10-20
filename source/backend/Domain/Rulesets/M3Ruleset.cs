@@ -22,6 +22,7 @@ public sealed class M3Ruleset : IRuleset
     private const string ViralClipFlag = "viral-clip";
     private const int ViralFlagWeeks = 4;
     private const string FollowersEventCode = "followers:event";
+    private const string ChoiceUnavailable = "choice-unavailable";
 
     public string Id => RulesetId;
 
@@ -76,8 +77,14 @@ public sealed class M3Ruleset : IRuleset
 
     public Result<EventPresentation> PresentEvent(CareerState s, ContentSnapshot c) => LiveEvents.Present(s, c);
 
+    /// <summary>Resolves like M1, but rejects a choice whose requirement the career does not meet.</summary>
     public Result<CareerState> ResolveEvent(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
     {
+        if ((RuleSteps.CommandRejection(s, expectedVersion) ?? Unavailable(LiveEvents.Present(s, c), choiceId)) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
         var resolved = LiveEvents.Resolve(s, c, choiceId, expectedVersion);
         if (!resolved.IsSuccess)
         {
@@ -168,10 +175,11 @@ public sealed class M3Ruleset : IRuleset
     /// <summary>
     /// Rolls the chosen answer to the first queued decision: stat, skill, flag and follow-up effects apply now; cash,
     /// follower effects, stat lines and the roll go into the carry. Sets the cooldown and one-time use, pops the queue.
+    /// A choice whose requirement the career does not meet is rejected.
     /// </summary>
     public Result<CareerState> ResolveDecision(CareerState s, ContentSnapshot c, string choiceId, long expectedVersion)
     {
-        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
+        if ((RuleSteps.CommandRejection(s, expectedVersion) ?? Unavailable(PresentDecision(s, c), choiceId)) is { } error)
         {
             return Result<CareerState>.Fail(error);
         }
@@ -231,6 +239,16 @@ public sealed class M3Ruleset : IRuleset
         => s.PendingDecisions is { Length: > 0 } queue
             ? RuleSteps.FindEvent(c, queue[0])
             : Result<EventDefinition>.Fail(DomainErrorCode.NoPendingDecision, "no-pending-decision");
+
+    /// <summary>
+    /// <c>choice-unavailable</c> when the presented <paramref name="choiceId"/> has an unmet requirement; a failed
+    /// presentation or an unknown choice is left to the resolution to report.
+    /// </summary>
+    private static DomainError? Unavailable(Result<EventPresentation> presented, string choiceId)
+        => presented.IsSuccess
+            && presented.Value.Choices.FirstOrDefault(o => o.ChoiceId == choiceId) is { UnavailableReason: not null }
+                ? new DomainError(DomainErrorCode.IllegalAction, ChoiceUnavailable)
+                : null;
 
     /// <summary>The command rejection (ended, stale version) first, then <c>decision-pending</c> while decisions are queued.</summary>
     private static DomainError? Blocked(CareerState s, long expectedVersion)
