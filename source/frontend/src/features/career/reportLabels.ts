@@ -56,7 +56,8 @@ export function statChangeText(t: TFunction, line: ReportLineView): string {
   }
 
   const cause = causeLabel(t, line.detail);
-  return `${statLabel(t, line.code)} ${delta}${cause === null ? '' : ` (${cause})`}`;
+  const change = `${statLabel(t, line.code)} ${delta}`;
+  return cause === null ? change : `${change} (${cause})`;
 }
 
 /** The roll against its threshold, or that a guaranteed choice needed none. */
@@ -68,5 +69,6 @@ export function rollText(t: TFunction, roll: RollView): string {
 
 /** A roll in a report: its outcome in words, then the roll. */
 export function rollLine(t: TFunction, roll: RollView): string {
-  return `${t(`roll.outcome.${roll.outcome}`)} — ${rollText(t, roll)}`;
+  const outcome = t(`roll.outcome.${roll.outcome}`);
+  return `${outcome} — ${rollText(t, roll)}`;
 }
