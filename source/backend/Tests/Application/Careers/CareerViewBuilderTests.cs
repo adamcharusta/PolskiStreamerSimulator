@@ -72,6 +72,29 @@ public sealed class CareerViewBuilderTests
     }
 
     [Fact]
+    public void A_queued_decision_that_cannot_be_presented_is_a_server_fault_not_a_plan()
+    {
+        var c = M3Play.C;
+        var broken = M3Play.Fresh() with { PendingDecisions = ["missing-event"] };
+
+        var error = Assert.Throws<InvalidOperationException>(() => new CareerViewBuilder(M3Play.Engine).Build(Guid.NewGuid(), "x", broken, c, null));
+
+        Assert.Contains("ContentMismatch", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_queued_decision_is_shown_as_a_mandatory_event()
+    {
+        var queued = M3Play.Fresh() with { PendingDecisions = ["first-week"] };
+
+        var view = new CareerViewBuilder(M3Play.Engine).Build(Guid.NewGuid(), "x", queued, M3Play.C, null);
+
+        Assert.Equal(NextStepKind.ResolveDecision, view.Next.Kind);
+        Assert.True(view.Next.Event!.Mandatory);
+        Assert.Empty(view.Next.Plans);
+    }
+
+    [Fact]
     public void Fixed_values_convert_exactly()
     {
         Assert.Equal(0.333333m, Decimals.Of(Fixed.FromRatio(1, 3)));

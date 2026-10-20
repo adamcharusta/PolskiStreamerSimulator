@@ -60,17 +60,26 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             return new NextStepView(NextStepKind.Ended, [], null);
         }
 
-        // A pause that queues no decision event leaves the week to be planned by hand.
         if (s.Pending is null)
         {
-            return Expect(engine.RequiresPlayerDecision(s, c)) && engine.PresentDecision(s, c) is { IsSuccess: true } decision
-                ? new NextStepView(NextStepKind.ResolveDecision, [], Event(decision.Value, c, mandatory: true))
+            return Expect(engine.RequiresPlayerDecision(s, c)) && Decision(s, c) is { } decision
+                ? new NextStepView(NextStepKind.ResolveDecision, [], Event(decision, c, mandatory: true))
                 : new NextStepView(NextStepKind.PlanWeek, Plans(s, c), null);
         }
 
         return s.Pending.Resolved.Length < s.Pending.EventIds.Length
             ? new NextStepView(NextStepKind.ResolveEvent, [], Event(Expect(engine.PresentEvent(s, c)), c, mandatory: false))
             : new NextStepView(NextStepKind.SettleWeek, [], null);
+    }
+
+    /// <summary>
+    /// The queued decision, or <c>null</c> for a pause that queues no decision event (the week is then planned by hand);
+    /// any other failure, such as a queued event missing from the content, is a server fault rather than a dead end.
+    /// </summary>
+    private EventPresentation? Decision(CareerState s, ContentSnapshot c)
+    {
+        var decision = engine.PresentDecision(s, c);
+        return !decision.IsSuccess && decision.Error.Code == DomainErrorCode.NoPendingDecision ? null : Expect(decision);
     }
 
     /// <summary>Every plan with its disabled reason and, for a rolled action (networking), the odds of its roll.</summary>
