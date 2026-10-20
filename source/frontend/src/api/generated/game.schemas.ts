@@ -90,6 +90,7 @@ export const NextStepKind = {
   resolveEvent: 'resolveEvent',
   settleWeek: 'settleWeek',
   ended: 'ended',
+  resolveDecision: 'resolveDecision',
 } as const;
 
 /**
@@ -135,37 +136,55 @@ export interface PlanView {
   upgradeSlot: null | EquipmentSlot;
 }
 
-export interface PlanOptionView {
-  plan: PlanView;
-  /** @nullable */
-  disabledReason: string | null;
-}
-
 export interface ModifierView {
   labelKey: string;
   value: number;
 }
 
+/**
+ * A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so.
+ */
 export interface ChoiceView {
   choiceId: string;
-  labelKey: string;
-  labelPl: string;
+  /** @nullable */
+  labelKey: string | null;
+  label: string;
   guaranteed: boolean;
   probability: number;
   threshold: number;
   modifiers: ModifierView[];
   allowsCritical: boolean;
-}
-
-export interface EventView {
-  eventId: string;
-  titleKey: string;
-  textPl: string;
-  choices: ChoiceView[];
+  viralOnCritical: number;
+  /** @nullable */
+  unavailableReason: string | null;
 }
 
 /**
- * IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent.
+ * A plan with the reason it is disabled and, for a rolled action (networking), the odds of its roll.
+ */
+export interface PlanOptionView {
+  plan: PlanView;
+  /** @nullable */
+  disabledReason: string | null;
+  odds: null | ChoiceView;
+}
+
+/**
+ * An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks.
+ */
+export interface EventView {
+  eventId: string;
+  /** @nullable */
+  titleKey: string | null;
+  /** @nullable */
+  title: string | null;
+  text: string;
+  choices: ChoiceView[];
+  mandatory: boolean;
+}
+
+/**
+ * IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent and NextStepKind.ResolveDecision.
  */
 export interface NextStepView {
   kind: NextStepKind;
@@ -204,6 +223,19 @@ export interface ReportLineView {
   detail: string | null;
 }
 
+/**
+ * A viral clip: the 1–100 roll against the threshold, the viewer multiplier and the follower bonus.
+ */
+export interface ViralView {
+  roll: number;
+  threshold: number;
+  multiplier: number;
+  followersBonus: number;
+}
+
+/**
+ * A settled week with the rolls of the decisions answered before it, the roll of a rolled action (networking) and its viral clip.
+ */
 export interface WeekReportView {
   week: number;
   plan: PlanView;
@@ -217,14 +249,18 @@ export interface WeekReportView {
   cashDelta: number;
   statChanges: ReportLineView[];
   ending: null | EndingReason;
+  decisionRolls: RollView[];
+  actionRoll: null | RollView;
+  viral: null | ViralView;
 }
 
 /**
- * A career as the client sees it at one version; also the stored response of each step.
+ * A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.
  */
 export interface CareerView {
   careerId: string;
   nickname: string;
+  rulesetId: string;
   version: number;
   status: CareerStatus;
   ending: null | EndingReason;
@@ -251,6 +287,7 @@ export const ActionType = {
   startWeek: 'startWeek',
   resolveEvent: 'resolveEvent',
   settleWeek: 'settleWeek',
+  resolveDecision: 'resolveDecision',
 } as const;
 
 /**

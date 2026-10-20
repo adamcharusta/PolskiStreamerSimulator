@@ -4,6 +4,8 @@ import type { RollView } from '@/api/generated/game.schemas';
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 
+import { rollText } from '../reportLabels';
+
 const gains = new Set(['success', 'criticalSuccess']);
 
 export function RollResult({
@@ -19,11 +21,7 @@ export function RollResult({
   return (
     <div className="grid gap-3">
       <StepHeading>{t('roll.title', { outcome })}</StepHeading>
-      <p>
-        {roll.roll === null
-          ? t('roll.noRoll')
-          : t('roll.rolled', { roll: roll.roll, threshold: roll.threshold })}
-      </p>
+      <p>{rollText(t, roll)}</p>
       <p className={good ? 'good font-bold' : 'bad font-bold'}>
         <span aria-hidden="true">{good ? '✔ ' : '✖ '}</span>
         {outcome}

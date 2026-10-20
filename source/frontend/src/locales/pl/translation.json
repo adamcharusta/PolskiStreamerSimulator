@@ -151,6 +151,8 @@
       "unknown-choice": "Tej odpowiedzi już nie ma.",
       "events-unresolved": "Najpierw rozegraj zdarzenia tego tygodnia.",
       "no-pending-week": "Nie ma trwającego tygodnia.",
+      "decision-pending": "Najpierw podejmij decyzję.",
+      "no-pending-decision": "Ta decyzja została już podjęta.",
       "generic": "Coś poszło nie tak. Odśwież stronę."
     }
   },
@@ -160,6 +162,7 @@
     "category": "Kategoria",
     "slot": "Sprzęt do ulepszenia",
     "start": "Zaczynam stream",
+    "odds": "Szansa networkingu",
     "lastReport": "Ostatni raport (tydzień {{week}})"
   },
   "disabled": {
@@ -171,15 +174,23 @@
     "career-ended": "Kariera zakończona",
     "week-in-progress": "Tydzień już trwa",
     "unsupported-action": "Niedostępne w tej karierze",
+    "decision-pending": "Najpierw podejmij decyzję",
+    "rest-only": "Ten tydzień to odpoczynek",
     "not-enough-energy": "Za mało energii",
     "unknown": "Niedostępne"
   },
+  "choice": {
+    "needs-cash": "Brakuje pieniędzy",
+    "needs-energy": "Brakuje energii"
+  },
   "event": {
     "live": "Na żywo",
+    "decision": "Decyzja",
     "choices": "Odpowiedzi",
     "chance": "Szansa: {{value}}",
     "certain": "pewne",
     "critical": "Możliwy wynik krytyczny",
+    "viralHint": "kryt. sukces: +{{value}} pp szansy na viral",
     "modifiers": "Modyfikatory",
     "points": "{{value}} pp",
     "choose": "Wybieram",
@@ -239,6 +250,10 @@
     "statChanges": "Zmiany statystyk",
     "none": "Brak",
     "next": "Następny tydzień",
+    "viral": "Klip poszedł viralem: widzowie ×{{multiplier}}, +{{followers}} obserwujących (rzut {{roll}} ≤ {{threshold}})",
+    "decisions": "Decyzje przed tygodniem",
+    "actionRoll": "Networking",
+    "followersEvent": "Obserwujący (wydarzenia): {{value}}%",
     "line": {
       "income": {
         "subscriptions": "Suby",
@@ -253,7 +268,12 @@
         "event": "Zdarzenie"
       }
     },
-    "cause": { "action": "akcja tygodnia", "stream": "stream", "practice": "praktyka" }
+    "cause": {
+      "action": "akcja tygodnia",
+      "stream": "stream",
+      "practice": "praktyka",
+      "event": "wydarzenie"
+    }
   },
   "batch": {
     "launch": "Auto: 13 tygodni",

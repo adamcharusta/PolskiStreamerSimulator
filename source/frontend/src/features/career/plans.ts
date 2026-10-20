@@ -21,6 +21,11 @@ export function optionFor(
   );
 }
 
+/** The actions the career's ruleset offers, each once, in the server's order (an M1 career has no networking). */
+export function offeredActions(plans: readonly PlanOptionView[]): MainAction[] {
+  return [...new Set(plans.map((option) => option.plan.mainAction))];
+}
+
 /** Why an action cannot be chosen in a category, or null when at least one of its options is legal. */
 export function actionBlock(
   plans: readonly PlanOptionView[],
