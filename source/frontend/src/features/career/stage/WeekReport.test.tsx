@@ -119,7 +119,7 @@ describe('weekly report', () => {
 
     expect(items('Zmiany statystyk')).toEqual([
       'Obserwujący (wydarzenia): +5%',
-      'Drama +4 (wydarzenie)',
+      'Drama +4 (networking)',
       'Wiarygodność −1 (wydarzenie)',
     ]);
   });

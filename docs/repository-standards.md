@@ -36,7 +36,7 @@ Status: **owner tooling choices and initial configuration**, 2026-10-12. The rep
 | `compose.yaml` | Development-only local stack: SQL Server, the API and Vite with health checks and named volumes (TD-99). Never points at staging or production. |
 | `.env.example` | Documents the variables `compose.yaml` reads (`MSSQL_SA_PASSWORD`) without values; the local `.env` is ignored and never committed. |
 | `.dockerignore` | Keeps Git data, agent artifacts, docs, build output, `node_modules`, the frontend tree and `.env` files out of the API build context. |
-| `source/backend/WebApp/Dockerfile` | Multi-stage API image (SDK build, `aspnet` runtime, non-root, port 8080); the build context is the repository root so `content/m1` ships with it. M6 reuses it (TD-99). |
+| `source/backend/WebApp/Dockerfile` | Multi-stage API image (SDK build, `aspnet` runtime, non-root, port 8080); the build context is the repository root so `content/m1` and `content/m3` ship with it. M6 reuses it (TD-99). |
 | `source/frontend/playwright.config.ts` and `e2e/` | The browser journey: Chromium, base URL `E2E_BASE_URL` or `http://localhost:5173`, no retries, traces on failure (TD-100). |
 | `source/backend/.config/dotnet-tools.json` | Local .NET tool manifest pinning SonarScanner for .NET (TD-86) and `dotnet-ef` 10.0.13 for migrations (TD-93). |
 

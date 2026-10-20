@@ -116,7 +116,7 @@ describe('live event', () => {
     [PronounSet.man, 'Sponsor pisze', 'Dostałeś ofertę współpracy.', /Podpisz jako twórca/u],
     [
       PronounSet.nonbinary,
-      'Sponsor_ka pisze',
+      'Sponsorstwo pisze',
       'Dostałoś ofertę współpracy.',
       /Podpisz jako osoba twórcza/u,
     ],

@@ -32,8 +32,7 @@ export function statLabel(t: TFunction, code: string): string {
 }
 
 /**
- * Why a stat changed: the week's action, the stream, practice, or an M1 event by its title. Networking and M3
- * events carry their text in the content snapshot, not in the translations, so they show as "wydarzenie".
+ * Why a stat changed: the week's action, the stream, practice, or an M1 event by its title. M3 events carry their text in the content snapshot, not in the translations, so they show as "wydarzenie".
  */
 export function causeLabel(t: TFunction, detail: string | null): string | null {
   if (detail === null) {

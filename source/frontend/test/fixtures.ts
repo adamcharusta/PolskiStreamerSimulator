@@ -204,7 +204,7 @@ export function decisionNext(): NextStepView {
     event: {
       eventId: 'sponsor-offer',
       titleKey: null,
-      title: '{gender, select, female {Sponsorka} male {Sponsor} other {Sponsor_ka}} pisze',
+      title: '{gender, select, female {Sponsorka} male {Sponsor} other {Sponsorstwo}} pisze',
       text: '{gender, select, female {Dostałaś} male {Dostałeś} other {Dostałoś}} ofertę współpracy.',
       mandatory: true,
       choices: [

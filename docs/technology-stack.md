@@ -8,7 +8,7 @@ The proposed layout applies the owner's four-project .NET solution and keeps Rea
 
 ```text
 docs/                         English project documentation
-content/                      versioned content and balance snapshots (M1: content/m1/*.json; TD-76)
+content/                      versioned content and balance snapshots (M1: content/m1/*.json; M3: content/m3/*.json, used by new careers; TD-76)
 .github/
   workflows/                  GitHub Actions workflows
 source/
