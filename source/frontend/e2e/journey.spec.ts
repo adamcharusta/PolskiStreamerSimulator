@@ -74,6 +74,13 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expectAccessible(page, 'weekly report');
   await page.getByRole('button', { name: pl.report.next }).click();
 
+  await expect(page.getByText(pl.event.decision)).toBeVisible();
+  await expectAccessible(page, 'mandatory decision');
+  await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+  await page.getByRole('button', { name: pl.event.choose }).click();
+  await page.getByRole('button', { name: pl.roll.next }).click();
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+
   await page.getByRole('button', { name: pl.batch.launch }).click();
   await page.getByRole('button', { name: pl.batch.confirm }).click();
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
@@ -100,6 +107,19 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
 
   const desk = page.getByRole('region', { name: pl.career.summaryLabel });
   await expect(desk).toContainText(fill(pl.career.week, { week: 2 + weeks }));
+  // A batch that paused for a decision lands on that decision first; answer it to reach the plan.
+  const planOrEnd = page.getByRole('heading', {
+    name: new RegExp(`^(${pl.plan.title}|${pl.career.endedTitle})$`, 'u'),
+  });
+  const decision = page.getByRole('button', { name: pl.event.choose });
+  await expect(planOrEnd.or(decision)).toBeVisible();
+  while (await decision.isVisible()) {
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await decision.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+    await expect(planOrEnd.or(decision)).toBeVisible();
+  }
+
   const next = page.getByRole('heading', {
     name: new RegExp(`^(${pl.plan.title}|${pl.career.endedTitle})$`, 'u'),
   });

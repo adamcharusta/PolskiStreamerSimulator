@@ -1,7 +1,7 @@
 # M3-A Rules and Content Foundation — Design
 
 Date: 2026-10-16
-Status: **Approved design (owner, 2026-10-16 brainstorming session).** The owner approved the M3 split, approach A for rulesets, the representative content set, ICU MessageFormat for grammatical forms and §4 in conversation, asked the agent to complete the design with its recommendations (§5–§9), and approved the written spec.
+Status: **Approved design (owner, 2026-10-16 brainstorming session).** The owner approved the M3 split, approach A for rulesets, the representative content set, ICU MessageFormat for grammatical forms and §4 in conversation, asked the agent to complete the design with its recommendations (§5–§9), and approved the written spec. **Delivery (2026-10-21):** M3-A is delivered in three pull requests: [PR 1](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/80) (content schema v2, validator, ICU, event versions), [PR 2](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/81) (`M3Ruleset`, decisions, balance, simulation report) and [M3-A PR 3](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/83) (browser play, open). Not delivered in M3-A: category hints, recovery report lines and the authored outcome explanation in roll results and reports, deferred to [#82](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/82); see TD-114, TD-115 and TD-116.
 Milestone: [M3 — Complete gameplay systems](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3), sub-project A, delivering [#21](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/21), [#17](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/17) and [#16](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/16), and preparing the material for [#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7).
 Builds on: [M1 simulation prototype](2026-10-12-m1-simulation-prototype-design.md), [M2-B backend slice](2026-10-14-m2b-backend-slice-design.md) and [M2-C frontend slice](2026-10-15-m2c-frontend-slice-design.md).
 
@@ -48,7 +48,7 @@ Sub-projects A–C each ship their own API change and the minimal UI that makes 
 - `Domain`: shared rule helpers extracted from `M1Ruleset`; `M3Ruleset`; event schema v2; mandatory decisions; flags and follow-ups; `Network/collaborate`; recovery crisis; category profiles; viral clips; validator rules; the `IcuMessage` ICU subset validator.
 - `Application`/`Infrastructure`: schema-v2 content loading, immutability of published event versions, the new `resolveDecision` command, new careers on `m3-systems.1`.
 - `WebApp`: `decision` next step, action odds on week plans, ICU strings in the career view; regenerated OpenAPI document.
-- Frontend: ICU rendering, the decision step, the new action, category hints, viral and recovery report lines.
+- Frontend: ICU rendering, the decision step, the new action, category hints (deferred to #82, TD-116), viral report lines and recovery report lines (deferred to #82, TD-116).
 - `content/m3`: balance and about 40 events.
 - Batch simulator: runs `m3-systems.1` and produces the M3-A baseline report.
 - Decision records and documentation (§9).

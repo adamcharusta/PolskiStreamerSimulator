@@ -3,7 +3,6 @@ using System.Text;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
-using PolskiStreamerSimulator.Domain.Rulesets;
 
 namespace PolskiStreamerSimulator.Application.Careers;
 
@@ -37,7 +36,7 @@ public sealed class CreateCareerHandler(ICareerStore store, ICurrentContent cont
         var snapshot = content.Snapshot;
         var seed = BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(sizeof(ulong)));
         var state = CareerFactory.Create(
-            M1Ruleset.RulesetId,
+            snapshot.RulesetId,
             snapshot.Digest,
             snapshot.Profiles[command.Background],
             command.Background,

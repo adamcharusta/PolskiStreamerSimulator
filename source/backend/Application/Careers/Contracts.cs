@@ -10,12 +10,18 @@ public enum NextStepKind
     ResolveEvent,
     SettleWeek,
     Ended,
+
+    /// <summary>A mandatory decision between weeks must be answered before the next week can be planned.</summary>
+    ResolveDecision,
 }
 
-/// <summary>A career as the client sees it at one version; also the stored response of each step.</summary>
+// Summaries of contract records stay on one line: the OpenAPI document copies them, and line breaks differ by OS.
+
+/// <summary>A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.</summary>
 public sealed record CareerView(
     Guid CareerId,
     string Nickname,
+    string RulesetId,
     long Version,
     CareerStatus Status,
     EndingReason? Ending,
@@ -44,24 +50,29 @@ public sealed record CategoryValuesView(decimal JustChatting, decimal Fps, decim
 
 public sealed record EquipmentView(int Microphone, int Camera, int Computer, int Connection);
 
-/// <summary><see cref="Plans"/> is filled for <see cref="NextStepKind.PlanWeek"/>, <see cref="Event"/> for <see cref="NextStepKind.ResolveEvent"/>.</summary>
+/// <summary><see cref="Plans"/> is filled for <see cref="NextStepKind.PlanWeek"/>, <see cref="Event"/> for <see cref="NextStepKind.ResolveEvent"/> and <see cref="NextStepKind.ResolveDecision"/>.</summary>
 public sealed record NextStepView(NextStepKind Kind, IReadOnlyList<PlanOptionView> Plans, EventView? Event);
 
 public sealed record PlanView(MainAction MainAction, Category Category, Category? TrainTarget, EquipmentSlot? UpgradeSlot);
 
-public sealed record PlanOptionView(PlanView Plan, string? DisabledReason);
+/// <summary>A plan with the reason it is disabled and, for a rolled action (networking), the odds of its roll.</summary>
+public sealed record PlanOptionView(PlanView Plan, string? DisabledReason, ChoiceView? Odds);
 
-public sealed record EventView(string EventId, string TitleKey, string TextPl, IReadOnlyList<ChoiceView> Choices);
+/// <summary>An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks.</summary>
+public sealed record EventView(string EventId, string? TitleKey, string? Title, string Text, IReadOnlyList<ChoiceView> Choices, bool Mandatory);
 
+/// <summary>A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so.</summary>
 public sealed record ChoiceView(
     string ChoiceId,
-    string LabelKey,
-    string LabelPl,
+    string? LabelKey,
+    string Label,
     bool Guaranteed,
     decimal Probability,
     int Threshold,
     IReadOnlyList<ModifierView> Modifiers,
-    bool AllowsCritical);
+    bool AllowsCritical,
+    decimal ViralOnCritical,
+    string? UnavailableReason);
 
 public sealed record ModifierView(string LabelKey, decimal Value);
 
@@ -69,6 +80,10 @@ public sealed record RollView(string EventId, string ChoiceId, int? Roll, int Th
 
 public sealed record ReportLineView(string Code, long? AmountPln, decimal? Delta, string? Detail);
 
+/// <summary>A viral clip: the 1–100 roll against the threshold, the viewer multiplier and the follower bonus.</summary>
+public sealed record ViralView(int Roll, int Threshold, decimal Multiplier, long FollowersBonus);
+
+/// <summary>A settled week with the rolls of the decisions answered before it, the roll of a rolled action (networking) and its viral clip.</summary>
 public sealed record WeekReportView(
     int Week,
     PlanView Plan,
@@ -81,4 +96,7 @@ public sealed record WeekReportView(
     IReadOnlyList<ReportLineView> Costs,
     long CashDelta,
     IReadOnlyList<ReportLineView> StatChanges,
-    EndingReason? Ending);
+    EndingReason? Ending,
+    IReadOnlyList<RollView> DecisionRolls,
+    RollView? ActionRoll,
+    ViralView? Viral);

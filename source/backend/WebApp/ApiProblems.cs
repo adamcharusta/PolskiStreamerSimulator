@@ -14,6 +14,8 @@ public static class ApiProblems
         [ErrorCodes.CareerNotFound] = StatusCodes.Status404NotFound,
         [ErrorCodes.StaleVersion] = StatusCodes.Status409Conflict,
         [ErrorCodes.CareerEnded] = StatusCodes.Status409Conflict,
+        [ErrorCodes.DecisionPending] = StatusCodes.Status409Conflict,
+        [ErrorCodes.NoPendingDecision] = StatusCodes.Status409Conflict,
         [ErrorCodes.IllegalAction] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.UnknownChoice] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.EventsUnresolved] = StatusCodes.Status422UnprocessableEntity,

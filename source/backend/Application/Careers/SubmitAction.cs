@@ -12,6 +12,9 @@ public enum ActionType
     StartWeek,
     ResolveEvent,
     SettleWeek,
+
+    /// <summary>Answers the first queued mandatory decision between weeks with <see cref="ActionInput.ChoiceId"/>.</summary>
+    ResolveDecision,
 }
 
 /// <summary>One manual step; stored as the request of the command, so a repeat must send exactly the same values.</summary>
@@ -108,7 +111,7 @@ public sealed class SubmitActionHandler(
         }
 
         return stored is [{ Step: 0 } only] && string.Equals(only.RequestJson, requestJson, StringComparison.Ordinal)
-            ? AppResult<ActionOutcome>.Ok(ContractJson.Deserialize<ActionOutcome>(only.ResponseJson))
+            ? AppResult<ActionOutcome>.Ok(StoredContract.ReadOutcome(only.ResponseJson))
             : AppResult<ActionOutcome>.Fail(ErrorCodes.CommandIdReused);
     }
 
@@ -131,6 +134,14 @@ public sealed class SubmitActionHandler(
                 }
 
                 return Map(engine.ResolveEvent(s, c, input.ChoiceId, input.ExpectedVersion), next => (next, ReportViews.Roll(next.Pending!.Resolved[^1]), null));
+
+            case ActionType.ResolveDecision:
+                if (string.IsNullOrEmpty(input.ChoiceId))
+                {
+                    return Rejected(new AppError(ErrorCodes.ValidationFailed, "resolveDecision needs choiceId"));
+                }
+
+                return Map(engine.ResolveDecision(s, c, input.ChoiceId, input.ExpectedVersion), next => (next, ReportViews.Roll(next.Carry!.Rolls[^1]), null));
 
             case ActionType.SettleWeek:
                 return Map(engine.SettleWeek(s, c, input.ExpectedVersion), settled => (settled.State, null, ReportViews.Report(settled.Report)));
@@ -161,6 +172,7 @@ public sealed class SubmitActionHandler(
     {
         ActionType.StartWeek => ActionKind.StartWeek,
         ActionType.ResolveEvent => ActionKind.ResolveEvent,
+        ActionType.ResolveDecision => ActionKind.ResolveDecision,
         _ => ActionKind.SettleWeek,
     };
 }

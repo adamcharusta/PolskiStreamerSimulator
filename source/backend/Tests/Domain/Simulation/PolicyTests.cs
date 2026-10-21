@@ -103,6 +103,20 @@ public class PolicyTests
     }
 
     [Fact]
+    public void Event_choice_skips_choices_the_career_cannot_take()
+    {
+        var shown = new EventPresentation(
+            "e",
+            [
+                new ChoiceOdds("rich", false, Fixed.FromRatio(9, 10), 90, [], false, UnavailableReason: "needs-cash"),
+                new ChoiceOdds("safe", true, Fixed.One, 100, [], false, UnavailableReason: "needs-energy"),
+                new ChoiceOdds("bold", false, Fixed.FromRatio(3, 10), 30, [], false),
+            ]);
+
+        Assert.All(BuiltInPolicies.M3All, p => Assert.Equal("bold", p.ChooseEventChoice(TestCareers.Dorm(1), shown).ChoiceId));
+    }
+
+    [Fact]
     public void Built_in_policies_never_retire()
         => Assert.All(BuiltInPolicies.All, p => Assert.False(p.ShouldRetire(TestCareers.Dorm(1) with { Week = new CareerWeek(1000) })));
 

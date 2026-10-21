@@ -9,6 +9,8 @@ public static class OddsCalculator
 {
     public const string EasyModifierLabel = "difficulty.easy";
     public const string BurnoutModifierLabel = "modifier.burnout";
+    public const string NeedsCash = "needs-cash";
+    public const string NeedsEnergy = "needs-energy";
 
     private static readonly Fixed MinimumProbability = Fixed.FromRatio(5, 100);
     private static readonly Fixed MaximumProbability = Fixed.FromRatio(95, 100);
@@ -21,7 +23,7 @@ public static class OddsCalculator
     {
         if (choice.Guaranteed)
         {
-            return new ChoiceOdds(choice.Id, true, Fixed.One, 100, [], choice.AllowsCritical, ViralOnCritical(choice, b));
+            return new ChoiceOdds(choice.Id, true, Fixed.One, 100, [], choice.AllowsCritical, ViralOnCritical(choice, b), Unavailable(s, choice));
         }
 
         var modifiers = ImmutableArray.CreateBuilder<ModifierLine>();
@@ -49,7 +51,23 @@ public static class OddsCalculator
         var probability = modifiers.Aggregate(choice.BaseChance, (sum, line) => sum + line.Value)
             .Clamp(MinimumProbability, MaximumProbability);
         var threshold = (int)(probability * Fixed.Hundred).RoundToLong();
-        return new ChoiceOdds(choice.Id, false, probability, threshold, modifiers.ToImmutable(), choice.AllowsCritical, ViralOnCritical(choice, b));
+        return new ChoiceOdds(choice.Id, false, probability, threshold, modifiers.ToImmutable(), choice.AllowsCritical, ViralOnCritical(choice, b), Unavailable(s, choice));
+    }
+
+    /// <summary>Why the career cannot take <paramref name="choice"/> (too little cash, then too little energy), or <c>null</c>.</summary>
+    public static string? Unavailable(CareerState s, ChoiceDefinition choice)
+    {
+        if (choice.Requires is not { } requires)
+        {
+            return null;
+        }
+
+        if (requires.MinCashPln is { } cash && s.CashPln < cash)
+        {
+            return NeedsCash;
+        }
+
+        return requires.MinEnergy is { } energy && s.Energy < energy ? NeedsEnergy : null;
     }
 
     /// <summary>The viral chance a critical outcome of <paramref name="choice"/> can add (zero when it has no critical).</summary>

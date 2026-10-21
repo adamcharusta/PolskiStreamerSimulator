@@ -93,7 +93,8 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
         </PlanWeek>
       );
     }
-    case NextStepKind.resolveEvent: {
+    case NextStepKind.resolveEvent:
+    case NextStepKind.resolveDecision: {
       return (
         <LiveEvent
           key={career.version}

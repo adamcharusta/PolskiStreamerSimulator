@@ -7,6 +7,7 @@ import {
   type CareerStatsView,
   type CareerView,
   Category,
+  type ChoiceView,
   Difficulty,
   EquipmentSlot,
   MainAction,
@@ -108,16 +109,26 @@ export function stats(overrides: Partial<CareerStatsView> = {}): CareerStatsView
   };
 }
 
-/** Every plan of a week, like the API lists them; `disabled` decides each option's reason. */
-export function planNext(disabled: (plan: PlanView) => string | null = () => null): NextStepView {
+/**
+ * Every plan of a week, like the API lists them; `disabled` decides each option's reason. Networking is offered
+ * only with its odds (an M3 career); an M1 career's plans leave it out.
+ */
+export function planNext(
+  disabled: (plan: PlanView) => string | null = () => null,
+  network: ChoiceView | null = null,
+): NextStepView {
   const plans: PlanOptionView[] = [];
+  const actions = Object.values(MainAction).filter(
+    (action) => network !== null || action !== MainAction.networkCollaborate,
+  );
   for (const category of Object.values(Category)) {
-    for (const mainAction of Object.values(MainAction)) {
+    for (const mainAction of actions) {
       const slots =
         mainAction === MainAction.improveProduction ? Object.values(EquipmentSlot) : [null];
       for (const upgradeSlot of slots) {
         const plan: PlanView = { mainAction, category, trainTarget: null, upgradeSlot };
-        plans.push({ plan, disabledReason: disabled(plan) });
+        const odds = mainAction === MainAction.networkCollaborate ? network : null;
+        plans.push({ plan, disabledReason: disabled(plan), odds });
       }
     }
   }
@@ -132,27 +143,107 @@ export function eventNext(): NextStepView {
     event: {
       eventId: 'chat-raid',
       titleKey: 'event.chat-raid.title',
-      textPl: 'Inny streamer kończy transmisję i wysyła do ciebie cały swój czat.',
+      title: null,
+      text: 'Inny streamer kończy transmisję i wysyła do ciebie cały swój czat.',
+      mandatory: false,
       choices: [
         {
           choiceId: 'welcome',
           labelKey: 'event.chat-raid.welcome',
-          labelPl: 'Przywitaj gości i odpal dla nich szybkie show',
+          label: 'Przywitaj gości i odpal dla nich szybkie show',
           guaranteed: false,
           probability: 0.58,
           threshold: 58,
           modifiers: [{ labelKey: 'modifier.credibility', value: 0.03 }],
           allowsCritical: true,
+          viralOnCritical: 0,
+          unavailableReason: null,
         },
         {
           choiceId: 'ignore',
           labelKey: 'event.chat-raid.ignore',
-          labelPl: 'Graj dalej, jakby nic się nie stało',
+          label: 'Graj dalej, jakby nic się nie stało',
           guaranteed: true,
           probability: 1,
           threshold: 100,
           modifiers: [],
           allowsCritical: false,
+          viralOnCritical: 0,
+          unavailableReason: null,
+        },
+      ],
+    },
+  };
+}
+
+/** The odds of the networking roll, as an M3 career's plans carry them. */
+export function networkOdds(overrides: Partial<ChoiceView> = {}): ChoiceView {
+  return {
+    choiceId: 'collaborate',
+    labelKey: null,
+    label: 'Zagadaj do innych twórców',
+    guaranteed: false,
+    probability: 0.41,
+    threshold: 41,
+    modifiers: [
+      { labelKey: 'modifier.credibility', value: 0.09 },
+      { labelKey: 'modifier.drama', value: -0.03 },
+    ],
+    allowsCritical: true,
+    viralOnCritical: 0,
+    unavailableReason: null,
+    ...overrides,
+  };
+}
+
+/** An M3 mandatory decision between weeks: ICU title, text and labels formatted by the client. */
+export function decisionNext(): NextStepView {
+  return {
+    kind: NextStepKind.resolveDecision,
+    plans: [],
+    event: {
+      eventId: 'sponsor-offer',
+      titleKey: null,
+      title: '{gender, select, female {Sponsorka} male {Sponsor} other {Sponsorstwo}} pisze',
+      text: '{gender, select, female {Dostałaś} male {Dostałeś} other {Dostałoś}} ofertę współpracy.',
+      mandatory: true,
+      choices: [
+        {
+          choiceId: 'invest',
+          labelKey: null,
+          label: 'Kup lepszy sprzęt na start',
+          guaranteed: false,
+          probability: 0.6,
+          threshold: 60,
+          modifiers: [],
+          allowsCritical: true,
+          viralOnCritical: 0.05,
+          unavailableReason: 'needs-cash',
+        },
+        {
+          choiceId: 'sign',
+          labelKey: null,
+          label:
+            '{gender, select, female {Podpisz jako twórczyni} male {Podpisz jako twórca} other {Podpisz jako osoba twórcza}}',
+          guaranteed: false,
+          probability: 0.5,
+          threshold: 50,
+          modifiers: [],
+          allowsCritical: true,
+          viralOnCritical: 0.05,
+          unavailableReason: null,
+        },
+        {
+          choiceId: 'refuse',
+          labelKey: null,
+          label: 'Odmów',
+          guaranteed: true,
+          probability: 1,
+          threshold: 100,
+          modifiers: [],
+          allowsCritical: false,
+          viralOnCritical: 0,
+          unavailableReason: null,
         },
       ],
     },
@@ -205,6 +296,9 @@ export function weekReport(week = 1, overrides: Partial<WeekReportView> = {}): W
       { code: 'stat:Credibility', amountPln: null, delta: 2, detail: 'chat-raid' },
     ],
     ending: null,
+    decisionRolls: [],
+    actionRoll: null,
+    viral: null,
     ...overrides,
   };
 }
@@ -213,6 +307,7 @@ export function careerView(overrides: Partial<CareerView> = {}): CareerView {
   return {
     careerId: TEST_CAREER_ID,
     nickname: 'Streamer',
+    rulesetId: 'm1-prototype.1',
     version: 1,
     status: 'active',
     ending: null,

@@ -476,7 +476,8 @@
         "enum": [
           "startWeek",
           "resolveEvent",
-          "settleWeek"
+          "settleWeek",
+          "resolveDecision"
         ],
         "type": "string"
       },
@@ -788,6 +789,7 @@
         "required": [
           "careerId",
           "nickname",
+          "rulesetId",
           "version",
           "status",
           "ending",
@@ -807,6 +809,9 @@
             "format": "uuid"
           },
           "nickname": {
+            "type": "string"
+          },
+          "rulesetId": {
             "type": "string"
           },
           "version": {
@@ -860,7 +865,7 @@
             ]
           }
         },
-        "description": "A career as the client sees it at one version; also the stored response of each step."
+        "description": "A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step."
       },
       "Category": {
         "enum": [
@@ -908,12 +913,14 @@
         "required": [
           "choiceId",
           "labelKey",
-          "labelPl",
+          "label",
           "guaranteed",
           "probability",
           "threshold",
           "modifiers",
-          "allowsCritical"
+          "allowsCritical",
+          "viralOnCritical",
+          "unavailableReason"
         ],
         "type": "object",
         "properties": {
@@ -921,9 +928,12 @@
             "type": "string"
           },
           "labelKey": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
-          "labelPl": {
+          "label": {
             "type": "string"
           },
           "guaranteed": {
@@ -945,8 +955,19 @@
           },
           "allowsCritical": {
             "type": "boolean"
+          },
+          "viralOnCritical": {
+            "type": "number",
+            "format": "double"
+          },
+          "unavailableReason": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        }
+        },
+        "description": "A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so."
       },
       "CreateCareerRequest": {
         "required": [
@@ -1063,8 +1084,10 @@
         "required": [
           "eventId",
           "titleKey",
-          "textPl",
-          "choices"
+          "title",
+          "text",
+          "choices",
+          "mandatory"
         ],
         "type": "object",
         "properties": {
@@ -1072,9 +1095,18 @@
             "type": "string"
           },
           "titleKey": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
-          "textPl": {
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "text": {
             "type": "string"
           },
           "choices": {
@@ -1082,8 +1114,12 @@
             "items": {
               "$ref": "#/components/schemas/ChoiceView"
             }
+          },
+          "mandatory": {
+            "type": "boolean"
           }
-        }
+        },
+        "description": "An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks."
       },
       "MainAction": {
         "enum": [
@@ -1118,7 +1154,8 @@
           "planWeek",
           "resolveEvent",
           "settleWeek",
-          "ended"
+          "ended",
+          "resolveDecision"
         ],
         "type": "string",
         "description": "What the player can do next."
@@ -1151,12 +1188,13 @@
             ]
           }
         },
-        "description": "IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent."
+        "description": "IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent and NextStepKind.ResolveDecision."
       },
       "PlanOptionView": {
         "required": [
           "plan",
-          "disabledReason"
+          "disabledReason",
+          "odds"
         ],
         "type": "object",
         "properties": {
@@ -1168,8 +1206,19 @@
               "null",
               "string"
             ]
+          },
+          "odds": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChoiceView"
+              }
+            ]
           }
-        }
+        },
+        "description": "A plan with the reason it is disabled and, for a rolled action (networking), the odds of its roll."
       },
       "PlanView": {
         "required": [
@@ -1371,6 +1420,34 @@
           }
         }
       },
+      "ViralView": {
+        "required": [
+          "roll",
+          "threshold",
+          "multiplier",
+          "followersBonus"
+        ],
+        "type": "object",
+        "properties": {
+          "roll": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "threshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "multiplier": {
+            "type": "number",
+            "format": "double"
+          },
+          "followersBonus": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "A viral clip: the 1–100 roll against the threshold, the viewer multiplier and the follower bonus."
+      },
       "WeekReportView": {
         "required": [
           "week",
@@ -1384,7 +1461,10 @@
           "costs",
           "cashDelta",
           "statChanges",
-          "ending"
+          "ending",
+          "decisionRolls",
+          "actionRoll",
+          "viral"
         ],
         "type": "object",
         "properties": {
@@ -1448,8 +1528,35 @@
                 "$ref": "#/components/schemas/EndingReason"
               }
             ]
+          },
+          "decisionRolls": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RollView"
+            }
+          },
+          "actionRoll": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RollView"
+              }
+            ]
+          },
+          "viral": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ViralView"
+              }
+            ]
           }
-        }
+        },
+        "description": "A settled week with the rolls of the decisions answered before it, the roll of a rolled action (networking) and its viral clip."
       }
     },
     "securitySchemes": {

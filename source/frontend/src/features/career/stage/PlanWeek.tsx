@@ -11,9 +11,10 @@ import {
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 
-import { actionBlock, optionFor, strongestCategory } from '../plans';
+import { actionBlock, offeredActions, optionFor, strongestCategory } from '../plans';
 import { RetryBanner } from '../RetryBanner';
 import { useActionCommand } from '../useCareerCommand';
+import { ChoiceOdds } from './ChoiceOdds';
 import { WeekReport } from './WeekReport';
 
 export interface PlanWeekProps {
@@ -42,7 +43,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
 
       <fieldset className="choices" disabled={locked}>
         <legend className="font-bold">{t('plan.action')}</legend>
-        {Object.values(MainAction).map((option) => {
+        {offeredActions(plans).map((option) => {
           const block = actionBlock(plans, option, category);
           const hint = `plan-action-${option}`;
           return (
@@ -120,6 +121,12 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
             );
           })}
         </fieldset>
+      )}
+
+      {chosen?.odds && (
+        <section className="choice" aria-label={t('plan.odds')}>
+          <ChoiceOdds choice={chosen.odds} />
+        </section>
       )}
 
       <RetryBanner command={command} />

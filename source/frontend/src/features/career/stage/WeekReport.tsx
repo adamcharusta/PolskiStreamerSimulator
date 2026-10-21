@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 
-import type { ReportLineView, WeekReportView } from '@/api/generated/game.schemas';
+import type { ReportLineView, RollView, WeekReportView } from '@/api/generated/game.schemas';
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
-import { count, pln, signed, stat } from '@/format';
+import { count, multiplier, pln, signed } from '@/format';
 
-import { causeLabel, lineLabel, statLabel } from '../reportLabels';
+import { lineLabel, rollLine, statChangeText } from '../reportLabels';
 
 export interface WeekReportProps {
   readonly report: WeekReportView;
@@ -30,7 +30,24 @@ export function WeekReport({ report, onNext }: WeekReportProps) {
         <dd className="m-0">{signed(report.followersNet)}</dd>
         <dt>{t('report.cashDelta')}</dt>
         <dd className="m-0">{signed(report.cashDelta, pln)}</dd>
+        {report.actionRoll !== null && (
+          <>
+            <dt>{t('report.actionRoll')}</dt>
+            <dd className="m-0">{rollLine(t, report.actionRoll)}</dd>
+          </>
+        )}
       </dl>
+      {report.viral !== null && (
+        <p className="good font-bold">
+          {t('report.viral', {
+            multiplier: multiplier(report.viral.multiplier),
+            followers: count(report.viral.followersBonus),
+            roll: report.viral.roll,
+            threshold: report.viral.threshold,
+          })}
+        </p>
+      )}
+      <DecisionRolls rolls={report.decisionRolls} />
       <MoneyLines title={t('report.income')} lines={report.income} sign={1} />
       <MoneyLines title={t('report.costs')} lines={report.costs} sign={-1} />
       <h3 className="font-bold">{t('report.statChanges')}</h3>
@@ -38,15 +55,9 @@ export function WeekReport({ report, onNext }: WeekReportProps) {
         <p>{t('report.none')}</p>
       ) : (
         <ul aria-label={t('report.statChanges')}>
-          {report.statChanges.map((line, index) => {
-            const cause = causeLabel(t, line.detail);
-            return (
-              <li key={`${line.code}-${String(index)}`}>
-                {statLabel(t, line.code)} {signed(line.delta ?? 0, stat)}
-                {cause === null ? '' : ` (${cause})`}
-              </li>
-            );
-          })}
+          {report.statChanges.map((line, index) => (
+            <li key={`${line.code}-${String(index)}`}>{statChangeText(t, line)}</li>
+          ))}
         </ul>
       )}
       {report.ending !== null && <p className="font-bold">{t(`career.ending.${report.ending}`)}</p>}
@@ -83,6 +94,26 @@ function MoneyLines({
           ))}
         </ul>
       )}
+    </>
+  );
+}
+
+/** The rolls of the mandatory decisions answered before the week (M3); nothing when there were none. */
+function DecisionRolls({ rolls }: { readonly rolls: readonly RollView[] }) {
+  const { t } = useTranslation();
+  if (rolls.length === 0) {
+    return null;
+  }
+
+  const title = t('report.decisions');
+  return (
+    <>
+      <h3 className="font-bold">{title}</h3>
+      <ul aria-label={title}>
+        {rolls.map((roll, index) => (
+          <li key={`${roll.eventId}-${String(index)}`}>{rollLine(t, roll)}</li>
+        ))}
+      </ul>
     </>
   );
 }

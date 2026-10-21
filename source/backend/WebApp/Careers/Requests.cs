@@ -47,7 +47,7 @@ public sealed class ActionRequestValidator : AbstractValidator<ActionRequest>
             RuleFor(r => r.MainAction).NotNull().IsInEnum();
             RuleFor(r => r.Category).NotNull().IsInEnum();
         });
-        When(r => r.Type == ActionType.ResolveEvent, () => RuleFor(r => r.ChoiceId).NotEmpty().MaximumLength(64));
+        When(r => r.Type is ActionType.ResolveEvent or ActionType.ResolveDecision, () => RuleFor(r => r.ChoiceId).NotEmpty().MaximumLength(64));
     }
 
     protected override bool PreValidate(ValidationContext<ActionRequest> context, ValidationResult result)
