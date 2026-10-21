@@ -27,6 +27,10 @@ public sealed class JsonContentSource(string directory) : IContentSource
     private const string ViralSection = "viral";
     private const string MasterySection = "mastery";
 
+    /// <summary>Balance sections allowed only with schema-2 events.</summary>
+    private static readonly string[] SchemaTwoSections =
+        ["networkCollaborate", "platforms", "migration", "policy", "sponsors", "wagers", "sideBusiness", "platformBan"];
+
     public ContentSnapshot Load()
         => Parse(
             File.ReadAllBytes(Path.Combine(directory, BalanceFile)),
@@ -50,9 +54,9 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var balance = ReadBalance(balanceRoot);
         var profiles = ReadProfiles(Property(balanceRoot, "profiles", BalanceFile));
         var (schema, events, sponsors) = ReadEvents(eventsDocument.RootElement);
-        if (schema == 1 && balanceRoot.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null)
+        if (schema == 1 && SchemaTwoSections.FirstOrDefault(name => Optional(balanceRoot, name) is not null) is { } section)
         {
-            throw Invalid($"{BalanceFile}.networkCollaborate", "is not allowed with schema 1 events");
+            throw Invalid($"{BalanceFile}.{section}", "is not allowed with schema 1 events");
         }
 
         var rulesetId = OptionalString(balanceRoot, "ruleset", BalanceFile) ?? DefaultRulesetId;
@@ -225,7 +229,136 @@ public sealed class JsonContentSource(string directory) : IContentSource
             MasteryFromSkill = SectionFixed(mastery, "fromSkill", MasterySection, Fixed.FromInt(101)),
             MasteryBoredomRelief = SectionInt(mastery, "boredomRelief", MasterySection, 0),
             MasteryChurnFactor = SectionFixed(mastery, "churnFactor", MasterySection, Fixed.One),
+            Platforms = Optional(b, "platforms") is { } platforms ? ReadPlatformProfiles(platforms) : null,
+            Migration = Optional(b, "migration") is { } migration ? ReadMigration(migration) : null,
+            Policy = Optional(b, "policy") is { } policy ? ReadPolicy(policy) : null,
+            Sponsors = Optional(b, "sponsors") is { } sponsors ? ReadSponsorBalance(sponsors) : null,
+            Wagers = Optional(b, "wagers") is { } wagers ? ReadWagers(wagers) : null,
+            SideBusiness = Optional(b, "sideBusiness") is { } sideBusiness ? ReadSideBusiness(sideBusiness) : null,
+            PlatformBan = Optional(b, "platformBan") is { } platformBan ? ReadPlatformBan(platformBan) : null,
         };
+    }
+
+    /// <summary>Reads <c>platforms</c>: one profile per named platform; a category missing from <c>categoryReach</c> has factor 1.</summary>
+    private static ImmutableDictionary<Platform, PlatformProfile> ReadPlatformProfiles(JsonElement platforms)
+        => ReadKeyed<Platform, PlatformProfile>(platforms, $"{BalanceFile}.platforms", (p, path) =>
+        {
+            var reach = Optional(p, "categoryReach");
+            var categoryReach = reach is { } r
+                ? ReadKeyed<Category, Fixed>(r, $"{path}.categoryReach", FixedValue)
+                : ImmutableDictionary<Category, Fixed>.Empty;
+            return new PlatformProfile(
+                ReadFixed(p, "reach", path),
+                ReadFixed(p, "subYield", path),
+                ReadFixed(p, "adYield", path),
+                ReadFixed(p, "policyRisk", path),
+                new CategoryValues<Fixed>([.. Enum.GetValues<Category>().Select(c => categoryReach.GetValueOrDefault(c, Fixed.One))]));
+        });
+
+    private static MigrationBalance ReadMigration(JsonElement m)
+    {
+        const string path = $"{BalanceFile}.migration";
+        return new MigrationBalance(
+            ReadFixed(m, "energyCost", path),
+            ReadInt(m, "minWeeksOnPlatform", path),
+            ReadInt(m, "announceWeeks", path),
+            ReadFixed(m, "announceCredibility", path),
+            ReadFixed(m, "announcedBonus", path),
+            ReadFixed(m, "banPenalty", path),
+            ReadFixed(m, "retentionBase", path),
+            ReadFixed(m, "credibilityDivisor", path),
+            ReadFixed(m, "dramaDivisor", path),
+            ReadFixed(m, "retentionMin", path),
+            ReadFixed(m, "retentionMax", path),
+            ReadFixed(m, "jitter", path));
+    }
+
+    private static PolicyBalance ReadPolicy(JsonElement p)
+    {
+        const string path = $"{BalanceFile}.policy";
+        return new PolicyBalance(
+            ReadInt(p, "gamblingExposure", path),
+            ReadInt(p, "sideBusinessExposure", path),
+            ReadInt(p, "highDramaExposure", path),
+            ReadFixed(p, "highDramaFrom", path),
+            ReadFixed(p, "chancePerExposure", path),
+            ReadFixed(p, "chanceCap", path),
+            ReadInt(p, "strikeWeeks", path),
+            ReadInt(p, "strikesToBan", path),
+            ReadFixed(p, "dramaDecay", path));
+    }
+
+    /// <summary>Reads <c>sponsors</c>; the pitch is a schema-2 choice and <c>startingLeads</c> maps backgrounds to template IDs.</summary>
+    private static SponsorBalance ReadSponsorBalance(JsonElement s)
+    {
+        const string path = $"{BalanceFile}.sponsors";
+        return new SponsorBalance(
+            ReadFixed(s, "offerBase", path),
+            ReadFixed(s, "offerPerMagnitude", path),
+            ReadFixed(s, "offerCap", path),
+            ReadInt(s, "offerWeeks", path),
+            ReadInt(s, "maxContracts", path),
+            ReadFixed(s, "pitchEnergyCost", path),
+            ReadChoice(Property(s, "pitch", path), $"{path}.pitch", schema: 2),
+            ReadFixed(s, "terminationCredibility", path),
+            ReadInt(s, "missesToTerminate", path),
+            ReadKeyed<Background, string>(Property(s, "startingLeads", path), $"{path}.startingLeads", StringValue));
+    }
+
+    private static WagerBalance ReadWagers(JsonElement w)
+    {
+        const string path = $"{BalanceFile}.wagers";
+        return new WagerBalance(
+            ReadKeyed<WagerTier, long>(Property(w, "stakePln", path), $"{path}.stakePln", LongValue),
+            ReadKeyed<WagerTier, int>(Property(w, "exposure", path), $"{path}.exposure", IntValue),
+            ReadFixed(w, "maxShareOfCash", path),
+            ReadFixed(w, "chance", path),
+            ReadFixed(w, "payoutMultiple", path),
+            ReadFixed(w, "winAudience", path),
+            ReadFixed(w, "lossAudience", path),
+            ReadFixed(w, "winDrama", path),
+            ReadFixed(w, "lossDrama", path));
+    }
+
+    private static SideBusinessBalance ReadSideBusiness(JsonElement s)
+    {
+        const string path = $"{BalanceFile}.sideBusiness";
+        return new SideBusinessBalance(
+            ReadInt(s, "fromWeek", path),
+            ReadLong(s, "minFollowers", path),
+            ReadFixed(s, "energyCost", path),
+            ReadFixed(s, "burnoutGain", path),
+            ReadFixed(s, "qualityPerWork", path),
+            ReadFixed(s, "qualityDecay", path),
+            ReadFixed(s, "incomePerFollower", path),
+            ReadFixed(s, "incomeScale", path),
+            ReadFixed(s, "credibilityPerWeek", path));
+    }
+
+    private static PlatformBanText ReadPlatformBan(JsonElement p)
+    {
+        const string path = $"{BalanceFile}.platformBan";
+        return new PlatformBanText(
+            ReadString(p, "title", path),
+            ReadString(p, "text", path),
+            ReadKeyed<Platform, string>(Property(p, "choices", path), $"{path}.choices", StringValue));
+    }
+
+    /// <summary>
+    /// Reads an object keyed by enum member names; every key must name a member, and the validator checks that none is
+    /// missing where all are required.
+    /// </summary>
+    private static ImmutableDictionary<TEnum, T> ReadKeyed<TEnum, T>(JsonElement obj, string path, Func<JsonElement, string, T> read)
+        where TEnum : struct, Enum
+    {
+        if (obj.ValueKind != JsonValueKind.Object)
+        {
+            throw Invalid(path, "expected an object");
+        }
+
+        return obj.EnumerateObject().ToImmutableDictionary(
+            p => ParseEnum<TEnum>(p.Name, path),
+            p => read(p.Value, $"{path}.{p.Name}"));
     }
 
     /// <summary>The balance's optional network choice; absent or JSON null means the action is unavailable.</summary>

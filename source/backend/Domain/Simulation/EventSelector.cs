@@ -7,7 +7,7 @@ namespace PolskiStreamerSimulator.Domain.Simulation;
 
 public static class EventSelector
 {
-    /// <summary>Strike lifetime used until the balance defines a policy section (Task 5 reads it from the balance).</summary>
+    /// <summary>Strike lifetime in weeks when the balance has no policy section.</summary>
     private const int DefaultStrikeWeeks = 26;
 
     /// <summary>
@@ -54,10 +54,10 @@ public static class EventSelector
     /// Whether <paramref name="e"/> may be shown now: inside its weeks, not cooling down, within its stat bounds, its
     /// required flags active and forbidden flags inactive, not an already used one-time event, allowed on the current
     /// platform, with enough active strikes there and — when <paramref name="category"/> is given — allowed for that
-    /// category. Stat bounds on the primary category read
-    /// <paramref name="category"/>, or the last streamed category for decisions.
+    /// category. Stat bounds on the primary category read <paramref name="category"/>, or the last streamed category for
+    /// decisions. Strikes count as active for <paramref name="b"/>'s policy strike weeks.
     /// </summary>
-    public static bool IsEligible(CareerState s, EventDefinition e, Category? category)
+    public static bool IsEligible(CareerState s, BalanceConstants b, EventDefinition e, Category? category)
     {
         var week = s.Week.Value;
         var eligibility = e.Eligibility;
@@ -71,7 +71,7 @@ public static class EventSelector
             && eligibility.RequiresFlags.All(flag => CareerFlags.IsActive(s, flag))
             && !eligibility.ForbidsFlags.Any(flag => CareerFlags.IsActive(s, flag))
             && !(e.OneTime && s.UsedOneTime is { } used && used.Contains(e.Id))
-            && IsAllowedOnPlatform(s, eligibility);
+            && IsAllowedOnPlatform(s, eligibility, b.Policy?.StrikeWeeks ?? DefaultStrikeWeeks);
     }
 
     /// <summary>The candidate holding <paramref name="ticket"/> (1 to the weight sum) by cumulative weight in list order.</summary>
@@ -79,7 +79,7 @@ public static class EventSelector
         => candidates[PickIndex(candidates, ticket)];
 
     private static List<EventDefinition> LiveCandidates(CareerState s, ContentSnapshot c, Category primary)
-        => [.. c.Events.Where(e => e.Phase == EventPhase.Live && IsEligible(s, e, primary))];
+        => [.. c.Events.Where(e => e.Phase == EventPhase.Live && IsEligible(s, c.Balance, e, primary))];
 
     private static void Draw(List<EventDefinition> candidates, int count, ImmutableArray<string>.Builder selected, ref Pcg32 rng)
     {
@@ -103,11 +103,11 @@ public static class EventSelector
         return index;
     }
 
-    private static bool IsAllowedOnPlatform(CareerState s, Eligibility eligibility)
+    private static bool IsAllowedOnPlatform(CareerState s, Eligibility eligibility, int strikeWeeks)
     {
         var current = Economy.Current(s);
         return (eligibility.Platforms.IsEmpty || eligibility.Platforms.Contains(current))
-            && (eligibility.MinStrikes <= 0 || Economy.ActiveStrikes(s, current, s.LastSettledWeek, DefaultStrikeWeeks) >= eligibility.MinStrikes);
+            && (eligibility.MinStrikes <= 0 || Economy.ActiveStrikes(s, current, s.LastSettledWeek, strikeWeeks) >= eligibility.MinStrikes);
     }
 
     private static bool IsCoolingDown(CareerState s, string eventId)

@@ -116,9 +116,9 @@ public class M3FlagTests
         var s = TestCareers.Dorm(7);
         var rng = Pcg32.Create(1, CareerFactory.CareerStream);
         Assert.Equal(["any"], EventSelector.Select(s, c, Category.Fps, ref rng));
-        Assert.False(EventSelector.IsEligible(s, c.Events[0], Category.Fps));
-        Assert.True(EventSelector.IsEligible(s, c.Events[0], Category.Chess));
-        Assert.True(EventSelector.IsEligible(s, c.Events[0], category: null));
+        Assert.False(EventSelector.IsEligible(s, c.Balance, c.Events[0], Category.Fps));
+        Assert.True(EventSelector.IsEligible(s, c.Balance, c.Events[0], Category.Chess));
+        Assert.True(EventSelector.IsEligible(s, c.Balance, c.Events[0], category: null));
     }
 
     [Fact]
