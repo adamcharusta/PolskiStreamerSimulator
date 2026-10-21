@@ -71,7 +71,7 @@ public static class BatchRunner
 
     /// <summary>The policies offered for content of <paramref name="rulesetId"/>: <see cref="BuiltInPolicies.M3All"/> for M3, otherwise the M1 list.</summary>
     public static IReadOnlyList<IChoicePolicy> PoliciesFor(string rulesetId)
-        => rulesetId == M3Ruleset.RulesetId ? BuiltInPolicies.M3All : BuiltInPolicies.All;
+        => M3Ruleset.IsM3(rulesetId) ? BuiltInPolicies.M3All : BuiltInPolicies.All;
 
     public static BatchResult Run(BatchOptions o) => Run(o, KnownPolicies);
 
@@ -83,7 +83,7 @@ public static class BatchRunner
     internal static BatchResult Run(BatchOptions o, IReadOnlyList<IChoicePolicy> availablePolicies)
     {
         var content = new JsonContentSource(o.ContentDirectory).Load();
-        var engine = new WeekEngine(new RulesetRegistry([new M1Ruleset(), new M3Ruleset()]));
+        var engine = new WeekEngine(new RulesetRegistry([new M1Ruleset(), .. M3Ruleset.Versions]));
         var policies = o.Policies.Select(name => availablePolicies.Single(p => p.Name == name)).ToArray();
         var results = new CareerSummary[o.Careers];
 

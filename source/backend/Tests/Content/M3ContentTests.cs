@@ -10,7 +10,7 @@ public class M3ContentTests
     private static readonly ContentSnapshot C = new JsonContentSource(TestPaths.ContentM3).Load();
 
     [Fact]
-    public void Loads_valid_for_the_m3_ruleset() => Assert.Equal(("m3-systems.1", 2), (C.RulesetId, C.Schema));
+    public void Loads_valid_for_the_m3_ruleset() => Assert.Equal(("m3-systems.2", 2), (C.RulesetId, C.Schema));
 
     [Fact]
     public void Has_the_representative_set()
