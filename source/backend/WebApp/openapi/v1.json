@@ -1130,10 +1130,13 @@
           "improveProduction",
           "manageCommunity",
           "noAction",
-          "networkCollaborate"
+          "networkCollaborate",
+          "pitchFulfillSponsor",
+          "sideBusinessWork",
+          "planPlatformMigration"
         ],
         "type": "string",
-        "description": "Between-stream main actions (network collaboration is M3 only); exactly one per week."
+        "description": "Between-stream main actions; exactly one per week. Network collaboration is M3 only; the sponsor pitch, the side\r\nbusiness and the platform migration are M3-B only and exist only in content that defines their balance sections."
       },
       "ModifierView": {
         "required": [

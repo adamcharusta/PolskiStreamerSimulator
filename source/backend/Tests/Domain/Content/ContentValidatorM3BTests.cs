@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
@@ -14,77 +13,11 @@ public class ContentValidatorM3BTests
     private const string RolledChoice = "bold";
     private const string GuaranteedChoice = "calm";
 
-    private static readonly SponsorTemplate TrustedTea = new(
-        "trusted-tea",
-        1,
-        "Herbata Spokój",
-        "Spokojna marka szuka spokojnego kanału.",
-        SponsorKind.Contract,
-        300,
-        20,
-        1000,
-        12,
-        4,
-        null,
-        [],
-        new SponsorPrerequisites(1000, Fixed.FromInt(40), Fixed.FromInt(40), null),
-        [SponsorTemplate.Gambling],
-        new SponsorBreach(200, Fixed.FromInt(-3)),
-        3,
-        []);
+    private static readonly SponsorTemplate TrustedTea = M3BTestContent.TrustedTea;
 
-    private static readonly ChoiceDefinition Pitch = new(
-        "pitch", null, "Rozpisz ofertę dla sponsorów", false, Fixed.FromRatio(15, 100), [], false,
-        new OutcomeSet([new Effect(EffectKind.StatDelta, StatKey.Credibility, Fixed.One)], [], null, null),
-        SuccessText: "Ktoś odpisał.",
-        FailureText: "Cisza w skrzynce.");
+    private static readonly ChoiceDefinition Pitch = M3BTestContent.Pitch;
 
-    private static readonly Lazy<ContentSnapshot> Snapshot = new(Build);
-
-    private static ContentSnapshot Valid() => Snapshot.Value;
-
-    /// <summary>The M3 test content plus the seven M3-B balance sections (the proposed values) and one sponsor template.</summary>
-    private static ContentSnapshot Build()
-    {
-        var m3 = M3TestContent.Valid();
-        static Fixed H(int hundredths) => Fixed.FromRatio(hundredths, 100);
-        var neutralReach = CategoryValues<Fixed>.Uniform(Fixed.One);
-        return m3 with
-        {
-            Sponsors = [TrustedTea],
-            Balance = m3.Balance with
-            {
-                Platforms = new Dictionary<Platform, PlatformProfile>
-                {
-                    [Platform.Czatnia] = new(Fixed.One, Fixed.One, Fixed.One, Fixed.One, neutralReach),
-                    [Platform.PulsLive] = new(H(120), H(85), H(110), H(130), neutralReach.With(Category.Fps, H(110))),
-                    [Platform.Nurt] = new(H(85), H(125), H(70), H(80), neutralReach.With(Category.Chess, H(120))),
-                }.ToImmutableDictionary(),
-                Migration = new MigrationBalance(
-                    Fixed.FromInt(6), 26, 4, Fixed.FromInt(-1), H(10), H(10), H(40), Fixed.FromInt(250), Fixed.FromInt(500), H(20), H(80), H(5)),
-                Policy = new PolicyBalance(1, 1, 1, Fixed.FromInt(70), Fixed.FromRatio(15, 1000), H(15), 26, 3, Fixed.One),
-                Sponsors = new SponsorBalance(
-                    H(8), H(2), H(20), 2, 2, Fixed.FromInt(8), Pitch, Fixed.FromInt(-5), 2,
-                    ImmutableDictionary<Background, string>.Empty.Add(Background.IndustryInsider, TrustedTea.Id)),
-                Wagers = new WagerBalance(
-                    Tiers(100L, 500L, 2000L), Tiers(1, 2, 3), H(25), H(45), Fixed.FromInt(2), H(115), H(105), Fixed.FromInt(2), Fixed.FromInt(3)),
-                SideBusiness = new SideBusinessBalance(
-                    52, 2000, Fixed.FromInt(12), Fixed.FromInt(4), Fixed.FromInt(15), Fixed.FromInt(3), Fixed.FromRatio(5, 10_000), Fixed.FromInt(10), Fixed.FromRatio(-2, 10)),
-                PlatformBan = new PlatformBanText(
-                    "Ban na platformie",
-                    "Platforma zamyka ci kanał na stałe. Dokąd przenosisz społeczność?",
-                    new Dictionary<Platform, string>
-                    {
-                        [Platform.Czatnia] = "Przenieś się na Czatnię",
-                        [Platform.PulsLive] = "Przenieś się na PulsLive",
-                        [Platform.Nurt] = "Przenieś się na Nurt",
-                    }.ToImmutableDictionary()),
-            },
-        };
-    }
-
-    private static ImmutableDictionary<WagerTier, T> Tiers<T>(T low, T medium, T high)
-        => new Dictionary<WagerTier, T> { [WagerTier.Low] = low, [WagerTier.Medium] = medium, [WagerTier.High] = high }.ToImmutableDictionary();
+    private static ContentSnapshot Valid() => M3BTestContent.Valid();
 
     private static ContentSnapshot WithSponsor(Func<SponsorTemplate, SponsorTemplate> change)
         => Valid() with { Sponsors = [change(TrustedTea)] };

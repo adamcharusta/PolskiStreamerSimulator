@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 
@@ -20,7 +21,7 @@ public static class WeekActions
     public delegate string? RulesetRule(CareerState s, WeekPlan plan);
 
     public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c, RulesetRule rule)
-        => [.. AllPlans(c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan, rule)))];
+        => [.. AllPlans(s, c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan, rule)))];
 
     /// <summary>
     /// Checks the command and the plan, then applies the main action: the result carries the changed state, the
@@ -53,12 +54,14 @@ public static class WeekActions
     }
 
     /// <summary>
-    /// The reason the plan cannot start, or null. <see cref="MainAction.NetworkCollaborate"/> exists only in content
-    /// that defines the collaboration choice (M3); otherwise it is <c>unsupported-action</c>, before any other rule.
+    /// The reason the plan cannot start, or null. An action (or a wager) whose balance section the content lacks is
+    /// <c>unsupported-action</c>, before any other rule: <see cref="MainAction.NetworkCollaborate"/> needs the
+    /// collaboration choice (M3); the pitch, the side business, the migration and the wager need their M3-B sections.
+    /// After the shared and ruleset rules come the action's own rules (the upgrade's included), then the stake's.
     /// </summary>
     public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan, RulesetRule rule)
     {
-        if (plan.Action == MainAction.NetworkCollaborate && b.NetworkCollaborate is null)
+        if (!IsSupported(b, plan))
         {
             return "unsupported-action";
         }
@@ -73,21 +76,92 @@ public static class WeekActions
             return "week-in-progress";
         }
 
-        if (rule(s, plan) is { } rejected)
+        return rule(s, plan) ?? ActionRejection(s, b, plan) ?? WagerRejection(s, b, plan);
+    }
+
+    private static bool IsSupported(BalanceConstants b, WeekPlan plan)
+    {
+        var action = plan.Action switch
         {
-            return rejected;
+            MainAction.NetworkCollaborate => b.NetworkCollaborate is not null,
+            MainAction.PitchFulfillSponsor => b.Sponsors is not null,
+            MainAction.SideBusinessWork => b.SideBusiness is not null,
+            MainAction.PlanPlatformMigration => b.Platforms is not null && b.Migration is not null,
+            _ => true,
+        };
+        return action && (plan.Wager is null || b.Wagers is not null);
+    }
+
+    private static string? ActionRejection(CareerState s, BalanceConstants b, WeekPlan plan)
+    {
+        if (plan.Wager is not null && plan.Category != Category.Gambling)
+        {
+            return "wager-category";
         }
 
-        if (plan.Action == MainAction.NetworkCollaborate && s.Energy < b.NetworkEnergyCost)
+        return plan.Action switch
         {
-            return "not-enough-energy";
+            MainAction.NetworkCollaborate => EnergyRejection(s, b.NetworkEnergyCost),
+            MainAction.PitchFulfillSponsor => EnergyRejection(s, b.Sponsors!.PitchEnergyCost),
+            MainAction.SideBusinessWork => SideBusinessRejection(s, b.SideBusiness!),
+            MainAction.PlanPlatformMigration => MigrationRejection(s, b.Migration!, plan),
+            MainAction.ImproveProduction => UpgradeRejection(s, b, plan),
+            _ => null,
+        };
+    }
+
+    private static string? EnergyRejection(CareerState s, Fixed cost) => s.Energy < cost ? "not-enough-energy" : null;
+
+    /// <summary>Side-business work is legal from <see cref="SideBusinessBalance.FromWeek"/> with enough followers.</summary>
+    private static string? SideBusinessRejection(CareerState s, SideBusinessBalance side)
+    {
+        if (EnergyRejection(s, side.EnergyCost) is { } energy)
+        {
+            return energy;
         }
 
-        if (plan.Action != MainAction.ImproveProduction)
+        if (s.Week.Value < side.FromWeek)
         {
-            return null;
+            return "too-early";
         }
 
+        return s.Followers < side.MinFollowers ? "needs-followers" : null;
+    }
+
+    /// <summary>A move needs another platform as its target, enough weeks on the current one and a target that has not banned the career.</summary>
+    private static string? MigrationRejection(CareerState s, MigrationBalance migration, WeekPlan plan)
+    {
+        if (plan.TargetPlatform is not { } target)
+        {
+            return "missing-target";
+        }
+
+        if (target == Economy.Current(s))
+        {
+            return "same-platform";
+        }
+
+        if (EnergyRejection(s, migration.EnergyCost) is { } energy)
+        {
+            return energy;
+        }
+
+        if (s.Week.Value - Economy.SinceWeek(s) < migration.MinWeeksOnPlatform)
+        {
+            return "too-soon";
+        }
+
+        return Economy.IsBanned(s, target) ? "platform-banned" : null;
+    }
+
+    /// <summary>A stake must fit the share of spendable cash (after the plan's upgrade and a negative decision carry).</summary>
+    private static string? WagerRejection(CareerState s, BalanceConstants b, WeekPlan plan)
+        => plan.Wager is { } tier && !WagerRules.Affordable(b.Wagers!.StakePln[tier], WagerRules.Spendable(s, b, plan), b.Wagers)
+            ? "needs-cash"
+            : null;
+
+    private static string? UpgradeRejection(CareerState s, BalanceConstants b, WeekPlan plan)
+    {
         if (plan.UpgradeSlot is not { } slot)
         {
             return "missing-slot";
@@ -132,6 +206,13 @@ public static class WeekActions
                 return Stats.Add(s, StatKey.PrimaryBoredom, -b.ManageCommunityBoredomRelief, plan.Category);
             case MainAction.NetworkCollaborate:
                 return Stats.Add(s, StatKey.Energy, -b.NetworkEnergyCost, plan.Category);
+            case MainAction.PitchFulfillSponsor:
+                return Stats.Add(s, StatKey.Energy, -b.Sponsors!.PitchEnergyCost, plan.Category);
+            case MainAction.SideBusinessWork:
+                s = Stats.Add(s, StatKey.Energy, -b.SideBusiness!.EnergyCost, plan.Category);
+                return Stats.Add(s, StatKey.Burnout, b.SideBusiness.BurnoutGain, plan.Category);
+            case MainAction.PlanPlatformMigration:
+                return Stats.Add(s, StatKey.Energy, -b.Migration!.EnergyCost, plan.Category);
             case MainAction.NoAction:
                 return Stats.Add(s, StatKey.Energy, b.NoActionEnergy, plan.Category);
             default:
@@ -139,23 +220,66 @@ public static class WeekActions
         }
     }
 
-    private static IEnumerable<WeekPlan> AllPlans(BalanceConstants b)
+    /// <summary>
+    /// Every plan the content defines, per category: the M1 and M3-A plans, then (M3-B) the pitch, side-business work
+    /// and a migration to each other platform in enum order. With wagers, each Gambling plan is followed by its
+    /// <c>Low</c>, <c>Medium</c> and <c>High</c> variants. Without M3-B sections this is exactly the M3-A sequence.
+    /// </summary>
+    public static IEnumerable<WeekPlan> AllPlans(CareerState s, BalanceConstants b)
     {
         foreach (var category in Enum.GetValues<Category>())
         {
-            yield return new WeekPlan(MainAction.Rest, category);
-            yield return new WeekPlan(MainAction.TrainCategory, category);
-            foreach (var slot in Enum.GetValues<EquipmentSlot>())
+            foreach (var plan in CategoryPlans(s, b, category))
             {
-                yield return new WeekPlan(MainAction.ImproveProduction, category, UpgradeSlot: slot);
-            }
+                yield return plan;
+                if (category != Category.Gambling || b.Wagers is null)
+                {
+                    continue;
+                }
 
-            yield return new WeekPlan(MainAction.ManageCommunity, category);
-            yield return new WeekPlan(MainAction.NoAction, category);
-            if (b.NetworkCollaborate is not null)
-            {
-                yield return new WeekPlan(MainAction.NetworkCollaborate, category);
+                foreach (var tier in Enum.GetValues<WagerTier>())
+                {
+                    yield return plan with { Wager = tier };
+                }
             }
+        }
+    }
+
+    private static IEnumerable<WeekPlan> CategoryPlans(CareerState s, BalanceConstants b, Category category)
+    {
+        yield return new WeekPlan(MainAction.Rest, category);
+        yield return new WeekPlan(MainAction.TrainCategory, category);
+        foreach (var slot in Enum.GetValues<EquipmentSlot>())
+        {
+            yield return new WeekPlan(MainAction.ImproveProduction, category, UpgradeSlot: slot);
+        }
+
+        yield return new WeekPlan(MainAction.ManageCommunity, category);
+        yield return new WeekPlan(MainAction.NoAction, category);
+        if (b.NetworkCollaborate is not null)
+        {
+            yield return new WeekPlan(MainAction.NetworkCollaborate, category);
+        }
+
+        if (b.Sponsors is not null)
+        {
+            yield return new WeekPlan(MainAction.PitchFulfillSponsor, category);
+        }
+
+        if (b.SideBusiness is not null)
+        {
+            yield return new WeekPlan(MainAction.SideBusinessWork, category);
+        }
+
+        if (b.Platforms is null || b.Migration is null)
+        {
+            yield break;
+        }
+
+        var current = Economy.Current(s);
+        foreach (var target in Enum.GetValues<Platform>().Where(p => p != current))
+        {
+            yield return new WeekPlan(MainAction.PlanPlatformMigration, category, TargetPlatform: target);
         }
     }
 }
