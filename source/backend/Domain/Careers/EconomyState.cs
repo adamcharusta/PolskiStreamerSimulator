@@ -33,4 +33,8 @@ public static class Economy
     public static int SinceWeek(CareerState s) => s.PlatformSinceWeek ?? CareerWeek.First;
 
     public static bool IsBanned(CareerState s, Platform p) => s.BannedPlatforms is { } banned && banned.Contains(p);
+
+    /// <summary>Strikes on <paramref name="platform"/> still active after <paramref name="settledWeek"/>: given within the last <paramref name="strikeWeeks"/> weeks.</summary>
+    public static int ActiveStrikes(CareerState s, Platform platform, int settledWeek, int strikeWeeks)
+        => s.Strikes is { } strikes ? strikes.Count(x => x.Platform == platform && x.GivenWeek + strikeWeeks > settledWeek) : 0;
 }

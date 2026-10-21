@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
@@ -220,6 +221,132 @@ public sealed class JsonContentSourceTests : IDisposable
             StringComparison.Ordinal));
         var error = Assert.Throws<InvalidDataException>(() => new JsonContentSource(dir).Load());
         Assert.Contains("balance.json.networkCollaborate", error.Message, StringComparison.Ordinal);
+    }
+
+    private const string TrustedTea = """
+        [{ "id": "trusted-tea", "version": 1, "name": "Herbata Spokój", "pitch": "Spokojna marka szuka spokojnego kanału.",
+           "kind": "contract", "paymentPln": 300, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 1000,
+           "termWeeks": 12, "dueEveryWeeks": 4, "platforms": [], "prerequisites": { "minFollowers": 1000, "minCredibility": 40, "maxDrama": 40 },
+           "incompatibleWith": ["gambling"], "breach": { "cashPln": 200, "credibility": -3 }, "weight": 3 }]
+        """;
+
+    /// <summary>The schema-2 test events with a <c>sponsors</c> array.</summary>
+    private static byte[] SchemaTwoWith(string sponsors) => WithSponsors(TestContentFiles.SchemaTwoEvents(), sponsors);
+
+    /// <summary>The schema-1 repository events with the same <c>sponsors</c> array, which schema 1 does not allow.</summary>
+    private static byte[] SchemaOneWithSponsors() => WithSponsors(TestContentFiles.Events, TrustedTea);
+
+    private static byte[] WithSponsors(byte[] events, string sponsors)
+    {
+        var root = JsonNode.Parse(events)!.AsObject();
+        root["sponsors"] = JsonNode.Parse(sponsors);
+        return System.Text.Encoding.UTF8.GetBytes(root.ToJsonString());
+    }
+
+    private static byte[] OneLiveEvent(string eligibility) => System.Text.Encoding.UTF8.GetBytes($$"""
+        { "schema": 2, "events": [ {
+          "id": "x", "version": 1, "phase": "live", "title": "T", "text": "t", "weight": 1,
+          "eligibility": { "fromWeek": 1, "toWeek": 1040, {{eligibility}} },
+          "choices": [ { "id": "ok", "label": "L", "guaranteed": true, "outcomes": {} } ] } ] }
+        """);
+
+    [Fact]
+    public void Schema_two_reads_sponsor_templates()
+    {
+        var events = SchemaTwoWith(sponsors: TrustedTea);
+        var c = JsonContentSource.Parse(TestContentFiles.Balance, events, "test");
+        var t = Assert.Single(c.Sponsors);
+        Assert.Equal(("trusted-tea", 1, "Herbata Spokój", 3), (t.Id, t.Version, t.Name, t.Weight));
+        Assert.Equal((SponsorKind.Contract, 300L, 20L, 1000L, 12, 4), (t.Kind, t.PaymentPln, t.PaymentPerThousandFollowersPln, t.PaymentCapPln, t.TermWeeks, t.DueEveryWeeks));
+        Assert.Equal(1000L, t.Prerequisites.MinFollowers);
+        Assert.Equal(Fixed.FromInt(40), t.Prerequisites.MinCredibility);
+        Assert.Equal(Fixed.FromInt(40), t.Prerequisites.MaxDrama);
+        Assert.Null(t.Prerequisites.MinDrama);
+        Assert.Null(t.RequiredCategory);
+        Assert.True(t.Platforms.IsEmpty);
+        Assert.True(t.Tags.IsEmpty);
+        Assert.Equal(["gambling"], t.IncompatibleWith.ToArray());
+        Assert.Equal(new SponsorBreach(200, Fixed.FromInt(-3)), t.Breach);
+    }
+
+    [Fact]
+    public void Schema_two_reads_a_one_off_sponsor_with_its_optional_fields()
+    {
+        var events = SchemaTwoWith(sponsors: """
+            [{ "id": "hype-drink", "version": 2, "name": "N", "pitch": "P", "kind": "oneOff",
+               "paymentPln": 500, "paymentPerThousandFollowersPln": 0, "paymentCapPln": 500, "requiredCategory": "Fps",
+               "platforms": ["PulsLive", "Nurt"], "prerequisites": { "minDrama": 10 }, "breach": { "cashPln": 0, "credibility": 0 },
+               "weight": 1, "tags": ["sponsor"] }]
+            """);
+        var t = Assert.Single(JsonContentSource.Parse(TestContentFiles.Balance, events, "test").Sponsors);
+        Assert.Equal((SponsorKind.OneOff, (int?)null, (int?)null, Category.Fps), (t.Kind, t.TermWeeks, t.DueEveryWeeks, t.RequiredCategory));
+        Assert.Equal([Platform.PulsLive, Platform.Nurt], t.Platforms.ToArray());
+        Assert.Equal(new SponsorPrerequisites(0, null, null, Fixed.FromInt(10)), t.Prerequisites);
+        Assert.True(t.IncompatibleWith.IsEmpty);
+        Assert.Equal(["sponsor"], t.Tags.ToArray());
+    }
+
+    [Fact]
+    public void Content_without_sponsors_has_none()
+    {
+        Assert.True(JsonContentSource.Parse(TestContentFiles.Balance, TestContentFiles.SchemaTwoEvents(), "test").Sponsors.IsEmpty);
+        Assert.True(new JsonContentSource(TestPaths.ContentM1).Load().Sponsors.IsEmpty);
+    }
+
+    [Fact]
+    public void Sponsors_are_rejected_in_schema_one()
+    {
+        var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.Parse(TestContentFiles.Balance, SchemaOneWithSponsors(), "test"));
+        Assert.Contains("events.json.sponsors", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Unknown_sponsor_kind_is_rejected()
+    {
+        var events = SchemaTwoWith(sponsors: TrustedTea.Replace("\"contract\"", "\"barter\"", StringComparison.Ordinal));
+        var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.Parse(TestContentFiles.Balance, events, "test"));
+        Assert.Contains("unknown SponsorKind 'Barter'", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Eligibility_reads_platforms_and_min_strikes()
+    {
+        var e = JsonContentSource.ParseEvents(OneLiveEvent("\"platforms\": [\"Nurt\"], \"minStrikes\": 1")).Single();
+        Assert.Equal([Platform.Nurt], e.Eligibility.Platforms.ToArray());
+        Assert.Equal(1, e.Eligibility.MinStrikes);
+    }
+
+    [Fact]
+    public void Eligibility_without_platforms_allows_every_platform_and_needs_no_strikes()
+    {
+        var e = JsonContentSource.ParseEvents(OneLiveEvent("\"categories\": []")).Single();
+        Assert.True(e.Eligibility.Platforms.IsEmpty);
+        Assert.Equal(0, e.Eligibility.MinStrikes);
+    }
+
+    [Fact]
+    public void Unknown_platform_in_eligibility_is_rejected()
+    {
+        var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.ParseEvents(OneLiveEvent("\"platforms\": [\"Kick\"]")));
+        Assert.Contains("unknown Platform 'Kick'", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Effects_read_the_m3b_kinds_and_a_sponsor_target()
+    {
+        var events = System.Text.Encoding.UTF8.GetBytes("""
+            { "schema": 2, "events": [ {
+              "id": "x", "version": 1, "phase": "crisis", "title": "T", "text": "t", "weight": 1,
+              "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+              "choices": [ { "id": "ok", "label": "L", "baseChance": 0.5,
+                "outcomes": {
+                  "success": [ { "kind": "SponsorOffer", "sponsor": "trusted-tea", "amount": 0 } ],
+                  "failure": [ { "kind": "PolicyStrike", "amount": 2 }, { "kind": "GlobalBan", "amount": 0 } ] } } ] } ] }
+            """);
+        var outcomes = JsonContentSource.ParseEvents(events).Single().Choices[0].Outcomes;
+        Assert.Equal(new Effect(EffectKind.SponsorOffer, null, Fixed.Zero, Target: "trusted-tea"), outcomes.Success[0]);
+        Assert.Equal(new Effect(EffectKind.PolicyStrike, null, Fixed.FromInt(2)), outcomes.Failure[0]);
+        Assert.Equal(new Effect(EffectKind.GlobalBan, null, Fixed.Zero), outcomes.Failure[1]);
     }
 
     [Theory]

@@ -49,7 +49,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var balanceRoot = balanceDocument.RootElement;
         var balance = ReadBalance(balanceRoot);
         var profiles = ReadProfiles(Property(balanceRoot, "profiles", BalanceFile));
-        var (schema, events) = ReadEvents(eventsDocument.RootElement);
+        var (schema, events, sponsors) = ReadEvents(eventsDocument.RootElement);
         if (schema == 1 && balanceRoot.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null)
         {
             throw Invalid($"{BalanceFile}.networkCollaborate", "is not allowed with schema 1 events");
@@ -57,7 +57,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
 
         var rulesetId = OptionalString(balanceRoot, "ruleset", BalanceFile) ?? DefaultRulesetId;
 
-        var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId);
+        var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId, sponsors);
         var violations = ContentValidator.Validate(snapshot);
         if (violations.Count > 0)
         {
@@ -74,7 +74,8 @@ public sealed class JsonContentSource(string directory) : IContentSource
         return ReadEvents(document.RootElement).Events;
     }
 
-    private static (int Schema, ImmutableArray<EventDefinition> Events) ReadEvents(JsonElement root)
+    /// <summary>Reads the schema, the events and (schema 2 only) the sponsor templates of an <c>events.json</c>.</summary>
+    private static (int Schema, ImmutableArray<EventDefinition> Events, ImmutableArray<SponsorTemplate> Sponsors) ReadEvents(JsonElement root)
     {
         var schema = OptionalInt(root, "schema", EventsFile) ?? 1;
         if (schema is not (1 or 2))
@@ -82,8 +83,54 @@ public sealed class JsonContentSource(string directory) : IContentSource
             throw Invalid($"{EventsFile}.schema", $"unsupported schema {schema}");
         }
 
-        return (schema, ReadArray(Property(root, "events", EventsFile), "events", (e, p) => ReadEvent(e, p, schema)));
+        var events = ReadArray(Property(root, "events", EventsFile), "events", (e, p) => ReadEvent(e, p, schema));
+        if (Optional(root, "sponsors") is not { } sponsors)
+        {
+            return (schema, events, []);
+        }
+
+        return schema == 1
+            ? throw Invalid($"{EventsFile}.sponsors", "is not allowed with schema 1 events")
+            : (schema, events, ReadArray(sponsors, "sponsors", ReadSponsor));
     }
+
+    /// <summary>Reads one sponsor template; term, cadence, required category, platforms, incompatibilities and tags are optional.</summary>
+    private static SponsorTemplate ReadSponsor(JsonElement t, string path)
+    {
+        var id = ReadString(t, "id", path);
+        path = $"sponsors[{id}]";
+        var prerequisites = Property(t, "prerequisites", path);
+        var prerequisitesPath = $"{path}.prerequisites";
+        var breach = Property(t, "breach", path);
+        return new SponsorTemplate(
+            id,
+            ReadInt(t, "version", path),
+            ReadString(t, "name", path),
+            ReadString(t, "pitch", path),
+            ParseEnum<SponsorKind>(ToPascalCase(ReadString(t, "kind", path)), $"{path}.kind"),
+            ReadLong(t, "paymentPln", path),
+            ReadLong(t, "paymentPerThousandFollowersPln", path),
+            ReadLong(t, "paymentCapPln", path),
+            OptionalInt(t, "termWeeks", path),
+            OptionalInt(t, "dueEveryWeeks", path),
+            OptionalString(t, "requiredCategory", path) is { } category ? ParseEnum<Category>(category, $"{path}.requiredCategory") : null,
+            ReadPlatforms(t, path),
+            new SponsorPrerequisites(
+                OptionalLong(prerequisites, "minFollowers", prerequisitesPath) ?? 0,
+                OptionalFixed(prerequisites, "minCredibility", prerequisitesPath),
+                OptionalFixed(prerequisites, "maxDrama", prerequisitesPath),
+                OptionalFixed(prerequisites, "minDrama", prerequisitesPath)),
+            OptionalStrings(t, "incompatibleWith", path),
+            new SponsorBreach(ReadLong(breach, "cashPln", $"{path}.breach"), ReadFixed(breach, "credibility", $"{path}.breach")),
+            ReadInt(t, "weight", path),
+            OptionalStrings(t, "tags", path));
+    }
+
+    /// <summary>An optional <c>platforms</c> list; absent means every platform.</summary>
+    private static ImmutableArray<Platform> ReadPlatforms(JsonElement obj, string path)
+        => Optional(obj, "platforms") is { } platforms
+            ? ReadArray(platforms, $"{path}.platforms", (p, itemPath) => ParseEnum<Platform>(StringValue(p, itemPath), itemPath))
+            : [];
 
     private static BalanceConstants ReadBalance(JsonElement b)
     {
@@ -289,6 +336,8 @@ public sealed class JsonContentSource(string directory) : IContentSource
             Categories = categoryList,
             RequiresFlags = OptionalStrings(eligibility, "requiresFlags", path),
             ForbidsFlags = OptionalStrings(eligibility, "forbidsFlags", path),
+            Platforms = ReadPlatforms(eligibility, path),
+            MinStrikes = OptionalInt(eligibility, "minStrikes", path) ?? 0,
         };
     }
 
@@ -351,14 +400,14 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ? ReadArray(effects, $"{path}.{name}", ReadEffect)
             : null;
 
-    /// <summary>Reads one effect; <c>flag</c> or <c>event</c> becomes <see cref="Effect.Target"/>.</summary>
+    /// <summary>Reads one effect; <c>flag</c>, <c>event</c> or <c>sponsor</c> becomes <see cref="Effect.Target"/>.</summary>
     private static Effect ReadEffect(JsonElement e, string path)
         => new(
             ParseEnum<EffectKind>(ReadString(e, "kind", path), path),
             OptionalString(e, "stat", path) is { } stat ? ParseEnum<StatKey>(stat, path) : null,
             ReadFixed(e, "amount", path),
             OptionalString(e, "category", path) is { } category ? ParseEnum<Category>(category, path) : null,
-            OptionalString(e, "flag", path) ?? OptionalString(e, "event", path),
+            OptionalString(e, "flag", path) ?? OptionalString(e, "event", path) ?? OptionalString(e, "sponsor", path),
             OptionalInt(e, "weeks", path));
 
     private static ImmutableDictionary<StatKey, Fixed> ReadStatBounds(JsonElement eligibility, string name, string path)

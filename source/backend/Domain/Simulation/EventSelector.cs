@@ -7,6 +7,9 @@ namespace PolskiStreamerSimulator.Domain.Simulation;
 
 public static class EventSelector
 {
+    /// <summary>Strike lifetime used until the balance defines a policy section (Task 5 reads it from the balance).</summary>
+    private const int DefaultStrikeWeeks = 26;
+
     /// <summary>
     /// Draws the week's event count, then picks that many distinct live events by weight among those eligible
     /// for the week and stats and not cooling down. Cumulative weights run in content order.
@@ -49,8 +52,9 @@ public static class EventSelector
 
     /// <summary>
     /// Whether <paramref name="e"/> may be shown now: inside its weeks, not cooling down, within its stat bounds, its
-    /// required flags active and forbidden flags inactive, not an already used one-time event and — when
-    /// <paramref name="category"/> is given — allowed for that category. Stat bounds on the primary category read
+    /// required flags active and forbidden flags inactive, not an already used one-time event, allowed on the current
+    /// platform, with enough active strikes there and — when <paramref name="category"/> is given — allowed for that
+    /// category. Stat bounds on the primary category read
     /// <paramref name="category"/>, or the last streamed category for decisions.
     /// </summary>
     public static bool IsEligible(CareerState s, EventDefinition e, Category? category)
@@ -66,7 +70,8 @@ public static class EventSelector
             && (category is null || eligibility.Categories.IsEmpty || eligibility.Categories.Contains(category.Value))
             && eligibility.RequiresFlags.All(flag => CareerFlags.IsActive(s, flag))
             && !eligibility.ForbidsFlags.Any(flag => CareerFlags.IsActive(s, flag))
-            && !(e.OneTime && s.UsedOneTime is { } used && used.Contains(e.Id));
+            && !(e.OneTime && s.UsedOneTime is { } used && used.Contains(e.Id))
+            && IsAllowedOnPlatform(s, eligibility);
     }
 
     /// <summary>The candidate holding <paramref name="ticket"/> (1 to the weight sum) by cumulative weight in list order.</summary>
@@ -96,6 +101,13 @@ public static class EventSelector
         }
 
         return index;
+    }
+
+    private static bool IsAllowedOnPlatform(CareerState s, Eligibility eligibility)
+    {
+        var current = Economy.Current(s);
+        return (eligibility.Platforms.IsEmpty || eligibility.Platforms.Contains(current))
+            && (eligibility.MinStrikes <= 0 || Economy.ActiveStrikes(s, current, s.LastSettledWeek, DefaultStrikeWeeks) >= eligibility.MinStrikes);
     }
 
     private static bool IsCoolingDown(CareerState s, string eventId)
