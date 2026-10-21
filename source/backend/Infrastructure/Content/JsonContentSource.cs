@@ -345,7 +345,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
     }
 
     /// <summary>
-    /// Reads an object keyed by enum member names; every key must name a member, and the validator checks that none is
+    /// Reads an object keyed by enum member names; every key must name a member at most once, and the validator checks that none is
     /// missing where all are required.
     /// </summary>
     private static ImmutableDictionary<TEnum, T> ReadKeyed<TEnum, T>(JsonElement obj, string path, Func<JsonElement, string, T> read)
@@ -356,9 +356,19 @@ public sealed class JsonContentSource(string directory) : IContentSource
             throw Invalid(path, "expected an object");
         }
 
-        return obj.EnumerateObject().ToImmutableDictionary(
-            p => ParseEnum<TEnum>(p.Name, path),
-            p => read(p.Value, $"{path}.{p.Name}"));
+        var values = ImmutableDictionary.CreateBuilder<TEnum, T>();
+        foreach (var p in obj.EnumerateObject())
+        {
+            var key = ParseEnum<TEnum>(p.Name, path);
+            if (values.ContainsKey(key))
+            {
+                throw Invalid($"{path}.{p.Name}", "is a duplicate key");
+            }
+
+            values.Add(key, read(p.Value, $"{path}.{p.Name}"));
+        }
+
+        return values.ToImmutable();
     }
 
     /// <summary>The balance's optional network choice; absent or JSON null means the action is unavailable.</summary>

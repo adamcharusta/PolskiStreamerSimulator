@@ -452,6 +452,17 @@ public sealed class JsonContentSourceTests : IDisposable
         Assert.Contains("unknown WagerTier 'Max'", error.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void A_duplicate_key_in_a_keyed_section_is_rejected()
+    {
+        var balance = System.Text.Encoding.UTF8.GetString(M3bBalance());
+        const string stakes = "\"stakePln\":{\"Low\":100,";
+        Assert.Contains(stakes, balance, StringComparison.Ordinal);
+        var duplicated = System.Text.Encoding.UTF8.GetBytes(balance.Replace(stakes, stakes + "\"Low\":200,", StringComparison.Ordinal));
+        var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.Parse(duplicated, M3bEvents(), "test"));
+        Assert.Equal("balance.json.wagers.stakePln.Low: is a duplicate key.", error.Message);
+    }
+
     [Theory]
     [InlineData("platforms")]
     [InlineData("migration")]
