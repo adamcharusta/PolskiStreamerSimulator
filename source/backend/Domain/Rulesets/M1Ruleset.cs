@@ -1,5 +1,6 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
 
@@ -14,7 +15,7 @@ public sealed class M1Ruleset : IRuleset
 
     public Result<CareerState> StartWeek(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
-        var applied = WeekActions.Apply(s, c, plan, expectedVersion);
+        var applied = WeekActions.Apply(s, c, plan, expectedVersion, ForcedRest);
         if (!applied.IsSuccess)
         {
             return Result<CareerState>.Fail(applied.Error);
@@ -26,7 +27,11 @@ public sealed class M1Ruleset : IRuleset
     }
 
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => WeekActions.LegalPlans(s, c);
+        => WeekActions.LegalPlans(s, c, ForcedRest);
+
+    /// <summary>At zero energy or full burnout only resting is legal.</summary>
+    private static string? ForcedRest(CareerState s, WeekPlan plan)
+        => (s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred) && plan.Action != MainAction.Rest ? "forced-rest" : null;
 
     /// <summary>The M1 rules have no mandatory decisions (TD-90); forced rest leaves only one legal plan.</summary>
     public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c) => false;
@@ -48,7 +53,7 @@ public sealed class M1Ruleset : IRuleset
         }
 
         var pending = settleable.Value;
-        var core = WeekSettlement.Core(s, pending, c);
+        var core = WeekSettlement.Core(s, pending, c, Fixed.One);
         var (state, ending) = WeekSettlement.Close(s, core.State, c);
         return Result<(CareerState, WeekReport)>.Ok((state, WeekSettlement.Report(s, pending, core, ending)));
     }

@@ -23,6 +23,9 @@ public sealed class JsonContentSource(string directory) : IContentSource
 
     /// <summary>Cooldown of a schema-2 event that does not set <c>cooldownWeeks</c>.</summary>
     private const int DefaultCooldownWeeks = 13;
+    private const string BurnoutPenaltySection = "burnoutPenalty";
+    private const string ViralSection = "viral";
+    private const string MasterySection = "mastery";
 
     public ContentSnapshot Load()
         => Parse(
@@ -47,6 +50,11 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var balance = ReadBalance(balanceRoot);
         var profiles = ReadProfiles(Property(balanceRoot, "profiles", BalanceFile));
         var (schema, events) = ReadEvents(eventsDocument.RootElement);
+        if (schema == 1 && balanceRoot.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null)
+        {
+            throw Invalid($"{BalanceFile}.networkCollaborate", "is not allowed with schema 1 events");
+        }
+
         var rulesetId = OptionalString(balanceRoot, "ruleset", BalanceFile) ?? DefaultRulesetId;
 
         var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId);
@@ -82,6 +90,10 @@ public sealed class JsonContentSource(string directory) : IContentSource
         const string f = BalanceFile;
         var weights = Property(b, "scoreWeights", f);
         var difficulty = Property(b, "difficultyMultiplier", f);
+        var burnout = Section(b, BurnoutPenaltySection);
+        var shortStream = Section(b, "shortStream");
+        var viral = Section(b, ViralSection);
+        var mastery = Section(b, MasterySection);
         return new BalanceConstants
         {
             Version = ReadString(b, "version", f),
@@ -147,11 +159,62 @@ public sealed class JsonContentSource(string directory) : IContentSource
             RecoveryCrisisEventId = OptionalString(b, "recoveryCrisisEventId", f),
             DecisionChancePerWeek = OptionalFixed(b, "decisionChancePerWeek", f) ?? Fixed.Zero,
             NetworkEnergyCost = OptionalFixed(b, "networkEnergyCost", f) ?? Fixed.Zero,
-            NetworkCollaborate = b.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null
-                ? ReadChoice(network, $"{f}.networkCollaborate", schema: 2)
-                : null,
+            NetworkCollaborate = ReadNetworkChoice(b),
+            ShortStreamFatigue = SectionFixed(shortStream, "fatigue", "shortStream", Fixed.One),
+            ShortStreamAudience = SectionFixed(shortStream, "audience", "shortStream", Fixed.One),
+            Categories = Section(b, "categories") is { } categories ? ReadCategories(categories) : null,
+            BurnoutPenaltyFrom = SectionFixed(burnout, "from", BurnoutPenaltySection, Fixed.FromInt(101)),
+            BurnoutPenaltyPerPoint = SectionFixed(burnout, "perPoint", BurnoutPenaltySection, Fixed.Zero),
+            BurnoutPenaltyCap = SectionFixed(burnout, "cap", BurnoutPenaltySection, Fixed.Zero),
+            ViralQualityFrom = SectionFixed(viral, "qualityFrom", ViralSection, Fixed.Zero),
+            ViralPerQualityPoint = SectionFixed(viral, "perQualityPoint", ViralSection, Fixed.Zero),
+            ViralPerCritical = SectionFixed(viral, "perCritical", ViralSection, Fixed.Zero),
+            ViralChanceCap = SectionFixed(viral, "chanceCap", ViralSection, Fixed.Zero),
+            ViralMultiplierMin = SectionFixed(viral, "multiplierMin", ViralSection, Fixed.Zero),
+            ViralMultiplierMax = SectionFixed(viral, "multiplierMax", ViralSection, Fixed.Zero),
+            ViralFollowerShare = SectionFixed(viral, "followerShare", ViralSection, Fixed.Zero),
+            ViralViewerShare = SectionFixed(viral, "viewerShare", ViralSection, Fixed.Zero),
+            ViralFollowerMin = SectionInt(viral, "followerMin", ViralSection, 0),
+            MasteryFromSkill = SectionFixed(mastery, "fromSkill", MasterySection, Fixed.FromInt(101)),
+            MasteryBoredomRelief = SectionInt(mastery, "boredomRelief", MasterySection, 0),
+            MasteryChurnFactor = SectionFixed(mastery, "churnFactor", MasterySection, Fixed.One),
         };
     }
+
+    /// <summary>The balance's optional network choice; absent or JSON null means the action is unavailable.</summary>
+    private static ChoiceDefinition? ReadNetworkChoice(JsonElement b)
+        => Optional(b, "networkCollaborate") is { } network ? ReadChoice(network, $"{BalanceFile}.networkCollaborate", schema: 2) : null;
+
+    /// <summary>An optional top-level balance section; absent means every value in it takes its M1-neutral default.</summary>
+    private static JsonElement? Section(JsonElement b, string name) => b.TryGetProperty(name, out var section) ? section : null;
+
+    /// <summary>A number inside an optional section, required once the section exists; <paramref name="fallback"/> when it does not.</summary>
+    private static Fixed SectionFixed(JsonElement? section, string name, string sectionName, Fixed fallback)
+        => section is { } s ? ReadFixed(s, name, $"{BalanceFile}.{sectionName}") : fallback;
+
+    /// <summary>An integer inside an optional section, required once the section exists; <paramref name="fallback"/> when it does not.</summary>
+    private static int SectionInt(JsonElement? section, string name, string sectionName, int fallback)
+        => section is { } s ? ReadInt(s, name, $"{BalanceFile}.{sectionName}") : fallback;
+
+    /// <summary>Reads the optional per-category profiles; every category is required once the section exists.</summary>
+    private static CategoryValues<CategoryProfile> ReadCategories(JsonElement categories)
+        => new([.. Enum.GetValues<Category>().Select(c => ReadCategory(Property(categories, c.ToString(), $"{BalanceFile}.categories"), $"{BalanceFile}.categories.{c}"))]);
+
+    private static CategoryProfile ReadCategory(JsonElement p, string path) => new(
+        ReadFixed(p, "reach", path),
+        ReadFixed(p, "noiseMin", path),
+        ReadFixed(p, "noiseMax", path),
+        ReadFixed(p, "conversion", path),
+        ReadFixed(p, "churn", path),
+        ReadInt(p, "boredomGainMin", path),
+        ReadInt(p, "boredomGainMax", path),
+        ReadFixed(p, "subYield", path),
+        ReadFixed(p, "donationYield", path),
+        ReadFixed(p, "adYield", path),
+        ReadFixed(p, "qualitySkillWeight", path),
+        ReadFixed(p, "credibilityPerStream", path),
+        ReadFixed(p, "dramaPerStream", path),
+        ReadFixed(p, "viralBase", path));
 
     private static ImmutableDictionary<Background, StartingProfile> ReadProfiles(JsonElement profiles)
     {

@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
@@ -6,13 +7,17 @@ namespace PolskiStreamerSimulator.Domain.Content;
 
 /// <summary>
 /// Rejects content that a career could not safely run on, before any career starts. Schema-1 (M1) content gets the
-/// original checks only; schema-2 content additionally gets ICU text, flag, follow-up, phase and per-category checks.
+/// original checks plus the M3 balance-range checks (its neutral defaults pass them); schema-2 content additionally gets ICU text, flag, follow-up, phase and per-category checks.
 /// </summary>
 public static class ContentValidator
 {
     /// <summary>Pseudo event ID under which the balance's network choice is reported.</summary>
     public const string NetworkChoiceOwner = "balance.networkCollaborate";
 
+    /// <summary>Flags the engine sets itself, so content may require them without any event setting them (flags starting with <c>sys:</c> count too).</summary>
+    public static readonly FrozenSet<string> EngineFlags = new[] { "viral-clip" }.ToFrozenSet(StringComparer.Ordinal);
+
+    private const string SystemFlagPrefix = "sys:";
     private const long MaxCashEffectPln = 1_000_000;
 
     private static readonly HashSet<EffectKind> DecisionForbidden =
@@ -65,7 +70,50 @@ public static class ContentValidator
         {
             violations.Add("balance:equipment-tiers");
         }
+
+        AddUnless(IsSafeViral(b), "balance:viral", violations);
+        AddUnless(IsFraction(b.ShortStreamFatigue) && IsFraction(b.ShortStreamAudience), "balance:short-stream", violations);
+        AddUnless(
+            b.BurnoutPenaltyFrom >= Fixed.Zero && b.BurnoutPenaltyPerPoint >= Fixed.Zero && b.BurnoutPenaltyCap >= Fixed.Zero,
+            "balance:burnout-penalty",
+            violations);
+        AddUnless(b.MasteryBoredomRelief >= 0 && b.MasteryChurnFactor > Fixed.Zero, "balance:mastery", violations);
+        if (b.Categories is { } categories)
+        {
+            violations.AddRange(Enum.GetValues<Category>()
+                .Where(category => !IsSafeCategory(categories[category], b.ViralChanceCap))
+                .Select(category => $"balance:category:{category}"));
+        }
     }
+
+    private static void AddUnless(bool valid, string violation, List<string> violations)
+    {
+        if (!valid)
+        {
+            violations.Add(violation);
+        }
+    }
+
+    /// <summary>A chance cap in [0, 1], shares in [0, 1], a non-negative follower floor and, when clips can happen, multipliers of at least one in order.</summary>
+    private static bool IsSafeViral(BalanceConstants b)
+        => IsShare(b.ViralChanceCap)
+            && IsShare(b.ViralFollowerShare)
+            && IsShare(b.ViralViewerShare)
+            && b.ViralFollowerMin >= 0
+            && (b.ViralChanceCap == Fixed.Zero || (b.ViralMultiplierMin >= Fixed.One && b.ViralMultiplierMin <= b.ViralMultiplierMax));
+
+    /// <summary>Positive factors, ordered noise and boredom ranges, and a viral base the viral chance cap still bounds.</summary>
+    private static bool IsSafeCategory(CategoryProfile p, Fixed viralChanceCap)
+        => p.NoiseMin > Fixed.Zero && p.NoiseMin <= p.NoiseMax
+            && p.BoredomGainMin >= 0 && p.BoredomGainMin <= p.BoredomGainMax
+            && new[] { p.Reach, p.Conversion, p.Churn, p.SubYield, p.DonationYield, p.AdYield, p.QualitySkillWeight }.All(factor => factor > Fixed.Zero)
+            && p.ViralBase >= Fixed.Zero && p.ViralBase <= viralChanceCap;
+
+    /// <summary>In [0, 1].</summary>
+    private static bool IsShare(Fixed value) => value >= Fixed.Zero && value <= Fixed.One;
+
+    /// <summary>In (0, 1].</summary>
+    private static bool IsFraction(Fixed value) => value > Fixed.Zero && value <= Fixed.One;
 
     private static void ValidateEvent(EventDefinition e, int schema, HashSet<string> eventIds, List<string> violations)
     {
@@ -201,16 +249,16 @@ public static class ContentValidator
     {
         var ids = c.Events.Select(e => e.Id).ToHashSet(StringComparer.Ordinal);
         var eventChoices = c.Events.SelectMany(e => ChoicesOf(e)).ToArray();
-        var flagSetters = c.Balance.NetworkCollaborate is { } network ? eventChoices.Append(network) : eventChoices;
-        var setFlags = TargetsOf(flagSetters, EffectKind.SetFlag);
-        var followUpTargets = TargetsOf(eventChoices, EffectKind.FollowUp);
+        var allChoices = c.Balance.NetworkCollaborate is { } network ? eventChoices.Append(network) : eventChoices;
+        var setFlags = TargetsOf(allChoices, EffectKind.SetFlag);
+        var followUpTargets = TargetsOf(allChoices, EffectKind.FollowUp);
 
         foreach (var e in c.Events)
         {
             ValidateDecisionShape(e, violations);
             ValidateTexts(e.Id, Texts(e), violations);
             violations.AddRange(e.Eligibility.RequiresFlags
-                .Where(flag => !setFlags.Contains(flag))
+                .Where(flag => !setFlags.Contains(flag) && !EngineFlags.Contains(flag) && !flag.StartsWith(SystemFlagPrefix, StringComparison.Ordinal))
                 .Select(flag => $"unset-flag:{e.Id}/{flag}"));
             ValidateChoiceLinks(e, c, ids, violations);
 
@@ -224,6 +272,7 @@ public static class ContentValidator
         if (c.Balance.NetworkCollaborate is { } networkChoice)
         {
             ValidateTexts(NetworkChoiceOwner, ChoiceTexts(networkChoice), violations);
+            ValidateFollowUps(NetworkChoiceOwner, networkChoice, c, ids, violations);
         }
 
         if (c.Balance.RecoveryCrisisEventId is { } recovery
@@ -259,20 +308,35 @@ public static class ContentValidator
     {
         foreach (var choice in ChoicesOf(e))
         {
-            violations.AddRange(AllEffects(choice)
-                .Where(effect => effect.Kind == EffectKind.FollowUp && effect.Target is not null && !ids.Contains(effect.Target))
-                .Select(effect => $"broken-follow-up:{e.Id}/{effect.Target}"));
+            ValidateFollowUps(e.Id, choice, c, ids, violations);
+            if (e.Phase == EventPhase.Live)
+            {
+                continue;
+            }
 
-            violations.AddRange(AllEffects(choice)
-                .Where(effect => effect.Kind == EffectKind.FollowUp && effect.Target is not null
-                    && c.Events.Any(x => x.Id == effect.Target && x.OneTime))
-                .Select(effect => $"follow-up-one-time:{e.Id}/{effect.Target}"));
-
-            if (e.Phase != EventPhase.Live && AllEffects(choice).Any(effect => DecisionForbidden.Contains(effect.Kind)))
+            if (AllEffects(choice).Any(effect => DecisionForbidden.Contains(effect.Kind)))
             {
                 violations.Add($"effect-phase:{e.Id}/{choice.Id}");
             }
+
+            if (choice.AllowsCritical)
+            {
+                violations.Add($"critical-in-decision:{e.Id}/{choice.Id}");
+            }
         }
+    }
+
+    /// <summary>Every follow-up of <paramref name="choice"/> must name an existing, repeatable event.</summary>
+    private static void ValidateFollowUps(string owner, ChoiceDefinition choice, ContentSnapshot c, HashSet<string> ids, List<string> violations)
+    {
+        var targets = AllEffects(choice)
+            .Where(effect => effect.Kind == EffectKind.FollowUp && effect.Target is not null)
+            .Select(effect => effect.Target!)
+            .ToArray();
+        violations.AddRange(targets.Where(target => !ids.Contains(target)).Select(target => $"broken-follow-up:{owner}/{target}"));
+        violations.AddRange(targets
+            .Where(target => c.Events.Any(x => x.Id == target && x.OneTime))
+            .Select(target => $"follow-up-one-time:{owner}/{target}"));
     }
 
     private static void ValidateTexts(string owner, IEnumerable<(string Field, string? Text)> texts, List<string> violations)

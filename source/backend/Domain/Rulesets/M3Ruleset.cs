@@ -5,6 +5,7 @@ using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets.M3;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
+using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets;
 
@@ -16,6 +17,10 @@ public sealed class M3Ruleset : IRuleset
 {
     public const string RulesetId = "m3-systems.1";
 
+    private const string RestOnlyFlag = "sys:rest-only";
+    private const string ShortStreamFlag = "sys:short-stream";
+    private const string ViralClipFlag = "viral-clip";
+    private const int ViralFlagWeeks = 4;
     private const string FollowersEventCode = "followers:event";
 
     public string Id => RulesetId;
@@ -31,16 +36,19 @@ public sealed class M3Ruleset : IRuleset
             return Result<CareerState>.Fail(blocked);
         }
 
-        var applied = WeekActions.Apply(s, c, plan, expectedVersion);
+        var applied = WeekActions.Apply(s, c, plan, expectedVersion, RestOnly);
         if (!applied.IsSuccess)
         {
             return Result<CareerState>.Fail(applied.Error);
         }
 
         var rng = applied.Value.Rng;
-        var (eventIds, scheduled) = EventSelector.Select(applied.Value.State, c, plan.Category, applied.Value.State.Scheduled ?? [], ref rng);
-        var started = WeekActions.Started(s, applied.Value, plan, eventIds, rng);
-        var pending = started.Pending!;
+        var afterAction = plan.Action == MainAction.NetworkCollaborate
+            ? RollNetwork(s, c, plan, applied.Value, ref rng)
+            : WeekActions.Started(s, applied.Value, plan, [], rng);
+        var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
+        var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
+        var pending = started.Pending;
         if (s.Carry is { } carry)
         {
             pending = pending with
@@ -56,7 +64,11 @@ public sealed class M3Ruleset : IRuleset
     }
 
     public IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => WeekActions.LegalPlans(s, c);
+        => WeekActions.LegalPlans(s, c, RestOnly);
+
+    /// <summary>No forced rest in M3 (the recovery crisis replaces it); a week off allows only resting.</summary>
+    private static string? RestOnly(CareerState s, WeekPlan plan)
+        => CareerFlags.IsActive(s, RestOnlyFlag) && plan.Action != MainAction.Rest ? "rest-only" : null;
 
     /// <summary>The next week waits while mandatory decisions are queued.</summary>
     public bool RequiresPlayerDecision(CareerState s, ContentSnapshot c)
@@ -89,17 +101,55 @@ public sealed class M3Ruleset : IRuleset
         }
 
         var pending = settleable.Value;
-        var core = ApplyFollowersPercent(WeekSettlement.Core(s, pending, c), pending.FollowersPercent);
-        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(core.State, s.Week.Value), c);
+        var shortStream = CareerFlags.IsActive(s, ShortStreamFlag);
+        if (shortStream)
+        {
+            pending = pending with { AudienceMultiplier = pending.AudienceMultiplier * c.Balance.ShortStreamAudience };
+        }
+
+        var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
+        var criticals = CriticalCount(pending);
+        var core = ApplyFollowersPercent(
+            WeekSettlement.Core(
+                streamed,
+                pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
+                c,
+                shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,
+                quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
+            pending.FollowersPercent);
+        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c);
         if (ending is null)
         {
             var rng = state.Rng;
             state = DecisionQueue.Open(state, c, ref rng) with { Rng = rng };
         }
 
-        var report = WeekSettlement.Report(s, pending, core, ending) with { DecisionRolls = pending.Carry?.Rolls ?? [] };
+        var report = WeekSettlement.Report(s, pending, core, ending) with { ActionRoll = pending.ActionRoll, DecisionRolls = pending.Carry?.Rolls ?? [] };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
+
+    /// <summary>
+    /// Category base + per-point bonus above the quality threshold + bonus per critical outcome + event effects
+    /// (percentage points), kept between zero and the cap. Gameplay §11.
+    /// </summary>
+    public static Fixed ViralChance(BalanceConstants b, Category category, Fixed quality, int criticals, Fixed fromEffects)
+    {
+        var aboveThreshold = FixedMath.Max(Fixed.Zero, quality - b.ViralQualityFrom);
+        var chance = b.Profile(category).ViralBase
+            + (aboveThreshold * b.ViralPerQualityPoint)
+            + (Fixed.FromInt(criticals) * b.ViralPerCritical)
+            + (fromEffects / Fixed.Hundred);
+        return chance.Clamp(Fixed.Zero, b.ViralChanceCap);
+    }
+
+    /// <summary>Critical outcomes of the week's resolved events and its action roll.</summary>
+    private static int CriticalCount(PendingWeek pending)
+        => pending.Resolved.Concat(pending.ActionRoll is { } action ? [action] : [])
+            .Count(r => r.Outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure);
+
+    /// <summary>The state with the <c>viral-clip</c> flag set for <see cref="ViralFlagWeeks"/> weeks when the week went viral.</summary>
+    private static CareerState ViralFlag(SettledCore core)
+        => core.Audience.Viral is null ? core.State : CareerFlags.Set(core.State, ViralClipFlag, ViralFlagWeeks);
 
     /// <summary>
     /// Rejected while decisions are queued. Otherwise folds the decision carry into the career first (its cash and
@@ -144,8 +194,38 @@ public sealed class M3Ruleset : IRuleset
         });
     }
 
-    /// <summary>No M3 action is rolled yet.</summary>
-    public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => null;
+    /// <summary>The visible odds of the networking roll for a network plan; null for any other plan.</summary>
+    public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
+        => plan.Action == MainAction.NetworkCollaborate && c.Balance.NetworkCollaborate is { } choice
+            ? NetworkOdds(s, choice, c.Balance, plan)
+            : null;
+
+    /// <summary>
+    /// The one place the networking odds are computed: from the state before the action with the plan's category,
+    /// so the odds shown are the odds rolled and the action's own energy cost does not change them.
+    /// </summary>
+    private static ChoiceOdds NetworkOdds(CareerState before, ChoiceDefinition choice, BalanceConstants b, WeekPlan plan)
+        => OddsCalculator.For(before, choice, b, plan.Category);
+
+    /// <summary>
+    /// Opens the network week and rolls the collaboration with the odds shown beforehand; its effects apply to the
+    /// week, the roll is recorded for the report and a critical counts in the metrics.
+    /// </summary>
+    private static CareerState RollNetwork(CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, ref Pcg32 rng)
+    {
+        var choice = c.Balance.NetworkCollaborate!;
+        var odds = NetworkOdds(s, choice, c.Balance, plan);
+        var (roll, outcome, effects) = RuleSteps.Roll(choice, odds, ref rng);
+        var started = WeekActions.Started(s, applied, plan, [], rng);
+        var pending = started.Pending!;
+        var state = EffectApplier.ToWeek(started, "network", effects, ref pending);
+        var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
+        return state with
+        {
+            Pending = pending with { ActionRoll = new RollResult("network", choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
+            Metrics = state.Metrics with { Criticals = state.Metrics.Criticals + (critical ? 1 : 0) },
+        };
+    }
 
     private static Result<EventDefinition> NextDecision(CareerState s, ContentSnapshot c)
         => s.PendingDecisions is { Length: > 0 } queue

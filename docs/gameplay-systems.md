@@ -136,7 +136,7 @@ Permanent platform bans require a clear escalating rule path or a rare severe in
 
 A strategy is a versioned object with: category rotation (specialize or weighted mix), primary weekly action sequence, sponsor acceptance threshold, financial reserve, risk appetite, drama target, rest threshold, and event-response priorities (growth, cash, credibility, safety). The UI previews example choices and explains ties. Automation chooses only legal options; if no option matches, it selects the least-risk legal option and records a fallback reason. It never silently spends beyond the reserve unless the player has explicitly allowed emergency spending. Major event pauses override policy.
 
-**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored` or `rotation`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
+**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `network-scheduled` (`everyWeeks`; M3 `Networker` only), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`; in M3 also every plan of a week the recovery crisis limits to `rest-only`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored`, `rotation` or, for the M3 category specialists, `fixed`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
 
 Batch runs are incremental commits, not one opaque transaction: each completed week is recorded and autosaved. Canceling a batch leaves already completed weeks intact. Deterministic random draws and policy choices are included in the ranked action log. The manual and automated paths call the same simulation functions.
 
@@ -183,7 +183,7 @@ Status: **implemented for simulation only**, 2026-10-13. Milestone 1 implements 
 ### M1 rules and simplifications (Agent proposal)
 
 - **Week order:** `StartWeek` validates and applies the main action (and pays an equipment purchase immediately), then draws the event count and picks distinct events by weight among those eligible and not cooling down. Each live event is presented (no random draw) and resolved with a 1–100 roll unless the choice is guaranteed. `SettleWeek` applies stream fatigue (−8 energy, +3 burnout), computes quality, live viewers and followers, itemises income and costs, applies skill and boredom changes, updates metrics and achievements, then checks endings.
-- **Forced rest:** at energy 0 or burnout 100 the only legal main action next week is `Rest`. This replaces the mandatory recovery choice of §5 until sponsor obligations exist (M3).
+- **Forced rest (M1 only; M3 uses the recovery crisis, §11):** at energy 0 or burnout 100 the only legal main action next week is `Rest`. This replaces the mandatory recovery choice of §5 until sponsor obligations exist (M3).
 - **Event effects:** stat deltas apply immediately (clamped to 0–100); cash, audience multiplier and event quality accumulate and apply at settlement. A resolved event cannot be selected again until `week + cooldownWeeks`. The five synthetic M1 events use a one-week cooldown because the content specification's 13-week default would starve a five-event pool; authored launch content follows the content specification.
 - **Easy difficulty:** +10 percentage points on risky choices (listed as the `difficulty.easy` modifier) and −15% on living cost and equipment upkeep.
 - **Skill decay:** an unused category loses 0.1 skill per week from its 14th consecutive inactive week, never below the background's starting skill.
@@ -212,3 +212,82 @@ The batch simulator and tests use five deterministic policies; all play through 
 | RestHeavy | Balanced, but rests whenever energy < 60. |
 | Specialist | Balanced on the bonus category for the whole career. |
 | Rotator | Balanced with the primary category rotating by week number. |
+
+### M3 simulation policies (Agent proposal)
+
+For `m3-systems.1` content the batch simulator defaults to ten policies (`BuiltInPolicies.M3All`, spec 2026-10-16 §8): Balanced, Grinder, RestHeavy and Rotator as above, plus:
+
+| Policy | Behaviour |
+| --- | --- |
+| Networker | Balanced, but in every third week (`week mod 3 = 0`) with energy ≥ 40 it plays `NetworkCollaborate` when no rest rule fires (reason `network-scheduled` with `everyWeeks`). |
+| Specialist-{Category} | One per category: Balanced on that fixed category for the whole career, however bored (category rule `fixed`). |
+
+The M1 `Specialist` (bonus category) stays in the M1 list only. In a week the recovery crisis limits to `Rest` (`rest-only`), every policy rests with reason `fallback-rest`.
+
+## 11. M3-A Ruleset (`m3-systems.1`)
+
+Status: **Agent proposal, tuned by the M3-A simulation**, 2026-10-17. Sub-project A of M3 ([design](superpowers/specs/2026-10-16-m3a-rules-and-content-foundation-design.md), [TD-110](technical-decisions.md)) adds the C# ruleset `m3-systems.1` next to `m1-prototype.1`. Every number below is read from [`content/m3/balance.json`](../content/m3/balance.json) (version `m3.1`); the rest of this document applies unchanged where §11 is silent. New careers start on `m3-systems.1`; M1 careers keep their rules. The criteria and the tuning log are in the [M3-A baseline simulation report](reports/m3a-baseline-simulation.md).
+
+### Category profiles
+
+Each category has a profile in `balance.json` `categories`. Reach scales live viewers; noise is the seeded viewer multiplier range; conversion and churn scale follower gain and loss; the yields scale subscription, donation and ad income per live viewer; the side effects apply once per stream.
+
+| Category | Reach | Viewer noise | Conversion | Churn | Boredom gain | Subs / donations / ads | Skill weight in quality | Credibility / drama per stream | Base viral chance |
+| --- | ---: | --- | ---: | ---: | --- | --- | ---: | --- | ---: |
+| Just Chatting | 1.00 | 0.85–1.15 | 1.15 | 1.00 | 2–4 | ×0.90 / ×1.40 / ×1.00 | 1.0 | 0 / 0 | 2 % |
+| FPS | 1.10 | 0.85–1.15 | 1.00 | 1.00 | 2–4 | ×0.65 / ×0.80 / ×2.80 | 1.2 | 0 / 0 | 3 % |
+| MOBA | 1.00 | 0.85–1.15 | 1.00 | 0.75 | 1–3 | ×1.10 / ×1.00 / ×1.00 | 1.0 | 0 / +0.5 | 2 % |
+| Chess | 0.85 | 0.92–1.08 | 1.25 | 0.50 | 1–3 | ×1.30 / ×1.00 / ×1.00 | 1.0 | +0.2 / −0.5 | 1 % |
+| Gambling | 1.15 | 0.70–1.40 | 0.90 | 1.20 | 2–4 | ×1.00 / ×1.20 / ×1.00 | 1.0 | −0.3 / +2 | 4 % |
+
+The profiles differ from the first proposal in the design spec (§7.1) because the proposed income tilts never changed the leading income source; the tuning rounds are logged in the report. Chess is the calm, credible, loyal path; Gambling is the high-drama, high-variance path that pays in reputation; Just Chatting leads donations, FPS leads ads, and MOBA sits between them. No category is intrinsically losing.
+
+### Mastery and the boredom rebalance (REQ-08)
+
+- **Audience boredom factor:** `1 − boredom / 600` (M1: `/ 250`). **Churn:** `churnRate + 0.00001 × primary-category boredom` (M1: `0.0001`).
+- **Mastery:** from skill 70 in the primary category (measured before the week's practice gain), the boredom gain drops by 2 (minimum 1) and churn is multiplied by 0.85.
+- Training, practice gains and skill decay keep the M1 rules.
+
+### Burnout penalty
+
+From burnout 60, every chance-bearing choice gets a visible `modifier.burnout` of −0.25 percentage points per burnout point above 60, capped at −10 points. The penalty appears in the odds before the player commits and in the report.
+
+### `Network/collaborate`
+
+The action `NetworkCollaborate` (label "Zagadaj do innych twórców") costs 10 energy and replaces the week's main action. It rolls before the stream with base chance 35 %, +0.3 points per credibility point and −0.3 points per drama point (and the burnout penalty), and allows critical outcomes.
+
+| Result | Effect |
+| --- | --- |
+| Success | This week's audience ×1.2, +1 credibility |
+| Failure | +4 drama, −2 credibility |
+| Critical success | Audience ×1.2, +1 credibility and flag `collab-friend` for 26 weeks |
+| Critical failure | +6 drama, −2 credibility and the follow-up event `collab-fallout` in 1 week |
+
+A critical outcome replaces the plain one, so each critical row repeats the plain outcome's effects (ruling R25).
+
+### Recovery crisis and short stream
+
+At energy 0 or burnout 100 after settlement, the next week opens with the mandatory crisis `burnout-recovery` instead of M1's forced rest (§10). *Take a week off* is guaranteed: it sets the system flags `sys:rest-only` (the only legal main action is `Rest`) and `sys:short-stream` (a short stream) for one week. A short stream costs half the stream fatigue (`shortStream.fatigue` 0.5) and ×0.7 audience (`shortStream.audience` 0.7). *Push through* rolls at 50 %: success +10 energy, failure +10 burnout and −5 credibility. Energy and burnout stay within 0–100. Content can also set `sys:short-stream`; the `community-burnout-poll` response `cut-hours` uses it for two weeks.
+
+### Mandatory decisions
+
+`CareerState.PendingDecisions` is a queue of event IDs that must be answered before the next week starts. After each settlement the ruleset enqueues, in this order:
+
+1. the recovery crisis when energy is 0 or burnout is 100;
+2. `milestone` and `crisis` follow-ups that have come due;
+3. the first eligible one-time `milestone` in content order;
+4. only if nothing opened, one repeatable `milestone` or `crisis` chosen by weight after a seeded roll with `decisionChancePerWeek` = 6 %.
+
+A week opens with at most two decisions; follow-ups that do not fit stay scheduled. While the queue is not empty the 13-week batch stops before the week (TD-90 mechanism). `ResolveDecision(choiceId)` shows the same odds as a live event and rolls. Stat effects apply at once; cash and follower effects, the roll and its stat lines go into a **decision carry** that the next `StartWeek` moves into the week, so the report reconciles. `Retire` is rejected with `decision-pending` while the queue is not empty ([TD-114](technical-decisions.md)). Mandatory events may not contain audience, quality or viral effects. Pacing guardrail: at most one mandatory interruption per 13 weeks for Balanced; measured 0.60.
+
+### Viral clips
+
+Once per stream, after live viewers are computed:
+
+`viralChance = min(30 %, category base + 0.2 points × max(0, quality − 70) + 5 points × critical outcomes + ViralChance effects)`
+
+A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, never above 3× baseline (`viralCapMultiplier`), and adds `max(100, min(10 % of followers, 20 % of the stream's live viewers))` followers. The report has a `viral` line with the roll and the threshold, and the career gets the flag `viral-clip` for 4 weeks (used by the `first-viral` milestone). Gained, lost and net followers stay separate from live viewers (REQ-06).
+
+### Flags and follow-ups
+
+`CareerState` stores career flags (optionally expiring after a number of weeks) and scheduled follow-ups; both are part of the state hash. `SetFlag`, `ClearFlag` and `FollowUp` are declarative effects ([content §2](content-and-experience.md#2-content-structure)). A scheduled `live` follow-up takes one of the event slots of its due stream; a `milestone` or `crisis` follow-up becomes a mandatory decision. Flags prefixed `sys:` are reserved for the ruleset (`sys:rest-only`, `sys:short-stream`). The rivalry arc is the reference: `rivalry-callout` (rare, cooldown 52 weeks) sets `rivalry`, and only a failed riposte schedules `rivalry-crisis`; `rivalry-rematch` can end the flag.

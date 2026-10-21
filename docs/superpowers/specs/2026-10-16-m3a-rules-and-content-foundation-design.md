@@ -167,11 +167,13 @@ The week plan returned by the API carries this odds presentation, so the player 
 
 No category is intrinsically losing: the higher-reach categories pay with volatility, churn or reputation.
 
+**Tuned by the M3-A baseline simulation (2026-10-17, agent, controller rulings R21 and R24; [tuning log](../../reports/m3a-baseline-simulation.md#tuning-log)).** The proposed income tilts never changed the leading income source, because per live viewer the base yields are 0.20 PLN subscriptions, 0.15 donations and 0.05 ads. To meet the §8 criteria, `content/m3/balance.json` now differs from the table as follows. Just Chatting: subscriptions ×0.90, donations ×1.40. FPS: subscriptions ×0.65, donations ×0.80, ads ×2.80. MOBA: reach 1.00, churn 0.75, +0.5 drama per stream. Chess: reach 0.85, conversion 1.25, churn 0.50, −0.5 drama per stream. Gambling: reach 1.15, +2 drama per stream. The other values in the table are unchanged; the §7.2 changes are listed there.
+
 ### 7.2 Skill, decay and specialization
 
 - Training and practice gains keep the M1 rule (`max(0.2, (100 − skill)/100) × factor`); decay keeps 0.1 per week after 13 inactive weeks down to the starting skill.
 - **Mastery:** from skill 70 in the primary category, boredom gain drops by 1 (minimum 1) and churn is multiplied by 0.85. Specialists still grow more slowly late, as the gain rule diminishes.
-- **Boredom rebalance (REQ-08):** the audience factor changes from `1 − boredom/250` to `1 − boredom/400`, and churn's boredom factor halves. The simulation decides the final values against §8's criteria.
+- **Boredom rebalance (REQ-08):** the audience factor changes from `1 − boredom/250` to `1 − boredom/400`, and churn's boredom factor halves. The simulation decides the final values against §8's criteria. **Tuned (2026-10-17, ruling R24):** audience factor `1 − boredom/600`, churn boredom factor 0.00001 (a tenth of M1's 0.0001), and mastery lowers the boredom gain by 2 instead of 1 (minimum 1).
 
 ### 7.3 Viral clips
 
@@ -183,7 +185,7 @@ A viral stream multiplies live viewers by a seeded 1.5–3.0, capped at 3× base
 
 ## 8. Simulation and acceptance
 
-The batch simulator gains `--ruleset m3-systems.1` and two policies: `Networker` (Balanced with `NetworkCollaborate` every third free week) and one `Specialist` per category. A 10,000-career run writes `docs/reports/m3a-baseline-simulation.md`.
+The batch simulator gains the `m3-systems.1` ruleset (taken from the content directory's `ruleset`, so `--content content/m3` selects it; no separate `--ruleset` flag) and two policies: `Networker` (Balanced with `NetworkCollaborate` every third free week) and one `Specialist` per category. A 10,000-career run writes `docs/reports/m3a-baseline-simulation.md`.
 
 Measurable criteria for the M3-A part of the issues:
 

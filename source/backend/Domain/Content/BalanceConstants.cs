@@ -133,4 +133,58 @@ public sealed record BalanceConstants
     public ChoiceDefinition? NetworkCollaborate { get; init; }
 
     public Fixed NetworkEnergyCost { get; init; }
+
+    /// <summary>Share of the regular stream's energy cost and burnout gain in a short stream (M3 week off); default 1.</summary>
+    public Fixed ShortStreamFatigue { get; init; } = Fixed.One;
+
+    /// <summary>Audience multiplier of a short stream (M3 week off); default 1.</summary>
+    public Fixed ShortStreamAudience { get; init; } = Fixed.One;
+
+    /// <summary>Per-category balance profiles (M3); null in M1, where every category is neutral.</summary>
+    public CategoryValues<CategoryProfile>? Categories { get; init; }
+
+    /// <summary>Skill from which a category counts as mastered; M1 default 101 is unreachable.</summary>
+    public Fixed MasteryFromSkill { get; init; } = Fixed.FromInt(101);
+
+    /// <summary>Burnout above which odds lose points; M1 default 101 is unreachable.</summary>
+    public Fixed BurnoutPenaltyFrom { get; init; } = Fixed.FromInt(101);
+
+    /// <summary>Chance lost per burnout point above <see cref="BurnoutPenaltyFrom"/>.</summary>
+    public Fixed BurnoutPenaltyPerPoint { get; init; }
+
+    /// <summary>Largest chance the burnout penalty can remove.</summary>
+    public Fixed BurnoutPenaltyCap { get; init; }
+
+    /// <summary>Boredom gain a master saves per stream.</summary>
+    public int MasteryBoredomRelief { get; init; }
+
+    /// <summary>Multiplier of the churn rate for a master.</summary>
+    public Fixed MasteryChurnFactor { get; init; } = Fixed.One;
+
+    /// <summary>Quality above which each point adds viral chance; all viral values are zero in M1, which never draws.</summary>
+    public Fixed ViralQualityFrom { get; init; }
+
+    /// <summary>Viral chance per quality point above <see cref="ViralQualityFrom"/>.</summary>
+    public Fixed ViralPerQualityPoint { get; init; }
+
+    /// <summary>Viral chance added by each critical outcome of the week.</summary>
+    public Fixed ViralPerCritical { get; init; }
+
+    /// <summary>Largest viral chance of a stream.</summary>
+    public Fixed ViralChanceCap { get; init; }
+
+    public Fixed ViralMultiplierMin { get; init; }
+
+    public Fixed ViralMultiplierMax { get; init; }
+
+    /// <summary>Share of the follower count a viral clip can add (bounded by <see cref="ViralViewerShare"/> of the live viewers).</summary>
+    public Fixed ViralFollowerShare { get; init; }
+
+    public Fixed ViralViewerShare { get; init; }
+
+    /// <summary>Follower bonus of a viral clip for a small career.</summary>
+    public int ViralFollowerMin { get; init; }
+
+    /// <summary>The profile of <paramref name="category"/>; neutral when no profiles are configured.</summary>
+    public CategoryProfile Profile(Category category) => Categories is { } all ? all[category] : CategoryProfile.Neutral(this);
 }

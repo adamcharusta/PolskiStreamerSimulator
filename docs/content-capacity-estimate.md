@@ -4,12 +4,12 @@ Status: **Agent proposal, pending owner measurement and approval**, 2026-10-13 (
 
 ## 1. What one template is
 
-A **template** is one publishable event record as defined in [content and experience §2](content-and-experience.md#2-content-structure):
+A **template** is one publishable schema-v2 event as defined in [content and experience §2](content-and-experience.md#2-content-structure) (the representative set is `content/m3/events.json`); the pronoun-variant time is the time to write its ICU `select` branches:
 
 - stable ID, phase, title and Polish situation text;
 - eligibility (week range, category, platform, stats, flags), weight and cooldown;
 - two or three responses with disclosed costs, odds, modifiers and declarative outcomes for success, failure and any permitted critical result;
-- the Polish grammatical forms required for the woman, man and nonbinary character options (pronoun agreement only; no gender-specific content);
+- the Polish grammatical forms required for the woman, man and nonbinary character options, written as ICU `select` branches (pronoun agreement only; no gender-specific content);
 - the explanation text shown with the outcome;
 - QA: a validator pass, a proofread, a check of every grammatical form, and a simulated run that shows the event and each outcome at least once.
 

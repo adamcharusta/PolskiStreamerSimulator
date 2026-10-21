@@ -16,7 +16,8 @@ public sealed record ChoiceOdds(
     Fixed Probability,
     int Threshold,
     ImmutableArray<ModifierLine> Modifiers,
-    bool AllowsCritical);
+    bool AllowsCritical,
+    Fixed ViralOnCritical = default);
 
 /// <summary>The next unresolved live event of the pending week with the odds of each choice.</summary>
 public sealed record EventPresentation(string EventId, ImmutableArray<ChoiceOdds> Choices);

@@ -13,21 +13,27 @@ public sealed record ActionApplied(CareerState State, Pcg32 Rng, ImmutableArray<
 /// <summary>Plan validation and the main actions shared by the M1 and M3 rulesets.</summary>
 public static class WeekActions
 {
-    public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c)
-        => [.. AllPlans().Select(plan => (plan, PlanRejection(s, c.Balance, plan)))];
+    /// <summary>
+    /// A ruleset's own plan rule, checked after the shared ended and in-progress rules: the reason the plan cannot
+    /// start in the state, or null.
+    /// </summary>
+    public delegate string? RulesetRule(CareerState s, WeekPlan plan);
+
+    public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c, RulesetRule rule)
+        => [.. AllPlans(c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan, rule)))];
 
     /// <summary>
     /// Checks the command and the plan, then applies the main action: the result carries the changed state, the
     /// advanced RNG and the action's report lines (equipment cost and stat changes).
     /// </summary>
-    public static Result<ActionApplied> Apply(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
+    public static Result<ActionApplied> Apply(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion, RulesetRule rule)
     {
         if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
         {
             return Result<ActionApplied>.Fail(error);
         }
 
-        if (PlanRejection(s, c.Balance, plan) is { } reason)
+        if (PlanRejection(s, c.Balance, plan, rule) is { } reason)
         {
             return Result<ActionApplied>.Fail(DomainErrorCode.IllegalAction, reason);
         }
@@ -46,8 +52,17 @@ public static class WeekActions
         return applied.State with { Rng = rng, StateVersion = s.StateVersion + 1, Pending = pending };
     }
 
-    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan)
+    /// <summary>
+    /// The reason the plan cannot start, or null. <see cref="MainAction.NetworkCollaborate"/> exists only in content
+    /// that defines the collaboration choice (M3); otherwise it is <c>unsupported-action</c>, before any other rule.
+    /// </summary>
+    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan, RulesetRule rule)
     {
+        if (plan.Action == MainAction.NetworkCollaborate && b.NetworkCollaborate is null)
+        {
+            return "unsupported-action";
+        }
+
         if (s.Status == CareerStatus.Ended)
         {
             return "career-ended";
@@ -58,9 +73,14 @@ public static class WeekActions
             return "week-in-progress";
         }
 
-        if ((s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred) && plan.Action != MainAction.Rest)
+        if (rule(s, plan) is { } rejected)
         {
-            return "forced-rest";
+            return rejected;
+        }
+
+        if (plan.Action == MainAction.NetworkCollaborate && s.Energy < b.NetworkEnergyCost)
+        {
+            return "not-enough-energy";
         }
 
         if (plan.Action != MainAction.ImproveProduction)
@@ -110,6 +130,8 @@ public static class WeekActions
                 s = Stats.Add(s, StatKey.Credibility, b.ManageCommunityCredibility, plan.Category);
                 s = Stats.Add(s, StatKey.Drama, -b.ManageCommunityDramaRelief, plan.Category);
                 return Stats.Add(s, StatKey.PrimaryBoredom, -b.ManageCommunityBoredomRelief, plan.Category);
+            case MainAction.NetworkCollaborate:
+                return Stats.Add(s, StatKey.Energy, -b.NetworkEnergyCost, plan.Category);
             case MainAction.NoAction:
                 return Stats.Add(s, StatKey.Energy, b.NoActionEnergy, plan.Category);
             default:
@@ -117,7 +139,7 @@ public static class WeekActions
         }
     }
 
-    private static IEnumerable<WeekPlan> AllPlans()
+    private static IEnumerable<WeekPlan> AllPlans(BalanceConstants b)
     {
         foreach (var category in Enum.GetValues<Category>())
         {
@@ -130,6 +152,10 @@ public static class WeekActions
 
             yield return new WeekPlan(MainAction.ManageCommunity, category);
             yield return new WeekPlan(MainAction.NoAction, category);
+            if (b.NetworkCollaborate is not null)
+            {
+                yield return new WeekPlan(MainAction.NetworkCollaborate, category);
+            }
         }
     }
 }

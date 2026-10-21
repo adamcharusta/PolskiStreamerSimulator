@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 
@@ -29,12 +30,57 @@ public static class M3TestContent
             {
                 RecoveryCrisisEventId = "burnout-recovery",
                 DecisionChancePerWeek = Fixed.FromRatio(6, 100),
+                NetworkEnergyCost = Fixed.FromInt(10),
+                NetworkCollaborate = new ChoiceDefinition(
+                    "collaborate", null, "Zagadaj do innych twórców", false, Fixed.FromRatio(35, 100),
+                    [
+                        new ChanceModifier(StatKey.Credibility, Fixed.FromRatio(3, 1000), null, "modifier.credibility"),
+                        new ChanceModifier(StatKey.Drama, Fixed.FromRatio(-3, 1000), null, "modifier.drama"),
+                    ],
+                    true,
+                    new OutcomeSet(
+                        [new Effect(EffectKind.AudienceMultiplier, null, Fixed.FromRatio(12, 10)), new Effect(EffectKind.StatDelta, StatKey.Credibility, Fixed.One)],
+                        [new Effect(EffectKind.StatDelta, StatKey.Drama, Fixed.FromInt(4)), new Effect(EffectKind.StatDelta, StatKey.Credibility, Fixed.FromInt(-2))],
+                        [new Effect(EffectKind.SetFlag, null, Fixed.Zero, Target: "collab-friend", Weeks: 26)],
+                        [new Effect(EffectKind.FollowUp, null, Fixed.Zero, Target: "test-crisis", Weeks: 1)])),
+                BurnoutPenaltyFrom = Fixed.FromInt(60),
+                BurnoutPenaltyPerPoint = Fixed.FromRatio(25, 10000),
+                BurnoutPenaltyCap = Fixed.FromRatio(10, 100),
+                ShortStreamFatigue = Fixed.FromRatio(1, 2),
+                ShortStreamAudience = Fixed.FromRatio(7, 10),
+                Categories = Profiles(),
+                MasteryFromSkill = Fixed.FromInt(70),
+                MasteryBoredomRelief = 1,
+                MasteryChurnFactor = Fixed.FromRatio(85, 100),
+                ViralQualityFrom = Fixed.FromInt(70),
+                ViralPerQualityPoint = Fixed.FromRatio(2, 1000),
+                ViralPerCritical = Fixed.FromRatio(5, 100),
+                ViralChanceCap = Fixed.FromRatio(30, 100),
+                ViralMultiplierMin = Fixed.FromRatio(15, 10),
+                ViralMultiplierMax = Fixed.FromInt(3),
+                ViralFollowerShare = Fixed.FromRatio(10, 100),
+                ViralViewerShare = Fixed.FromRatio(20, 100),
+                ViralFollowerMin = 100,
             },
             Events = live.AddRange(
                 Decision("first-week", EventPhase.Milestone, fromWeek: 2, toWeek: 2, oneTime: true),
                 Decision("test-crisis", EventPhase.Crisis, fromWeek: 1, toWeek: 1040, oneTime: false),
                 Recovery()),
         };
+    }
+
+    /// <summary>The content/m3 category table: JustChatting, Fps, Moba, Chess, Gambling.</summary>
+    private static CategoryValues<CategoryProfile> Profiles()
+    {
+        static Fixed H(int hundredths) => Fixed.FromRatio(hundredths, 100);
+        return new CategoryValues<CategoryProfile>(
+        [
+            new(H(100), H(85), H(115), H(115), H(100), 2, 4, H(100), H(130), H(100), H(100), H(0), H(0), H(2)),
+            new(H(110), H(85), H(115), H(100), H(100), 2, 4, H(100), H(100), H(110), H(120), H(0), H(0), H(3)),
+            new(H(95), H(85), H(115), H(100), H(85), 1, 3, H(110), H(100), H(100), H(100), H(0), H(0), H(2)),
+            new(H(75), H(92), H(108), H(105), H(70), 1, 3, H(130), H(100), H(100), H(100), H(20), H(0), H(1)),
+            new(H(125), H(70), H(140), H(90), H(120), 2, 4, H(100), H(120), H(100), H(100), H(-30), H(100), H(4)),
+        ]);
     }
 
     public static EventDefinition Decision(string id, EventPhase phase, int fromWeek, int toWeek, bool oneTime) => new(

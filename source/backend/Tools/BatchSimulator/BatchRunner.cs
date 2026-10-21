@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
@@ -7,7 +8,12 @@ using PolskiStreamerSimulator.Infrastructure.Content;
 
 namespace PolskiStreamerSimulator.BatchSimulator;
 
-/// <summary>Summary of one simulated career; <see cref="Ending"/> is null only when the run stopped on a violation.</summary>
+/// <summary>
+/// Summary of one simulated career; <see cref="Ending"/> is null only when the run stopped on a violation. The init
+/// members are the M3 measures (also filled for M1 careers): the most streamed category, final drama and credibility,
+/// the coefficient of variation of weekly live viewers, the income code with the largest total, the decisions answered
+/// and the weeks with a viral clip.
+/// </summary>
 public sealed record CareerSummary(
     int Index,
     ulong Seed,
@@ -20,9 +26,25 @@ public sealed record CareerSummary(
     long Cash,
     long Score,
     IReadOnlyList<string> Violations,
-    string FinalHash);
+    string FinalHash)
+{
+    public Category DominantCategory { get; init; }
+
+    public decimal Drama { get; init; }
+
+    public decimal Credibility { get; init; }
+
+    public double ViewerCv { get; init; }
+
+    public string LeadingIncome { get; init; } = "";
+
+    public int Decisions { get; init; }
+
+    public int ViralWeeks { get; init; }
+}
 
 public sealed record BatchResult(
+    string RulesetId,
     string ContentVersion,
     string ContentDigest,
     IReadOnlyList<CareerSummary> Careers,
@@ -44,19 +66,25 @@ public static class BatchRunner
         }
     }
 
-    public static BatchResult Run(BatchOptions o) => Run(o, BuiltInPolicies.All);
+    /// <summary>Every built-in policy by name: the M1 list followed by the M3-only ones.</summary>
+    public static IReadOnlyList<IChoicePolicy> KnownPolicies { get; } = [.. BuiltInPolicies.All.Concat(BuiltInPolicies.M3All).Distinct()];
+
+    /// <summary>The policies offered for content of <paramref name="rulesetId"/>: <see cref="BuiltInPolicies.M3All"/> for M3, otherwise the M1 list.</summary>
+    public static IReadOnlyList<IChoicePolicy> PoliciesFor(string rulesetId)
+        => rulesetId == M3Ruleset.RulesetId ? BuiltInPolicies.M3All : BuiltInPolicies.All;
+
+    public static BatchResult Run(BatchOptions o) => Run(o, KnownPolicies);
 
     /// <summary>
     /// Runs every career independently and in parallel. Career <c>i</c> uses seed <c>SplitMix64(seed + i)</c>,
-    /// background <c>i mod 4</c>, difficulty Normal/Easy alternating every four careers and policy
-    /// <c>policies[i mod count]</c>; results are stored by index so the order never depends on scheduling.
+    /// policy <c>policies[i mod count]</c> and the background and difficulty of <see cref="Assign"/>; results are
+    /// stored by index so the order never depends on scheduling.
     /// </summary>
     internal static BatchResult Run(BatchOptions o, IReadOnlyList<IChoicePolicy> availablePolicies)
     {
         var content = new JsonContentSource(o.ContentDirectory).Load();
-        var engine = new WeekEngine(new RulesetRegistry([new M1Ruleset()]));
+        var engine = new WeekEngine(new RulesetRegistry([new M1Ruleset(), new M3Ruleset()]));
         var policies = o.Policies.Select(name => availablePolicies.Single(p => p.Name == name)).ToArray();
-        var backgrounds = Enum.GetValues<Background>();
         var results = new CareerSummary[o.Careers];
 
         var allocatedBefore = GC.GetTotalAllocatedBytes(precise: true);
@@ -68,11 +96,11 @@ public static class BatchRunner
             i =>
             {
                 var seed = SplitMix64(unchecked(o.Seed + (ulong)i));
-                var background = backgrounds[i % backgrounds.Length];
-                var difficulty = i / backgrounds.Length % 2 == 0 ? Difficulty.Normal : Difficulty.Easy;
+                var (background, difficulty) = Assign(i, policies.Length);
                 var policy = policies[i % policies.Length];
-                var start = CareerFactory.Create(M1Ruleset.RulesetId, content.Digest, content.Profiles[background], background, difficulty, PronounSet.Woman, seed);
-                var run = CareerRunner.Run(engine, content, start, policy);
+                var start = CareerFactory.Create(content.RulesetId, content.Digest, content.Profiles[background], background, difficulty, PronounSet.Woman, seed);
+                var weeks = new WeekTally();
+                var run = CareerRunner.Run(engine, content, start, policy, (_, report) => weeks.Add(report));
                 var final = run.Final;
                 results[i] = new CareerSummary(
                     i,
@@ -86,17 +114,82 @@ public static class BatchRunner
                     final.CashPln,
                     final.FinalScore?.FinalScore ?? 0,
                     run.InvariantViolations,
-                    run.FinalHash);
+                    run.FinalHash)
+                {
+                    DominantCategory = Enum.GetValues<Category>().MaxBy(category => final.Metrics.WeeksPerCategory[category]),
+                    Drama = ToDecimal(final.Drama),
+                    Credibility = ToDecimal(final.Credibility),
+                    ViewerCv = weeks.ViewerCv,
+                    LeadingIncome = final.Metrics.IncomeBySource
+                        .OrderByDescending(source => source.Value)
+                        .ThenBy(source => source.Key, StringComparer.Ordinal)
+                        .Select(source => source.Key)
+                        .FirstOrDefault() ?? "",
+                    Decisions = weeks.Decisions,
+                    ViralWeeks = weeks.ViralWeeks,
+                };
             });
         stopwatch.Stop();
 
         using var process = Process.GetCurrentProcess();
         return new BatchResult(
+            content.RulesetId,
             content.Version,
             content.Digest,
             results,
             stopwatch.Elapsed,
             GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore,
             process.PeakWorkingSet64);
+    }
+
+    /// <summary>
+    /// Background and difficulty of career <paramref name="index"/>. With an odd policy count (the M1 list): background
+    /// <c>i mod 4</c> and difficulty Normal/Easy alternating every four careers. With an even count that rule would pair
+    /// each policy with only two backgrounds, so policy <c>p = i mod count</c> in round <c>k = i div count</c> plays
+    /// combination <c>(p + k) mod 8</c>: background <c>combination mod 4</c>, Normal for combinations 0–3, Easy for 4–7.
+    /// </summary>
+    public static (Background Background, Difficulty Difficulty) Assign(int index, int policyCount)
+    {
+        var backgrounds = Enum.GetValues<Background>();
+        var combination = policyCount % 2 == 1 ? index : ((index % policyCount) + (index / policyCount)) % (2 * backgrounds.Length);
+        return (backgrounds[combination % backgrounds.Length], combination / backgrounds.Length % 2 == 0 ? Difficulty.Normal : Difficulty.Easy);
+    }
+
+    private static decimal ToDecimal(Fixed value) => (decimal)value.Raw / Fixed.Scale;
+
+    /// <summary>Running totals over a career's settled weeks.</summary>
+    private sealed class WeekTally
+    {
+        private int weeks;
+        private double viewers;
+        private double viewersSquared;
+
+        public int Decisions { get; private set; }
+
+        public int ViralWeeks { get; private set; }
+
+        /// <summary>Population standard deviation over mean of weekly live viewers; zero without viewers.</summary>
+        public double ViewerCv
+        {
+            get
+            {
+                if (weeks == 0 || viewers <= 0)
+                {
+                    return 0;
+                }
+
+                var mean = viewers / weeks;
+                return Math.Sqrt(Math.Max(0, (viewersSquared / weeks) - (mean * mean))) / mean;
+            }
+        }
+
+        public void Add(WeekReport report)
+        {
+            weeks++;
+            viewers += report.LiveViewers;
+            viewersSquared += (double)report.LiveViewers * report.LiveViewers;
+            Decisions += report.DecisionRolls.IsDefault ? 0 : report.DecisionRolls.Length;
+            ViralWeeks += report.Viral is null ? 0 : 1;
+        }
     }
 }

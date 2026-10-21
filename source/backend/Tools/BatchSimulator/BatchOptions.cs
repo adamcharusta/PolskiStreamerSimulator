@@ -16,7 +16,10 @@ public sealed record BatchOptions(
     public const string Usage =
         "Usage: BatchSimulator [--careers <n>] [--seed <n>] [--policies all|a,b] [--content <dir>] [--out <dir>] [--parallel <n>]";
 
-    /// <summary>Parses <c>--careers</c> (default 1000), <c>--seed</c> (42), <c>--policies</c> (all), <c>--content</c>, <c>--out</c> and <c>--parallel</c>.</summary>
+    /// <summary>
+    /// Parses <c>--careers</c> (default 1000), <c>--seed</c> (42), <c>--policies</c> (all of the M1 list here; the program
+    /// passes the list of the content's ruleset), <c>--content</c>, <c>--out</c> and <c>--parallel</c>.
+    /// </summary>
     public static Result<BatchOptions> Parse(string[] args) => Parse(args, BuiltInPolicies.All);
 
     internal static Result<BatchOptions> Parse(string[] args, IReadOnlyList<IChoicePolicy> availablePolicies)

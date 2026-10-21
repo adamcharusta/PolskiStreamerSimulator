@@ -1091,10 +1091,11 @@
           "trainCategory",
           "improveProduction",
           "manageCommunity",
-          "noAction"
+          "noAction",
+          "networkCollaborate"
         ],
         "type": "string",
-        "description": "M1 between-stream main actions; exactly one per week."
+        "description": "Between-stream main actions (network collaboration is M3 only); exactly one per week."
       },
       "ModifierView": {
         "required": [

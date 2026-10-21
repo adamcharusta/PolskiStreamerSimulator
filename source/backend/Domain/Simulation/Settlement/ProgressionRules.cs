@@ -12,13 +12,32 @@ public static class ProgressionRules
     public static Fixed GrowthFactor(Fixed skill)
         => FixedMath.Max(MinimumGrowthFactor, (Fixed.Hundred - skill) / Fixed.Hundred);
 
-    /// <summary>A regular stream costs energy and adds burnout after the main action.</summary>
-    public static CareerState ApplyStreamFatigue(CareerState s, BalanceConstants b)
+    /// <summary>
+    /// A stream costs energy and adds burnout after the main action, both scaled by <paramref name="factor"/>
+    /// (one for a regular stream, less for a short stream).
+    /// </summary>
+    public static CareerState ApplyStreamFatigue(CareerState s, BalanceConstants b, Fixed factor)
         => s with
         {
-            Energy = Stats.Bounded(s.Energy - b.StreamEnergyCost),
-            Burnout = Stats.Bounded(s.Burnout + b.StreamBurnoutGain),
+            Energy = Stats.Bounded(s.Energy - (b.StreamEnergyCost * factor)),
+            Burnout = Stats.Bounded(s.Burnout + (b.StreamBurnoutGain * factor)),
         };
+
+    /// <summary>
+    /// M3 only: the streamed category's per-stream credibility and drama effects (the caller reports them as stat lines
+    /// with detail <c>category</c> through <see cref="Stats.Changes"/>); unchanged when both are zero.
+    /// </summary>
+    public static CareerState ApplyCategoryReputation(CareerState s, Category primary, BalanceConstants b)
+    {
+        var profile = b.Profile(primary);
+        if (profile.CredibilityPerStream == Fixed.Zero && profile.DramaPerStream == Fixed.Zero)
+        {
+            return s;
+        }
+
+        var withCredibility = Stats.Add(s, StatKey.Credibility, profile.CredibilityPerStream, primary);
+        return Stats.Add(withCredibility, StatKey.Drama, profile.DramaPerStream, primary);
+    }
 
     /// <summary>
     /// The streamed category gains <c>max(0.2, (100 − skill)/100)</c> skill and 2–4 boredom and resets its
@@ -39,8 +58,15 @@ public static class ProgressionRules
         {
             if (category == primary)
             {
+                var master = skill[category] >= b.MasteryFromSkill;
                 skill = skill.With(category, Stats.Bounded(skill[category] + GrowthFactor(skill[category])));
-                (var gain, rng) = rng.NextInt(b.BoredomGainMin, b.BoredomGainMax);
+                var profile = b.Profile(primary);
+                (var gain, rng) = rng.NextInt(profile.BoredomGainMin, profile.BoredomGainMax);
+                if (master && b.MasteryBoredomRelief > 0)
+                {
+                    gain = Math.Max(1, gain - b.MasteryBoredomRelief);
+                }
+
                 boredom = boredom.With(category, Stats.Bounded(boredom[category] + Fixed.FromInt(gain)));
                 inactive = inactive.With(category, 0);
                 continue;
