@@ -8,6 +8,45 @@ namespace PolskiStreamerSimulator.Tests.Domain.Careers;
 
 public class CareerInvariantsTests
 {
+    private static CareerState BannedNurt() => M3Play.Fresh() with
+    {
+        Platform = Platform.Nurt,
+        BannedPlatforms = [Platform.Nurt],
+        PendingDecisions = [],
+    };
+
+    private static SponsorContract Contract(string id) => new(id, "hype", SponsorKind.Contract, 1, 4, 12, 500, 0);
+
+    public static TheoryData<string, CareerState> EconomyViolations()
+    {
+        var f = M3Play.Fresh();
+        return new TheoryData<string, CareerState>
+        {
+            { "contract-limit", f with { Contracts = [Contract("a"), Contract("b"), Contract("c")] } },
+            { "offer-duplicate", f with { Offers = [new SponsorOffer("x:1", "tea", 1, 2, 100), new SponsorOffer("x:2", "tea", 1, 2, 100)] } },
+            { "banned-platform-unanswered", BannedNurt() },
+            { "side-business-quality", f with { SideBusiness = new SideBusiness(60, Fixed.FromInt(101)) } },
+            { "former-followers-negative", f with { FormerFollowers = -1 } },
+        };
+    }
+
+    [Theory]
+    [MemberData(nameof(EconomyViolations))]
+    public void Economy_state_violations_are_reported(string code, CareerState state)
+        => Assert.Equal([code], CareerInvariants.Validate(state));
+
+    [Fact]
+    public void Banned_platform_with_the_ban_decision_queued_is_valid()
+        => Assert.Empty(CareerInvariants.Validate(BannedNurt() with { PendingDecisions = ["platform-ban"] }));
+
+    [Fact]
+    public void Two_contracts_and_distinct_offers_are_valid()
+        => Assert.Empty(CareerInvariants.Validate(M3Play.Fresh() with
+        {
+            Contracts = [Contract("a"), Contract("b")],
+            Offers = [new SponsorOffer("x:1", "tea", 1, 2, 100), new SponsorOffer("y:1", "mug", 1, 2, 100)],
+        }));
+
     [Fact]
     public void Decisions_pending_during_a_week_are_reported()
     {
