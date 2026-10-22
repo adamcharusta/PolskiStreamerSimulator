@@ -161,7 +161,7 @@ public static class SponsorRules
     {
         if (s.Contracts is not { Length: > 0 } deals || c.Balance.Sponsors is not { } b)
         {
-            return [];
+            return ImmutableArray<SponsorConsequence>.Empty;
         }
 
         var incompatible = Incompatible(s, plan);

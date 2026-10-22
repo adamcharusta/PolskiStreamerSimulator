@@ -1,5 +1,6 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Tests.Support;
@@ -48,6 +49,40 @@ public static class M3BPlay
         }
 
         return s;
+    }
+
+    /// <summary>
+    /// One random week: answers the queued decisions and every open offer at random, then starts a random enabled plan,
+    /// resolves its events at random and settles. <c>BeforeStart</c> is the state after the decisions and offers.
+    /// </summary>
+    public static (CareerState BeforeStart, CareerState After, WeekReport Report) RandomWeek(CareerState s, ref Pcg32 rng)
+    {
+        while (s.PendingDecisions is { Length: > 0 })
+        {
+            var choices = Engine.PresentDecision(s, C).Value.Choices.Where(o => o.UnavailableReason is null).ToList();
+            (var pick, rng) = rng.NextInt(0, choices.Count - 1);
+            s = Engine.ResolveDecision(s, C, choices[pick].ChoiceId, s.StateVersion).Value;
+        }
+
+        foreach (var offer in s.Offers ?? [])
+        {
+            (var accept, rng) = rng.NextInt(0, 1);
+            var answered = Engine.RespondOffer(s, C, offer.OfferId, accept == 1, s.StateVersion);
+            s = answered.IsSuccess ? answered.Value : Respond(s, offer.OfferId, accept: false);
+        }
+
+        var plans = Engine.LegalPlans(s, C).Value.Where(p => p.DisabledReason is null).ToList();
+        (var plan, rng) = rng.NextInt(0, plans.Count - 1);
+        var started = Engine.StartWeek(s, C, plans[plan].Plan, s.StateVersion).Value;
+        while (started.Pending!.Resolved.Length < started.Pending.EventIds.Length)
+        {
+            var choices = Engine.PresentEvent(started, C).Value.Choices.Where(o => o.UnavailableReason is null).ToList();
+            (var pick, rng) = rng.NextInt(0, choices.Count - 1);
+            started = Engine.ResolveEvent(started, C, choices[pick].ChoiceId, started.StateVersion).Value;
+        }
+
+        var (after, report) = Engine.SettleWeek(started, C, started.StateVersion).Value;
+        return (s, after, report);
     }
 
     /// <summary>Answers the first queued decision with <paramref name="choiceId"/>.</summary>

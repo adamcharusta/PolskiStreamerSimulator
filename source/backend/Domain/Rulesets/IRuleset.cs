@@ -1,5 +1,6 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets;
@@ -50,4 +51,7 @@ public interface IRuleset
     /// <c>unknown-offer</c> when the career has no such offer.
     /// </summary>
     Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion);
+
+    /// <summary>What <paramref name="plan"/> risks (wager terms, sponsor consequences); pure, never draws a random value.</summary>
+    PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan);
 }

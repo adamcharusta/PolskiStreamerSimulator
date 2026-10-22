@@ -1,6 +1,7 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
 
@@ -72,4 +73,7 @@ public sealed class M1Ruleset : IRuleset
     /// <summary>M1 has no sponsors, so there is never an offer to answer.</summary>
     public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
         => Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "unknown-offer");
+
+    /// <summary>M1 plans risk nothing beyond what the plan screen already shows.</summary>
+    public PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan) => PlanPreview.None;
 }

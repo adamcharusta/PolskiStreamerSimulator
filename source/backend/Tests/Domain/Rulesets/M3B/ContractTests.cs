@@ -68,6 +68,14 @@ public class ContractTests
     }
 
     [Fact]
+    public void Week_off_postpones_a_due_one_off_deal()
+    {
+        var (after, report) = M3BPlay.Week(CareerFlags.Set(ChessDeal(), "sys:rest-only", 1), M3BPlay.Plan(MainAction.Rest, Category.Fps));
+        Assert.DoesNotContain(report.Costs, l => l.Code == "cost:sponsor-penalty");
+        Assert.Equal((6, 6), (after.Contracts!.Value[0].NextDueWeek, after.Contracts.Value[0].TermEndWeek));
+    }
+
+    [Fact]
     public void One_off_pays_in_the_next_stream_when_the_category_matches()
     {
         var (after, report) = M3BPlay.Week(ChessDeal(), M3BPlay.Plan(MainAction.NoAction, Category.Chess));

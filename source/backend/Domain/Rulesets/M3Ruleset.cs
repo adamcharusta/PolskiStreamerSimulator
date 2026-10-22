@@ -229,6 +229,10 @@ public sealed class M3Ruleset(string id) : IRuleset
         });
     }
 
+    /// <summary>The wager terms of the plan's stake and the consequences the plan would have for the sponsor deals.</summary>
+    public PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan)
+        => new(plan.Wager is { } tier && c.Balance.Wagers is { } w ? WagerRules.Terms(tier, w) : null, SponsorRules.Consequences(s, c, plan));
+
     /// <summary>The visible odds of the action's roll (networking, or a pitch with nothing due); null for any other plan.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
         => ActionChoice(s, c, plan) is (_, var choice) ? ActionOdds(s, choice, c.Balance, plan) : null;
