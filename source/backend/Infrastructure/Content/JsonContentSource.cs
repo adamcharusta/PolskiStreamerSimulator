@@ -26,6 +26,11 @@ public sealed class JsonContentSource(string directory) : IContentSource
     private const string BurnoutPenaltySection = "burnoutPenalty";
     private const string ViralSection = "viral";
     private const string MasterySection = "mastery";
+    private const string SponsorsSection = "sponsors";
+
+    /// <summary>Balance sections allowed only with schema-2 events.</summary>
+    private static readonly string[] SchemaTwoSections =
+        ["networkCollaborate", "platforms", "migration", "policy", SponsorsSection, "wagers", "sideBusiness", "platformBan"];
 
     public ContentSnapshot Load()
         => Parse(
@@ -49,15 +54,15 @@ public sealed class JsonContentSource(string directory) : IContentSource
         var balanceRoot = balanceDocument.RootElement;
         var balance = ReadBalance(balanceRoot);
         var profiles = ReadProfiles(Property(balanceRoot, "profiles", BalanceFile));
-        var (schema, events) = ReadEvents(eventsDocument.RootElement);
-        if (schema == 1 && balanceRoot.TryGetProperty("networkCollaborate", out var network) && network.ValueKind != JsonValueKind.Null)
+        var (schema, events, sponsors) = ReadEvents(eventsDocument.RootElement);
+        if (schema == 1 && SchemaTwoSections.FirstOrDefault(name => Optional(balanceRoot, name) is not null) is { } section)
         {
-            throw Invalid($"{BalanceFile}.networkCollaborate", "is not allowed with schema 1 events");
+            throw Invalid($"{BalanceFile}.{section}", "is not allowed with schema 1 events");
         }
 
         var rulesetId = OptionalString(balanceRoot, "ruleset", BalanceFile) ?? DefaultRulesetId;
 
-        var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId);
+        var snapshot = new ContentSnapshot(balance.Version, digest, balance, events, profiles, schema, rulesetId, sponsors);
         var violations = ContentValidator.Validate(snapshot);
         if (violations.Count > 0)
         {
@@ -74,7 +79,8 @@ public sealed class JsonContentSource(string directory) : IContentSource
         return ReadEvents(document.RootElement).Events;
     }
 
-    private static (int Schema, ImmutableArray<EventDefinition> Events) ReadEvents(JsonElement root)
+    /// <summary>Reads the schema, the events and (schema 2 only) the sponsor templates of an <c>events.json</c>.</summary>
+    private static (int Schema, ImmutableArray<EventDefinition> Events, ImmutableArray<SponsorTemplate> Sponsors) ReadEvents(JsonElement root)
     {
         var schema = OptionalInt(root, "schema", EventsFile) ?? 1;
         if (schema is not (1 or 2))
@@ -82,8 +88,54 @@ public sealed class JsonContentSource(string directory) : IContentSource
             throw Invalid($"{EventsFile}.schema", $"unsupported schema {schema}");
         }
 
-        return (schema, ReadArray(Property(root, "events", EventsFile), "events", (e, p) => ReadEvent(e, p, schema)));
+        var events = ReadArray(Property(root, "events", EventsFile), "events", (e, p) => ReadEvent(e, p, schema));
+        if (Optional(root, SponsorsSection) is not { } sponsors)
+        {
+            return (schema, events, []);
+        }
+
+        return schema == 1
+            ? throw Invalid($"{EventsFile}.sponsors", "is not allowed with schema 1 events")
+            : (schema, events, ReadArray(sponsors, SponsorsSection, ReadSponsor));
     }
+
+    /// <summary>Reads one sponsor template; term, cadence, required category, platforms, incompatibilities and tags are optional.</summary>
+    private static SponsorTemplate ReadSponsor(JsonElement t, string path)
+    {
+        var id = ReadString(t, "id", path);
+        path = $"sponsors[{id}]";
+        var prerequisites = Property(t, "prerequisites", path);
+        var prerequisitesPath = $"{path}.prerequisites";
+        var breach = Property(t, "breach", path);
+        return new SponsorTemplate(
+            id,
+            ReadInt(t, "version", path),
+            ReadString(t, "name", path),
+            ReadString(t, "pitch", path),
+            ParseEnum<SponsorKind>(ToPascalCase(ReadString(t, "kind", path)), $"{path}.kind"),
+            ReadLong(t, "paymentPln", path),
+            ReadLong(t, "paymentPerThousandFollowersPln", path),
+            ReadLong(t, "paymentCapPln", path),
+            OptionalInt(t, "termWeeks", path),
+            OptionalInt(t, "dueEveryWeeks", path),
+            OptionalString(t, "requiredCategory", path) is { } category ? ParseEnum<Category>(category, $"{path}.requiredCategory") : null,
+            ReadPlatforms(t, path),
+            new SponsorPrerequisites(
+                OptionalLong(prerequisites, "minFollowers", prerequisitesPath) ?? 0,
+                OptionalFixed(prerequisites, "minCredibility", prerequisitesPath),
+                OptionalFixed(prerequisites, "maxDrama", prerequisitesPath),
+                OptionalFixed(prerequisites, "minDrama", prerequisitesPath)),
+            OptionalStrings(t, "incompatibleWith", path),
+            new SponsorBreach(ReadLong(breach, "cashPln", $"{path}.breach"), ReadFixed(breach, "credibility", $"{path}.breach")),
+            ReadInt(t, "weight", path),
+            OptionalStrings(t, "tags", path));
+    }
+
+    /// <summary>An optional <c>platforms</c> list; absent means every platform.</summary>
+    private static ImmutableArray<Platform> ReadPlatforms(JsonElement obj, string path)
+        => Optional(obj, "platforms") is { } platforms
+            ? ReadArray(platforms, $"{path}.platforms", (p, itemPath) => ParseEnum<Platform>(StringValue(p, itemPath), itemPath))
+            : [];
 
     private static BalanceConstants ReadBalance(JsonElement b)
     {
@@ -178,7 +230,146 @@ public sealed class JsonContentSource(string directory) : IContentSource
             MasteryFromSkill = SectionFixed(mastery, "fromSkill", MasterySection, Fixed.FromInt(101)),
             MasteryBoredomRelief = SectionInt(mastery, "boredomRelief", MasterySection, 0),
             MasteryChurnFactor = SectionFixed(mastery, "churnFactor", MasterySection, Fixed.One),
+            Platforms = Optional(b, "platforms") is { } platforms ? ReadPlatformProfiles(platforms) : null,
+            Migration = Optional(b, "migration") is { } migration ? ReadMigration(migration) : null,
+            Policy = Optional(b, "policy") is { } policy ? ReadPolicy(policy) : null,
+            Sponsors = Optional(b, SponsorsSection) is { } sponsors ? ReadSponsorBalance(sponsors) : null,
+            Wagers = Optional(b, "wagers") is { } wagers ? ReadWagers(wagers) : null,
+            SideBusiness = Optional(b, "sideBusiness") is { } sideBusiness ? ReadSideBusiness(sideBusiness) : null,
+            PlatformBan = Optional(b, "platformBan") is { } platformBan ? ReadPlatformBan(platformBan) : null,
         };
+    }
+
+    /// <summary>Reads <c>platforms</c>: one profile per named platform; a category missing from <c>categoryReach</c> has factor 1.</summary>
+    private static ImmutableDictionary<Platform, PlatformProfile> ReadPlatformProfiles(JsonElement platforms)
+        => ReadKeyed<Platform, PlatformProfile>(platforms, $"{BalanceFile}.platforms", (p, path) =>
+        {
+            var reach = Optional(p, "categoryReach");
+            var categoryReach = reach is { } r
+                ? ReadKeyed<Category, Fixed>(r, $"{path}.categoryReach", FixedValue)
+                : ImmutableDictionary<Category, Fixed>.Empty;
+            return new PlatformProfile(
+                ReadFixed(p, "reach", path),
+                ReadFixed(p, "subYield", path),
+                ReadFixed(p, "adYield", path),
+                ReadFixed(p, "policyRisk", path),
+                new CategoryValues<Fixed>([.. Enum.GetValues<Category>().Select(c => categoryReach.GetValueOrDefault(c, Fixed.One))]));
+        });
+
+    private static MigrationBalance ReadMigration(JsonElement m)
+    {
+        const string path = $"{BalanceFile}.migration";
+        return new MigrationBalance(
+            ReadFixed(m, "energyCost", path),
+            ReadInt(m, "minWeeksOnPlatform", path),
+            ReadInt(m, "announceWeeks", path),
+            ReadFixed(m, "announceCredibility", path),
+            ReadFixed(m, "announcedBonus", path),
+            ReadFixed(m, "banPenalty", path),
+            ReadFixed(m, "retentionBase", path),
+            ReadFixed(m, "credibilityDivisor", path),
+            ReadFixed(m, "dramaDivisor", path),
+            ReadFixed(m, "retentionMin", path),
+            ReadFixed(m, "retentionMax", path),
+            ReadFixed(m, "jitter", path));
+    }
+
+    private static PolicyBalance ReadPolicy(JsonElement p)
+    {
+        const string path = $"{BalanceFile}.policy";
+        return new PolicyBalance(
+            ReadInt(p, "gamblingExposure", path),
+            ReadInt(p, "sideBusinessExposure", path),
+            ReadInt(p, "highDramaExposure", path),
+            ReadFixed(p, "highDramaFrom", path),
+            ReadFixed(p, "chancePerExposure", path),
+            ReadFixed(p, "chanceCap", path),
+            ReadInt(p, "strikeWeeks", path),
+            ReadInt(p, "strikesToBan", path),
+            ReadFixed(p, "dramaDecay", path));
+    }
+
+    /// <summary>Reads <c>sponsors</c>; the pitch is a schema-2 choice and <c>startingLeads</c> maps backgrounds to template IDs.</summary>
+    private static SponsorBalance ReadSponsorBalance(JsonElement s)
+    {
+        const string path = $"{BalanceFile}.sponsors";
+        return new SponsorBalance(
+            ReadFixed(s, "offerBase", path),
+            ReadFixed(s, "offerPerMagnitude", path),
+            ReadFixed(s, "offerCap", path),
+            ReadInt(s, "offerWeeks", path),
+            ReadInt(s, "maxContracts", path),
+            ReadFixed(s, "pitchEnergyCost", path),
+            ReadChoice(Property(s, "pitch", path), $"{path}.pitch", schema: 2),
+            ReadFixed(s, "terminationCredibility", path),
+            ReadInt(s, "missesToTerminate", path),
+            ReadKeyed<Background, string>(Property(s, "startingLeads", path), $"{path}.startingLeads", StringValue));
+    }
+
+    private static WagerBalance ReadWagers(JsonElement w)
+    {
+        const string path = $"{BalanceFile}.wagers";
+        return new WagerBalance(
+            ReadKeyed<WagerTier, long>(Property(w, "stakePln", path), $"{path}.stakePln", LongValue),
+            ReadKeyed<WagerTier, int>(Property(w, "exposure", path), $"{path}.exposure", IntValue),
+            ReadFixed(w, "maxShareOfCash", path),
+            ReadFixed(w, "chance", path),
+            ReadFixed(w, "payoutMultiple", path),
+            ReadFixed(w, "winAudience", path),
+            ReadFixed(w, "lossAudience", path),
+            ReadFixed(w, "winDrama", path),
+            ReadFixed(w, "lossDrama", path));
+    }
+
+    private static SideBusinessBalance ReadSideBusiness(JsonElement s)
+    {
+        const string path = $"{BalanceFile}.sideBusiness";
+        return new SideBusinessBalance(
+            ReadInt(s, "fromWeek", path),
+            ReadLong(s, "minFollowers", path),
+            ReadFixed(s, "energyCost", path),
+            ReadFixed(s, "burnoutGain", path),
+            ReadFixed(s, "qualityPerWork", path),
+            ReadFixed(s, "qualityDecay", path),
+            ReadFixed(s, "incomePerFollower", path),
+            ReadFixed(s, "incomeScale", path),
+            ReadFixed(s, "credibilityPerWeek", path));
+    }
+
+    private static PlatformBanText ReadPlatformBan(JsonElement p)
+    {
+        const string path = $"{BalanceFile}.platformBan";
+        return new PlatformBanText(
+            ReadString(p, "title", path),
+            ReadString(p, "text", path),
+            ReadKeyed<Platform, string>(Property(p, "choices", path), $"{path}.choices", StringValue));
+    }
+
+    /// <summary>
+    /// Reads an object keyed by enum member names; every key must name a member at most once, and the validator checks that none is
+    /// missing where all are required.
+    /// </summary>
+    private static ImmutableDictionary<TEnum, T> ReadKeyed<TEnum, T>(JsonElement obj, string path, Func<JsonElement, string, T> read)
+        where TEnum : struct, Enum
+    {
+        if (obj.ValueKind != JsonValueKind.Object)
+        {
+            throw Invalid(path, "expected an object");
+        }
+
+        var values = ImmutableDictionary.CreateBuilder<TEnum, T>();
+        foreach (var p in obj.EnumerateObject())
+        {
+            var key = ParseEnum<TEnum>(p.Name, path);
+            if (values.ContainsKey(key))
+            {
+                throw Invalid($"{path}.{p.Name}", "is a duplicate key");
+            }
+
+            values.Add(key, read(p.Value, $"{path}.{p.Name}"));
+        }
+
+        return values.ToImmutable();
     }
 
     /// <summary>The balance's optional network choice; absent or JSON null means the action is unavailable.</summary>
@@ -289,6 +480,8 @@ public sealed class JsonContentSource(string directory) : IContentSource
             Categories = categoryList,
             RequiresFlags = OptionalStrings(eligibility, "requiresFlags", path),
             ForbidsFlags = OptionalStrings(eligibility, "forbidsFlags", path),
+            Platforms = ReadPlatforms(eligibility, path),
+            MinStrikes = OptionalInt(eligibility, "minStrikes", path) ?? 0,
         };
     }
 
@@ -351,14 +544,14 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ? ReadArray(effects, $"{path}.{name}", ReadEffect)
             : null;
 
-    /// <summary>Reads one effect; <c>flag</c> or <c>event</c> becomes <see cref="Effect.Target"/>.</summary>
+    /// <summary>Reads one effect; <c>flag</c>, <c>event</c> or <c>sponsor</c> becomes <see cref="Effect.Target"/>.</summary>
     private static Effect ReadEffect(JsonElement e, string path)
         => new(
             ParseEnum<EffectKind>(ReadString(e, "kind", path), path),
             OptionalString(e, "stat", path) is { } stat ? ParseEnum<StatKey>(stat, path) : null,
             ReadFixed(e, "amount", path),
             OptionalString(e, "category", path) is { } category ? ParseEnum<Category>(category, path) : null,
-            OptionalString(e, "flag", path) ?? OptionalString(e, "event", path),
+            OptionalString(e, "flag", path) ?? OptionalString(e, "event", path) ?? OptionalString(e, "sponsor", path),
             OptionalInt(e, "weeks", path));
 
     private static ImmutableDictionary<StatKey, Fixed> ReadStatBounds(JsonElement eligibility, string name, string path)

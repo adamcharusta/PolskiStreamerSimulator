@@ -185,6 +185,27 @@ public sealed record BalanceConstants
     /// <summary>Follower bonus of a viral clip for a small career.</summary>
     public int ViralFollowerMin { get; init; }
 
+    /// <summary>M3-B platform factors; null when the content has no platforms, and the scalar platform values apply.</summary>
+    public ImmutableDictionary<Platform, PlatformProfile>? Platforms { get; init; }
+
+    /// <summary>M3-B platform migration; null when content has none.</summary>
+    public MigrationBalance? Migration { get; init; }
+
+    /// <summary>M3-B policy strikes and bans; null when content has none, and no strike is ever rolled.</summary>
+    public PolicyBalance? Policy { get; init; }
+
+    /// <summary>M3-B sponsor offers and the pitch action; null when content has none.</summary>
+    public SponsorBalance? Sponsors { get; init; }
+
+    /// <summary>M3-B wagers; null when content has none.</summary>
+    public WagerBalance? Wagers { get; init; }
+
+    /// <summary>M3-B side business; null when content has none.</summary>
+    public SideBusinessBalance? SideBusiness { get; init; }
+
+    /// <summary>M3-B texts of the platform-ban decision; null when content has none.</summary>
+    public PlatformBanText? PlatformBan { get; init; }
+
     /// <summary>The profile of <paramref name="category"/>; neutral when no profiles are configured.</summary>
     public CategoryProfile Profile(Category category) => Categories is { } all ? all[category] : CategoryProfile.Neutral(this);
 }

@@ -6,6 +6,12 @@ public static class CareerInvariants
 {
     public const int MaxEquipmentTier = 4;
 
+    /// <summary>Most sponsor contracts a career may hold at once.</summary>
+    public const int MaxContracts = 2;
+
+    /// <summary>ID of the decision that answers a ban of the current platform.</summary>
+    public const string PlatformBanDecision = "platform-ban";
+
     /// <summary>Cash at or below this value cannot belong to an active career (insolvency).</summary>
     public const long InsolvencyThresholdPln = -1_000;
 
@@ -51,7 +57,39 @@ public static class CareerInvariants
             violations.Add("expired-flag-kept");
         }
 
+        CheckEconomy(violations, s);
         return violations;
+    }
+
+    private static void CheckEconomy(List<string> violations, CareerState s)
+    {
+        if (s.Contracts is { Length: > MaxContracts })
+        {
+            violations.Add("contract-limit");
+        }
+
+        if (s.Offers is { } offers && offers.Select(o => o.TemplateId).Distinct(StringComparer.Ordinal).Count() != offers.Length)
+        {
+            violations.Add("offer-duplicate");
+        }
+
+        if (s.Status == CareerStatus.Active
+            && s.Pending is null
+            && Economy.IsBanned(s, Economy.Current(s))
+            && s.PendingDecisions?.Contains(PlatformBanDecision, StringComparer.Ordinal) != true)
+        {
+            violations.Add("banned-platform-unanswered");
+        }
+
+        if (s.SideBusiness is { } business && (business.Quality < Fixed.Zero || business.Quality > Fixed.Hundred))
+        {
+            violations.Add("side-business-quality");
+        }
+
+        if (s.FormerFollowers < 0)
+        {
+            violations.Add("former-followers-negative");
+        }
     }
 
     private static void CheckStats(List<string> violations, CareerState s)

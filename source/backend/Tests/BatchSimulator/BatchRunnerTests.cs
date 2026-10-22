@@ -135,7 +135,7 @@ public sealed class BatchRunnerTests : IDisposable
         Assert.Equal(0, BatchProgram.Run(["--content", TestPaths.ContentM3, "--careers", "20", "--out", outputDirectory], output, null));
         var md = output.ToString();
         Assert.StartsWith("# M3 batch simulation report", md, StringComparison.Ordinal);
-        Assert.Contains("Ruleset `m3-systems.1`", md, StringComparison.Ordinal);
+        Assert.Contains("Ruleset `m3-systems.2`", md, StringComparison.Ordinal);
         Assert.Contains($"policies: {string.Join(", ", BuiltInPolicies.M3All.Select(p => p.Name))}.", md, StringComparison.Ordinal);
         Assert.Contains("### By category specialist", md, StringComparison.Ordinal);
         Assert.Contains("| Specialist-Gambling |", md, StringComparison.Ordinal);
@@ -149,7 +149,7 @@ public sealed class BatchRunnerTests : IDisposable
 
         using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(outputDirectory, "report.json")));
         var deterministic = json.RootElement.GetProperty("deterministic");
-        Assert.Equal("m3-systems.1", deterministic.GetProperty("rulesetId").GetString());
+        Assert.Equal("m3-systems.2", deterministic.GetProperty("rulesetId").GetString());
         Assert.Equal(10, deterministic.GetProperty("careers").EnumerateArray().Select(c => c.GetProperty("policy").GetString()).Distinct().Count());
     }
 

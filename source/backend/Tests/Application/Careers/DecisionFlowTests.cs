@@ -12,7 +12,7 @@ public sealed class DecisionFlowTests
     {
         var kit = AppTestKit.WithContent(TestPaths.ContentM3);
         var created = await kit.NewCareerAsync();
-        Assert.Equal("m3-systems.1", created.Career.RulesetId);
+        Assert.Equal("m3-systems.2", created.Career.RulesetId);
     }
 
     [Fact]
@@ -122,6 +122,6 @@ public sealed class DecisionFlowTests
         Assert.Equal("m1-prototype.1", played.RulesetId);
         Assert.Equal(NextStepKind.PlanWeek, played.Next.Kind);
         Assert.DoesNotContain(played.Next.Plans, p => p.Plan.MainAction == MainAction.NetworkCollaborate);
-        Assert.Equal("m3-systems.1", (await kit.NewCareerAsync()).Career.RulesetId);
+        Assert.Equal("m3-systems.2", (await kit.NewCareerAsync()).Career.RulesetId);
     }
 }

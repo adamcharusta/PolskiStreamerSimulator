@@ -22,7 +22,7 @@ public sealed class MixedRulesetTests(SqlServerFixture sql)
         var playedM3 = await kit.PlayManualWeekAsync(m3);
 
         Assert.Equal(("m1-prototype.1", NextStepKind.PlanWeek, 1), (playedM1.RulesetId, playedM1.Next.Kind, playedM1.LastReport!.Week));
-        Assert.Equal(("m3-systems.1", NextStepKind.ResolveDecision, 1), (playedM3.RulesetId, playedM3.Next.Kind, playedM3.LastReport!.Week));
+        Assert.Equal(("m3-systems.2", NextStepKind.ResolveDecision, 1), (playedM3.RulesetId, playedM3.Next.Kind, playedM3.LastReport!.Week));
         Assert.Equal(ContractJson.Serialize(playedM3), ContractJson.Serialize(await kit.GetAsync(m3.CareerId)));
     }
 }

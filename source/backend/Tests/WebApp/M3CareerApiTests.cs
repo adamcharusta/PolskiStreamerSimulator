@@ -17,7 +17,7 @@ public sealed class M3CareerApiTests(M3ApiFactory api) : IClassFixture<M3ApiFact
     {
         var (_, _, career) = await client.CreateCareerAsync(Ct);
 
-        Assert.Equal("m3-systems.1", career.GetProperty("rulesetId").GetString());
+        Assert.Equal("m3-systems.2", career.GetProperty("rulesetId").GetString());
         var network = career.GetProperty("next").GetProperty("plans").EnumerateArray()
             .First(p => p.GetProperty("plan").GetProperty("mainAction").GetString() == "networkCollaborate");
         Assert.InRange(network.GetProperty("odds").GetProperty("threshold").GetInt32(), 5, 95);

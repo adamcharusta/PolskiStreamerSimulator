@@ -1,5 +1,6 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets;
@@ -44,4 +45,13 @@ public interface IRuleset
 
     /// <summary>Odds of the main action's roll for <paramref name="plan"/>, or <c>null</c> when the action is not rolled.</summary>
     ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan);
+
+    /// <summary>
+    /// Accepts or declines an open sponsor offer between weeks; a free command that draws nothing. Fails with
+    /// <c>unknown-offer</c> when the career has no such offer.
+    /// </summary>
+    Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion);
+
+    /// <summary>What <paramref name="plan"/> risks (wager terms, sponsor consequences); pure, never draws a random value.</summary>
+    PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan);
 }

@@ -1,6 +1,7 @@
 using FsCheck;
 using FsCheck.Xunit;
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
 
@@ -38,6 +39,27 @@ public class ReconciliationProperties
             }
 
             s = next;
+        }
+
+        return true;
+    }
+
+    /// <summary>Random M3-B weeks (offers, contracts, wagers, the side business) keep every cash movement in the report.</summary>
+    [Property(MaxTest = 100)]
+    public bool M3b_cash_delta_reconciles_with_report_lines(PositiveInt seed, NonNegativeInt weeks)
+    {
+        var s = M3BPlay.Fresh((ulong)seed.Get, Background.IndustryInsider) with { Followers = 5_000, CashPln = 6_000 };
+        var rng = Pcg32.Create((ulong)seed.Get, 11);
+        for (var i = 0; i < weeks.Get % 80 && s.Status == CareerStatus.Active; i++)
+        {
+            var (beforeStart, after, report) = M3BPlay.RandomWeek(s, ref rng);
+            var lines = report.Income.Sum(l => l.AmountPln!.Value) - report.Costs.Sum(l => l.AmountPln!.Value);
+            if (lines != report.CashDelta || report.CashDelta != after.CashPln - beforeStart.CashPln)
+            {
+                return false;
+            }
+
+            s = after;
         }
 
         return true;
