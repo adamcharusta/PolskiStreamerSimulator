@@ -40,4 +40,7 @@ public sealed class LegacyRuleset(string id = LegacyRuleset.LegacyId) : IRuleset
         => inner.ResolveDecision(s, c, choiceId, expectedVersion);
 
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => inner.PresentAction(s, c, plan);
+
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+        => inner.RespondOffer(s, c, offerId, accept, expectedVersion);
 }

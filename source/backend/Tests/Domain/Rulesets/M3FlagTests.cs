@@ -78,7 +78,7 @@ public class M3FlagTests
     {
         var s = CareerFlags.Set(TestCareers.Dorm(7), "x", weeks: 5);
         Assert.True(CareerFlags.IsActive(s, "x"));
-        s = EffectApplier.ToCarry(s, "source", [new Effect(EffectKind.ClearFlag, null, Fixed.Zero, Target: "x")]);
+        s = EffectApplier.ToCarry(s, M3Play.C, "source", [new Effect(EffectKind.ClearFlag, null, Fixed.Zero, Target: "x")]);
         Assert.False(CareerFlags.IsActive(s, "x"));
         Assert.Equal(s, CareerFlags.Clear(s, "x"));
     }

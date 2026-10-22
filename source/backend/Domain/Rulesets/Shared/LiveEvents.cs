@@ -44,7 +44,7 @@ public static class LiveEvents
         }
 
         var pending = s.Pending!;
-        var state = EffectApplier.ToWeek(s, next.Value.Id, answer.Value.Effects, ref pending);
+        var state = EffectApplier.ToWeek(s, c, next.Value.Id, answer.Value.Effects, ref pending);
         state = EventRolls.Recorded(s, state, answer.Value) with
         {
             Pending = pending with { Resolved = pending.Resolved.Add(answer.Value.Roll) },

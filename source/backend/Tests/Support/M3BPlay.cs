@@ -1,6 +1,5 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
-using PolskiStreamerSimulator.Domain.Rulesets;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Tests.Support;
@@ -13,7 +12,7 @@ public static class M3BPlay
     public static ContentSnapshot C => M3BTestContent.Valid();
 
     public static CareerState Fresh(ulong seed = 3, Background background = Background.DormRoomNewcomer)
-        => CareerFactory.Create(M3Ruleset.SystemsV2, C.Digest, C.Profiles[background], background, Difficulty.Normal, PronounSet.Man, seed);
+        => CareerFactory.Create(C, background, Difficulty.Normal, PronounSet.Man, seed);
 
     public static WeekPlan Plan(MainAction a, Category c = Category.Fps, WagerTier? wager = null, Platform? target = null)
         => new(a, c, Wager: wager, TargetPlatform: target);
@@ -34,6 +33,22 @@ public static class M3BPlay
 
     /// <summary>Starts the week with <paramref name="plan"/> and settles it.</summary>
     public static (CareerState State, WeekReport Report) Week(CareerState s, WeekPlan plan) => SettleAll(Start(s, plan));
+
+    /// <summary>Accepts or declines an open offer between weeks.</summary>
+    public static CareerState Respond(CareerState s, string offerId, bool accept)
+        => Engine.RespondOffer(s, C, offerId, accept, s.StateVersion).Value;
+
+    /// <summary>Answers every queued decision with its first available choice.</summary>
+    public static CareerState AnswerDecisions(CareerState s)
+    {
+        while (s.PendingDecisions is { Length: > 0 })
+        {
+            var choice = Engine.PresentDecision(s, C).Value.Choices.First(o => o.UnavailableReason is null);
+            s = Engine.ResolveDecision(s, C, choice.ChoiceId, s.StateVersion).Value;
+        }
+
+        return s;
+    }
 
     /// <summary>Answers the first queued decision with <paramref name="choiceId"/>.</summary>
     public static CareerState ResolveQueued(CareerState s, string choiceId)

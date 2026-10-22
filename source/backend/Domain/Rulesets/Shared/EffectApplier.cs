@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets.Shared;
@@ -10,10 +11,10 @@ namespace PolskiStreamerSimulator.Domain.Rulesets.Shared;
 public static class EffectApplier
 {
     /// <summary>
-    /// Live events: stat, skill, flag and follow-up effects change the career now; cash, audience, quality, follower
+    /// Live events: stat, skill, flag, follow-up and sponsor-offer effects change the career now; cash, audience, quality, follower
     /// and viral effects accumulate in the pending week for settlement.
     /// </summary>
-    public static CareerState ToWeek(CareerState s, string sourceId, ImmutableArray<Effect> effects, ref PendingWeek pending)
+    public static CareerState ToWeek(CareerState s, ContentSnapshot c, string sourceId, ImmutableArray<Effect> effects, ref PendingWeek pending)
     {
         var before = s;
         var lines = pending.Lines.ToBuilder();
@@ -38,7 +39,10 @@ public static class EffectApplier
                 case EffectKind.ViralChance:
                     pending = pending with { ViralChance = (pending.ViralChance ?? Fixed.Zero) + effect.Amount };
                     break;
-                case EffectKind.PolicyStrike or EffectKind.GlobalBan or EffectKind.SponsorOffer:
+                case EffectKind.SponsorOffer:
+                    s = SponsorRules.Offer(s, c, effect.Target!);
+                    break;
+                case EffectKind.PolicyStrike or EffectKind.GlobalBan:
                     throw NotYetApplied(effect);
                 default:
                     s = ToCareer(s, effect, pending.Plan.Category);
@@ -52,12 +56,12 @@ public static class EffectApplier
     }
 
     /// <summary>
-    /// Decisions between weeks: stat, skill, flag and follow-up effects change the career now; cash and follower
+    /// Decisions between weeks: stat, skill, flag, follow-up and sponsor-offer effects change the career now; cash and follower
     /// effects and the stat-change lines go into the decision carry for the next week's report. Primary-category
     /// stats use the last streamed category. Audience, quality and viral effects are rejected (the content validator
     /// forbids them in decisions).
     /// </summary>
-    public static CareerState ToCarry(CareerState s, string sourceId, ImmutableArray<Effect> effects)
+    public static CareerState ToCarry(CareerState s, ContentSnapshot c, string sourceId, ImmutableArray<Effect> effects)
     {
         var before = s;
         var carry = s.Carry ?? DecisionCarry.Empty;
@@ -77,7 +81,10 @@ public static class EffectApplier
                     break;
                 case EffectKind.AudienceMultiplier or EffectKind.EventQuality or EffectKind.ViralChance:
                     throw new ArgumentOutOfRangeException(nameof(effects), effect.Kind, "Not allowed in a decision.");
-                case EffectKind.PolicyStrike or EffectKind.GlobalBan or EffectKind.SponsorOffer:
+                case EffectKind.SponsorOffer:
+                    s = SponsorRules.Offer(s, c, effect.Target!);
+                    break;
+                case EffectKind.PolicyStrike or EffectKind.GlobalBan:
                     throw NotYetApplied(effect);
                 default:
                     s = ToCareer(s, effect, primary);
@@ -110,7 +117,7 @@ public static class EffectApplier
         }
     }
 
-    /// <summary>The M3-B effect kinds are read from content but applied only once their rules exist; no content uses them yet.</summary>
+    /// <summary>The M3-B policy effect kinds are read from content but applied only once their rules exist; no content uses them yet.</summary>
     private static ArgumentOutOfRangeException NotYetApplied(Effect effect)
         => new(nameof(effect), effect.Kind, "The M3-B effect kinds are not applied yet.");
 

@@ -72,6 +72,12 @@ public sealed class WeekEngine(RulesetRegistry registry)
         return ruleset.IsSuccess ? Result<ChoiceOdds?>.Ok(ruleset.Value.PresentAction(s, c, plan)) : Result<ChoiceOdds?>.Fail(ruleset.Error);
     }
 
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+    {
+        var ruleset = Resolve(s, c);
+        return ruleset.IsSuccess ? ruleset.Value.RespondOffer(s, c, offerId, accept, expectedVersion) : Result<CareerState>.Fail(ruleset.Error);
+    }
+
     private Result<IRuleset> Resolve(CareerState s, ContentSnapshot c)
     {
         var ruleset = registry.Resolve(s.RulesetId);

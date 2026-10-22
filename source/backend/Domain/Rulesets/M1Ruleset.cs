@@ -68,4 +68,8 @@ public sealed class M1Ruleset : IRuleset
 
     /// <summary>M1 actions are never rolled.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => null;
+
+    /// <summary>M1 has no sponsors, so there is never an offer to answer.</summary>
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+        => Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "unknown-offer");
 }

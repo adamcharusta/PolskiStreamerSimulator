@@ -44,4 +44,10 @@ public interface IRuleset
 
     /// <summary>Odds of the main action's roll for <paramref name="plan"/>, or <c>null</c> when the action is not rolled.</summary>
     ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan);
+
+    /// <summary>
+    /// Accepts or declines an open sponsor offer between weeks; a free command that draws nothing. Fails with
+    /// <c>unknown-offer</c> when the career has no such offer.
+    /// </summary>
+    Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion);
 }

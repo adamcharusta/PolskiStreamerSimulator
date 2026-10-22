@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets.M3;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
@@ -106,7 +107,7 @@ public sealed class M3Ruleset(string id) : IRuleset
 
     /// <summary>
     /// Settles like M1, then applies the week's follower percentage, expires flags and — unless the career ended —
-    /// opens the decisions due before the new week. The report lists the carried decision rolls.
+    /// expires and rolls sponsor offers and opens the decisions due before the new week. The report lists the carried decision rolls.
     /// </summary>
     public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
     {
@@ -137,6 +138,7 @@ public sealed class M3Ruleset(string id) : IRuleset
         if (ending is null)
         {
             var rng = state.Rng;
+            state = SponsorRules.AfterSettlement(state, c, s.Week.Value, ref rng);
             state = DecisionQueue.Open(state, c, ref rng) with { Rng = rng };
         }
 
@@ -201,7 +203,7 @@ public sealed class M3Ruleset(string id) : IRuleset
         }
 
         var e = answer.Value.Event;
-        var state = EffectApplier.ToCarry(s, e.Id, answer.Value.Effects);
+        var state = EffectApplier.ToCarry(s, c, e.Id, answer.Value.Effects);
         var carry = state.Carry!;
         return Result<CareerState>.Ok(EventRolls.Recorded(s, state, answer.Value) with
         {
@@ -235,13 +237,42 @@ public sealed class M3Ruleset(string id) : IRuleset
         var (roll, outcome, effects) = RuleSteps.Roll(choice, odds, ref rng);
         var started = WeekActions.Started(s, applied, plan, [], rng);
         var pending = started.Pending!;
-        var state = EffectApplier.ToWeek(started, "network", effects, ref pending);
+        var state = EffectApplier.ToWeek(started, c, "network", effects, ref pending);
         var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
         return state with
         {
             Pending = pending with { ActionRoll = new RollResult("network", choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
             Metrics = state.Metrics with { Criticals = state.Metrics.Criticals + (critical ? 1 : 0) },
         };
+    }
+
+    /// <summary>
+    /// Answers an open sponsor offer between weeks, also while decisions are queued: refused during a week, for an
+    /// unknown or expired offer, and on acceptance when <see cref="SponsorRules.AcceptRejection"/> gives a reason.
+    /// </summary>
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+    {
+        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
+        if (s.Pending is not null)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "week-in-progress");
+        }
+
+        if (s.Offers?.FirstOrDefault(o => string.Equals(o.OfferId, offerId, StringComparison.Ordinal)) is not { } offer)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "unknown-offer");
+        }
+
+        if (accept && SponsorRules.AcceptRejection(s, c, offer) is { } refusal)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, refusal);
+        }
+
+        return Result<CareerState>.Ok(SponsorRules.Respond(s, c, offer, accept) with { StateVersion = s.StateVersion + 1 });
     }
 
     private static Result<EventDefinition> NextDecision(CareerState s, ContentSnapshot c)
