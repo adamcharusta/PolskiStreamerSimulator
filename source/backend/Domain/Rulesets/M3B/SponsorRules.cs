@@ -250,9 +250,12 @@ public static class SponsorRules
             return "contract-limit";
         }
 
-        return HasDeal(s, offer.TemplateId)
-            ? "same-sponsor"
-            : Unmet(s, Template(c, offer.TemplateId)) is { } unmet ? $"prerequisite:{unmet}" : null;
+        if (HasDeal(s, offer.TemplateId))
+        {
+            return "same-sponsor";
+        }
+
+        return Unmet(s, Template(c, offer.TemplateId)) is { } unmet ? $"prerequisite:{unmet}" : null;
     }
 
     /// <summary>
