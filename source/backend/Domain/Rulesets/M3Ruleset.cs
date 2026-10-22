@@ -112,7 +112,7 @@ public sealed class M3Ruleset(string id) : IRuleset
     }
 
     /// <summary>
-    /// Settles like M1 (after the sponsor deals), then applies the week's follower percentage, expires flags and — unless the career ended —
+    /// Settles like M1 (after the sponsor deals and the side business), then applies the week's follower percentage, expires flags and — unless the career ended —
     /// expires and rolls sponsor offers and opens the decisions due before the new week. The report lists the carried decision rolls.
     /// </summary>
     public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
@@ -132,13 +132,14 @@ public sealed class M3Ruleset(string id) : IRuleset
 
         var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
         var criticals = CriticalCount(pending);
-        var (sponsored, settling) = SponsorRules.Settle(
+        var (sponsored, sponsoring) = SponsorRules.Settle(
             streamed,
             pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
             c);
+        var (sideBusiness, settling) = SideBusinessRules.Settle(sponsored, sponsoring, c.Balance.SideBusiness);
         var core = ApplyFollowersPercent(
             WeekSettlement.Core(
-                sponsored,
+                sideBusiness,
                 settling,
                 c,
                 shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,

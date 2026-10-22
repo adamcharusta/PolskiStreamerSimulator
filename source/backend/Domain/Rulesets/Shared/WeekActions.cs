@@ -216,7 +216,7 @@ public static class WeekActions
                 return Stats.Add(s, StatKey.Energy, -b.Sponsors!.PitchEnergyCost, plan.Category);
             case MainAction.SideBusinessWork:
                 s = Stats.Add(s, StatKey.Energy, -b.SideBusiness!.EnergyCost, plan.Category);
-                return Stats.Add(s, StatKey.Burnout, b.SideBusiness.BurnoutGain, plan.Category);
+                return SideBusinessRules.Work(Stats.Add(s, StatKey.Burnout, b.SideBusiness.BurnoutGain, plan.Category), b.SideBusiness);
             case MainAction.PlanPlatformMigration:
                 return Stats.Add(s, StatKey.Energy, -b.Migration!.EnergyCost, plan.Category);
             case MainAction.NoAction:

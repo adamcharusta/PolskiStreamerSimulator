@@ -148,7 +148,7 @@ public static class SponsorRules
             activities.Add(SponsorTemplate.Gambling);
         }
 
-        if (plan.Action == MainAction.SideBusinessWork || IsSideBusinessOpen(s))
+        if (plan.Action == MainAction.SideBusinessWork || SideBusinessRules.IsOpen(s))
         {
             activities.Add(SponsorTemplate.AdultBusiness);
         }
@@ -299,7 +299,7 @@ public static class SponsorRules
             return "platform";
         }
 
-        return t.IncompatibleWith.Contains(SponsorTemplate.AdultBusiness) && IsSideBusinessOpen(s)
+        return t.IncompatibleWith.Contains(SponsorTemplate.AdultBusiness) && SideBusinessRules.IsOpen(s)
             ? SponsorTemplate.AdultBusiness
             : null;
     }
@@ -358,9 +358,6 @@ public static class SponsorRules
             kept.Add(d);
         }
     }
-
-    /// <summary>Until the side-business rules exist, a business with any quality counts as open.</summary>
-    private static bool IsSideBusinessOpen(CareerState s) => s.SideBusiness is { Quality.Raw: > 0 };
 
     private static CareerState OpenByWeight(CareerState s, IReadOnlyList<SponsorTemplate> eligible, SponsorBalance b, ref Pcg32 rng)
     {
