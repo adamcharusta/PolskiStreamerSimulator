@@ -3,10 +3,11 @@ using PolskiStreamerSimulator.Domain.Careers;
 
 namespace PolskiStreamerSimulator.Domain.Simulation;
 
-/// <summary>
-/// Between-stream main actions; exactly one per week. Network collaboration is M3 only; the sponsor pitch, the side
-/// business and the platform migration are M3-B only and exist only in content that defines their balance sections.
-/// </summary>
+/// <summary>Between-stream main actions, one per week; networking is M3 only, the last three need M3-B balance sections.</summary>
+/// <remarks>
+/// The summary stays on one line: the OpenAPI generator keeps an enum summary's line breaks, which differ between
+/// Windows and Linux builds.
+/// </remarks>
 public enum MainAction
 {
     Rest,

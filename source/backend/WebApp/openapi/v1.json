@@ -1136,7 +1136,7 @@
           "planPlatformMigration"
         ],
         "type": "string",
-        "description": "Between-stream main actions; exactly one per week. Network collaboration is M3 only; the sponsor pitch, the side\r\nbusiness and the platform migration are M3-B only and exist only in content that defines their balance sections."
+        "description": "Between-stream main actions, one per week; networking is M3 only, the last three need M3-B balance sections."
       },
       "ModifierView": {
         "required": [

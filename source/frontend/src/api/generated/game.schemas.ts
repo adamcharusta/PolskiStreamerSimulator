@@ -96,8 +96,7 @@ export const NextStepKind = {
 } as const;
 
 /**
- * Between-stream main actions; exactly one per week. Network collaboration is M3 only; the sponsor pitch, the side
- * business and the platform migration are M3-B only and exist only in content that defines their balance sections.
+ * Between-stream main actions, one per week; networking is M3 only, the last three need M3-B balance sections.
  */
 export type MainAction = typeof MainAction[keyof typeof MainAction];
 
