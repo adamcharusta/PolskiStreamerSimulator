@@ -14,7 +14,7 @@ public class M3FlagTests
     private static WeekEngine Engine => M3Play.Engine;
 
     private static CareerState Fresh(ContentSnapshot c, ulong seed = 3)
-        => CareerFactory.Create(M3Ruleset.RulesetId, c.Digest, c.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, seed);
+        => CareerFactory.Create(M3Ruleset.SystemsV1, c.Digest, c.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, seed);
 
     private static EventDefinition Live(string id, Eligibility? eligibility = null)
     {
@@ -116,9 +116,9 @@ public class M3FlagTests
         var s = TestCareers.Dorm(7);
         var rng = Pcg32.Create(1, CareerFactory.CareerStream);
         Assert.Equal(["any"], EventSelector.Select(s, c, Category.Fps, ref rng));
-        Assert.False(EventSelector.IsEligible(s, c.Events[0], Category.Fps));
-        Assert.True(EventSelector.IsEligible(s, c.Events[0], Category.Chess));
-        Assert.True(EventSelector.IsEligible(s, c.Events[0], category: null));
+        Assert.False(EventSelector.IsEligible(s, c.Balance, c.Events[0], Category.Fps));
+        Assert.True(EventSelector.IsEligible(s, c.Balance, c.Events[0], Category.Chess));
+        Assert.True(EventSelector.IsEligible(s, c.Balance, c.Events[0], category: null));
     }
 
     [Fact]

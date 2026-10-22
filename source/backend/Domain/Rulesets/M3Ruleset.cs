@@ -10,12 +10,16 @@ using PolskiStreamerSimulator.Domain.Simulation.Settlement;
 namespace PolskiStreamerSimulator.Domain.Rulesets;
 
 /// <summary>
-/// Rules of M3 (<c>m3-systems.1</c>): the shared M1 core plus career flags, follow-up events and mandatory
-/// decisions answered between weeks, whose cash, follower changes and rolls are carried into the next week.
+/// Rules of M3 (<c>m3-systems.1</c> and <c>m3-systems.2</c>): the shared M1 core plus career flags, follow-up
+/// events and mandatory decisions answered between weeks, whose cash, follower changes and rolls are carried into
+/// the next week. Registered as both IDs; M3-B rules are switched by balance sections, never by the ID.
 /// </summary>
-public sealed class M3Ruleset : IRuleset
+public sealed class M3Ruleset(string id) : IRuleset
 {
-    public const string RulesetId = "m3-systems.1";
+    public const string SystemsV1 = "m3-systems.1";
+    public const string SystemsV2 = "m3-systems.2";
+
+    private readonly string _id = IsM3(id) ? id : throw new ArgumentException($"Unknown M3 ruleset id '{id}'.", nameof(id));
 
     private const string RestOnlyFlag = "sys:rest-only";
     private const string ShortStreamFlag = "sys:short-stream";
@@ -24,7 +28,12 @@ public sealed class M3Ruleset : IRuleset
     private const string FollowersEventCode = "followers:event";
     private const string ChoiceUnavailable = "choice-unavailable";
 
-    public string Id => RulesetId;
+    /// <summary>Both registered M3 rulesets, one per stored ruleset ID.</summary>
+    public static IReadOnlyList<IRuleset> Versions { get; } = [new M3Ruleset(SystemsV1), new M3Ruleset(SystemsV2)];
+
+    public string Id => _id;
+
+    public static bool IsM3(string rulesetId) => rulesetId is SystemsV1 or SystemsV2;
 
     /// <summary>
     /// Rejects while decisions are queued; otherwise applies the action, selects the events (due live follow-ups

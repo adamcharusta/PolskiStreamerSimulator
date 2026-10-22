@@ -21,6 +21,67 @@ public class CanonicalJsonTests
         []);
 
     [Fact]
+    public void Stored_m3a_state_round_trips_without_new_fields()
+    {
+        var s = M3Play.Fresh();
+        var started = M3Play.Start(s, MainAction.NoAction);
+        foreach (var state in new[] { s, started })
+        {
+            var json = Encoding.UTF8.GetString(CanonicalJson.Serialize(state));
+            foreach (var name in new[] { "Platform", "PlatformSinceWeek", "BannedPlatforms", "Strikes", "FormerFollowers", "Offers", "Contracts", "SideBusiness", "Wager", "TargetPlatform", "Exposure", "Migration" })
+            {
+                Assert.DoesNotContain($"\"{name}\"", json, StringComparison.Ordinal);
+            }
+
+            Assert.Equal(StateHash.Of(state), StateHash.Of(CanonicalJson.Deserialize(CanonicalJson.Serialize(state))));
+        }
+    }
+
+    [Fact]
+    public void M3b_fields_round_trip()
+    {
+        var s = M3Play.Fresh() with
+        {
+            Platform = Platform.PulsLive,
+            PlatformSinceWeek = 30,
+            BannedPlatforms = [Platform.Czatnia],
+            Strikes = [new PolicyStrike(Platform.Czatnia, 12), new PolicyStrike(Platform.PulsLive, 31)],
+            FormerFollowers = 4_200,
+            Offers = [new SponsorOffer("trusted-tea:31", "trusted-tea", 31, 32, 400)],
+            Contracts = [new SponsorContract("hype:20", "hype", SponsorKind.Contract, 20, 23, 31, 500, 1)],
+            SideBusiness = new SideBusiness(60, Fixed.FromInt(45)),
+        };
+        var bytes = CanonicalJson.Serialize(s);
+        var restored = CanonicalJson.Deserialize(bytes);
+        Assert.Equal(bytes, CanonicalJson.Serialize(restored));
+        Assert.Equal(Platform.PulsLive, restored.Platform);
+        Assert.Equal(new PolicyStrike(Platform.PulsLive, 31), restored.Strikes!.Value[1]);
+        Assert.Equal(Fixed.FromInt(45), restored.SideBusiness!.Quality);
+    }
+
+    [Fact]
+    public void M3b_plan_and_pending_fields_round_trip_and_are_omitted_when_null()
+    {
+        var plan = new WeekPlan(MainAction.NoAction, Category.Fps, null, null, WagerTier.High, Platform.Nurt);
+        var migration = new Migration(Platform.Czatnia, Platform.Nurt, Fixed.FromInt(60), true);
+        var pending = BasePending() with
+        {
+            Plan = plan,
+            Wager = new WagerResult(WagerTier.High, 500, 40, 45, false, -500),
+            Exposure = 7,
+            Migration = migration,
+        };
+        var s = M3Play.Fresh() with { Pending = pending, Carry = DecisionCarry.Empty with { Migration = migration } };
+        var restored = CanonicalJson.Deserialize(CanonicalJson.Serialize(s));
+        Assert.Equal(pending.Plan, restored.Pending!.Plan);
+        Assert.Equal(pending.Wager, restored.Pending.Wager);
+        Assert.Equal(7, restored.Pending.Exposure);
+        Assert.Equal(migration, restored.Pending.Migration);
+        Assert.Equal(migration, restored.Carry!.Migration);
+        Assert.Equal(CanonicalJson.Serialize(s), CanonicalJson.Serialize(restored));
+    }
+
+    [Fact]
     public void Pending_week_extras_round_trip_and_are_omitted_when_null()
     {
         var roll = new RollResult("e1", "c1", 42, 60, [new ModifierLine("skill", Fixed.FromInt(5))], RollOutcome.Success);

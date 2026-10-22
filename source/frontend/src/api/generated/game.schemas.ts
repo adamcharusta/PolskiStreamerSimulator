@@ -19,6 +19,8 @@ export const EndingReason = {
   completed: 'completed',
   insolvency: 'insolvency',
   earlyRetirement: 'earlyRetirement',
+  globalBan: 'globalBan',
+  allPlatformsBanned: 'allPlatformsBanned',
 } as const;
 
 export type Background = typeof Background[keyof typeof Background];

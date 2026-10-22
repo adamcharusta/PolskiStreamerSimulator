@@ -23,4 +23,7 @@ public sealed record WeekReport(
     EndingReason? Ending,
     ImmutableArray<RollResult> DecisionRolls = default,
     RollResult? ActionRoll = null,
-    ViralResult? Viral = null);
+    ViralResult? Viral = null,
+    StrikeRoll? Strike = null,
+    WagerResult? Wager = null,
+    MigrationResult? Migration = null);

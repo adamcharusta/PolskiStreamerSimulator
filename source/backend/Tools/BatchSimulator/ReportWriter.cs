@@ -148,7 +148,7 @@ public static class ReportWriter
         md.AppendLine();
     }
 
-    private static bool IsM3(BatchResult r) => r.RulesetId == M3Ruleset.RulesetId;
+    private static bool IsM3(BatchResult r) => M3Ruleset.IsM3(r.RulesetId);
 
     private static void AppendPaths(StringBuilder md, IReadOnlyList<PathSummary> paths)
     {

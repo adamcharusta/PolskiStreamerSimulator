@@ -14,14 +14,21 @@ public static class ContentValidator
     /// <summary>Pseudo event ID under which the balance's network choice is reported.</summary>
     public const string NetworkChoiceOwner = "balance.networkCollaborate";
 
+    /// <summary>Pseudo event ID under which the balance's sponsor pitch choice is reported.</summary>
+    public const string PitchChoiceOwner = "balance.sponsors.pitch";
+
     /// <summary>Flags the engine sets itself, so content may require them without any event setting them (flags starting with <c>sys:</c> count too).</summary>
-    public static readonly FrozenSet<string> EngineFlags = new[] { "viral-clip" }.ToFrozenSet(StringComparer.Ordinal);
+    public static readonly FrozenSet<string> EngineFlags = new[] { "viral-clip", "side-business" }.ToFrozenSet(StringComparer.Ordinal);
 
     private const string SystemFlagPrefix = "sys:";
     private const long MaxCashEffectPln = 1_000_000;
 
     private static readonly HashSet<EffectKind> DecisionForbidden =
         [EffectKind.AudienceMultiplier, EffectKind.EventQuality, EffectKind.ViralChance];
+
+    /// <summary>The values a sponsor template may list in <see cref="SponsorTemplate.IncompatibleWith"/>.</summary>
+    private static readonly FrozenSet<string> Incompatibilities =
+        new[] { SponsorTemplate.Gambling, SponsorTemplate.AdultBusiness }.ToFrozenSet(StringComparer.Ordinal);
 
     public static IReadOnlyList<string> Validate(ContentSnapshot c)
     {
@@ -37,6 +44,11 @@ public static class ContentValidator
         if (c.Balance.NetworkCollaborate is { } network)
         {
             ValidateChoice(NetworkChoiceOwner, network, c.Schema, new HashSet<string>(StringComparer.Ordinal), violations);
+        }
+
+        if (c.Balance.Sponsors is { } sponsors)
+        {
+            ValidateChoice(PitchChoiceOwner, sponsors.Pitch, c.Schema, new HashSet<string>(StringComparer.Ordinal), violations);
         }
 
         switch (c.Schema)
@@ -176,15 +188,15 @@ public static class ContentValidator
             && e.Eligibility.FromWeek <= e.Eligibility.ToWeek;
 
     /// <summary>
-    /// Checks one effect's shape: its amount range and that only the fields its kind uses are set. The six M3 kinds are
-    /// valid only in schema 2, and a stat delta on followers is never valid.
+    /// Checks one effect's shape: its amount range and that only the fields its kind uses are set. The M3 and M3-B kinds
+    /// are valid only in schema 2, and a stat delta on followers is never valid.
     /// </summary>
     private static bool IsValidEffect(Effect effect, int schema) => effect.Kind switch
     {
         EffectKind.StatDelta => effect.Stat is { } stat && stat != StatKey.Followers && UsesOnly(effect) && Abs(effect.Amount) <= Fixed.Hundred,
         EffectKind.CashDelta => effect.Stat is null
             && UsesOnly(effect)
-            && effect.Amount.Raw % Fixed.Scale == 0
+            && IsWhole(effect.Amount)
             && Abs(effect.Amount) <= Fixed.FromInt(MaxCashEffectPln),
         EffectKind.AudienceMultiplier => effect.Stat is null && UsesOnly(effect) && effect.Amount > Fixed.Zero && effect.Amount <= Fixed.FromInt(10),
         EffectKind.EventQuality => effect.Stat is null && UsesOnly(effect) && Abs(effect.Amount) <= Fixed.Hundred,
@@ -199,6 +211,9 @@ public static class ContentValidator
         EffectKind.SetFlag => HasTarget(effect) && UsesOnly(effect, target: true, weeks: true) && effect.Weeks is null or >= 1,
         EffectKind.ClearFlag => HasTarget(effect) && UsesOnly(effect, target: true),
         EffectKind.FollowUp => HasTarget(effect) && UsesOnly(effect, target: true, weeks: true) && effect.Weeks is >= 1 and <= 52,
+        EffectKind.PolicyStrike => UsesOnly(effect) && IsWhole(effect.Amount) && effect.Amount >= Fixed.One && effect.Amount <= Fixed.FromInt(2),
+        EffectKind.GlobalBan => UsesOnly(effect) && effect.Amount == Fixed.Zero,
+        EffectKind.SponsorOffer => HasTarget(effect) && UsesOnly(effect, target: true) && effect.Amount == Fixed.Zero,
         _ => false,
     };
 
@@ -207,6 +222,8 @@ public static class ContentValidator
     /// <summary>True when every optional field that the kind does not use is null.</summary>
     private static bool UsesOnly(Effect effect, bool category = false, bool target = false, bool weeks = false)
         => (category || effect.Category is null) && (target || effect.Target is null) && (weeks || effect.Weeks is null);
+
+    private static bool IsWhole(Fixed value) => value.Raw % Fixed.Scale == 0;
 
     private static Fixed Abs(Fixed value) => value < Fixed.Zero ? -value : value;
 
@@ -261,6 +278,7 @@ public static class ContentValidator
                 .Where(flag => !setFlags.Contains(flag) && !EngineFlags.Contains(flag) && !flag.StartsWith(SystemFlagPrefix, StringComparison.Ordinal))
                 .Select(flag => $"unset-flag:{e.Id}/{flag}"));
             ValidateChoiceLinks(e, c, ids, violations);
+            ValidateGlobalBans(e, violations);
 
             var triggered = string.Equals(e.Id, c.Balance.RecoveryCrisisEventId, StringComparison.Ordinal) || followUpTargets.Contains(e.Id);
             if (e.Phase != EventPhase.Live && !HasValidWeeks(e) && !triggered)
@@ -271,8 +289,12 @@ public static class ContentValidator
 
         if (c.Balance.NetworkCollaborate is { } networkChoice)
         {
-            ValidateTexts(NetworkChoiceOwner, ChoiceTexts(networkChoice), violations);
-            ValidateFollowUps(NetworkChoiceOwner, networkChoice, c, ids, violations);
+            ValidateBalanceChoice(NetworkChoiceOwner, networkChoice, c, ids, violations);
+        }
+
+        if (c.Balance.Sponsors is { } sponsors)
+        {
+            ValidateBalanceChoice(PitchChoiceOwner, sponsors.Pitch, c, ids, violations);
         }
 
         if (c.Balance.RecoveryCrisisEventId is { } recovery
@@ -282,6 +304,180 @@ public static class ContentValidator
         }
 
         ValidateCategorySupply(c, violations);
+        ValidateSponsors(c, violations);
+        ValidateEconomyBalance(c, violations);
+    }
+
+    private static void ValidateSponsors(ContentSnapshot c, List<string> violations)
+    {
+        var sponsorIds = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var t in c.Sponsors)
+        {
+            AddUnless(sponsorIds.Add(t.Id), $"sponsor-duplicate:{t.Id}", violations);
+            AddUnless(t.Version >= 1, $"sponsor-version:{t.Id}", violations);
+            AddUnless(HasValidPayment(t), $"sponsor-payment:{t.Id}", violations);
+            AddUnless(HasValidBreach(t), $"sponsor-breach:{t.Id}", violations);
+            AddUnless(HasValidTerm(t), $"sponsor-term:{t.Id}", violations);
+            AddUnless(HasPath(t), $"sponsor-no-path:{t.Id}", violations);
+            violations.AddRange(t.IncompatibleWith
+                .Where(value => !Incompatibilities.Contains(value))
+                .Select(value => $"sponsor-incompatible:{t.Id}/{value}"));
+            AddUnless(t.Weight > 0, $"sponsor-weight:{t.Id}", violations);
+            ValidateTexts($"sponsor:{t.Id}", [("name", t.Name), ("pitch", t.Pitch)], violations);
+        }
+    }
+
+    /// <summary>A positive base payment, a non-negative follower rate and a cap no lower than the base.</summary>
+    private static bool HasValidPayment(SponsorTemplate t)
+        => t.PaymentPln > 0 && t.PaymentPerThousandFollowersPln >= 0 && t.PaymentCapPln >= t.PaymentPln;
+
+    /// <summary>A breach returns at most the payment cap and costs between 0 and 20 credibility.</summary>
+    private static bool HasValidBreach(SponsorTemplate t)
+        => t.Breach.CashPln >= 0
+            && t.Breach.CashPln <= t.PaymentCapPln
+            && t.Breach.Credibility >= Fixed.FromInt(-20)
+            && t.Breach.Credibility <= Fixed.Zero;
+
+    /// <summary>A contract runs a whole number of delivery periods; a one-off has neither a term nor a period.</summary>
+    private static bool HasValidTerm(SponsorTemplate t) => t.Kind == SponsorKind.Contract
+        ? t is { TermWeeks: > 0 and var term, DueEveryWeeks: > 0 and var due } && term % due == 0
+        : t is { TermWeeks: null, DueEveryWeeks: null };
+
+    /// <summary>Prerequisites some career can meet: stat bounds in [0, 100] and ordered, and no gambling sponsor that forbids gambling.</summary>
+    private static bool HasPath(SponsorTemplate t)
+    {
+        var p = t.Prerequisites;
+        return p.MinFollowers >= 0
+            && new[] { p.MinCredibility, p.MaxDrama, p.MinDrama }.All(bound => bound is not { } value || IsStat(value))
+            && (p is not { MinDrama: { } minDrama, MaxDrama: { } maxDrama } || minDrama <= maxDrama)
+            && !(t.RequiredCategory == Category.Gambling && t.IncompatibleWith.Contains(SponsorTemplate.Gambling));
+    }
+
+    /// <summary>In [0, 100].</summary>
+    private static bool IsStat(Fixed value) => value >= Fixed.Zero && value <= Fixed.Hundred;
+
+    /// <summary>The M3-B balance sections; each is checked only when present.</summary>
+    private static void ValidateEconomyBalance(ContentSnapshot c, List<string> violations)
+    {
+        var b = c.Balance;
+        if (b.Platforms is { } platforms)
+        {
+            AddUnless(IsSafePlatforms(platforms), "balance:platforms", violations);
+            AddUnless(b.PlatformBan is not null && b.Migration is not null, "balance:platform-ban-missing", violations);
+        }
+
+        if (b.Migration is { } migration)
+        {
+            AddUnless(IsSafeMigration(migration), "balance:migration", violations);
+        }
+
+        if (b.Policy is { } policy)
+        {
+            AddUnless(IsShare(policy.ChanceCap) && policy.StrikesToBan >= 1 && policy.StrikeWeeks >= 1, "balance:policy", violations);
+        }
+
+        if (b.Wagers is { } wagers)
+        {
+            AddUnless(IsSafeWagers(wagers), "balance:wagers", violations);
+        }
+
+        if (b.SideBusiness is { } side)
+        {
+            AddUnless(
+                side.FromWeek >= CareerWeek.First && side.FromWeek <= CareerWeek.Last && IsStat(side.QualityPerWork) && IsStat(side.QualityDecay),
+                "balance:side-business",
+                violations);
+        }
+
+        if (b.Sponsors is { } sponsors)
+        {
+            ValidateSponsorBalance(sponsors, c, violations);
+        }
+
+        if (b.PlatformBan is { } ban)
+        {
+            ValidatePlatformBan(ban, violations);
+        }
+    }
+
+    /// <summary>Every platform has positive factors and a non-negative policy risk.</summary>
+    private static bool IsSafePlatforms(ImmutableDictionary<Platform, PlatformProfile> platforms)
+        => Enum.GetValues<Platform>().All(platform => platforms.TryGetValue(platform, out var p)
+            && p.Reach > Fixed.Zero
+            && p.SubYield > Fixed.Zero
+            && p.AdYield > Fixed.Zero
+            && p.CategoryReach.Values.All(factor => factor > Fixed.Zero)
+            && p.PolicyRisk >= Fixed.Zero);
+
+    /// <summary>An ordered retention range in [0, 1], positive divisors and a non-negative jitter.</summary>
+    private static bool IsSafeMigration(MigrationBalance m)
+        => IsShare(m.RetentionMin)
+            && IsShare(m.RetentionMax)
+            && m.RetentionMin <= m.RetentionMax
+            && m.CredibilityDivisor > Fixed.Zero
+            && m.DramaDivisor > Fixed.Zero
+            && m.Jitter >= Fixed.Zero;
+
+    /// <summary>A positive stake and an exposure for every tier, a chance in [0, 1], a payout of at least the stake and a share in (0, 1].</summary>
+    private static bool IsSafeWagers(WagerBalance w)
+        => Enum.GetValues<WagerTier>().All(tier => w.StakePln.TryGetValue(tier, out var stake) && stake > 0 && w.Exposure.ContainsKey(tier))
+            && IsShare(w.Chance)
+            && w.PayoutMultiple >= Fixed.One
+            && IsFraction(w.MaxShareOfCash);
+
+    private static void ValidateSponsorBalance(SponsorBalance s, ContentSnapshot c, List<string> violations)
+    {
+        AddUnless(
+            IsShare(s.OfferBase) && IsShare(s.OfferPerMagnitude) && IsShare(s.OfferCap) && s.OfferBase <= s.OfferCap
+                && s.MaxContracts >= 1 && s.MissesToTerminate >= 1,
+            "balance:sponsors",
+            violations);
+        AddUnless(
+            !s.Pitch.AllowsCritical && AllEffects(s.Pitch).All(effect => effect.Kind == EffectKind.StatDelta),
+            "balance:pitch",
+            violations);
+        foreach (var (background, id) in s.StartingLeads.OrderBy(lead => lead.Key))
+        {
+            ValidateLead(background, id, c, violations);
+        }
+    }
+
+    /// <summary>A starting lead names a known template whose prerequisites the background's starting profile meets.</summary>
+    private static void ValidateLead(Background background, string id, ContentSnapshot c, List<string> violations)
+    {
+        var template = c.Sponsors.FirstOrDefault(t => t.Id == id);
+        if (template is null)
+        {
+            violations.Add($"missing-lead:{background}/{id}");
+        }
+        else if (c.Profiles.TryGetValue(background, out var profile) && !Meets(profile, template.Prerequisites))
+        {
+            violations.Add($"lead-unmet:{background}/{id}");
+        }
+    }
+
+    /// <summary>Whether a career starting from <paramref name="profile"/> meets <paramref name="p"/> in week 1.</summary>
+    private static bool Meets(StartingProfile profile, SponsorPrerequisites p)
+        => profile.Followers >= p.MinFollowers
+            && (p.MinCredibility is not { } minCredibility || profile.Credibility >= minCredibility)
+            && (p.MaxDrama is not { } maxDrama || profile.Drama <= maxDrama)
+            && (p.MinDrama is not { } minDrama || profile.Drama >= minDrama);
+
+    /// <summary>ICU title, text and a move-choice label for every platform.</summary>
+    private static void ValidatePlatformBan(PlatformBanText ban, List<string> violations)
+    {
+        AddUnless(Enum.GetValues<Platform>().All(ban.Choices.ContainsKey), "balance:platform-ban", violations);
+        var labels = ban.Choices.OrderBy(choice => choice.Key).Select(choice => ($"choices.{choice.Key}", (string?)choice.Value));
+        ValidateTexts("platformBan", new (string Field, string? Text)[] { ("title", ban.Title), ("text", ban.Text) }.Concat(labels), violations);
+    }
+
+    /// <summary>The network and pitch choices: ICU texts, links, and never a global ban.</summary>
+    private static void ValidateBalanceChoice(string owner, ChoiceDefinition choice, ContentSnapshot c, HashSet<string> ids, List<string> violations)
+    {
+        ValidateTexts(owner, ChoiceTexts(choice), violations);
+        ValidateFollowUps(owner, choice, c, ids, violations);
+        ValidateSponsorOffers(owner, choice, c, violations);
+        AddUnless(!HasGlobalBan(AllEffects(choice)), $"global-ban-placement:{owner}/{choice.Id}", violations);
     }
 
     private static HashSet<string> TargetsOf(IEnumerable<ChoiceDefinition> choices, EffectKind kind)
@@ -309,6 +505,7 @@ public static class ContentValidator
         foreach (var choice in ChoicesOf(e))
         {
             ValidateFollowUps(e.Id, choice, c, ids, violations);
+            ValidateSponsorOffers(e.Id, choice, c, violations);
             if (e.Phase == EventPhase.Live)
             {
                 continue;
@@ -338,6 +535,29 @@ public static class ContentValidator
             .Where(target => c.Events.Any(x => x.Id == target && x.OneTime))
             .Select(target => $"follow-up-one-time:{owner}/{target}"));
     }
+
+    /// <summary>Every sponsor offer of <paramref name="choice"/> must name a known sponsor template.</summary>
+    private static void ValidateSponsorOffers(string owner, ChoiceDefinition choice, ContentSnapshot c, List<string> violations)
+        => violations.AddRange(AllEffects(choice)
+            .Where(effect => effect.Kind == EffectKind.SponsorOffer && effect.Target is not null)
+            .Select(effect => effect.Target!)
+            .Where(target => !c.Sponsors.Any(t => t.Id == target))
+            .Select(target => $"unknown-sponsor:{owner}/{target}"));
+
+    /// <summary>A global ban may only be a failure or critical-failure outcome of a crisis choice whose risk is rolled.</summary>
+    private static void ValidateGlobalBans(EventDefinition e, List<string> violations)
+        => violations.AddRange(ChoicesOf(e)
+            .Where(choice => !HasSafeGlobalBans(e.Phase, choice))
+            .Select(choice => $"global-ban-placement:{e.Id}/{choice.Id}"));
+
+    private static bool HasSafeGlobalBans(EventPhase phase, ChoiceDefinition choice)
+        => !HasGlobalBan(AllEffects(choice))
+            || (phase == EventPhase.Crisis
+                && !choice.Guaranteed
+                && !HasGlobalBan(choice.Outcomes.Success)
+                && !HasGlobalBan(choice.Outcomes.CriticalSuccess ?? []));
+
+    private static bool HasGlobalBan(IEnumerable<Effect> effects) => effects.Any(effect => effect.Kind == EffectKind.GlobalBan);
 
     private static void ValidateTexts(string owner, IEnumerable<(string Field, string? Text)> texts, List<string> violations)
     {

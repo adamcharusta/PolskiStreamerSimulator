@@ -61,10 +61,19 @@ public enum EffectKind
 
     /// <summary>Schedules event <see cref="Effect.Target"/> in <see cref="Effect.Weeks"/> weeks (schema 2).</summary>
     FollowUp,
+
+    /// <summary>Gives <see cref="Effect.Amount"/> (1–2) policy strikes on the current platform (M3-B).</summary>
+    PolicyStrike,
+
+    /// <summary>Bans the career on every platform, which ends it; amount 0 (M3-B).</summary>
+    GlobalBan,
+
+    /// <summary>Opens an offer from sponsor template <see cref="Effect.Target"/>; amount 0 (M3-B).</summary>
+    SponsorOffer,
 }
 
 /// <summary>
-/// One change applied by an outcome. <see cref="Category"/>, <see cref="Target"/> (a flag or event ID) and
+/// One change applied by an outcome. <see cref="Category"/>, <see cref="Target"/> (a flag, event or sponsor template ID) and
 /// <see cref="Weeks"/> are used only by the schema-2 kinds.
 /// </summary>
 public sealed record Effect(EffectKind Kind, StatKey? Stat, Fixed Amount, Category? Category = null, string? Target = null, int? Weeks = null);
@@ -96,7 +105,8 @@ public sealed record ChoiceDefinition(
 
 /// <summary>
 /// Weeks and inclusive stat bounds in which an event may be selected; in schema 2 also the categories (empty means
-/// every category) and the flags that must be set or must not be set.
+/// every category) and the flags that must be set or must not be set; in M3-B also the platforms (empty means every
+/// platform) and the minimum number of active policy strikes on the current platform.
 /// </summary>
 public sealed record Eligibility(
     int FromWeek,
@@ -105,7 +115,9 @@ public sealed record Eligibility(
     ImmutableDictionary<StatKey, Fixed> Max,
     ImmutableArray<Category> Categories = default,
     ImmutableArray<string> RequiresFlags = default,
-    ImmutableArray<string> ForbidsFlags = default)
+    ImmutableArray<string> ForbidsFlags = default,
+    ImmutableArray<Platform> Platforms = default,
+    int MinStrikes = 0)
 {
     /// <summary>Allowed categories; empty (never default) means every category.</summary>
     public ImmutableArray<Category> Categories { get; init; } = Categories.IsDefault ? [] : Categories;
@@ -113,6 +125,9 @@ public sealed record Eligibility(
     public ImmutableArray<string> RequiresFlags { get; init; } = RequiresFlags.IsDefault ? [] : RequiresFlags;
 
     public ImmutableArray<string> ForbidsFlags { get; init; } = ForbidsFlags.IsDefault ? [] : ForbidsFlags;
+
+    /// <summary>Platforms on which the event may be shown; empty (never default) means every platform.</summary>
+    public ImmutableArray<Platform> Platforms { get; init; } = Platforms.IsDefault ? [] : Platforms;
 }
 
 /// <summary>

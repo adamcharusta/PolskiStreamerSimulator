@@ -1,6 +1,6 @@
 {
-  "version": "m3.1",
-  "ruleset": "m3-systems.1",
+  "version": "m3.2",
+  "ruleset": "m3-systems.2",
   "livingCostPln": 100,
   "easyUpkeepDiscount": 0.15,
   "equipmentUpkeepPerTierPln": [10, 20, 35, 55, 80],
