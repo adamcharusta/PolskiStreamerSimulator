@@ -54,8 +54,8 @@ public sealed class M3Ruleset(string id) : IRuleset
         }
 
         var rng = applied.Value.Rng;
-        var afterAction = plan.Action == MainAction.NetworkCollaborate
-            ? RollNetwork(s, c, plan, applied.Value, ref rng)
+        var afterAction = ActionChoice(s, c, plan) is (var eventId, var choice)
+            ? RollAction(s, c, plan, applied.Value, eventId, choice, ref rng)
             : WeekActions.Started(s, applied.Value, plan, [], rng);
         var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
         var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
@@ -106,7 +106,7 @@ public sealed class M3Ruleset(string id) : IRuleset
     }
 
     /// <summary>
-    /// Settles like M1, then applies the week's follower percentage, expires flags and — unless the career ended —
+    /// Settles like M1 (after the sponsor deals), then applies the week's follower percentage, expires flags and — unless the career ended —
     /// expires and rolls sponsor offers and opens the decisions due before the new week. The report lists the carried decision rolls.
     /// </summary>
     public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
@@ -126,10 +126,14 @@ public sealed class M3Ruleset(string id) : IRuleset
 
         var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
         var criticals = CriticalCount(pending);
+        var (sponsored, settling) = SponsorRules.Settle(
+            streamed,
+            pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
+            c);
         var core = ApplyFollowersPercent(
             WeekSettlement.Core(
-                streamed,
-                pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
+                sponsored,
+                settling,
                 c,
                 shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,
                 quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
@@ -213,35 +217,51 @@ public sealed class M3Ruleset(string id) : IRuleset
         });
     }
 
-    /// <summary>The visible odds of the networking roll for a network plan; null for any other plan.</summary>
+    /// <summary>The visible odds of the action's roll (networking, or a pitch with nothing due); null for any other plan.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
-        => plan.Action == MainAction.NetworkCollaborate && c.Balance.NetworkCollaborate is { } choice
-            ? NetworkOdds(s, choice, c.Balance, plan)
-            : null;
+        => ActionChoice(s, c, plan) is (_, var choice) ? ActionOdds(s, choice, c.Balance, plan) : null;
 
     /// <summary>
-    /// The one place the networking odds are computed: from the state before the action with the plan's category,
+    /// The rolled choice of the plan's action: the collaboration for a network plan, the pitch for a pitch plan with
+    /// no installment due (a due installment is fulfilled without a roll); null for an action without a roll.
+    /// </summary>
+    private static (string EventId, ChoiceDefinition Choice)? ActionChoice(CareerState s, ContentSnapshot c, WeekPlan plan)
+        => plan.Action switch
+        {
+            MainAction.NetworkCollaborate when c.Balance.NetworkCollaborate is { } network => ("network", network),
+            MainAction.PitchFulfillSponsor when c.Balance.Sponsors is { } sponsors && SponsorRules.DueThisWeek(s).IsEmpty => ("pitch", sponsors.Pitch),
+            _ => null,
+        };
+
+    /// <summary>
+    /// The one place an action's odds are computed: from the state before the action with the plan's category,
     /// so the odds shown are the odds rolled and the action's own energy cost does not change them.
     /// </summary>
-    private static ChoiceOdds NetworkOdds(CareerState before, ChoiceDefinition choice, BalanceConstants b, WeekPlan plan)
+    private static ChoiceOdds ActionOdds(CareerState before, ChoiceDefinition choice, BalanceConstants b, WeekPlan plan)
         => OddsCalculator.For(before, choice, b, plan.Category);
 
     /// <summary>
-    /// Opens the network week and rolls the collaboration with the odds shown beforehand; its effects apply to the
-    /// week, the roll is recorded for the report and a critical counts in the metrics.
+    /// Opens the week and rolls the action's choice with the odds shown beforehand; its effects apply to the week,
+    /// the roll is recorded for the report and a critical counts in the metrics. A successful pitch then opens one
+    /// offer at once.
     /// </summary>
-    private static CareerState RollNetwork(CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, ref Pcg32 rng)
+    private static CareerState RollAction(
+        CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, string eventId, ChoiceDefinition choice, ref Pcg32 rng)
     {
-        var choice = c.Balance.NetworkCollaborate!;
-        var odds = NetworkOdds(s, choice, c.Balance, plan);
+        var odds = ActionOdds(s, choice, c.Balance, plan);
         var (roll, outcome, effects) = RuleSteps.Roll(choice, odds, ref rng);
         var started = WeekActions.Started(s, applied, plan, [], rng);
         var pending = started.Pending!;
-        var state = EffectApplier.ToWeek(started, c, "network", effects, ref pending);
+        var state = EffectApplier.ToWeek(started, c, eventId, effects, ref pending);
         var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
+        if (plan.Action == MainAction.PitchFulfillSponsor && outcome is RollOutcome.Success or RollOutcome.CriticalSuccess)
+        {
+            state = SponsorRules.Pitched(state, c, ref rng);
+        }
+
         return state with
         {
-            Pending = pending with { ActionRoll = new RollResult("network", choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
+            Pending = pending with { ActionRoll = new RollResult(eventId, choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
             Metrics = state.Metrics with { Criticals = state.Metrics.Criticals + (critical ? 1 : 0) },
         };
     }

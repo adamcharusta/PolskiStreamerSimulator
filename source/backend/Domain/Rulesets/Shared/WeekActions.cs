@@ -21,7 +21,7 @@ public static class WeekActions
     public delegate string? RulesetRule(CareerState s, WeekPlan plan);
 
     public static IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> LegalPlans(CareerState s, ContentSnapshot c, RulesetRule rule)
-        => [.. AllPlans(s, c.Balance).Select(plan => (plan, PlanRejection(s, c.Balance, plan, rule)))];
+        => [.. AllPlans(s, c.Balance).Select(plan => (plan, PlanRejection(s, c, plan, rule)))];
 
     /// <summary>
     /// Checks the command and the plan, then applies the main action: the result carries the changed state, the
@@ -34,7 +34,7 @@ public static class WeekActions
             return Result<ActionApplied>.Fail(error);
         }
 
-        if (PlanRejection(s, c.Balance, plan, rule) is { } reason)
+        if (PlanRejection(s, c, plan, rule) is { } reason)
         {
             return Result<ActionApplied>.Fail(DomainErrorCode.IllegalAction, reason);
         }
@@ -59,8 +59,9 @@ public static class WeekActions
     /// collaboration choice (M3); the pitch, the side business, the migration and the wager need their M3-B sections.
     /// After the shared and ruleset rules come the action's own rules (the upgrade's included), then the stake's.
     /// </summary>
-    public static string? PlanRejection(CareerState s, BalanceConstants b, WeekPlan plan, RulesetRule rule)
+    public static string? PlanRejection(CareerState s, ContentSnapshot c, WeekPlan plan, RulesetRule rule)
     {
+        var b = c.Balance;
         if (!IsSupported(b, plan))
         {
             return "unsupported-action";
@@ -76,7 +77,7 @@ public static class WeekActions
             return "week-in-progress";
         }
 
-        return rule(s, plan) ?? ActionRejection(s, b, plan) ?? WagerRejection(s, b, plan);
+        return rule(s, plan) ?? ActionRejection(s, c, plan) ?? WagerRejection(s, b, plan);
     }
 
     private static bool IsSupported(BalanceConstants b, WeekPlan plan)
@@ -92,8 +93,9 @@ public static class WeekActions
         return action && (plan.Wager is null || b.Wagers is not null);
     }
 
-    private static string? ActionRejection(CareerState s, BalanceConstants b, WeekPlan plan)
+    private static string? ActionRejection(CareerState s, ContentSnapshot c, WeekPlan plan)
     {
+        var b = c.Balance;
         if (plan.Wager is not null && plan.Category != Category.Gambling)
         {
             return "wager-category";
@@ -102,7 +104,7 @@ public static class WeekActions
         return plan.Action switch
         {
             MainAction.NetworkCollaborate => EnergyRejection(s, b.NetworkEnergyCost),
-            MainAction.PitchFulfillSponsor => EnergyRejection(s, b.Sponsors!.PitchEnergyCost),
+            MainAction.PitchFulfillSponsor => EnergyRejection(s, b.Sponsors!.PitchEnergyCost) ?? PitchRejection(s, c),
             MainAction.SideBusinessWork => SideBusinessRejection(s, b.SideBusiness!),
             MainAction.PlanPlatformMigration => MigrationRejection(s, b.Migration!, plan),
             MainAction.ImproveProduction => UpgradeRejection(s, b, plan),
@@ -111,6 +113,10 @@ public static class WeekActions
     }
 
     private static string? EnergyRejection(CareerState s, Fixed cost) => s.Energy < cost ? "not-enough-energy" : null;
+
+    /// <summary>A pitch needs a due installment to fulfil or a sponsor that could make an offer.</summary>
+    private static string? PitchRejection(CareerState s, ContentSnapshot c)
+        => SponsorRules.DueThisWeek(s).IsEmpty && SponsorRules.Eligible(s, c).Count == 0 ? "no-sponsor-fits" : null;
 
     /// <summary>Side-business work is legal from <see cref="SideBusinessBalance.FromWeek"/> with enough followers.</summary>
     private static string? SideBusinessRejection(CareerState s, SideBusinessBalance side)
