@@ -17,23 +17,22 @@ public class CareerInvariantsTests
 
     private static SponsorContract Contract(string id) => new(id, "hype", SponsorKind.Contract, 1, 4, 12, 500, 0);
 
-    public static TheoryData<string, CareerState> EconomyViolations()
+    /// <summary>Each violation code with a state that breaks only that rule; tests take the code, which serializes.</summary>
+    private static readonly Dictionary<string, CareerState> EconomyViolationStates = new()
     {
-        var f = M3Play.Fresh();
-        return new TheoryData<string, CareerState>
-        {
-            { "contract-limit", f with { Contracts = [Contract("a"), Contract("b"), Contract("c")] } },
-            { "offer-duplicate", f with { Offers = [new SponsorOffer("x:1", "tea", 1, 2, 100), new SponsorOffer("x:2", "tea", 1, 2, 100)] } },
-            { "banned-platform-unanswered", BannedNurt() },
-            { "side-business-quality", f with { SideBusiness = new SideBusiness(60, Fixed.FromInt(101)) } },
-            { "former-followers-negative", f with { FormerFollowers = -1 } },
-        };
-    }
+        ["contract-limit"] = M3Play.Fresh() with { Contracts = [Contract("a"), Contract("b"), Contract("c")] },
+        ["offer-duplicate"] = M3Play.Fresh() with { Offers = [new SponsorOffer("x:1", "tea", 1, 2, 100), new SponsorOffer("x:2", "tea", 1, 2, 100)] },
+        ["banned-platform-unanswered"] = BannedNurt(),
+        ["side-business-quality"] = M3Play.Fresh() with { SideBusiness = new SideBusiness(60, Fixed.FromInt(101)) },
+        ["former-followers-negative"] = M3Play.Fresh() with { FormerFollowers = -1 },
+    };
+
+    public static TheoryData<string> EconomyViolations() => [.. EconomyViolationStates.Keys];
 
     [Theory]
     [MemberData(nameof(EconomyViolations))]
-    public void Economy_state_violations_are_reported(string code, CareerState state)
-        => Assert.Equal([code], CareerInvariants.Validate(state));
+    public void Economy_state_violations_are_reported(string code)
+        => Assert.Equal([code], CareerInvariants.Validate(EconomyViolationStates[code]));
 
     [Fact]
     public void Banned_platform_with_the_ban_decision_queued_is_valid()

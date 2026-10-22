@@ -26,10 +26,11 @@ public sealed class JsonContentSource(string directory) : IContentSource
     private const string BurnoutPenaltySection = "burnoutPenalty";
     private const string ViralSection = "viral";
     private const string MasterySection = "mastery";
+    private const string SponsorsSection = "sponsors";
 
     /// <summary>Balance sections allowed only with schema-2 events.</summary>
     private static readonly string[] SchemaTwoSections =
-        ["networkCollaborate", "platforms", "migration", "policy", "sponsors", "wagers", "sideBusiness", "platformBan"];
+        ["networkCollaborate", "platforms", "migration", "policy", SponsorsSection, "wagers", "sideBusiness", "platformBan"];
 
     public ContentSnapshot Load()
         => Parse(
@@ -88,14 +89,14 @@ public sealed class JsonContentSource(string directory) : IContentSource
         }
 
         var events = ReadArray(Property(root, "events", EventsFile), "events", (e, p) => ReadEvent(e, p, schema));
-        if (Optional(root, "sponsors") is not { } sponsors)
+        if (Optional(root, SponsorsSection) is not { } sponsors)
         {
             return (schema, events, []);
         }
 
         return schema == 1
             ? throw Invalid($"{EventsFile}.sponsors", "is not allowed with schema 1 events")
-            : (schema, events, ReadArray(sponsors, "sponsors", ReadSponsor));
+            : (schema, events, ReadArray(sponsors, SponsorsSection, ReadSponsor));
     }
 
     /// <summary>Reads one sponsor template; term, cadence, required category, platforms, incompatibilities and tags are optional.</summary>
@@ -232,7 +233,7 @@ public sealed class JsonContentSource(string directory) : IContentSource
             Platforms = Optional(b, "platforms") is { } platforms ? ReadPlatformProfiles(platforms) : null,
             Migration = Optional(b, "migration") is { } migration ? ReadMigration(migration) : null,
             Policy = Optional(b, "policy") is { } policy ? ReadPolicy(policy) : null,
-            Sponsors = Optional(b, "sponsors") is { } sponsors ? ReadSponsorBalance(sponsors) : null,
+            Sponsors = Optional(b, SponsorsSection) is { } sponsors ? ReadSponsorBalance(sponsors) : null,
             Wagers = Optional(b, "wagers") is { } wagers ? ReadWagers(wagers) : null,
             SideBusiness = Optional(b, "sideBusiness") is { } sideBusiness ? ReadSideBusiness(sideBusiness) : null,
             PlatformBan = Optional(b, "platformBan") is { } platformBan ? ReadPlatformBan(platformBan) : null,
