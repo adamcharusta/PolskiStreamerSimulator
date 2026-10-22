@@ -37,8 +37,8 @@ public sealed class M3Ruleset(string id) : IRuleset
     public static bool IsM3(string rulesetId) => rulesetId is SystemsV1 or SystemsV2;
 
     /// <summary>
-    /// Rejects while decisions are queued; otherwise applies the action, selects the events (due live follow-ups
-    /// first) and moves the decision carry into the new pending week.
+    /// Rejects while decisions are queued; otherwise applies the action (and its roll), rolls the wager, selects the
+    /// events (due live follow-ups first) and moves the decision carry into the new pending week.
     /// </summary>
     public Result<CareerState> StartWeek(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
@@ -57,6 +57,12 @@ public sealed class M3Ruleset(string id) : IRuleset
         var afterAction = ActionChoice(s, c, plan) is (var eventId, var choice)
             ? RollAction(s, c, plan, applied.Value, eventId, choice, ref rng)
             : WeekActions.Started(s, applied.Value, plan, [], rng);
+        if (plan.Wager is not null && c.Balance.Wagers is { } wagers)
+        {
+            var wagered = afterAction.Pending!;
+            afterAction = WagerRules.Roll(afterAction, plan, wagers, ref wagered, ref rng) with { Pending = wagered };
+        }
+
         var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
         var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
         var pending = started.Pending;
@@ -146,7 +152,12 @@ public sealed class M3Ruleset(string id) : IRuleset
             state = DecisionQueue.Open(state, c, ref rng) with { Rng = rng };
         }
 
-        var report = WeekSettlement.Report(s, pending, core, ending) with { ActionRoll = pending.ActionRoll, DecisionRolls = pending.Carry?.Rolls ?? [] };
+        var report = WeekSettlement.Report(s, pending, core, ending) with
+        {
+            ActionRoll = pending.ActionRoll,
+            DecisionRolls = pending.Carry?.Rolls ?? [],
+            Wager = pending.Wager,
+        };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
 
