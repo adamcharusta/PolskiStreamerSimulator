@@ -22,6 +22,9 @@ public static class Achievements
 
     private const int CareerCompletedPoints = 4;
 
+    /// <summary>The final drama at or below which a career has recovered from its scandal (<see cref="AchievementKind.DramaSurvived"/>).</summary>
+    private static readonly Fixed RecoveredDrama = Fixed.FromInt(30);
+
     /// <summary>Earned achievements: those already held plus follower milestones reached now and, when completed, the completion award.</summary>
     public static ImmutableHashSet<string> Evaluate(CareerState s, bool completed)
     {
@@ -49,9 +52,9 @@ public static class Achievements
             AchievementKind.Completed => completed,
             AchievementKind.Mastery => s.Skill.Values.Any(skill => skill >= threshold),
             AchievementKind.Specialist => s.Metrics.WeeksPerCategory.Values.Any(weeks => Fixed.FromInt(weeks) >= threshold),
-            AchievementKind.PlatformMove => s.PlatformSinceWeek is > 1,
+            AchievementKind.PlatformMove => s.PlatformSinceWeek is > 1 && s.BannedPlatforms is not { Length: > 0 },
             AchievementKind.SponsorInstallments => Fixed.FromInt(s.Metrics.SponsorInstallments ?? 0) >= threshold,
-            AchievementKind.DramaSurvived => completed && (s.Metrics.PeakDrama ?? Fixed.Zero) >= threshold,
+            AchievementKind.DramaSurvived => completed && (s.Metrics.PeakDrama ?? Fixed.Zero) >= threshold && s.Drama <= RecoveredDrama,
             _ => false,
         };
     }

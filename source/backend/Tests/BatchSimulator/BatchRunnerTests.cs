@@ -170,6 +170,16 @@ public sealed class BatchRunnerTests : IDisposable
         {
             Assert.Contains($"| {name}", md, StringComparison.Ordinal);
         }
+
+        Assert.Contains("### Achievements and strategies", md, StringComparison.Ordinal);
+        Assert.Contains("### M3-C criteria", md, StringComparison.Ordinal);
+        Assert.Contains("| scandal-survivor |", md, StringComparison.Ordinal);
+        foreach (var name in new[] { "Strategies are viable", "Strategy choices matter", "Achievements separate careers" })
+        {
+            Assert.Contains($"| {name}", md, StringComparison.Ordinal);
+        }
+
+        Assert.All(r.Careers, c => Assert.Equal(c.Achievements.Count == 0, c.AchievementPoints == 0));
     }
 
     [Fact]

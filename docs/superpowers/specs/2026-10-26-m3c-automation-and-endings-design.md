@@ -1,7 +1,7 @@
 # M3-C Automation and Endings — Design
 
 Date: 2026-10-26
-Status: **Agent proposal.** The owner asked the agent to design sub-project C without a design interview ("tak rób", 2026-10-26, answering whether the agent should design C itself as it did B). Every rule and number below is an agent proposal to validate in review and by the M3-C simulation; nothing here is a confirmed owner choice unless it cites the GDD.
+Status: **Agent proposal; rules, content and simulation delivered in PR 1 (2026-10-26), numbers tuned by the [M3-C baseline simulation](../../reports/m3c-baseline-simulation.md)** (final values in [gameplay §13](../../gameplay-systems.md#13-m3-c-automation-and-endings)). The owner asked the agent to design sub-project C without a design interview ("tak rób", 2026-10-26, answering whether the agent should design C itself as it did B). Every rule and number below is an agent proposal to validate in review and by the M3-C simulation; nothing here is a confirmed owner choice unless it cites the GDD.
 Milestone: [M3 — Complete gameplay systems](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3), sub-project C, delivering [#22](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/22) and [#23](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/23) ([TD-109](../../technical-decisions.md)).
 Builds on: [M3-B economy and risk](2026-10-21-m3b-economy-and-risk-design.md) (ruleset `m3-systems.2`, sponsor offers, platform bans, policies `M3BAll`).
 
@@ -72,12 +72,12 @@ Validation (`Strategy.Errors()`), each a stable code: `focus-missing`, `focus-un
 ## 6. Achievements and score (#23)
 
 - `balance.achievements` (optional; absent keeps the hard-coded M1 set, so `m1-prototype.1` and `m3-systems.1` results never change): a list of `{ id, name, description, kind, threshold?, points }`. `name` and `description` are Polish ICU strings shown by the client.
-- Kinds: `followers` (followers ≥ threshold at a settlement), `cash` (cash ≥ threshold PLN), `completed` (week 1,040 settled), `mastery` (skill ≥ threshold in any category), `specialist` (weeks streamed in one category ≥ threshold), `platformMove` (any move, announced or forced), `sponsorInstallments` (paid installments ≥ threshold), `dramaSurvived` (completed with peak drama ≥ threshold).
+- Kinds: `followers` (followers ≥ threshold at a settlement), `cash` (cash ≥ threshold PLN), `completed` (week 1,040 settled), `mastery` (skill ≥ threshold in any category), `specialist` (weeks streamed in one category ≥ threshold), `platformMove` (a move with no banned platform; tuned 2026-10-26, proposed: any move), `sponsorInstallments` (paid installments ≥ threshold), `dramaSurvived` (completed with peak drama ≥ threshold and final drama ≤ 30; tuned 2026-10-26, proposed: no recovery condition).
 - New nullable metrics, written only when the section exists: `PeakDrama` and `SponsorInstallments` on `CareerMetrics` (omitted from canonical JSON when null). A move is read from `PlatformSinceWeek > 1`.
 - Achievements are evaluated at every settlement and at retirement, are never revoked, and their points feed `A` exactly as today (`AchievementPointsCap` 10). The score formula, weights and multipliers are unchanged.
 - Validator: unique IDs, known kind, threshold present and positive for the kinds that need one, points 1–5, ICU name and description; `achievement:<rule>` violation codes.
 
-Proposed `content/m3` set (11 achievements, 16 points before tuning): `followers-10k` (1), `followers-100k` (1), `followers-1m` (2), `cash-1m` (1), `career-completed` (2), `skill-master` (mastery 90, 1), `one-category` (specialist 520 weeks, 1), `new-home` (platform move, 2), `trusted-partner` (24 installments, 2), `scandal-survivor` (completed with peak drama ≥ 90, 2), `cash-10m` (1).
+Proposed `content/m3` set (11 achievements, 16 points before tuning; the tuned set is in gameplay §13): `followers-10k` (1), `followers-100k` (1), `followers-1m` (2), `cash-1m` (1), `career-completed` (2), `skill-master` (mastery 90, 1), `one-category` (specialist 520 weeks, 1), `new-home` (platform move, 2), `trusted-partner` (24 installments, 2), `scandal-survivor` (completed with peak drama ≥ 90, 2), `cash-10m` (1).
 
 ## 7. Endings and summary (#23)
 
@@ -93,7 +93,7 @@ Proposed `content/m3` set (11 achievements, 16 points before tuning): `followers
 
 ## 9. Simulation
 
-- Three strategy policies join the `m3-systems.2` list: `Strategy-Default` (the §5 defaults), `Strategy-Safe` (risk `safe`, rest below 50, reserve 2,000 PLN, no wager, routine `noAction, manageCommunity, trainCategory`) and `Strategy-Bold` (risk `bold`, focus Gambling, wager `medium`, side business on, routine `noAction, networkCollaborate`).
+- Three strategy policies join the `m3-systems.2` list: `Strategy-Default` (the §5 defaults), `Strategy-Safe` (risk `safe`, rest below 50, reserve 2,000 PLN, no wager, routine `noAction, manageCommunity, trainCategory`) and `Strategy-Bold` (risk `bold`, focus Gambling, wager `low`, routine `noAction, networkCollaborate`; tuned 2026-10-26, proposed: wager `medium` and the side business).
 - The report gains "Achievements and strategies": the share of careers earning each achievement, the distribution of `A`, and per strategy the medians. Criteria:
   - **Strategies are viable:** each strategy policy avoids insolvency in ≥ 90 % of careers.
   - **Strategy choices matter:** Strategy-Safe and Strategy-Bold differ by at least 10 points of median final drama.

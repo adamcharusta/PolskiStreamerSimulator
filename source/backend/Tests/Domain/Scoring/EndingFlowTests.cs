@@ -62,14 +62,13 @@ public class EndingFlowTests
         {
             Platform = Platform.Nurt,
             PlatformSinceWeek = 30,
-            BannedPlatforms = [Platform.Czatnia],
             Followers = 20_000,
             Metrics = M3BPlay.Fresh().Metrics with { WeeksPerCategory = CategoryValues<int>.Uniform(1).With(Category.Chess, 40) },
         };
         var retired = M3BPlay.Engine.Retire(s, c, s.StateVersion).Value;
         var summary = EndingSummary.Of(retired, c)!;
         Assert.Equal((Platform.Nurt, Category.Chess), (summary.Platform, summary.DominantCategory));
-        Assert.Equal([Platform.Czatnia], summary.BannedPlatforms);
+        Assert.Empty(summary.BannedPlatforms);
         Assert.Equal([new EarnedAchievement("fans", 1), new EarnedAchievement("moved", 2)], summary.Achievements);
     }
 }

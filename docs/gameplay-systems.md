@@ -358,3 +358,50 @@ For `m3-systems.2` content the batch simulator runs fourteen policies (`BuiltInP
 | Migrator | Balanced plus `PlanPlatformMigration` toward PulsLive whenever it is enabled and the career is not on PulsLive: announced in week 27, executed in week 28 (`migration-scheduled`, `platform`). |
 
 A free week is one in which no forced-rest, due-installment, rest or upgrade rule fired.
+
+## 13. M3-C Automation and Endings
+
+Status: **Agent proposal, tuned by the M3-C simulation**, 2026-10-26 ([M3-C design](superpowers/specs/2026-10-26-m3c-automation-and-endings-design.md), [M3-C baseline simulation report](reports/m3c-baseline-simulation.md)). The rules below apply on `m3-systems.2` content with the `achievements` section; careers whose content snapshot lacks the section keep the M1 achievement set (§10).
+
+### Batches and strategies
+
+A batch plays 4, 13 or 52 weeks, committing each week on its own, and stops at an ending or before any queued decision. With a strategy the batch plays `StrategyPolicy`; without one it plays `Balanced`. Strategy fields, defaults and bounds:
+
+| Field | Default | Bounds |
+| --- | --- | --- |
+| Category plan | strongest (least bored while boredom ≥ 60) | strongest, focus (one category), rotate |
+| Routine | normal stream ×3, training | 1–8 of normal stream, training, community, networking, sponsor pitch |
+| Rest below energy | 30 | 0–80 |
+| Rest above burnout | 70 | 50–100 |
+| Cash reserve | 0 PLN | 0–1,000,000 |
+| Upgrades | on (only when `cash − price ≥ max(reserve, 2 × price)`) | on/off |
+| Risk appetite | balanced: gambles from 50 %, community above drama 40 | safe 65 % / 25, bold 35 % / 60 |
+| Sponsor offers | accept when they fit | on/off |
+| Wager | none | Low, Medium, High on Gambling weeks, never below the reserve |
+| Side business | off | on: `week mod 4 = 2` |
+
+Plan order: forced rest, a due sponsor installment, rest thresholds, community above the drama limit, upgrade, side-business week, routine; a due one-off sets the category. A disabled choice falls back to a normal stream, then to rest. Reason codes: `routine-step` (`step`, `of`, `action`), `fallback-safe` (`preferred`, `disabledReason`), `strategy-wager` (`tier`, `routine`), `strategy-side-business`, `strategy-upgrade` (`slot`, `pricePln`, `reservePln`), plus the existing rest, drama, sponsor, offer and event codes (§8, §12). Event-response priorities are deferred to M5.
+
+Simulator strategies: `Strategy-Default` (the defaults), `Strategy-Safe` (safe, rest below 50, reserve 2,000 PLN, routine normal stream / community / training) and `Strategy-Bold` (bold, focus Gambling, Low wager, routine normal stream / networking). Every `Strategy-Bold` career ends with `AllPlatformsBanned` (report follow-up).
+
+### Achievements
+
+| ID | Rule | Points |
+| --- | --- | ---: |
+| `followers-1m` | 1,000,000 followers | 1 |
+| `followers-10m` | 10,000,000 followers | 1 |
+| `followers-100m` | 100,000,000 followers | 2 |
+| `cash-100m` | 100,000,000 PLN | 1 |
+| `cash-1b` | 1,000,000,000 PLN | 1 |
+| `career-completed` | week 1,040 settled | 1 |
+| `skill-master` | skill 100 in any category | 1 |
+| `one-category` | 780 weeks in one category | 1 |
+| `new-home` | a platform move with no banned platform | 2 |
+| `trusted-partner` | 150 paid sponsor installments | 1 |
+| `scandal-survivor` | completed after peak drama ≥ 90, final drama ≤ 30 | 2 |
+
+Achievements are evaluated at every settlement and at retirement and never revoked; their points feed `A = min(1, points / 10)` (§9, unchanged). The metrics `PeakDrama` and `SponsorInstallments` are kept only with the section.
+
+### Ending summary
+
+An ended career has a summary: the ending reason, weeks played, the most streamed category, the reputation (trusted: credibility ≥ 70 and drama ≤ 30; controversial: drama ≥ 60; steady otherwise), the final and banned platforms, the peak follower milestone and the earned achievements with points. The client builds the Polish narrative from it.

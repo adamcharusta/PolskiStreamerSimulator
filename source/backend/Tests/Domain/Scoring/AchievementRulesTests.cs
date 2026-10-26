@@ -41,10 +41,12 @@ public class AchievementRulesTests
         Assert.Contains("master", Earned(s with { Skill = s.Skill.With(Category.Chess, Fixed.FromInt(90)) }));
         Assert.Contains("one-category", Earned(s with { Metrics = s.Metrics with { WeeksPerCategory = s.Metrics.WeeksPerCategory.With(Category.Fps, 520) } }));
         Assert.Contains("moved", Earned(s with { PlatformSinceWeek = 30 }));
+        Assert.DoesNotContain("moved", Earned(s with { PlatformSinceWeek = 30, BannedPlatforms = [Platform.Czatnia] }));
         Assert.Contains("partner", Earned(s with { Metrics = s.Metrics with { SponsorInstallments = 24 } }));
-        var dramatic = s with { Metrics = s.Metrics with { PeakDrama = Fixed.FromInt(90) } };
+        var dramatic = s with { Drama = Fixed.FromInt(30), Metrics = s.Metrics with { PeakDrama = Fixed.FromInt(90) } };
         Assert.DoesNotContain("survivor", Earned(dramatic));
         Assert.Contains("survivor", Earned(dramatic, completed: true));
+        Assert.DoesNotContain("survivor", Earned(dramatic with { Drama = Fixed.FromInt(31) }, completed: true));
     }
 
     [Fact]

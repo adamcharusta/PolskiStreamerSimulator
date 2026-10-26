@@ -20,13 +20,13 @@ public enum AchievementKind
     /// <summary>Weeks streamed in one category at least the threshold.</summary>
     Specialist,
 
-    /// <summary>Any platform move, announced or forced.</summary>
+    /// <summary>A platform move by choice: the career moved and no platform has banned it.</summary>
     PlatformMove,
 
     /// <summary>Paid sponsor installments at least the threshold.</summary>
     SponsorInstallments,
 
-    /// <summary>The career completed after drama peaked at the threshold or above.</summary>
+    /// <summary>The career completed after drama peaked at the threshold or above and then fell to 30 or below.</summary>
     DramaSurvived,
 }
 

@@ -58,8 +58,7 @@ public static class BuiltInPolicies
             Risk = RiskAppetite.Bold,
             CategoryPlan = CategoryPlan.Focus,
             Focus = Category.Gambling,
-            Wager = WagerTier.Medium,
-            SideBusiness = true,
+            Wager = WagerTier.Low,
             Routine = [MainAction.NoAction, MainAction.NetworkCollaborate],
         }),
     ];
