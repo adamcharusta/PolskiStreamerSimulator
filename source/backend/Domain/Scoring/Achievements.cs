@@ -42,6 +42,10 @@ public static class Achievements
     public static int Points(ImmutableHashSet<string> achievements, ImmutableArray<AchievementDefinition>? definitions)
         => definitions is { } defs ? defs.Where(d => achievements.Contains(d.Id)).Sum(d => d.Points) : Points(achievements);
 
+    public static int Points(ImmutableHashSet<string> achievements)
+        => FollowerMilestones.Where(m => achievements.Contains(m.Id)).Sum(m => m.Points)
+            + (achievements.Contains(CareerCompleted) ? CareerCompletedPoints : 0);
+
     private static bool Met(CareerState s, bool completed, AchievementDefinition d)
     {
         var threshold = d.Threshold ?? Fixed.Zero;
@@ -58,10 +62,6 @@ public static class Achievements
             _ => false,
         };
     }
-
-    public static int Points(ImmutableHashSet<string> achievements)
-        => FollowerMilestones.Where(m => achievements.Contains(m.Id)).Sum(m => m.Points)
-            + (achievements.Contains(CareerCompleted) ? CareerCompletedPoints : 0);
 
     /// <summary>Highest follower milestone reached, or 0.</summary>
     public static int FollowersMilestone(long followers)
