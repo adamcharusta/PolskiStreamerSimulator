@@ -9,12 +9,12 @@ namespace PolskiStreamerSimulator.Tests.Support;
 /// <summary>Plays M3 careers on <see cref="M3TestContent"/> for rule tests.</summary>
 public static class M3Play
 {
-    public static WeekEngine Engine { get; } = new(new RulesetRegistry([new M1Ruleset(), new M3Ruleset()]));
+    public static WeekEngine Engine { get; } = new(new RulesetRegistry([new M1Ruleset(), .. M3Ruleset.Versions]));
 
     public static ContentSnapshot C => M3TestContent.Valid();
 
     public static CareerState Fresh(ulong seed = 3)
-        => CareerFactory.Create(M3Ruleset.RulesetId, C.Digest, C.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, seed);
+        => CareerFactory.Create(M3Ruleset.SystemsV1, C.Digest, C.Profiles[Background.DormRoomNewcomer], Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Man, seed);
 
     public static CareerState Start(CareerState s, MainAction action, Category category = Category.Fps)
         => Engine.StartWeek(s, C, new WeekPlan(action, category), s.StateVersion).Value;

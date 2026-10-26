@@ -30,4 +30,13 @@ public sealed record PendingWeek(
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public DecisionCarry? Carry { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public WagerResult? Wager { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Exposure { get; init; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Migration? Migration { get; init; }
 }

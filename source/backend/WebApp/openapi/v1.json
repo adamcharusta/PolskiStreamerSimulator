@@ -1040,7 +1040,9 @@
         "enum": [
           "completed",
           "insolvency",
-          "earlyRetirement"
+          "earlyRetirement",
+          "globalBan",
+          "allPlatformsBanned"
         ],
         "type": "string"
       },

@@ -39,6 +39,26 @@ public class EventVersionsTests
         Assert.Empty(EventVersions.Conflicts(Events("""{ "id": "a", "version": 1, "text": "y" }"""), [m1]));
     }
 
+    private static byte[] WithSponsor(long paymentPln, int version = 1) => Encoding.UTF8.GetBytes($$"""
+        { "schema": 2, "events": [ { "id": "a", "version": 1, "text": "x" } ],
+          "sponsors": [ { "id": "trusted-tea", "version": {{version}}, "paymentPln": {{paymentPln}} } ] }
+        """);
+
+    [Fact]
+    public void Changed_sponsor_under_the_same_version_conflicts()
+        => Assert.Equal(["sponsor:trusted-tea@1"], EventVersions.Conflicts(WithSponsor(301), [WithSponsor(300)]));
+
+    [Fact]
+    public void Changed_sponsor_under_a_new_version_does_not_conflict()
+        => Assert.Empty(EventVersions.Conflicts(WithSponsor(301, version: 2), [WithSponsor(300)]));
+
+    [Fact]
+    public void An_event_and_a_sponsor_with_the_same_id_and_version_do_not_clash()
+    {
+        var stored = Encoding.UTF8.GetBytes("""{ "schema": 2, "events": [ { "id": "trusted-tea", "version": 1, "text": "x" } ] }""");
+        Assert.Empty(EventVersions.Conflicts(WithSponsor(300), [stored]));
+    }
+
     [Fact]
     public async Task The_in_memory_store_refuses_a_changed_event_under_the_same_version()
     {

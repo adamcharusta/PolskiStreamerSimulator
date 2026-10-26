@@ -40,7 +40,7 @@ public static class DecisionQueue
 
         var candidates = c.Events
             .Where(e => e.Phase != EventPhase.Live && e.Id != c.Balance.RecoveryCrisisEventId && !queue.Contains(e.Id))
-            .Where(e => EventSelector.IsEligible(s, e, category: null))
+            .Where(e => EventSelector.IsEligible(s, c.Balance, e, category: null))
             .ToList();
         if (queue.Count < MaxPerWeek && candidates.FirstOrDefault(e => e.OneTime) is { } milestone)
         {

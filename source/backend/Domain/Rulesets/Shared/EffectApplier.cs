@@ -38,6 +38,8 @@ public static class EffectApplier
                 case EffectKind.ViralChance:
                     pending = pending with { ViralChance = (pending.ViralChance ?? Fixed.Zero) + effect.Amount };
                     break;
+                case EffectKind.PolicyStrike or EffectKind.GlobalBan or EffectKind.SponsorOffer:
+                    throw NotYetApplied(effect);
                 default:
                     s = ToCareer(s, effect, pending.Plan.Category);
                     break;
@@ -75,6 +77,8 @@ public static class EffectApplier
                     break;
                 case EffectKind.AudienceMultiplier or EffectKind.EventQuality or EffectKind.ViralChance:
                     throw new ArgumentOutOfRangeException(nameof(effects), effect.Kind, "Not allowed in a decision.");
+                case EffectKind.PolicyStrike or EffectKind.GlobalBan or EffectKind.SponsorOffer:
+                    throw NotYetApplied(effect);
                 default:
                     s = ToCareer(s, effect, primary);
                     break;
@@ -105,6 +109,10 @@ public static class EffectApplier
                 throw new ArgumentOutOfRangeException(nameof(effect), effect.Kind, null);
         }
     }
+
+    /// <summary>The M3-B effect kinds are read from content but applied only once their rules exist; no content uses them yet.</summary>
+    private static ArgumentOutOfRangeException NotYetApplied(Effect effect)
+        => new(nameof(effect), effect.Kind, "The M3-B effect kinds are not applied yet.");
 
     private static ReportLine CashLine(long amount, string sourceId)
         => new(amount >= 0 ? "income:event" : "cost:event", AmountPln: Math.Abs(amount), Detail: sourceId);
