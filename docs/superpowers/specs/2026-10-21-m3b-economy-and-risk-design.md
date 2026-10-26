@@ -1,7 +1,7 @@
 # M3-B Economy and Risk — Design
 
 Date: 2026-10-21
-Status: **Agent proposal.** The owner asked the agent to design sub-project B without a design interview ("zacznij sam", 2026-10-21). Every rule and number below is an agent proposal to validate in review and by the M3-B simulation; nothing here is a confirmed owner choice unless it cites the GDD.
+Status: **Agent proposal; rules and content delivered in PR 3 (2026-10-26), numbers tuned by the [M3-B baseline simulation](../../reports/m3b-baseline-simulation.md)**; the wager stakes are an owner decision (2026-10-26). The owner asked the agent to design sub-project B without a design interview ("zacznij sam", 2026-10-21). Every rule and number below is an agent proposal to validate in review and by the M3-B simulation; nothing here is a confirmed owner choice unless it cites the GDD.
 Milestone: [M3 — Complete gameplay systems](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3), sub-project B, delivering [#18](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/18), [#20](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/20) and [#19](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/19).
 Builds on: [M3-A rules and content foundation](2026-10-16-m3a-rules-and-content-foundation-design.md) (ruleset `m3-systems.1`, schema-v2 events, mandatory decisions, decision carry, category profiles).
 
@@ -76,7 +76,7 @@ The factors replace the scalar `platformReach`, `platformSubYield` and `platform
 ### 5.2 Policy strikes
 
 - **Exposure** each settled week (balance `policy.exposure`): gambling stream 1, wager +1 per stake tier (§7), side business open 1, drama ≥ 70 adds 1.
-- **Strike roll:** one seeded roll per settled week with exposure > 0: chance `exposure × 1.5 pp × platform policy risk`, capped at 15 %. The report shows the roll and threshold; the plan screen shows the week's expected exposure and chance.
+- **Strike roll:** one seeded roll per settled week with exposure > 0: chance `exposure × 0.3 pp × platform policy risk`, capped at 6 % (tuned 2026-10-26; proposed 1.5 pp and 15 %). The report shows the roll and threshold; the plan screen shows the week's expected exposure and chance.
 - Event effect `PolicyStrike` (1–2) adds strikes directly, for disclosed incidents (copyright, privacy, gambling promo).
 - A strike expires 26 weeks after it was given. **Three active strikes ban the career from that platform permanently.**
 
@@ -96,7 +96,7 @@ The factors replace the scalar `platformReach`, `platformSubYield` and `platform
 
 ### 5.5 Drama and credibility
 
-Drama decays by 1 at settlement in a week that added no drama; credibility is unchanged (it already needs explicit repair). Sponsor prerequisites (§6) use both: trusted sponsors need low drama, sensational sponsors need high drama, so neither route is the higher-scoring default.
+Drama decays by 0.2 at settlement in a week that added no drama (tuned 2026-10-26; proposed 1); credibility is unchanged (it already needs explicit repair). Sponsor prerequisites (§6) use both: trusted sponsors need low drama, sensational sponsors need high drama, so neither route is the higher-scoring default.
 
 ## 6. Sponsors, equipment and revenue (#18)
 
@@ -131,7 +131,7 @@ Equipment (four slots, tiers, prices, upkeep) and the subscription, donation and
 
 - A plan with category `Gambling` has an optional `wager`: `None`, `Low` 100 PLN, `Medium` 500 PLN or `High` 2,000 PLN. A stake must not exceed 25 % of cash and needs positive cash; otherwise it stays visible and disabled (`needs-cash`).
 - Chance 45 %, payout 2× the stake: a win adds `income:wager` (the net win), a loss adds `cost:wager`. The expected value is negative (−10 % of the stake), so wagering never pays on average.
-- Spectacle: a win multiplies the stream's live viewers by 1.15, a loss by 1.05; drama +2 on a win, +3 on a loss.
+- Spectacle: a win multiplies the stream's live viewers by 1.05, a loss by 0.85 (tuned 2026-10-26; proposed 1.15 and 1.05); drama +2 on a win, +3 on a loss.
 - The stake tier raises policy exposure (§5.2) and breaches sponsors incompatible with `gambling` (§6.3).
 - The plan screen shows stake, chance, payout, loss and the policy and sponsor consequences before the week starts. There is no purchase, top-up, cash-out or real-money text anywhere; a content test rejects such wording in gambling events.
 
@@ -139,7 +139,7 @@ Equipment (four slots, tiers, prices, upkeep) and the subscription, donation and
 
 - Action **`SideBusinessWork`** (energy 12, +4 burnout) is legal from week 52 with at least 2,000 followers. It is never required: every content choice and every policy path works without it.
 - The first use opens the business (flag `side-business`); each use adds 15 catalog quality (cap 100). Quality decays by 3 per week; at 0 the business is dormant and stops paying.
-- Income `income:side-business = round(followers × 0.0005 × quality/100 × 10)` PLN per week while open; −0.2 credibility per week while quality > 0; policy exposure +1 (§5.2); sponsors incompatible with `adult-business` stop offering and active ones breach (§6.3).
+- Income `income:side-business = round(followers × 0.0005 × quality/100 × 100)` PLN per week (scale tuned 2026-10-26; proposed 10) while open; −0.2 credibility per week while quality > 0; policy exposure +1 (§5.2); sponsors incompatible with `adult-business` stop offering and active ones breach (§6.3).
 - All copy is non-explicit text about workload, pricing, audience and reputation, tagged `adult-business`.
 
 ## 8. Events, validation and content

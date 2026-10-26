@@ -2,12 +2,14 @@ using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Domain.Rulesets.M3;
 
 /// <summary>
-/// Opens the mandatory decisions before a week, in order: the recovery crisis when energy is 0 or burnout 100, due decision
+/// Opens the mandatory decisions before a week, in order: the platform-ban decision when the current platform is banned
+/// (M3-B), the recovery crisis when energy is 0 or burnout 100, due decision
 /// follow-ups, the first eligible one-time milestone, then — only if nothing opened — one repeatable
 /// milestone or crisis after a seeded <see cref="BalanceConstants.DecisionChancePerWeek"/> roll. At most two open.
 /// Repeated due follow-ups of one decision open it once; follow-ups of events missing from the content are dropped.
@@ -21,6 +23,11 @@ public static class DecisionQueue
         var week = s.Week.Value;
         var queue = ImmutableArray.CreateBuilder<string>();
         var scheduled = (s.Scheduled ?? []).Where(x => c.Events.Any(e => e.Id == x.EventId)).ToList();
+        if (PlatformRules.MustMove(s))
+        {
+            queue.Add(PlatformRules.BanDecisionId);
+        }
+
         if (c.Balance.RecoveryCrisisEventId is { } recovery
             && (s.Energy == Fixed.Zero || s.Burnout == Fixed.Hundred))
         {

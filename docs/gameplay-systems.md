@@ -116,7 +116,7 @@ Gambling is an optional stream activity using **only in-game PLN**. A wager requ
 
 When cash is negative, all spend options are disabled; non-spend recovery actions remain available. Apply insolvency at the **end of settlement**, after all earned income and required costs for that week; at ≤ −1,000 PLN the career ends. End-of-week events cannot create hidden charges after the insolvency check.
 
-M3-B rules for sponsors, the wager and the side business: [§12](#12-m3-b-ruleset-m3-systems2).
+M3-B rules for sponsors, the wager and the side business, with their tuned numbers: [§12](#12-m3-b-ruleset-m3-systems2).
 
 ## 7. Drama, Credibility, Platforms, and Bans
 
@@ -132,13 +132,15 @@ Drama measures public controversy; credibility measures trust. A provocative eve
 
 These factors are initial balance defaults. Category-specific audience preferences and rule details belong in versioned platform data and must be shown before switching. A switch becomes available after a proposed 26 weeks or after a permanent ban, provided another platform is accessible. Its retention proposal is `clamp(0.20, 0.80, 0.40 + credibility/250 - drama/500 + announcedSwitchBonus - banPenalty)`. Show the estimated retention range and then the exact resulting follower count. Former followers stay in history but are no longer current followers.
 
+M3-B rules and tuned numbers for platforms, exposure, strikes, bans, migration and drama decay: [§12](#12-m3-b-ruleset-m3-systems2).
+
 Permanent platform bans require a clear escalating rule path or a rare severe incident with a disclosed risk. A global ban is a distinct terminal outcome; it is not inferred merely from one platform's ban. If all three platforms are permanently unavailable, the career also ends. Appeals are a possible future extension, not a launch recovery path.
 
 ## 8. Automation Policy
 
 A strategy is a versioned object with: category rotation (specialize or weighted mix), primary weekly action sequence, sponsor acceptance threshold, financial reserve, risk appetite, drama target, rest threshold, and event-response priorities (growth, cash, credibility, safety). The UI previews example choices and explains ties. Automation chooses only legal options; if no option matches, it selects the least-risk legal option and records a fallback reason. It never silently spends beyond the reserve unless the player has explicitly allowed emergency spending. Major event pauses override policy.
 
-**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `network-scheduled` (`everyWeeks`; M3 `Networker` only), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`; in M3 also every plan of a week the recovery crisis limits to `rest-only`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored`, `rotation` or, for the M3 category specialists, `fixed`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
+**M2 slice (TD-90).** The slice offers only the 13-week batch, played by the fixed `Balanced` policy instead of a saved strategy. Every plan and event choice records a stable reason code with its values (for example `rest-low-energy` with `energy` and `threshold`), which the client localizes. The plan reasons are `forced-rest` (`energy`, `burnout`), `train-every-week`, `rest-low-energy` (`energy`, `threshold`), `rest-high-burnout` (`burnout`, `limit`), `upgrade-equipment` (`slot`, `pricePln`, `cashPln`), `train-scheduled` (`everyWeeks`), `network-scheduled` (`everyWeeks`; M3 `Networker` only), `manage-community-drama` (`drama`, `limit`), `no-action-default` and `fallback-rest` (`preferred`; in M3 also every plan of a week the recovery crisis limits to `rest-only`); every plan reason also carries `category` and `categoryRule` (`bonus`, `least-bored`, `rotation` or, for the M3 category specialists, `fixed`). The event-choice reasons are `gamble-best-odds` (`probability`, `threshold`), `take-guaranteed` (optional `bestProbability`) and `only-gambles` (`probability`). M3-B adds the plan reasons `sponsor-due`, `wager-scheduled`, `side-business-scheduled`, `pitch-scheduled` and `migration-scheduled`, the category rule `sponsor-safe`, the event-choice reason `ban-move` and the offer reasons `offer-accepted` and `offer-declined` ([§12](#m3-b-simulation-policies)). Values are strings: fixed-point numbers with six decimals (`20.000000`), integers in invariant form and enum values in camelCase. The batch stops before a week that needs the player; the M1 rules have no such week, so the stop is exercised by a test ruleset until M3 adds mandatory decisions.
 
 Batch runs are incremental commits, not one opaque transaction: each completed week is recorded and autosaved. Canceling a batch leaves already completed weeks intact. Deterministic random draws and policy choices are included in the ranked action log. The manual and automated paths call the same simulation functions.
 
@@ -296,23 +298,61 @@ A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, n
 
 ## 12. M3-B Ruleset (`m3-systems.2`)
 
-Status: in progress; rules from the [M3-B design](superpowers/specs/2026-10-21-m3b-economy-and-risk-design.md); Task 19 of the [M3-B plan](superpowers/plans/2026-10-21-m3b-economy-and-risk.md) records the tuned numbers. `m3-systems.2` is the M3-A ruleset plus the rules below; each rule reads an optional balance section and is inert without it, so `m3-systems.1` careers play exactly as before ([TD-117](technical-decisions.md)).
+Status: **Agent proposal, tuned by the M3-B simulation**, 2026-10-26 ([M3-B design](superpowers/specs/2026-10-21-m3b-economy-and-risk-design.md), [M3-B baseline simulation report](reports/m3b-baseline-simulation.md) with the criteria and the tuning log). The wager stakes are an owner decision (2026-10-26); every other number below is read from [`content/m3/balance.json`](../content/m3/balance.json) (version `m3.2`) and still needs owner review. `m3-systems.2` is the M3-A ruleset plus the rules below; each rule reads an optional balance section and is inert without it, so `m3-systems.1` careers play exactly as before ([TD-117](technical-decisions.md)).
+
+### Platforms
+
+Every career starts on Czatnia. Settlement replaces the scalar platform values with the current platform's factors; a category's reach is multiplied by the platform's category reach (1.00 where the table is silent).
+
+| Platform | Reach | Sub yield | Ad yield | Policy risk | Category reach |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Czatnia | 1.00 | 1.00 | 1.00 | 1.00 | — |
+| PulsLive | 1.20 | 0.85 | 1.10 | 1.30 | FPS 1.10, MOBA 1.10, Chess 0.90 |
+| Nurt | 0.85 | 1.25 | 0.70 | 0.80 | Chess 1.20, Just Chatting 1.10, Gambling 0.80 |
+
+### Policy exposure, strikes and bans
+
+- **Exposure** is frozen when the week starts, from the state before it: +1 for a Gambling stream, +1 / +2 / +3 for a Low / Medium / High wager, +1 while the side business is open (or for this week's work on it), +1 at drama 70 or more. The plan screen shows the exposure, the chance and the threshold.
+- **Strike roll.** With exposure above zero, settlement draws one 1–100 roll against `round(100 × min(6 %, exposure × 0.3 % × policy risk))`; a hit gives a strike on the current platform. Content can give strikes too (`PolicyStrike`). A strike stays active for 26 weeks.
+- **Ban.** At settlement, three active strikes on the current platform ban the career from it permanently. When another platform is open, the ruleset-built decision `platform-ban` opens first (before the recovery crisis): one guaranteed choice `move-{Platform}` per open platform, each with its forced-move retention range. Moving switches the platform at once, ends tied contracts without penalty and applies the retention at the next settlement (or at retirement). Strikes on the old platform stay.
+- **Endings.** Order at settlement: `Insolvency`, then `GlobalBan` (the system flag `sys:global-ban`, set only by a disclosed failure outcome of a crisis choice), then `AllPlatformsBanned` (current platform banned, no other open), then `Completed`. Both new endings keep their wealth points.
+
+### Migration
+
+`PlanPlatformMigration` (6 energy) needs a target other than the current platform, 26 weeks on the current one and a target that has not banned the career. The first use toward a target announces the move (flag for 4 weeks, −1 credibility, detail `migration`); a second use within those weeks executes it at that week's settlement, after the audience change. Retention is `clamp(0.20, 0.80, 0.40 + credibility / 250 − drama / 500 + 0.10 if announced − 0.10 if forced)`, drawn uniformly within ±0.05 (clamped) when the week starts; the plan screen and the ban decision show the range and the follower counts. The move keeps `round(followers × retention)`; the rest count as lost that week and as former followers (`followers:migration` line). Deals whose template lists platforms that exclude the new one end without penalty.
+
+### Drama decay
+
+A week whose lines add no drama (event, wager, decision or stream) lowers drama by 0.2, never below zero (`stat:Drama`, detail `decay`). The spec's 1 point a week halved the Just Chatting path and was tuned down (report, round 3).
 
 ### Sponsors
 
-- **Offers.** After each settlement (unless the career ended) offers whose last week was the settled week expire, then one seeded roll opens at most one offer: `chance = min(20 %, 8 % + 2 points × magnitude)`, where the magnitude counts the `k ≥ 1` with `followers ≥ 1,000 × 10^k`. The template is chosen by weight among those whose prerequisites hold now, that allow the current platform and that have no open offer or deal; no template, no draw. Payment `= min(cap, base + perThousand × ⌊followers / 1,000⌋)`, fixed when the offer opens. An offer can be answered in its week and the next one (`offerWeeks` = 2). The Industry Insider starts with its lead offer.
+- **Offers.** After each settlement (unless the career ended) offers whose last week was the settled week expire, then one seeded roll opens at most one offer: `chance = min(20 %, 8 % + 2 points × magnitude)`, where the magnitude counts the `k ≥ 1` with `followers ≥ 1,000 × 10^k`. The template is chosen by weight among those whose prerequisites hold now, that allow the current platform and that have no open offer or deal; no template, no draw. Payment `= min(cap, base + perThousand × ⌊followers / 1,000⌋)`, fixed when the offer opens; the twelve `content/m3` templates have caps of 160,000–600,000 PLN per installment so that deals keep pace with late-career income (report, rounds 1–2; to be rescaled with the M5 economy cap). An offer can be answered in its week and the next one (`offerWeeks` = 2). The Industry Insider starts with its lead offer.
 - **`respondOffer(offerId, accept)`** is a free command between weeks, also while decisions are queued; it is refused during a week (`week-in-progress`), for an unknown or expired offer (`unknown-offer`) and, on acceptance, with `contract-limit` (two deals), `same-sponsor` or `prerequisite:<name>`. It draws nothing.
 - **Deals.** A one-off is due in the week it was accepted for; a contract's first installment is due `dueEveryWeeks − 1` weeks after acceptance, then every `dueEveryWeeks` weeks through the term. At settlement, in deal order: an incompatible activity (`gambling` for a Gambling stream, `adult-business` for side-business work or an open side business) breaches the deal once and ends it; a due installment is paid (`income:sponsor`) when the plan is `PitchFulfillSponsor` with the required category, is moved one week (with the term end) by a week off (`sys:rest-only`), and is otherwise missed: `cost:sponsor-penalty = min(breach.cashPln, installment)` and the breach credibility; the second miss ends the contract with a further −5 credibility as its own `stat:Credibility` line. A one-off is paid when the stream's category matches and breached otherwise.
 - **Pitch.** `PitchFulfillSponsor` (8 energy) fulfils the installments due this week without a roll; with nothing due it rolls the pitch with visible odds (15 % + 0.4 points per credibility point, burnout penalty) and a success opens one fitting offer at once. It is disabled with `no-sponsor-fits` when nothing is due and no template fits.
 
 ### Wager
 
-A Gambling plan may stake Low 100, Medium 500 or High 2,000 PLN when the stake is at most 25 % of spendable cash (cash, minus a negative decision carry, minus the plan's equipment price); otherwise the variant is disabled with `needs-cash`, and `StartWeek` refuses a stale plan the same way. The wager rolls once after the action's roll: 45 % to win 2× the stake. A win adds `income:wager` (the net win), +2 drama and ×1.15 live viewers; a loss adds `cost:wager` (the stake), +3 drama and ×1.05 live viewers. The money settles with the week; the report shows the roll and threshold.
+A Gambling plan may stake Low 100, Medium 500 or High 2,000 PLN when the stake is at most 25 % of spendable cash (cash, minus a negative decision carry, minus the plan's equipment price); otherwise the variant is disabled with `needs-cash`, and `StartWeek` refuses a stale plan the same way. The wager rolls once after the action's roll: 45 % to win 2× the stake. A win adds `income:wager` (the net win), +2 drama and ×1.05 live viewers; a loss adds `cost:wager` (the stake), +3 drama and ×0.85 live viewers, so a wager never raises the audience on average. The stakes (Low 100, Medium 500, High 2,000 PLN) are an owner decision (2026-10-26). The money settles with the week; the report shows the roll and threshold.
 
 ### Side business
 
-From week 52 with at least 2,000 followers, `SideBusinessWork` (12 energy, +4 burnout) opens the text-only business on first use (permanent flag `side-business`) and adds 15 quality (max 100). While its quality is above zero it pays `income:side-business = round(followers × 0.0005 × quality / 100 × 10)`, costs 0.2 credibility a week (`stat:Credibility`, detail `side-business`) and loses 3 quality per week.
+From week 52 with at least 2,000 followers, `SideBusinessWork` (12 energy, +4 burnout) opens the text-only business on first use (permanent flag `side-business`) and adds 15 quality (max 100). While its quality is above zero it pays `income:side-business = round(followers × 0.0005 × quality / 100 × 100)`, costs 0.2 credibility a week (`stat:Credibility`, detail `side-business`) and loses 3 quality per week.
 
 ### Plan preview
 
-`PresentPlan` shows, before the player commits, the wager terms of the plan's stake and every missed installment or breach the plan would cause (penalty, credibility, whether the deal ends). It never draws a random value.
+`PresentPlan` shows, before the player commits, the wager terms of the plan's stake, every missed installment or breach the plan would cause (penalty, credibility, whether the deal ends), the policy exposure with its strike chance and threshold, and for a migration plan the retention and follower range and whether this use executes the move. It never draws a random value.
+
+### M3-B simulation policies
+
+For `m3-systems.2` content the batch simulator runs fourteen policies (`BuiltInPolicies.M3BAll`): the ten of §10 plus the four below. Every policy answers open offers before planning, fulfils a due installment with `PitchFulfillSponsor` in the contract's category (reason `sponsor-due`, `templateId`) right after forced rest, streams the required category of a due one-off, and answers `platform-ban` with the move of the highest retention, then the larger reach (`ban-move`, `platform`, `retention`). An offer is accepted (`offer-accepted`, `templateId`) unless the engine refuses it or it clashes with the policy (`offer-declined`, `templateId`, `reason`): a deal requiring or tagged Gambling for a policy that does not stream Gambling, a deal forbidding gambling for a Gambling specialist, a deal forbidding the side business for the side hustler, or a required category a fixed-category policy never streams. A policy that is not fixed on a category never picks Gambling while a gambling-forbidding contract runs (category rule `sponsor-safe`). No M3-A policy wagers or opens the side business.
+
+| Policy | Behaviour |
+| --- | --- |
+| Gambler | Specialist-Gambling that stakes the Medium wager on every non-rest week it is enabled (`wager-scheduled`, `tier`, `routine`). |
+| SideHustler | Balanced plus `SideBusinessWork` in free weeks with `week mod 4 = 2` when enabled (`side-business-scheduled`). |
+| SponsorHunter | Balanced plus `PitchFulfillSponsor` in free weeks with `week mod 3 = 1` when enabled (`pitch-scheduled`). |
+| Migrator | Balanced plus `PlanPlatformMigration` toward PulsLive whenever it is enabled and the career is not on PulsLive: announced in week 27, executed in week 28 (`migration-scheduled`, `platform`). |
+
+A free week is one in which no forced-rest, due-installment, rest or upgrade rule fired.

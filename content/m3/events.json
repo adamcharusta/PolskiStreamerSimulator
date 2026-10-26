@@ -1731,6 +1731,885 @@
           }
         }
       ]
+    },
+    {
+      "id": "policy-copyright-strike",
+      "version": 1,
+      "phase": "live",
+      "title": "Automat od praw autorskich",
+      "text": "Algorytm platformy wyłapuje w tle fragment piosenki. Na ekranie miga ostrzeżenie, a czat zaczyna liczyć, ile to już razy.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 27,
+        "toWeek": 1040
+      },
+      "choices": [
+        {
+          "id": "keep-music",
+          "label": "Zostaw muzykę, przecież to tylko refren",
+          "baseChance": 0.75,
+          "successText": "Algorytm tym razem odpuszcza. Refren zostaje, czat śpiewa razem z tobą.",
+          "failureText": "Przychodzi oficjalne upomnienie od platformy. Refren kosztował więcej, niż był wart.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "EventQuality",
+                "amount": 2
+              }
+            ],
+            "failure": [
+              {
+                "kind": "PolicyStrike",
+                "amount": 1
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "mute",
+          "label": "Wycisz wszystko i graj dalej w ciszy",
+          "guaranteed": true,
+          "successText": "Cisza jest bezpieczna. Czat zaczyna nucić za ciebie, ale to już nie twój problem.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "EventQuality",
+                "amount": -3
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-gambling-promo",
+      "version": 1,
+      "phase": "live",
+      "title": "Kod promocyjny w wiadomościach",
+      "text": "Ktoś z bardzo błyszczącym awatarem proponuje, żeby na wizji pojawił się kod do wirtualnych żetonów. Regulamin platformy ma na ten temat osobny rozdział.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "refuse",
+          "label": "Odmów i przypnij regulamin na czacie",
+          "guaranteed": true,
+          "successText": "Czat docenia, że nie każdy kod musi trafić na ekran. Moderatorzy oddychają z ulgą.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "show-code",
+          "label": "Pokaż kod, raz się żyje",
+          "baseChance": 0.35,
+          "successText": "Kod znika z czatu szybciej, niż się pojawił. Partner przysyła symboliczne podziękowanie.",
+          "failureText": "Zgłoszenie trafia do działu zgodności. Platforma wpisuje ci upomnienie.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 150
+              }
+            ],
+            "failure": [
+              {
+                "kind": "PolicyStrike",
+                "amount": 1
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-privacy-leak",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Wyciek z prywatnej rozmowy",
+      "text": "W sieci krąży zrzut ekranu z twojej prywatnej rozmowy, w której mało pochlebnie oceniasz moderatorów platformy. Dział zaufania i bezpieczeństwa prosi o wyjaśnienia.",
+      "weight": 1,
+      "cooldownWeeks": 104,
+      "tags": [
+        "privacy-incident"
+      ],
+      "eligibility": {
+        "fromWeek": 105,
+        "toWeek": 1040,
+        "minStrikes": 1
+      },
+      "choices": [
+        {
+          "id": "apologise",
+          "label": "Przyznaj się i przeproś publicznie",
+          "guaranteed": true,
+          "successText": "{gender, select, female {Przeprosiłaś bez wykrętów. Część widzów kręci głową, ale sprawa przycicha.} male {Przeprosiłeś bez wykrętów. Część widzów kręci głową, ale sprawa przycicha.} other {Przeprosiłoś bez wykrętów. Część widzów kręci głową, ale sprawa przycicha.}}",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -3
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Zaprzeczaj wszystkiemu (ryzyko trwałej blokady wszędzie)",
+          "baseChance": 0.3,
+          "successText": "Nikt nie potrafi udowodnić, że zrzut jest prawdziwy. Temat umiera po weekendzie.",
+          "failureText": "Pojawia się nagranie. Wszystkie platformy jednocześnie zamykają ci konta na stałe.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              }
+            ],
+            "failure": [
+              {
+                "kind": "GlobalBan",
+                "amount": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "puls-discovery",
+      "version": 1,
+      "phase": "live",
+      "title": "Wyróżnienie na stronie głównej",
+      "text": "PulsLive testuje nowy algorytm odkrywania i twój stream ląduje w karuzeli na stronie głównej. Na czacie pojawiają się nicki, których nikt tu wcześniej nie widział.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "platforms": [
+          "PulsLive"
+        ]
+      },
+      "choices": [
+        {
+          "id": "showcase",
+          "label": "Zrób show dla nowych widzów",
+          "baseChance": 0.55,
+          "modifiers": [
+            {
+              "stat": "PrimarySkill",
+              "perPoint": 0.003,
+              "labelKey": "modifier.primary-skill"
+            }
+          ],
+          "allowsCritical": true,
+          "successText": "Nowi widzowie zostają do końca. Algorytm zapisuje sobie twoje nazwisko.",
+          "failureText": "Robisz za dużo hałasu i nowi widzowie uciekają do kolejnego kafelka.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "AudienceMultiplier",
+                "amount": 1.3
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "business-as-usual",
+          "label": "Rób swoje, jakby nic się nie stało",
+          "guaranteed": true,
+          "successText": "Kilka osób zostaje, reszta przewija dalej. Spokojny stream to też stream.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "AudienceMultiplier",
+                "amount": 1.05
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "nurt-community",
+      "version": 1,
+      "phase": "live",
+      "title": "Wieczór patronów",
+      "text": "Społeczność Nurtu organizuje wieczór dla patronów. Ktoś przygotował nawet tabelkę z listą tematów i harmonogramem przerw na herbatę.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "community"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "platforms": [
+          "Nurt"
+        ]
+      },
+      "choices": [
+        {
+          "id": "patron-night",
+          "label": "Poprowadź wieczór patronów",
+          "guaranteed": true,
+          "successText": "Patroni dziękują za spokojną rozmowę i zostawiają drobne wsparcie.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 2
+              },
+              {
+                "kind": "CashDelta",
+                "amount": 100
+              }
+            ]
+          }
+        },
+        {
+          "id": "skip",
+          "label": "Podziękuj i zostań przy zwykłym planie",
+          "guaranteed": true,
+          "successText": "Patroni rozumieją. Tabelka czeka na lepszy termin.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-first-strike",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Pierwsze upomnienie",
+      "text": "Platforma przysyła oficjalne upomnienie z numerem paragrafu. Trzy takie listy w pół roku i kanał może zniknąć.",
+      "weight": 1,
+      "cooldownWeeks": 26,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "minStrikes": 1
+      },
+      "choices": [
+        {
+          "id": "read-rules",
+          "label": "Przeczytaj regulamin od deski do deski",
+          "guaranteed": true,
+          "successText": "{gender, select, female {Przeczytałaś wszystkie czterdzieści stron. Teraz wiesz, czego unikać.} male {Przeczytałeś wszystkie czterdzieści stron. Teraz wiesz, czego unikać.} other {Przeczytałoś wszystkie czterdzieści stron. Teraz wiesz, czego unikać.}}",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": -2
+              }
+            ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Zignoruj, przecież to tylko automat",
+          "guaranteed": true,
+          "successText": "List ląduje w folderze z innymi listami. Czat zauważa, że temat cię nie obchodzi.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-first-catalog",
+      "version": 1,
+      "phase": "milestone",
+      "title": "Pierwszy cennik po godzinach",
+      "text": "Biznes po godzinach ma już pierwszych subskrybentów. Trzeba ustalić cennik, zanim zrobi to za ciebie dział plotek.",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": [
+        "adult-business"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ]
+      },
+      "choices": [
+        {
+          "id": "premium",
+          "label": "Ustal wysokie ceny dla wąskiego grona",
+          "guaranteed": true,
+          "successText": "Grono jest wąskie, ale hojne. Część widzów streamów uważa, że to przesada.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 300
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -1
+              }
+            ]
+          }
+        },
+        {
+          "id": "affordable",
+          "label": "Ustal przystępne ceny i jasne zasady",
+          "guaranteed": true,
+          "successText": "Zasady są proste, a ceny uczciwe. Mniej pieniędzy, mniej pytań.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 100
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-workload",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Dwa etaty naraz",
+      "text": "Streamy w dzień, biznes po godzinach w nocy. Kalendarz wygląda jak plansza do Tetrisa, a ty coraz częściej zasypiasz przy klawiaturze.",
+      "weight": 1,
+      "cooldownWeeks": 26,
+      "tags": [
+        "adult-business"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ],
+        "min": {
+          "Burnout": 40
+        }
+      },
+      "choices": [
+        {
+          "id": "cut-hours",
+          "label": "Ogranicz godziny biznesu po godzinach",
+          "guaranteed": true,
+          "successText": "Mniej pracy, więcej snu. Konto trochę na tym traci, głowa zyskuje.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Burnout",
+                "amount": -5
+              }
+            ]
+          }
+        },
+        {
+          "id": "push",
+          "label": "Dociśnij jeszcze ten tydzień",
+          "guaranteed": true,
+          "successText": "Kolejna noc przy biurku. Przelew przychodzi, siły odchodzą.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Energy",
+                "amount": -5
+              },
+              {
+                "kind": "CashDelta",
+                "amount": 200
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-leak-rumour",
+      "version": 1,
+      "phase": "live",
+      "title": "Plotka o wycieku",
+      "text": "Na forum ktoś twierdzi, że wyciekły materiały z twojego biznesu po godzinach. Szybko okazuje się, że to wygenerowane, syntetyczne dane, ale czat już o tym mówi.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "adult-business",
+        "privacy-incident"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ]
+      },
+      "choices": [
+        {
+          "id": "deny-loudly",
+          "label": "Ostro zdementuj plotkę na wizji",
+          "baseChance": 0.5,
+          "modifiers": [
+            {
+              "stat": "Credibility",
+              "perPoint": 0.003,
+              "labelKey": "modifier.credibility"
+            }
+          ],
+          "successText": "Dementi trafia. Czat zgadza się, że to podróbka, i wraca do tematu streamu.",
+          "failureText": "Im głośniej zaprzeczasz, tym więcej osób szuka podróbki. Temat żyje dalej.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 3
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -2
+              }
+            ]
+          }
+        },
+        {
+          "id": "calm-statement",
+          "label": "Wydaj krótkie, spokojne oświadczenie",
+          "guaranteed": true,
+          "successText": "Oświadczenie jest nudne, a o to chodziło. Plotka gaśnie bez paliwa.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-fan-request",
+      "version": 1,
+      "phase": "live",
+      "title": "Prośba od fana",
+      "text": "Fan z biznesu po godzinach pisze na czacie streamu i prosi o coś specjalnego. Moderatorzy patrzą na ciebie pytająco.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "adult-business"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ]
+      },
+      "choices": [
+        {
+          "id": "decline",
+          "label": "Grzecznie odmów i oddziel oba światy",
+          "guaranteed": true,
+          "successText": "Granica jest jasna. Moderatorzy kiwają głowami z uznaniem.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "upsell",
+          "label": "Odeślij fana do płatnej oferty",
+          "guaranteed": true,
+          "successText": "Fan płaci, czat komentuje. Obie rzeczy były do przewidzenia.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 100
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wager-chat-hype",
+      "version": 1,
+      "phase": "live",
+      "title": "Czat chce więcej",
+      "text": "Czat skanduje, żeby stawka wirtualnych żetonów poszła w górę. Ktoś już wkleja emotkę z rakietą po raz czterdziesty.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "keep-limit",
+          "label": "Trzymam limit ustalony przed streamem",
+          "guaranteed": true,
+          "successText": "Limit to limit. Część czatu marudzi, reszta szanuje konsekwencję.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "hype-back",
+          "label": "Podkręć emocje gadaniem, nie stawką",
+          "guaranteed": true,
+          "successText": "Robisz z tego teatr bez ruszania żetonów. Czat dostaje show.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              },
+              {
+                "kind": "EventQuality",
+                "amount": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wager-streak",
+      "version": 1,
+      "phase": "live",
+      "title": "Szczęśliwa passa",
+      "text": "Trzy wygrane z rzędu w wirtualnych żetonach. Czat jest przekonany, że masz dar, a ty wiesz, że to tylko statystyka.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "keep-playing",
+          "label": "Graj dalej, póki karta idzie",
+          "baseChance": 0.45,
+          "successText": "Passa trwa jeszcze chwilę. Widzowie zostają, żeby zobaczyć, jak się skończy.",
+          "failureText": "Passa kończy się efektownie. Czat ma nowe ulubione nagranie.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "AudienceMultiplier",
+                "amount": 1.1
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 3
+              }
+            ]
+          }
+        },
+        {
+          "id": "stop",
+          "label": "Zatrzymaj się i pogadaj o prawdopodobieństwie",
+          "guaranteed": true,
+          "successText": "Mała lekcja statystyki. Nie wszyscy są zachwyceni, ale nikt nie wychodzi.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wager-mod-limit",
+      "version": 1,
+      "phase": "live",
+      "title": "Limit od moderatora",
+      "text": "Moderator proponuje, żeby na kanale obowiązywał tygodniowy limit stawek wirtualnych żetonów. Przygotował nawet grafikę.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accept",
+          "label": "Przyjmij limit i przypnij grafikę",
+          "guaranteed": true,
+          "successText": "Limit wisi na ekranie. Temat zakładów na czacie wyraźnie się uspokaja.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": -2
+              }
+            ]
+          }
+        },
+        {
+          "id": "reject",
+          "label": "Odrzuć limit, przecież wiesz najlepiej",
+          "guaranteed": true,
+          "successText": "Moderator wzdycha i chowa grafikę. Czat odnotowuje wymianę zdań.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sponsor-agency-call",
+      "version": 1,
+      "phase": "milestone",
+      "title": "Telefon z agencji",
+      "text": "Dzwoni agencja, która reprezentuje kilka marek. Mają klienta, który szuka twórcy z twoim zasięgiem i spokojnym czatem.",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": [
+        "sponsor"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "min": {
+          "Followers": 5000
+        }
+      },
+      "choices": [
+        {
+          "id": "meet",
+          "label": "Umów spotkanie z agencją",
+          "guaranteed": true,
+          "successText": "Agencja przysyła ofertę jeszcze tego samego dnia.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "SponsorOffer",
+                "sponsor": "ksiegarnia-strona",
+                "amount": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "not-now",
+          "label": "Podziękuj, nie teraz",
+          "guaranteed": true,
+          "successText": "Agencja zapisuje twój numer. Może zadzwoni jeszcze raz.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sponsor-brand-rep",
+      "version": 1,
+      "phase": "live",
+      "title": "Przedstawiciel marki na czacie",
+      "text": "Na czacie odzywa się przedstawiciel napoju o smaku, którego nikt nie potrafi nazwać. Pyta, czy można by tak na żywo coś pokazać.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "sponsor"
+      ],
+      "eligibility": {
+        "fromWeek": 27,
+        "toWeek": 1040
+      },
+      "choices": [
+        {
+          "id": "pitch-live",
+          "label": "Zrób szybką prezentację na wizji",
+          "baseChance": 0.5,
+          "successText": "Prezentacja wychodzi zabawnie. Przedstawiciel prosi o kontakt w sprawie oferty.",
+          "failureText": "Prezentacja wychodzi drętwo. Czat robi z niej mema.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "SponsorOffer",
+                "sponsor": "turbo-kisiel",
+                "amount": 0
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Zignoruj i wróć do streamu",
+          "guaranteed": true,
+          "successText": "Przedstawiciel znika równie szybko, jak się pojawił.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "EventQuality",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
     }
+  ],
+  "sponsors": [
+    {"id": "herbata-spokoj", "version": 1, "name": "Herbata Spokój", "pitch": "Marka herbaty szuka kanału, przy którym nikt nie podnosi głosu.", "kind": "contract", "paymentPln": 250, "paymentPerThousandFollowersPln": 15, "paymentCapPln": 240000, "termWeeks": 12, "dueEveryWeeks": 4, "platforms": [], "prerequisites": {"minFollowers": 1000, "minCredibility": 55, "maxDrama": 30}, "incompatibleWith": ["adult-business"], "breach": {"cashPln": 200, "credibility": -3}, "weight": 3, "tags": ["sponsor"]},
+    {"id": "bank-skarbonka", "version": 1, "name": "Bank Skarbonka", "pitch": "Bank z okrągłym logo chce jednego odcinka o oszczędzaniu na mikrofon.", "kind": "oneOff", "paymentPln": 300, "paymentPerThousandFollowersPln": 10, "paymentCapPln": 180000, "platforms": [], "prerequisites": {"minFollowers": 1000, "minCredibility": 45, "maxDrama": 35}, "incompatibleWith": [], "breach": {"cashPln": 150, "credibility": -2}, "weight": 3, "tags": ["sponsor"]},
+    {"id": "ksiegarnia-strona", "version": 1, "name": "Księgarnia Strona", "pitch": "Księgarnia internetowa szuka kogoś, kto czyta coś więcej niż czat.", "kind": "contract", "paymentPln": 200, "paymentPerThousandFollowersPln": 10, "paymentCapPln": 160000, "termWeeks": 8, "dueEveryWeeks": 4, "platforms": [], "prerequisites": {"minFollowers": 2000, "minCredibility": 50, "maxDrama": 40}, "incompatibleWith": ["adult-business"], "breach": {"cashPln": 150, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "meble-ergo", "version": 1, "name": "Meble Ergo", "pitch": "Producent krzeseł obiecuje, że twój kręgosłup podziękuje w napisach końcowych.", "kind": "oneOff", "paymentPln": 600, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 500000, "platforms": [], "prerequisites": {"minFollowers": 10000, "minCredibility": 60, "maxDrama": 25}, "incompatibleWith": ["adult-business"], "breach": {"cashPln": 300, "credibility": -3}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "turbo-kisiel", "version": 1, "name": "Turbo Kisiel", "pitch": "Kisiel o smaku błyskawicy chce, żeby o nim było głośno. Bardzo głośno.", "kind": "oneOff", "paymentPln": 400, "paymentPerThousandFollowersPln": 25, "paymentCapPln": 400000, "platforms": [], "prerequisites": {"minFollowers": 2000, "minDrama": 50}, "incompatibleWith": [], "breach": {"cashPln": 200, "credibility": -1}, "weight": 3, "tags": ["sponsor"]},
+    {"id": "energol-max", "version": 1, "name": "Energol Max", "pitch": "Napój energetyczny szuka kanału, na którym zawsze coś się pali.", "kind": "contract", "paymentPln": 500, "paymentPerThousandFollowersPln": 30, "paymentCapPln": 600000, "termWeeks": 12, "dueEveryWeeks": 4, "platforms": [], "prerequisites": {"minFollowers": 5000, "minDrama": 60}, "incompatibleWith": [], "breach": {"cashPln": 400, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "apka-plotki", "version": 1, "name": "Apka Plotki", "pitch": "Aplikacja z plotkami płaci za każdy temat, który rozgrzeje komentarze.", "kind": "contract", "paymentPln": 350, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 360000, "termWeeks": 8, "dueEveryWeeks": 2, "platforms": [], "prerequisites": {"minFollowers": 3000, "minDrama": 55}, "incompatibleWith": [], "breach": {"cashPln": 300, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "szachy-pionek", "version": 1, "name": "Klub Pionek", "pitch": "Szachowy klub online szuka ambasadora spokojnych partii.", "kind": "contract", "paymentPln": 250, "paymentPerThousandFollowersPln": 15, "paymentCapPln": 200000, "termWeeks": 12, "dueEveryWeeks": 4, "requiredCategory": "Chess", "platforms": [], "prerequisites": {"minFollowers": 1000, "minCredibility": 50}, "incompatibleWith": ["gambling"], "breach": {"cashPln": 150, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "myszka-celownik", "version": 1, "name": "Myszka Celownik", "pitch": "Producent myszek chce jednego streama, na którym trafiasz wszystko.", "kind": "oneOff", "paymentPln": 350, "paymentPerThousandFollowersPln": 15, "paymentCapPln": 300000, "requiredCategory": "Fps", "platforms": [], "prerequisites": {"minFollowers": 1500}, "incompatibleWith": [], "breach": {"cashPln": 200, "credibility": -1}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "zetonik-wirtualny", "version": 1, "name": "Żetonik", "pitch": "Studio gry promuje nową skórkę żetonu w grze. Wyłącznie kosmetyka, bez żadnych wygranych.", "kind": "oneOff", "paymentPln": 450, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 360000, "requiredCategory": "Gambling", "platforms": [], "prerequisites": {"minFollowers": 2000, "minDrama": 30}, "incompatibleWith": [], "breach": {"cashPln": 250, "credibility": -2}, "weight": 1, "tags": ["sponsor", "gambling"]},
+    {"id": "puls-boost", "version": 1, "name": "Puls Boost", "pitch": "Program partnerski PulsLive nagradza twórców, którzy zostają na platformie.", "kind": "contract", "paymentPln": 400, "paymentPerThousandFollowersPln": 25, "paymentCapPln": 400000, "termWeeks": 8, "dueEveryWeeks": 4, "platforms": ["PulsLive"], "prerequisites": {"minFollowers": 3000}, "incompatibleWith": [], "breach": {"cashPln": 300, "credibility": -3}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "nurt-patron", "version": 1, "name": "Patronat Nurtu", "pitch": "Nurt dopłaca twórcom, którzy budują spokojną i wierną społeczność.", "kind": "contract", "paymentPln": 300, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 300000, "termWeeks": 12, "dueEveryWeeks": 4, "platforms": ["Nurt"], "prerequisites": {"minFollowers": 1500, "minCredibility": 55}, "incompatibleWith": [], "breach": {"cashPln": 200, "credibility": -3}, "weight": 2, "tags": ["sponsor"]}
   ]
 }

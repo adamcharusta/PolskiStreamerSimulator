@@ -95,6 +95,137 @@
       "criticalFailure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "FollowUp", "event": "collab-fallout", "weeks": 1, "amount": 0 } ]
     }
   },
+  "platforms": {
+    "Czatnia": {
+      "reach": 1.0,
+      "subYield": 1.0,
+      "adYield": 1.0,
+      "policyRisk": 1.0
+    },
+    "PulsLive": {
+      "reach": 1.2,
+      "subYield": 0.85,
+      "adYield": 1.1,
+      "policyRisk": 1.3,
+      "categoryReach": {
+        "Fps": 1.1,
+        "Moba": 1.1,
+        "Chess": 0.9
+      }
+    },
+    "Nurt": {
+      "reach": 0.85,
+      "subYield": 1.25,
+      "adYield": 0.7,
+      "policyRisk": 0.8,
+      "categoryReach": {
+        "Chess": 1.2,
+        "JustChatting": 1.1,
+        "Gambling": 0.8
+      }
+    }
+  },
+  "migration": {
+    "energyCost": 6,
+    "minWeeksOnPlatform": 26,
+    "announceWeeks": 4,
+    "announceCredibility": -1,
+    "announcedBonus": 0.1,
+    "banPenalty": 0.1,
+    "retentionBase": 0.4,
+    "credibilityDivisor": 250,
+    "dramaDivisor": 500,
+    "retentionMin": 0.2,
+    "retentionMax": 0.8,
+    "jitter": 0.05
+  },
+  "policy": {
+    "gamblingExposure": 1,
+    "sideBusinessExposure": 1,
+    "highDramaExposure": 1,
+    "highDramaFrom": 70,
+    "chancePerExposure": 0.003,
+    "chanceCap": 0.06,
+    "strikeWeeks": 26,
+    "strikesToBan": 3,
+    "dramaDecay": 0.2
+  },
+  "sponsors": {
+    "offerBase": 0.08,
+    "offerPerMagnitude": 0.02,
+    "offerCap": 0.2,
+    "offerWeeks": 2,
+    "maxContracts": 2,
+    "pitchEnergyCost": 8,
+    "pitch": {
+      "id": "pitch",
+      "label": "Rozpisz ofertę dla sponsorów",
+      "baseChance": 0.15,
+      "modifiers": [
+        {
+          "stat": "Credibility",
+          "perPoint": 0.004,
+          "labelKey": "modifier.credibility"
+        }
+      ],
+      "successText": "Ktoś odpisał. W skrzynce czeka propozycja.",
+      "failureText": "Cisza w skrzynce. Marki mają dziś inne plany.",
+      "outcomes": {
+        "success": [
+          {
+            "kind": "StatDelta",
+            "stat": "Credibility",
+            "amount": 1
+          }
+        ],
+        "failure": []
+      }
+    },
+    "terminationCredibility": -5,
+    "missesToTerminate": 2,
+    "startingLeads": {
+      "IndustryInsider": "bank-skarbonka"
+    }
+  },
+  "wagers": {
+    "stakePln": {
+      "Low": 100,
+      "Medium": 500,
+      "High": 2000
+    },
+    "exposure": {
+      "Low": 1,
+      "Medium": 2,
+      "High": 3
+    },
+    "maxShareOfCash": 0.25,
+    "chance": 0.45,
+    "payoutMultiple": 2,
+    "winAudience": 1.05,
+    "lossAudience": 0.85,
+    "winDrama": 2,
+    "lossDrama": 3
+  },
+  "sideBusiness": {
+    "fromWeek": 52,
+    "minFollowers": 2000,
+    "energyCost": 12,
+    "burnoutGain": 4,
+    "qualityPerWork": 15,
+    "qualityDecay": 3,
+    "incomePerFollower": 0.0005,
+    "incomeScale": 100,
+    "credibilityPerWeek": -0.2
+  },
+  "platformBan": {
+    "title": "Ban na platformie",
+    "text": "Platforma zamyka ci kanał na stałe. Dokąd przenosisz społeczność?",
+    "choices": {
+      "Czatnia": "Przenieś się na Czatnię",
+      "PulsLive": "Przenieś się na PulsLive",
+      "Nurt": "Przenieś się na Nurt"
+    }
+  },
   "profiles": {
     "DormRoomNewcomer": {
       "cashPln": 2000,

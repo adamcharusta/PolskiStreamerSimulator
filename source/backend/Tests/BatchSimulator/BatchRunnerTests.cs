@@ -136,7 +136,7 @@ public sealed class BatchRunnerTests : IDisposable
         var md = output.ToString();
         Assert.StartsWith("# M3 batch simulation report", md, StringComparison.Ordinal);
         Assert.Contains("Ruleset `m3-systems.2`", md, StringComparison.Ordinal);
-        Assert.Contains($"policies: {string.Join(", ", BuiltInPolicies.M3All.Select(p => p.Name))}.", md, StringComparison.Ordinal);
+        Assert.Contains($"policies: {string.Join(", ", BuiltInPolicies.M3BAll.Select(p => p.Name))}.", md, StringComparison.Ordinal);
         Assert.Contains("### By category specialist", md, StringComparison.Ordinal);
         Assert.Contains("| Specialist-Gambling |", md, StringComparison.Ordinal);
         Assert.Contains("### Decisions and virals", md, StringComparison.Ordinal);
@@ -150,7 +150,34 @@ public sealed class BatchRunnerTests : IDisposable
         using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(outputDirectory, "report.json")));
         var deterministic = json.RootElement.GetProperty("deterministic");
         Assert.Equal("m3-systems.2", deterministic.GetProperty("rulesetId").GetString());
-        Assert.Equal(10, deterministic.GetProperty("careers").EnumerateArray().Select(c => c.GetProperty("policy").GetString()).Distinct().Count());
+        Assert.Equal(BuiltInPolicies.M3BAll.Count, deterministic.GetProperty("careers").EnumerateArray().Select(c => c.GetProperty("policy").GetString()).Distinct().Count());
+    }
+
+    [Fact]
+    public void M3b_content_reports_economy_and_risk_with_its_criteria()
+    {
+        var o = BatchOptions.Parse(["--content", TestPaths.ContentM3, "--careers", "28"], BatchRunner.PoliciesFor("m3-systems.2")).Value;
+        var r = BatchRunner.Run(o, BuiltInPolicies.M3BAll);
+        Assert.Equal("m3-systems.2", r.RulesetId);
+        Assert.Equal(BuiltInPolicies.M3BAll.Select(p => p.Name), o.Policies);
+        Assert.All(r.Careers, c => Assert.Equal(0, c.ReconciliationViolations));
+        Assert.All(r.Careers, c => Assert.True(c.SponsorIncome <= c.TotalIncome));
+        Assert.Contains(r.Careers, c => c.Installments > 0);
+        var md = ReportWriter.Markdown(r, o);
+        Assert.Contains("### Economy and risk", md, StringComparison.Ordinal);
+        Assert.Contains("### M3-B criteria", md, StringComparison.Ordinal);
+        foreach (var name in new[] { "No side business needed", "Gambling is not dominant", "Side business is a trade-off", "Bans are rare but real", "Sponsors matter", "Reconciliation" })
+        {
+            Assert.Contains($"| {name}", md, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void M3a_content_has_no_m3b_sections()
+    {
+        var o = BatchOptions.Parse(["--content", TestPaths.Golden("m3-systems.1"), "--careers", "10"], BuiltInPolicies.M3All).Value;
+        var md = ReportWriter.Markdown(BatchRunner.Run(o, BuiltInPolicies.M3All), o);
+        Assert.DoesNotContain("M3-B criteria", md, StringComparison.Ordinal);
     }
 
     [Fact]

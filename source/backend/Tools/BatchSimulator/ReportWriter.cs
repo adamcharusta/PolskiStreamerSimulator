@@ -62,7 +62,13 @@ public static class ReportWriter
         {
             AppendPaths(md, BatchStatistics.Paths(careers));
             AppendPace(md, BatchStatistics.Pace(careers));
-            AppendCriteria(md, BatchStatistics.M3Criteria(careers));
+            AppendCriteria(md, "Criteria", BatchStatistics.M3Criteria(careers));
+        }
+
+        if (IsM3B(r))
+        {
+            AppendEconomy(md, BatchStatistics.Economy(careers));
+            AppendCriteria(md, "M3-B criteria", BatchStatistics.M3BCriteria(careers));
         }
 
         var byScore = careers.OrderByDescending(c => c.Score).ThenBy(c => c.Index).ToArray();
@@ -118,6 +124,8 @@ public static class ReportWriter
                 BySpecialist = IsM3(r) ? BatchStatistics.Paths(r.Careers) : null,
                 DecisionsAndVirals = IsM3(r) ? BatchStatistics.Pace(r.Careers) : null,
                 Criteria = IsM3(r) ? BatchStatistics.M3Criteria(r.Careers) : null,
+                EconomyAndRisk = IsM3B(r) ? BatchStatistics.Economy(r.Careers) : null,
+                M3BCriteria = IsM3B(r) ? BatchStatistics.M3BCriteria(r.Careers) : null,
                 r.Careers,
             },
             performance = new
@@ -150,6 +158,24 @@ public static class ReportWriter
 
     private static bool IsM3(BatchResult r) => M3Ruleset.IsM3(r.RulesetId);
 
+    private static bool IsM3B(BatchResult r) => r.RulesetId == M3Ruleset.SystemsV2;
+
+    private static void AppendEconomy(StringBuilder md, IReadOnlyList<EconomySummary> economy)
+    {
+        md.AppendLine("### Economy and risk");
+        md.AppendLine();
+        md.AppendLine("Medians by the nearest-rank method. Sponsor share is sponsor income over all income; breach rate is sponsor penalties over paid installments plus penalties; banned counts careers that lost at least one platform; ban endings are `GlobalBan` and `AllPlatformsBanned`.");
+        md.AppendLine();
+        md.AppendLine("| Policy | Careers | Insolvency | Median cash PLN | Median score | Sponsor share | Installments | Breach rate | Strikes | Banned | Ban endings | Migrations |");
+        md.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+        foreach (var e in economy)
+        {
+            md.AppendLine(Invariant($"| {e.Group} | {e.Careers:N0} | {BatchStatistics.Percent(e.InsolvencyRate)} | {e.MedianCash:N0} | {e.MedianScore:N0} | {BatchStatistics.Percent(e.SponsorShare)} | {e.Installments:N0} | {BatchStatistics.Percent(e.BreachRate)} | {e.Strikes:N0} | {e.CareersBanned:N0} | {e.BanEndings:N0} | {e.Migrations:N0} |"));
+        }
+
+        md.AppendLine();
+    }
+
     private static void AppendPaths(StringBuilder md, IReadOnlyList<PathSummary> paths)
     {
         md.AppendLine("### By category specialist");
@@ -180,9 +206,9 @@ public static class ReportWriter
         md.AppendLine();
     }
 
-    private static void AppendCriteria(StringBuilder md, IReadOnlyList<Criterion> criteria)
+    private static void AppendCriteria(StringBuilder md, string title, IReadOnlyList<Criterion> criteria)
     {
-        md.AppendLine("### Criteria");
+        md.AppendLine($"### {title}");
         md.AppendLine();
         md.AppendLine("| Criterion | Result | Evidence |");
         md.AppendLine("| --- | --- | --- |");

@@ -1,5 +1,6 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
@@ -147,5 +148,16 @@ public class EndingTests
         var (s1, _) = Play.OneWeek(TestCareers.Dorm(9) with { Followers = 20_000 });
         Assert.Contains("followers-10k", s1.Achievements);
         Assert.Equal(10_000, s1.Metrics.PeakFollowersMilestone);
+    }
+
+    [Theory]
+    [InlineData(EndingReason.GlobalBan)]
+    [InlineData(EndingReason.AllPlatformsBanned)]
+    public void New_endings_keep_their_wealth_points(EndingReason ending)
+    {
+        var completed = ScoreCalculator.Compute(50_000, 20_000, 30, Difficulty.Normal, Fixed.One, EndingReason.Completed, Content.Balance);
+        var banned = ScoreCalculator.Compute(50_000, 20_000, 30, Difficulty.Normal, Fixed.One, ending, Content.Balance);
+        Assert.Equal(completed, banned);
+        Assert.True(banned.WealthPoints > 0);
     }
 }

@@ -1,1 +1,28 @@
 date,author,template_id,category,phase,write_minutes,pronoun_variant_minutes,qa_minutes,revision_minutes,notes
+2026-10-26,agent,policy-copyright-strike,any,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,policy-gambling-promo,Gambling,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,policy-privacy-leak,any,crisis,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,puls-discovery,any,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,nurt-community,any,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,policy-first-strike,any,crisis,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,side-first-catalog,any,milestone,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,side-workload,any,crisis,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,side-leak-rumour,any,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,side-fan-request,any,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,wager-chat-hype,Gambling,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,wager-streak,Gambling,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,wager-mod-limit,Gambling,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,sponsor-agency-call,any,milestone,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,sponsor-brand-rep,any,live,,,,,agent-written M3-B event; not a human authoring measurement
+2026-10-26,agent,sponsor:herbata-spokoj,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:bank-skarbonka,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:ksiegarnia-strona,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:meble-ergo,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:turbo-kisiel,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:energol-max,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:apka-plotki,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:szachy-pionek,Chess,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:myszka-celownik,Fps,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:zetonik-wirtualny,Gambling,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:puls-boost,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
+2026-10-26,agent,sponsor:nurt-patron,any,sponsor,,,,,agent-written M3-B sponsor template; not a human authoring measurement
