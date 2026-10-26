@@ -92,6 +92,15 @@ public class M3ContentTests
         => Assert.All(C.Sponsors, t => Assert.Contains("sponsor", t.Tags));
 
     [Fact]
+    public void Has_the_m3c_achievements()
+    {
+        var defs = C.Balance.Achievements!.Value;
+        Assert.Equal(11, defs.Length);
+        Assert.Equal(Enum.GetValues<AchievementKind>().Order(), defs.Select(d => d.Kind).Distinct().Order());
+        Assert.True(defs.Sum(d => d.Points) > C.Balance.AchievementPointsCap);
+    }
+
+    [Fact]
     public void Insider_lead_fits_the_insider_start()
         => Assert.Single(CareerFactory.Create(C, Background.IndustryInsider, Difficulty.Normal, PronounSet.Woman, 1).Offers!.Value);
 

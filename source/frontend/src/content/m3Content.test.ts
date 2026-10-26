@@ -38,6 +38,7 @@ interface Balance {
   networkCollaborate: Choice;
   sponsors: { pitch: Choice };
   platformBan: { title: string; text: string; choices: Record<string, string> };
+  achievements: { id: string; name: string; description: string }[];
 }
 
 const { events, sponsors } = JSON.parse(raw('events.json')) as {
@@ -69,6 +70,10 @@ const messages: [string, string][] = [
   ...choiceTexts('sponsors.pitch', balance.sponsors.pitch),
   ['platformBan.title', balance.platformBan.title],
   ['platformBan.text', balance.platformBan.text],
+  ...balance.achievements.flatMap((a) => [
+    [`achievement ${a.id}.name`, a.name] as [string, string],
+    [`achievement ${a.id}.description`, a.description] as [string, string],
+  ]),
   ...Object.entries(balance.platformBan.choices).map(
     ([platform, label]) => [`platformBan.${platform}`, label] as [string, string],
   ),

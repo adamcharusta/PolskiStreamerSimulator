@@ -226,6 +226,19 @@
       "Nurt": "Przenieś się na Nurt"
     }
   },
+  "achievements": [
+    {"id": "followers-10k", "name": "Pierwsza dycha", "description": "10 000 obserwujących.", "kind": "followers", "threshold": 10000, "points": 1},
+    {"id": "followers-100k", "name": "Sto tysięcy oczu", "description": "100 000 obserwujących.", "kind": "followers", "threshold": 100000, "points": 1},
+    {"id": "followers-1m", "name": "Milionowa widownia", "description": "1 000 000 obserwujących.", "kind": "followers", "threshold": 1000000, "points": 2},
+    {"id": "cash-1m", "name": "Pierwszy milion", "description": "1 000 000 zł na koncie.", "kind": "cash", "threshold": 1000000, "points": 1},
+    {"id": "cash-10m", "name": "Dziesięć baniek", "description": "10 000 000 zł na koncie.", "kind": "cash", "threshold": 10000000, "points": 1},
+    {"id": "career-completed", "name": "Dwadzieścia lat na wizji", "description": "{gender, select, female {Dotrwałaś do ostatniego tygodnia kariery.} male {Dotrwałeś do ostatniego tygodnia kariery.} other {Dotrwałoś do ostatniego tygodnia kariery.}}", "kind": "completed", "points": 2},
+    {"id": "skill-master", "name": "Mistrzostwo", "description": "Umiejętność 90 w dowolnej kategorii.", "kind": "mastery", "threshold": 90, "points": 1},
+    {"id": "one-category", "name": "Wierność jednej grze", "description": "520 tygodni streamów w jednej kategorii.", "kind": "specialist", "threshold": 520, "points": 1},
+    {"id": "new-home", "name": "Nowy dom", "description": "Przeprowadzka na inną platformę.", "kind": "platformMove", "points": 2},
+    {"id": "trusted-partner", "name": "Zaufany partner", "description": "24 opłacone zlecenia sponsorów.", "kind": "sponsorInstallments", "threshold": 24, "points": 2},
+    {"id": "scandal-survivor", "name": "Przetrwanie burzy", "description": "{gender, select, female {Ukończyłaś karierę po dramie na poziomie 90.} male {Ukończyłeś karierę po dramie na poziomie 90.} other {Ukończyłoś karierę po dramie na poziomie 90.}}", "kind": "dramaSurvived", "threshold": 90, "points": 2}
+  ],
   "profiles": {
     "DormRoomNewcomer": {
       "cashPln": 2000,
