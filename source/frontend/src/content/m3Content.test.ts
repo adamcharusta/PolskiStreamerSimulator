@@ -29,9 +29,27 @@ const raw = (name: string): string => {
 
   return entry[1];
 };
-const events = (JSON.parse(raw('events.json')) as { events: ContentEvent[] }).events;
-const network = (JSON.parse(raw('balance.json')) as { networkCollaborate: Choice })
-  .networkCollaborate;
+interface Sponsor {
+  id: string;
+  name: string;
+  pitch: string;
+}
+interface Balance {
+  networkCollaborate: Choice;
+  sponsors: { pitch: Choice };
+  platformBan: { title: string; text: string; choices: Record<string, string> };
+}
+
+const { events, sponsors } = JSON.parse(raw('events.json')) as {
+  events: ContentEvent[];
+  sponsors: Sponsor[];
+};
+const balance = JSON.parse(raw('balance.json')) as Balance;
+const network = balance.networkCollaborate;
+const choiceTexts = (owner: string, c: Choice): [string, string][] =>
+  [c.label, c.successText, c.failureText]
+    .filter((m): m is string => m !== undefined)
+    .map((m) => [owner, m]);
 
 const messages: [string, string][] = [
   ...events.flatMap((e) => [
@@ -43,9 +61,17 @@ const messages: [string, string][] = [
         .map((m) => [`${e.id}.choice`, m] as [string, string]),
     ),
   ]),
-  ...[network.label, network.successText, network.failureText]
-    .filter((m): m is string => m !== undefined)
-    .map((m) => ['network', m] as [string, string]),
+  ...choiceTexts('network', network),
+  ...sponsors.flatMap((s) => [
+    [`sponsor ${s.id}.name`, s.name] as [string, string],
+    [`sponsor ${s.id}.pitch`, s.pitch] as [string, string],
+  ]),
+  ...choiceTexts('sponsors.pitch', balance.sponsors.pitch),
+  ['platformBan.title', balance.platformBan.title],
+  ['platformBan.text', balance.platformBan.text],
+  ...Object.entries(balance.platformBan.choices).map(
+    ([platform, label]) => [`platformBan.${platform}`, label] as [string, string],
+  ),
 ];
 
 describe('content/m3 messages', () => {

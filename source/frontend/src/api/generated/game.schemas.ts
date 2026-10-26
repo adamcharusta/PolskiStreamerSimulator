@@ -134,16 +134,57 @@ export const EquipmentSlot = {
   connection: 'connection',
 } as const;
 
+export type WagerTier = typeof WagerTier[keyof typeof WagerTier];
+
+
+export const WagerTier = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type Platform = typeof Platform[keyof typeof Platform];
+
+
+export const Platform = {
+  czatnia: 'czatnia',
+  pulsLive: 'pulsLive',
+  nurt: 'nurt',
+} as const;
+
 export interface PlanView {
   mainAction: MainAction;
   category: Category;
   trainTarget: null | Category;
   upgradeSlot: null | EquipmentSlot;
+  wager: null | WagerTier;
+  targetPlatform: null | Platform;
 }
 
 export interface ModifierView {
   labelKey: string;
   value: number;
+}
+
+export interface PlatformProfileView {
+  reach: number;
+  subYield: number;
+  adYield: number;
+  policyRisk: number;
+}
+
+/**
+ * A platform move: the retention and follower range, whether this use executes it, and the target platform's factors.
+ */
+export interface MigrationEstimateView {
+  from: Platform;
+  to: Platform;
+  executes: boolean;
+  retentionMin: number;
+  retentionMax: number;
+  followersMin: number;
+  followersMax: number;
+  target: PlatformProfileView;
 }
 
 /**
@@ -162,16 +203,50 @@ export interface ChoiceView {
   viralOnCritical: number;
   /** @nullable */
   unavailableReason: string | null;
+  migration: null | MigrationEstimateView;
+}
+
+export interface WagerTermsView {
+  tier: WagerTier;
+  stakePln: number;
+  chance: number;
+  payoutPln: number;
+  lossPln: number;
 }
 
 /**
- * A plan with the reason it is disabled and, for a rolled action (networking), the odds of its roll.
+ * The week's policy exposure, the strike chance and the 1–100 threshold of the strike roll.
+ */
+export interface PolicyExposureView {
+  exposure: number;
+  chance: number;
+  threshold: number;
+}
+
+/**
+ * A missed installment or breach the plan would cause: missedInstallment or breach, the penalty, the credibility change and whether the deal ends.
+ */
+export interface SponsorConsequenceView {
+  contractId: string;
+  templateId: string;
+  kind: string;
+  penaltyPln: number;
+  credibility: number;
+  terminates: boolean;
+}
+
+/**
+ * A plan with the reason it is disabled, the odds of a rolled action and what it risks: wager terms, policy exposure, a platform move and sponsor consequences.
  */
 export interface PlanOptionView {
   plan: PlanView;
   /** @nullable */
   disabledReason: string | null;
   odds: null | ChoiceView;
+  wager: null | WagerTermsView;
+  policy: null | PolicyExposureView;
+  migration: null | MigrationEstimateView;
+  sponsorConsequences: SponsorConsequenceView[];
 }
 
 /**
@@ -239,7 +314,43 @@ export interface ViralView {
 }
 
 /**
- * A settled week with the rolls of the decisions answered before it, the roll of a rolled action (networking) and its viral clip.
+ * The week's policy exposure and strike roll (no roll without exposure), and whether it banned the platform.
+ */
+export interface StrikeRollView {
+  platform: Platform;
+  exposure: number;
+  threshold: number;
+  /** @nullable */
+  roll: number | null;
+  strike: boolean;
+  banned: boolean;
+}
+
+/**
+ * The week's wager: the stake, the 1–100 roll against the win threshold and the net cash.
+ */
+export interface WagerResultView {
+  tier: WagerTier;
+  stakePln: number;
+  roll: number;
+  threshold: number;
+  won: boolean;
+  netPln: number;
+}
+
+/**
+ * A completed platform move with the retention and the followers before and after.
+ */
+export interface MigrationView {
+  from: Platform;
+  to: Platform;
+  retention: number;
+  followersBefore: number;
+  followersAfter: number;
+}
+
+/**
+ * A settled week with the decision rolls, the action roll, its viral clip, the strike roll, the wager and a platform move.
  */
 export interface WeekReportView {
   week: number;
@@ -257,6 +368,92 @@ export interface WeekReportView {
   decisionRolls: RollView[];
   actionRoll: null | RollView;
   viral: null | ViralView;
+  strike: null | StrikeRollView;
+  wager: null | WagerResultView;
+  migration: null | MigrationView;
+}
+
+/**
+ * An active policy strike on a platform and the last settled week in which it still counts.
+ */
+export interface StrikeView {
+  platform: Platform;
+  givenWeek: number;
+  expiresAfterWeek: number;
+}
+
+/**
+ * M3-B: a one-off sponsor deal or a multi-week contract.
+ */
+export type SponsorKind = typeof SponsorKind[keyof typeof SponsorKind];
+
+
+export const SponsorKind = {
+  oneOff: 'oneOff',
+  contract: 'contract',
+} as const;
+
+export interface SponsorPrerequisitesView {
+  minFollowers: number;
+  /** @nullable */
+  minCredibility: number | null;
+  /** @nullable */
+  maxDrama: number | null;
+  /** @nullable */
+  minDrama: number | null;
+}
+
+/**
+ * A sponsor offer with every term shown before acceptance and why it cannot be accepted now, if so.
+ */
+export interface OfferView {
+  offerId: string;
+  templateId: string;
+  name: string;
+  pitch: string;
+  kind: SponsorKind;
+  paymentPln: number;
+  /** @nullable */
+  termWeeks: number | null;
+  /** @nullable */
+  dueEveryWeeks: number | null;
+  requiredCategory: null | Category;
+  platforms: Platform[];
+  prerequisites: SponsorPrerequisitesView;
+  incompatibleWith: string[];
+  breachCashPln: number;
+  breachCredibility: number;
+  expiresAfterWeek: number;
+  /** @nullable */
+  acceptBlockedReason: string | null;
+}
+
+/**
+ * An accepted sponsor deal: its next due week, the term end, the misses so far and whether it is due this week.
+ */
+export interface ContractView {
+  contractId: string;
+  templateId: string;
+  name: string;
+  kind: SponsorKind;
+  paymentPln: number;
+  requiredCategory: null | Category;
+  platforms: Platform[];
+  nextDueWeek: number;
+  termEndWeek: number;
+  missed: number;
+  breachCashPln: number;
+  breachCredibility: number;
+  dueThisWeek: boolean;
+}
+
+/**
+ * The text-only side business: when it opened, its quality and the income it pays at the next settlement.
+ */
+export interface SideBusinessView {
+  openedWeek: number;
+  quality: number;
+  weeklyIncomePln: number;
 }
 
 /**
@@ -277,6 +474,13 @@ export interface CareerView {
   stats: CareerStatsView;
   next: NextStepView;
   lastReport: null | WeekReportView;
+  platform: Platform;
+  platformSinceWeek: number;
+  strikes: StrikeView[];
+  bannedPlatforms: Platform[];
+  offers: OfferView[];
+  contracts: ContractView[];
+  sideBusiness: null | SideBusinessView;
 }
 
 export interface ActionOutcome {
@@ -293,6 +497,7 @@ export const ActionType = {
   resolveEvent: 'resolveEvent',
   settleWeek: 'settleWeek',
   resolveDecision: 'resolveDecision',
+  respondOffer: 'respondOffer',
 } as const;
 
 /**
@@ -308,6 +513,12 @@ export interface ActionRequest {
   upgradeSlot?: null | EquipmentSlot;
   /** @nullable */
   choiceId?: string | null;
+  wager?: null | WagerTier;
+  targetPlatform?: null | Platform;
+  /** @nullable */
+  offerId?: string | null;
+  /** @nullable */
+  accept?: boolean | null;
 }
 
 export type ReasonViewArgs = {[key: string]: string};
@@ -324,12 +535,23 @@ export interface AutoChoiceView {
   roll: RollView;
 }
 
+/**
+ * A sponsor offer the batch answered before planning the week, with the policy's reason.
+ */
+export interface AutoOfferView {
+  offerId: string;
+  templateId: string;
+  accepted: boolean;
+  reason: ReasonView;
+}
+
 export interface AutoWeekView {
   week: number;
   plan: PlanView;
   planReason: ReasonView;
   choices: AutoChoiceView[];
   report: WeekReportView;
+  offers: AutoOfferView[];
 }
 
 export interface BackgroundOptionView {

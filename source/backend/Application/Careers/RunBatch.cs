@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
 
@@ -22,7 +23,10 @@ public sealed record ReasonView(string Code, IReadOnlyDictionary<string, string>
 
 public sealed record AutoChoiceView(string EventId, string ChoiceId, ReasonView Reason, RollView Roll);
 
-public sealed record AutoWeekView(int Week, PlanView Plan, ReasonView PlanReason, IReadOnlyList<AutoChoiceView> Choices, WeekReportView Report);
+public sealed record AutoWeekView(int Week, PlanView Plan, ReasonView PlanReason, IReadOnlyList<AutoChoiceView> Choices, WeekReportView Report, IReadOnlyList<AutoOfferView> Offers);
+
+/// <summary>A sponsor offer the batch answered before planning the week, with the policy's reason.</summary>
+public sealed record AutoOfferView(string OfferId, string TemplateId, bool Accepted, ReasonView Reason);
 
 public sealed record BatchSummaryView(int WeeksCommitted, long FollowersNet, long CashDelta, long IncomePln, long CostsPln, CareerStatsView Start, CareerStatsView End);
 
@@ -195,8 +199,17 @@ public sealed class RunBatchHandler(
         }
     }
 
+    /// <summary>Answers every open offer with the policy first (inside the week's log entry), then plans, plays and settles the week.</summary>
     private (CareerState State, AutoWeekView Week) PlayWeek(CareerState s, ContentSnapshot c)
     {
+        var offers = new List<AutoOfferView>();
+        foreach (var offer in s.Offers ?? [])
+        {
+            var decision = Policy.ChooseOffer(s, c, offer, SponsorRules.AcceptRejection(s, c, offer));
+            s = Expect(engine.RespondOffer(s, c, offer.OfferId, decision.Accept, s.StateVersion));
+            offers.Add(new AutoOfferView(offer.OfferId, offer.TemplateId, decision.Accept, Reason(decision.Reason)));
+        }
+
         var plan = Policy.ChoosePlan(s, c, Expect(engine.LegalPlans(s, c)));
         s = Expect(engine.StartWeek(s, c, plan.Plan, s.StateVersion));
         var choices = new List<AutoChoiceView>();
@@ -210,7 +223,7 @@ public sealed class RunBatchHandler(
 
         var settled = Expect(engine.SettleWeek(s, c, s.StateVersion));
         var report = ReportViews.Report(settled.Report);
-        return (settled.State, new AutoWeekView(report.Week, ReportViews.Plan(plan.Plan), Reason(plan.Reason), choices, report));
+        return (settled.State, new AutoWeekView(report.Week, ReportViews.Plan(plan.Plan), Reason(plan.Reason), choices, report, offers));
     }
 
     private BatchOutcome Outcome(StoredCareer current, ContentSnapshot c, List<AutoWeekRecord> records, BatchStopReason stop, WeekReportView? lastReport)

@@ -15,6 +15,7 @@ import {
   type NextStepView,
   type PlanOptionView,
   type PlanView,
+  Platform,
   PronounSet,
   type RollView,
   type WeekReportView,
@@ -114,6 +115,25 @@ export function stats(overrides: Partial<CareerStatsView> = {}): CareerStatsView
  * only with its odds (an M3 career); an M1 career's plans leave it out. The M3-B actions (pitch, side business,
  * migration) are left out, as for a career whose content has no M3-B sections.
  */
+/** A plan option without risks: no wager terms, policy exposure, platform move or sponsor consequence. */
+export function planOption(
+  plan: PlanView,
+  disabledReason: string | null = null,
+  odds: ChoiceView | null = null,
+  overrides: Partial<PlanOptionView> = {},
+): PlanOptionView {
+  return {
+    plan,
+    disabledReason,
+    odds,
+    wager: null,
+    policy: null,
+    migration: null,
+    sponsorConsequences: [],
+    ...overrides,
+  };
+}
+
 export function planNext(
   disabled: (plan: PlanView) => string | null = () => null,
   network: ChoiceView | null = null,
@@ -133,9 +153,16 @@ export function planNext(
       const slots =
         mainAction === MainAction.improveProduction ? Object.values(EquipmentSlot) : [null];
       for (const upgradeSlot of slots) {
-        const plan: PlanView = { mainAction, category, trainTarget: null, upgradeSlot };
+        const plan: PlanView = {
+          mainAction,
+          category,
+          trainTarget: null,
+          upgradeSlot,
+          wager: null,
+          targetPlatform: null,
+        };
         const odds = mainAction === MainAction.networkCollaborate ? network : null;
-        plans.push({ plan, disabledReason: disabled(plan), odds });
+        plans.push(planOption(plan, disabled(plan), odds));
       }
     }
   }
@@ -165,6 +192,7 @@ export function eventNext(): NextStepView {
           allowsCritical: true,
           viralOnCritical: 0,
           unavailableReason: null,
+          migration: null,
         },
         {
           choiceId: 'ignore',
@@ -177,6 +205,7 @@ export function eventNext(): NextStepView {
           allowsCritical: false,
           viralOnCritical: 0,
           unavailableReason: null,
+          migration: null,
         },
       ],
     },
@@ -199,6 +228,7 @@ export function networkOdds(overrides: Partial<ChoiceView> = {}): ChoiceView {
     allowsCritical: true,
     viralOnCritical: 0,
     unavailableReason: null,
+    migration: null,
     ...overrides,
   };
 }
@@ -226,6 +256,7 @@ export function decisionNext(): NextStepView {
           allowsCritical: true,
           viralOnCritical: 0.05,
           unavailableReason: 'needs-cash',
+          migration: null,
         },
         {
           choiceId: 'sign',
@@ -239,6 +270,7 @@ export function decisionNext(): NextStepView {
           allowsCritical: true,
           viralOnCritical: 0.05,
           unavailableReason: null,
+          migration: null,
         },
         {
           choiceId: 'refuse',
@@ -251,6 +283,7 @@ export function decisionNext(): NextStepView {
           allowsCritical: false,
           viralOnCritical: 0,
           unavailableReason: null,
+          migration: null,
         },
       ],
     },
@@ -285,6 +318,8 @@ export function weekReport(week = 1, overrides: Partial<WeekReportView> = {}): W
       category: Category.fps,
       trainTarget: null,
       upgradeSlot: null,
+      wager: null,
+      targetPlatform: null,
     },
     rolls: [roll()],
     liveViewers: 115,
@@ -306,6 +341,9 @@ export function weekReport(week = 1, overrides: Partial<WeekReportView> = {}): W
     decisionRolls: [],
     actionRoll: null,
     viral: null,
+    strike: null,
+    wager: null,
+    migration: null,
     ...overrides,
   };
 }
@@ -326,6 +364,13 @@ export function careerView(overrides: Partial<CareerView> = {}): CareerView {
     stats: stats(),
     next: planNext(),
     lastReport: null,
+    platform: Platform.czatnia,
+    platformSinceWeek: 1,
+    strikes: [],
+    bannedPlatforms: [],
+    offers: [],
+    contracts: [],
+    sideBusiness: null,
     ...overrides,
   };
 }
@@ -348,6 +393,8 @@ export function batchOutcome(
       category: Category.fps,
       trainTarget: null,
       upgradeSlot: null,
+      wager: null,
+      targetPlatform: null,
     },
     planReason: {
       code: 'rest-low-energy',
@@ -365,6 +412,7 @@ export function batchOutcome(
       },
     ],
     report: weekReport(index + 2),
+    offers: [],
   }));
   return {
     weeksCommitted: weeks,

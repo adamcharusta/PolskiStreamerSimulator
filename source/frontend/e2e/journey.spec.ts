@@ -130,3 +130,54 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expect(desk).toHaveText(before);
   await expect(page.getByRole('heading', { name: step ?? '' })).toBeVisible();
 });
+
+test('an Industry Insider accepts the lead sponsor offer and plays the deal week', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Sponsor E2E');
+  await page.getByRole('radio', { name: pl.background.industryInsider }).check();
+  await page.getByRole('button', { name: pl.create.submit }).click();
+
+  const offers = page.getByRole('region', { name: pl.offer.title });
+  await expect(offers).toBeVisible();
+  await expectAccessible(page, 'sponsor offers');
+  await offers.getByRole('button', { name: pl.offer.accept }).click();
+  await expect(offers.getByRole('list', { name: pl.offer.contracts })).toBeVisible();
+  await expect(offers.getByText(pl.offer.dueNow)).toBeVisible();
+
+  await page.getByRole('radio', { name: pl.action.noAction }).check();
+  await page.getByRole('button', { name: pl.plan.start }).click();
+  const choose = page.getByRole('button', { name: pl.event.choose });
+  const settle = page.getByRole('button', { name: pl.settle.action });
+  for (;;) {
+    await expect(choose.or(settle)).toBeVisible();
+    if (await settle.isVisible()) {
+      break;
+    }
+
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await choose.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+  }
+
+  await settle.click();
+  await expect(
+    page.getByRole('heading', { name: fill(pl.report.title, { week: 1 }) }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByText(pl.report.line.income.sponsor, { exact: false })
+      .or(page.getByText(pl.report.line.cost['sponsor-penalty'], { exact: false }))
+      .first(),
+  ).toBeVisible();
+  await page.getByRole('button', { name: pl.report.next }).click();
+  await expect(
+    page
+      .getByRole('heading', { name: pl.plan.title })
+      .or(page.getByRole('button', { name: pl.event.choose })),
+  ).toBeVisible();
+});

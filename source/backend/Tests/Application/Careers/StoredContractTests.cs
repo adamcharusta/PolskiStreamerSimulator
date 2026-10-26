@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using PolskiStreamerSimulator.Application.Careers;
+using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Application.Careers;
@@ -68,6 +70,46 @@ public sealed class StoredContractTests
         var current = ContractJson.Serialize(StoredContract.ReadOutcome(Golden("action-outcome-event.json")));
 
         Assert.Equal(current, ContractJson.Serialize(StoredContract.ReadOutcome(current)));
+    }
+
+    [Fact]
+    public void An_m3a_response_reads_with_the_m3b_defaults()
+    {
+        var m3a = JsonNode.Parse(ContractJson.Serialize(StoredContract.ReadOutcome(Golden("action-outcome.json"))))!.AsObject();
+        var career = m3a["career"]!.AsObject();
+        foreach (var name in new[] { "platform", "platformSinceWeek", "strikes", "bannedPlatforms", "offers", "contracts", "sideBusiness" })
+        {
+            career.Remove(name);
+        }
+
+        foreach (var option in career["next"]!["plans"]!.AsArray().Select(n => n!.AsObject()))
+        {
+            option.Remove("wager");
+            option.Remove("policy");
+            option.Remove("migration");
+            option.Remove("sponsorConsequences");
+            option["plan"]!.AsObject().Remove("wager");
+            option["plan"]!.AsObject().Remove("targetPlatform");
+        }
+
+        var read = StoredContract.ReadOutcome(m3a.ToJsonString()).Career;
+
+        Assert.Equal((Platform.Czatnia, 1, (SideBusinessView?)null), (read.Platform, read.PlatformSinceWeek, read.SideBusiness));
+        Assert.Empty(read.Strikes);
+        Assert.Empty(read.Offers);
+        Assert.Empty(read.Contracts);
+        Assert.Empty(read.BannedPlatforms);
+        Assert.All(read.Next.Plans, p => Assert.Equal((null, null, null, null, null), (p.Wager, p.Policy, p.Migration, p.Plan.Wager, p.Plan.TargetPlatform)));
+        Assert.All(read.Next.Plans, p => Assert.Empty(p.SponsorConsequences));
+    }
+
+    [Fact]
+    public void A_request_with_the_m3b_fields_omits_them_when_null()
+    {
+        var json = ContractJson.Serialize(new ActionInput(3, ActionType.StartWeek, MainAction.Rest, Category.Fps, null, null, null));
+        Assert.DoesNotContain("wager", json, StringComparison.Ordinal);
+        Assert.DoesNotContain("offerId", json, StringComparison.Ordinal);
+        Assert.Contains("\"offerId\":\"x:1\"", ContractJson.Serialize(new ActionInput(3, ActionType.RespondOffer, null, null, null, null, null, OfferId: "x:1", Accept: true)), StringComparison.Ordinal);
     }
 
     /// <summary>Every value of <paramref name="stored"/> is in <paramref name="read"/>, under its renamed name where it was renamed.</summary>

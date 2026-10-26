@@ -7,7 +7,9 @@ namespace PolskiStreamerSimulator.Application.Careers;
 /// <summary>
 /// Reads stored responses and reports into today's contract records (TD-91). Rows written before M3 (contract v1)
 /// are upgraded first: <c>textPl</c> and <c>labelPl</c> become <c>text</c> and <c>label</c>, and each field added
-/// since gets the value it has for an M1 career, the only ruleset of contract v1. Current rows pass unchanged.
+/// since gets the value it has for an M1 career, the only ruleset of contract v1. Rows written before M3-B get the M3-A
+/// defaults of the M3-B fields (Czatnia since week 1, no strikes, offers, deals or side business, no wager, platform
+/// move, policy exposure or sponsor consequence). Current rows pass unchanged.
 /// </summary>
 public static class StoredContract
 {
@@ -15,7 +17,19 @@ public static class StoredContract
 
     public static WeekReportView ReadReport(string json) => Read<WeekReportView>(json, UpgradeReport);
 
-    public static AutoWeekRecord ReadAutoWeek(string json) => Read<AutoWeekRecord>(json, record => UpgradeReport(record["week"]?["report"] as JsonObject));
+    public static AutoWeekRecord ReadAutoWeek(string json) => Read<AutoWeekRecord>(json, UpgradeAutoWeek);
+
+    private static void UpgradeAutoWeek(JsonObject record)
+    {
+        if (record["week"] is not JsonObject week)
+        {
+            return;
+        }
+
+        Default(week, "offers", new JsonArray());
+        UpgradePlan(week["plan"] as JsonObject);
+        UpgradeReport(week["report"] as JsonObject);
+    }
 
     private static T Read<T>(string json, Action<JsonObject> upgrade)
     {
@@ -38,15 +52,31 @@ public static class StoredContract
         }
 
         Default(career, "rulesetId", M1Ruleset.RulesetId);
+        Default(career, "platform", "czatnia");
+        Default(career, "platformSinceWeek", 1);
+        Default(career, "strikes", new JsonArray());
+        Default(career, "bannedPlatforms", new JsonArray());
+        Default(career, "offers", new JsonArray());
+        Default(career, "contracts", new JsonArray());
+        Default(career, "sideBusiness", null);
         UpgradeReport(career["lastReport"] as JsonObject);
         if (career["next"] is not JsonObject next)
         {
             return;
         }
 
-        foreach (var plan in Objects(next["plans"]))
+        foreach (var option in Objects(next["plans"]))
         {
-            Default(plan, "odds", null);
+            Default(option, "odds", null);
+            Default(option, "wager", null);
+            Default(option, "policy", null);
+            Default(option, "migration", null);
+            Default(option, "sponsorConsequences", new JsonArray());
+            UpgradePlan(option["plan"] as JsonObject);
+            if (option["odds"] is JsonObject odds)
+            {
+                UpgradeChoice(odds);
+            }
         }
 
         if (next["event"] is JsonObject shown)
@@ -63,9 +93,26 @@ public static class StoredContract
         foreach (var choice in Objects(shown["choices"]))
         {
             Rename(choice, "labelPl", "label");
-            Default(choice, "viralOnCritical", 0);
-            Default(choice, "unavailableReason", null);
+            UpgradeChoice(choice);
         }
+    }
+
+    private static void UpgradeChoice(JsonObject choice)
+    {
+        Default(choice, "viralOnCritical", 0);
+        Default(choice, "unavailableReason", null);
+        Default(choice, "migration", null);
+    }
+
+    private static void UpgradePlan(JsonObject? plan)
+    {
+        if (plan is null)
+        {
+            return;
+        }
+
+        Default(plan, "wager", null);
+        Default(plan, "targetPlatform", null);
     }
 
     private static void UpgradeReport(JsonObject? report)
@@ -78,6 +125,10 @@ public static class StoredContract
         Default(report, "decisionRolls", new JsonArray());
         Default(report, "actionRoll", null);
         Default(report, "viral", null);
+        Default(report, "strike", null);
+        Default(report, "wager", null);
+        Default(report, "migration", null);
+        UpgradePlan(report["plan"] as JsonObject);
     }
 
     private static IEnumerable<JsonObject> Objects(JsonNode? array)

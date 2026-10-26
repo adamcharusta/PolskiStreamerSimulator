@@ -468,6 +468,38 @@
               "null",
               "string"
             ]
+          },
+          "wager": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WagerTier"
+              }
+            ]
+          },
+          "targetPlatform": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Platform"
+              }
+            ]
+          },
+          "offerId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "accept": {
+            "type": [
+              "null",
+              "boolean"
+            ]
           }
         },
         "description": "Only the fields of the chosen ActionType ActionRequest.Type are needed; the others may be omitted."
@@ -477,7 +509,8 @@
           "startWeek",
           "resolveEvent",
           "settleWeek",
-          "resolveDecision"
+          "resolveDecision",
+          "respondOffer"
         ],
         "type": "string"
       },
@@ -504,13 +537,38 @@
           }
         }
       },
+      "AutoOfferView": {
+        "required": [
+          "offerId",
+          "templateId",
+          "accepted",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "offerId": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "accepted": {
+            "type": "boolean"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/ReasonView"
+          }
+        },
+        "description": "A sponsor offer the batch answered before planning the week, with the policy's reason."
+      },
       "AutoWeekView": {
         "required": [
           "week",
           "plan",
           "planReason",
           "choices",
-          "report"
+          "report",
+          "offers"
         ],
         "type": "object",
         "properties": {
@@ -532,6 +590,12 @@
           },
           "report": {
             "$ref": "#/components/schemas/WeekReportView"
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutoOfferView"
+            }
           }
         }
       },
@@ -800,7 +864,14 @@
           "lastSettledWeek",
           "stats",
           "next",
-          "lastReport"
+          "lastReport",
+          "platform",
+          "platformSinceWeek",
+          "strikes",
+          "bannedPlatforms",
+          "offers",
+          "contracts",
+          "sideBusiness"
         ],
         "type": "object",
         "properties": {
@@ -863,6 +934,47 @@
                 "$ref": "#/components/schemas/WeekReportView"
               }
             ]
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "platformSinceWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "strikes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StrikeView"
+            }
+          },
+          "bannedPlatforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Platform"
+            }
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfferView"
+            }
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractView"
+            }
+          },
+          "sideBusiness": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SideBusinessView"
+              }
+            ]
           }
         },
         "description": "A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step."
@@ -920,7 +1032,8 @@
           "modifiers",
           "allowsCritical",
           "viralOnCritical",
-          "unavailableReason"
+          "unavailableReason",
+          "migration"
         ],
         "type": "object",
         "properties": {
@@ -965,9 +1078,95 @@
               "null",
               "string"
             ]
+          },
+          "migration": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MigrationEstimateView"
+              }
+            ]
           }
         },
         "description": "A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so."
+      },
+      "ContractView": {
+        "required": [
+          "contractId",
+          "templateId",
+          "name",
+          "kind",
+          "paymentPln",
+          "requiredCategory",
+          "platforms",
+          "nextDueWeek",
+          "termEndWeek",
+          "missed",
+          "breachCashPln",
+          "breachCredibility",
+          "dueThisWeek"
+        ],
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SponsorKind"
+          },
+          "paymentPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requiredCategory": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Category"
+              }
+            ]
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Platform"
+            }
+          },
+          "nextDueWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "termEndWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breachCashPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "breachCredibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "dueThisWeek": {
+            "type": "boolean"
+          }
+        },
+        "description": "An accepted sponsor deal: its next due week, the term end, the misses so far and whether it is due this week."
       },
       "CreateCareerRequest": {
         "required": [
@@ -1138,6 +1337,81 @@
         "type": "string",
         "description": "Between-stream main actions, one per week; networking is M3 only, the last three need M3-B balance sections."
       },
+      "MigrationEstimateView": {
+        "required": [
+          "from",
+          "to",
+          "executes",
+          "retentionMin",
+          "retentionMax",
+          "followersMin",
+          "followersMax",
+          "target"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "to": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "executes": {
+            "type": "boolean"
+          },
+          "retentionMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "retentionMax": {
+            "type": "number",
+            "format": "double"
+          },
+          "followersMin": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followersMax": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "target": {
+            "$ref": "#/components/schemas/PlatformProfileView"
+          }
+        },
+        "description": "A platform move: the retention and follower range, whether this use executes it, and the target platform's factors."
+      },
+      "MigrationView": {
+        "required": [
+          "from",
+          "to",
+          "retention",
+          "followersBefore",
+          "followersAfter"
+        ],
+        "type": "object",
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "to": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "retention": {
+            "type": "number",
+            "format": "double"
+          },
+          "followersBefore": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followersAfter": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "A completed platform move with the retention and the followers before and after."
+      },
       "ModifierView": {
         "required": [
           "labelKey",
@@ -1195,11 +1469,115 @@
         },
         "description": "IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent and NextStepKind.ResolveDecision."
       },
+      "OfferView": {
+        "required": [
+          "offerId",
+          "templateId",
+          "name",
+          "pitch",
+          "kind",
+          "paymentPln",
+          "termWeeks",
+          "dueEveryWeeks",
+          "requiredCategory",
+          "platforms",
+          "prerequisites",
+          "incompatibleWith",
+          "breachCashPln",
+          "breachCredibility",
+          "expiresAfterWeek",
+          "acceptBlockedReason"
+        ],
+        "type": "object",
+        "properties": {
+          "offerId": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pitch": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SponsorKind"
+          },
+          "paymentPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "termWeeks": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dueEveryWeeks": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "requiredCategory": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Category"
+              }
+            ]
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Platform"
+            }
+          },
+          "prerequisites": {
+            "$ref": "#/components/schemas/SponsorPrerequisitesView"
+          },
+          "incompatibleWith": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "breachCashPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "breachCredibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "expiresAfterWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "acceptBlockedReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "A sponsor offer with every term shown before acceptance and why it cannot be accepted now, if so."
+      },
       "PlanOptionView": {
         "required": [
           "plan",
           "disabledReason",
-          "odds"
+          "odds",
+          "wager",
+          "policy",
+          "migration",
+          "sponsorConsequences"
         ],
         "type": "object",
         "properties": {
@@ -1221,16 +1599,54 @@
                 "$ref": "#/components/schemas/ChoiceView"
               }
             ]
+          },
+          "wager": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WagerTermsView"
+              }
+            ]
+          },
+          "policy": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PolicyExposureView"
+              }
+            ]
+          },
+          "migration": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MigrationEstimateView"
+              }
+            ]
+          },
+          "sponsorConsequences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SponsorConsequenceView"
+            }
           }
         },
-        "description": "A plan with the reason it is disabled and, for a rolled action (networking), the odds of its roll."
+        "description": "A plan with the reason it is disabled, the odds of a rolled action and what it risks: wager terms, policy exposure, a platform move and sponsor consequences."
       },
       "PlanView": {
         "required": [
           "mainAction",
           "category",
           "trainTarget",
-          "upgradeSlot"
+          "upgradeSlot",
+          "wager",
+          "targetPlatform"
         ],
         "type": "object",
         "properties": {
@@ -1259,8 +1675,86 @@
                 "$ref": "#/components/schemas/EquipmentSlot"
               }
             ]
+          },
+          "wager": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WagerTier"
+              }
+            ]
+          },
+          "targetPlatform": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Platform"
+              }
+            ]
           }
         }
+      },
+      "Platform": {
+        "enum": [
+          "czatnia",
+          "pulsLive",
+          "nurt"
+        ],
+        "type": "string"
+      },
+      "PlatformProfileView": {
+        "required": [
+          "reach",
+          "subYield",
+          "adYield",
+          "policyRisk"
+        ],
+        "type": "object",
+        "properties": {
+          "reach": {
+            "type": "number",
+            "format": "double"
+          },
+          "subYield": {
+            "type": "number",
+            "format": "double"
+          },
+          "adYield": {
+            "type": "number",
+            "format": "double"
+          },
+          "policyRisk": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PolicyExposureView": {
+        "required": [
+          "exposure",
+          "chance",
+          "threshold"
+        ],
+        "type": "object",
+        "properties": {
+          "exposure": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chance": {
+            "type": "number",
+            "format": "double"
+          },
+          "threshold": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The week's policy exposure, the strike chance and the 1–100 threshold of the strike roll."
       },
       "ProblemDetails": {
         "required": [
@@ -1425,6 +1919,167 @@
           }
         }
       },
+      "SideBusinessView": {
+        "required": [
+          "openedWeek",
+          "quality",
+          "weeklyIncomePln"
+        ],
+        "type": "object",
+        "properties": {
+          "openedWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "quality": {
+            "type": "number",
+            "format": "double"
+          },
+          "weeklyIncomePln": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "The text-only side business: when it opened, its quality and the income it pays at the next settlement."
+      },
+      "SponsorConsequenceView": {
+        "required": [
+          "contractId",
+          "templateId",
+          "kind",
+          "penaltyPln",
+          "credibility",
+          "terminates"
+        ],
+        "type": "object",
+        "properties": {
+          "contractId": {
+            "type": "string"
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "penaltyPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "credibility": {
+            "type": "number",
+            "format": "double"
+          },
+          "terminates": {
+            "type": "boolean"
+          }
+        },
+        "description": "A missed installment or breach the plan would cause: missedInstallment or breach, the penalty, the credibility change and whether the deal ends."
+      },
+      "SponsorKind": {
+        "enum": [
+          "oneOff",
+          "contract"
+        ],
+        "type": "string",
+        "description": "M3-B: a one-off sponsor deal or a multi-week contract."
+      },
+      "SponsorPrerequisitesView": {
+        "required": [
+          "minFollowers",
+          "minCredibility",
+          "maxDrama",
+          "minDrama"
+        ],
+        "type": "object",
+        "properties": {
+          "minFollowers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "minCredibility": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "maxDrama": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "minDrama": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "StrikeRollView": {
+        "required": [
+          "platform",
+          "exposure",
+          "threshold",
+          "roll",
+          "strike",
+          "banned"
+        ],
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "exposure": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "threshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "roll": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "strike": {
+            "type": "boolean"
+          },
+          "banned": {
+            "type": "boolean"
+          }
+        },
+        "description": "The week's policy exposure and strike roll (no roll without exposure), and whether it banned the platform."
+      },
+      "StrikeView": {
+        "required": [
+          "platform",
+          "givenWeek",
+          "expiresAfterWeek"
+        ],
+        "type": "object",
+        "properties": {
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "givenWeek": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiresAfterWeek": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "An active policy strike on a platform and the last settled week in which it still counts."
+      },
       "ViralView": {
         "required": [
           "roll",
@@ -1453,6 +2108,81 @@
         },
         "description": "A viral clip: the 1–100 roll against the threshold, the viewer multiplier and the follower bonus."
       },
+      "WagerResultView": {
+        "required": [
+          "tier",
+          "stakePln",
+          "roll",
+          "threshold",
+          "won",
+          "netPln"
+        ],
+        "type": "object",
+        "properties": {
+          "tier": {
+            "$ref": "#/components/schemas/WagerTier"
+          },
+          "stakePln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "roll": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "threshold": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "won": {
+            "type": "boolean"
+          },
+          "netPln": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "The week's wager: the stake, the 1–100 roll against the win threshold and the net cash."
+      },
+      "WagerTermsView": {
+        "required": [
+          "tier",
+          "stakePln",
+          "chance",
+          "payoutPln",
+          "lossPln"
+        ],
+        "type": "object",
+        "properties": {
+          "tier": {
+            "$ref": "#/components/schemas/WagerTier"
+          },
+          "stakePln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chance": {
+            "type": "number",
+            "format": "double"
+          },
+          "payoutPln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lossPln": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "WagerTier": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "type": "string"
+      },
       "WeekReportView": {
         "required": [
           "week",
@@ -1469,7 +2199,10 @@
           "ending",
           "decisionRolls",
           "actionRoll",
-          "viral"
+          "viral",
+          "strike",
+          "wager",
+          "migration"
         ],
         "type": "object",
         "properties": {
@@ -1559,9 +2292,39 @@
                 "$ref": "#/components/schemas/ViralView"
               }
             ]
+          },
+          "strike": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StrikeRollView"
+              }
+            ]
+          },
+          "wager": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WagerResultView"
+              }
+            ]
+          },
+          "migration": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/MigrationView"
+              }
+            ]
           }
         },
-        "description": "A settled week with the rolls of the decisions answered before it, the roll of a rolled action (networking) and its viral clip."
+        "description": "A settled week with the decision rolls, the action roll, its viral clip, the strike roll, the wager and a platform move."
       }
     },
     "securitySchemes": {
