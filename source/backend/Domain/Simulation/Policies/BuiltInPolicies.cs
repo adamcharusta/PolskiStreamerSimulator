@@ -124,6 +124,7 @@ public static class BuiltInPolicies
         private const Platform MigrationTarget = Platform.PulsLive;
         private const string RestOnly = "rest-only";
         private const string Declined = "offer-declined";
+        private const string EveryWeeksArg = "everyWeeks";
 
         public string Name => name;
 
@@ -281,7 +282,7 @@ public static class BuiltInPolicies
                 && c.Balance.NetworkCollaborate is not null
                 && s.Week.Value % NetworkEveryWeeks == 0
                 && s.Energy >= Fixed.FromInt(NetworkFromEnergy)
-                    ? new(new WeekPlan(MainAction.NetworkCollaborate, category), "network-scheduled", [("everyWeeks", NetworkEveryWeeks.ToString(CultureInfo.InvariantCulture))])
+                    ? new(new WeekPlan(MainAction.NetworkCollaborate, category), "network-scheduled", [(EveryWeeksArg, NetworkEveryWeeks.ToString(CultureInfo.InvariantCulture))])
                     : null;
 
         /// <summary>Upgrades the lowest-tier slot that is not maxed once cash exceeds <see cref="UpgradeReserveMultiple"/> times its price.</summary>
@@ -309,9 +310,9 @@ public static class BuiltInPolicies
             Preference? candidate = style switch
             {
                 PlanStyle.SideHustle when s.Week.Value % SideBusinessEveryWeeks == SideBusinessWeekOffset
-                    => new(new WeekPlan(MainAction.SideBusinessWork, category), "side-business-scheduled", [("everyWeeks", SideBusinessEveryWeeks.ToString(CultureInfo.InvariantCulture))]),
+                    => new(new WeekPlan(MainAction.SideBusinessWork, category), "side-business-scheduled", [(EveryWeeksArg, SideBusinessEveryWeeks.ToString(CultureInfo.InvariantCulture))]),
                 PlanStyle.SponsorHunt when s.Week.Value % PitchEveryWeeks == PitchWeekOffset
-                    => new(new WeekPlan(MainAction.PitchFulfillSponsor, category), "pitch-scheduled", [("everyWeeks", PitchEveryWeeks.ToString(CultureInfo.InvariantCulture))]),
+                    => new(new WeekPlan(MainAction.PitchFulfillSponsor, category), "pitch-scheduled", [(EveryWeeksArg, PitchEveryWeeks.ToString(CultureInfo.InvariantCulture))]),
                 PlanStyle.Migrate when Economy.Current(s) != MigrationTarget
                     => new(new WeekPlan(MainAction.PlanPlatformMigration, category, TargetPlatform: MigrationTarget), "migration-scheduled", [("platform", PolicyReason.Name(MigrationTarget))]),
                 _ => null,
@@ -323,7 +324,7 @@ public static class BuiltInPolicies
         {
             if (s.Week.Value % TrainEveryWeeks == 0)
             {
-                return new(new WeekPlan(MainAction.TrainCategory, category), "train-scheduled", [("everyWeeks", TrainEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
+                return new(new WeekPlan(MainAction.TrainCategory, category), "train-scheduled", [(EveryWeeksArg, TrainEveryWeeks.ToString(CultureInfo.InvariantCulture))]);
             }
 
             return s.Drama > DramaLimit

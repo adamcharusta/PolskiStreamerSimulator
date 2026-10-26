@@ -29,7 +29,7 @@ public static class CareerRunner
         while (violations.Count == 0 && s.Status == CareerStatus.Active)
         {
             var week = $"week {s.Week.Value}";
-            if (!AnswerDecisions(engine, c, policy, week, violations, ref s) || !AnswerOffers(engine, c, policy, week, violations, ref s))
+            if (!BetweenWeeks(engine, c, policy, week, violations, ref s))
             {
                 break;
             }
@@ -106,6 +106,10 @@ public static class CareerRunner
         violations.Add($"{week} present decision: {presentation.Error.Code} ({presentation.Error.Detail})");
         return false;
     }
+
+    /// <summary>The steps between weeks: the queued decisions, then the open offers.</summary>
+    private static bool BetweenWeeks(WeekEngine engine, ContentSnapshot c, IChoicePolicy policy, string week, List<string> violations, ref CareerState s)
+        => AnswerDecisions(engine, c, policy, week, violations, ref s) && AnswerOffers(engine, c, policy, week, violations, ref s);
 
     /// <summary>Answers every open sponsor offer, in list order, with the policy's decision before the week is planned (M3-B).</summary>
     private static bool AnswerOffers(WeekEngine engine, ContentSnapshot c, IChoicePolicy policy, string week, List<string> violations, ref CareerState s)
