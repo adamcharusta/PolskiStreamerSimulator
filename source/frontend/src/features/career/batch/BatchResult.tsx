@@ -88,6 +88,13 @@ export function BatchResult({
                   category: t(`category.${week.plan.category}`),
                 })}
               </p>
+              {week.offers.length > 0 && (
+                <ul aria-label={t('batch.offers')}>
+                  {week.offers.map((offer) => (
+                    <li key={offer.offerId}>{reasonText(t, offer.reason)}</li>
+                  ))}
+                </ul>
+              )}
               <p className="muted">{reasonText(t, week.planReason)}</p>
               {week.choices.length > 0 && (
                 <ul>

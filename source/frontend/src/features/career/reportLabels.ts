@@ -1,15 +1,18 @@
 import type { TFunction } from 'i18next';
 
 import type { ReportLineView, RollView } from '@/api/generated/game.schemas';
-import { signed, stat } from '@/format';
+import { percent, signed, stat } from '@/format';
 import i18n from '@/i18n';
 
 /** The follower change from events, a percentage of the followers rather than a stat (M3). */
 const FOLLOWERS_EVENT = 'followers:event';
 
+/** The share of followers that followed a platform move (M3-B); the exact count is in the report's migration. */
+const FOLLOWERS_MIGRATION = 'followers:migration';
+
 const camel = (pascal: string): string => pascal.slice(0, 1).toLowerCase() + pascal.slice(1);
 
-/** `income:subscriptions` → "Suby"; an unknown code shows as itself rather than disappearing. */
+/** `income:subscriptions` → "Suby", `cost:sponsor-penalty` → "Kara od sponsora"; an unknown code shows as itself rather than disappearing. */
 export function lineLabel(t: TFunction, code: string): string {
   const key = `report.line.${code.replace(':', '.')}`;
   return i18n.exists(key) ? t(key) : code;
@@ -53,6 +56,10 @@ export function statChangeText(t: TFunction, line: ReportLineView): string {
   const delta = signed(line.delta ?? 0, stat);
   if (line.code === FOLLOWERS_EVENT) {
     return t('report.followersEvent', { value: delta });
+  }
+
+  if (line.code === FOLLOWERS_MIGRATION) {
+    return t('report.followersMigration', { value: percent(line.delta ?? 0) });
   }
 
   const cause = causeLabel(t, line.detail);

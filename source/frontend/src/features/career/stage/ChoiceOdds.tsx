@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import type { ChoiceView } from '@/api/generated/game.schemas';
 import { percent, signed, stat } from '@/format';
 
-/** The chance of a rolled choice with its modifiers, critical outcome and viral chance, shown before the player commits. */
+import { MigrationEstimate } from './PlanRisks';
+
+/** The chance of a rolled choice with its modifiers, critical outcome, viral chance and the platform move it makes, shown before the player commits. */
 export function ChoiceOdds({ choice }: { readonly choice: ChoiceView }) {
   const { t } = useTranslation();
   return (
@@ -25,6 +27,7 @@ export function ChoiceOdds({ choice }: { readonly choice: ChoiceView }) {
         </span>
       )}
       {choice.allowsCritical && <span className="muted">{t('event.critical')}</span>}
+      {choice.migration !== null && <MigrationEstimate estimate={choice.migration} />}
       {choice.viralOnCritical > 0 && (
         <span className="muted">
           {t('event.viralHint', { value: stat(choice.viralOnCritical * 100) })}

@@ -78,8 +78,15 @@
     "chessClubRegular": "Bywalec klubu szachowego",
     "industryInsider": "Człowiek z branży"
   },
-  "difficulty": { "easy": "Łatwy", "normal": "Normalny" },
-  "pronouns": { "woman": "ona/jej", "man": "on/jego", "nonbinary": "forma neutralna" },
+  "difficulty": {
+    "easy": "Łatwy",
+    "normal": "Normalny"
+  },
+  "pronouns": {
+    "woman": "ona/jej",
+    "man": "on/jego",
+    "nonbinary": "forma neutralna"
+  },
   "category": {
     "justChatting": "Just Chatting",
     "fps": "FPS",
@@ -93,7 +100,10 @@
     "improveProduction": "Ulepszenie sprzętu",
     "manageCommunity": "Ogarnianie społeczności",
     "noAction": "Zwykły stream",
-    "networkCollaborate": "Networking i kolaboracje"
+    "networkCollaborate": "Networking i kolaboracje",
+    "pitchFulfillSponsor": "Sponsorzy: oferta lub zlecenie",
+    "sideBusinessWork": "Biznes poboczny",
+    "planPlatformMigration": "Przeprowadzka na inną platformę"
   },
   "slot": {
     "microphone": "Mikrofon",
@@ -141,7 +151,9 @@
     "ending": {
       "completed": "Kariera ukończona — dwadzieścia lat streamowania za tobą.",
       "insolvency": "Bankructwo — kasa skończyła się na dobre.",
-      "earlyRetirement": "Wcześniejsza emerytura."
+      "earlyRetirement": "Wcześniejsza emerytura.",
+      "globalBan": "Globalny ban — kariera zakończona",
+      "allPlatformsBanned": "Bany na wszystkich platformach — kariera zakończona"
     },
     "errors": {
       "stale-version": "Kariera zmieniła się w innej karcie. Pokazuję aktualny stan.",
@@ -177,7 +189,16 @@
     "decision-pending": "Najpierw podejmij decyzję",
     "rest-only": "Ten tydzień to odpoczynek",
     "not-enough-energy": "Za mało energii",
-    "unknown": "Niedostępne"
+    "unknown": "Niedostępne",
+    "needs-cash": "Za mało kasy na tę stawkę",
+    "too-early": "Jeszcze za wcześnie w karierze",
+    "needs-followers": "Za mało obserwujących",
+    "too-soon": "Za krótko na obecnej platformie",
+    "platform-banned": "Ta platforma cię zbanowała",
+    "no-sponsor-fits": "Żaden sponsor teraz nie pasuje",
+    "wager-category": "Zakład tylko na streamie hazardowym",
+    "missing-target": "Wybierz platformę",
+    "same-platform": "Już tu streamujesz"
   },
   "choice": {
     "needs-cash": "Brakuje pieniędzy",
@@ -259,13 +280,18 @@
         "subscriptions": "Suby",
         "donations": "Donejty",
         "ads": "Reklamy",
-        "event": "Zdarzenie"
+        "event": "Zdarzenie",
+        "sponsor": "Sponsor",
+        "wager": "Zakład (wygrana)",
+        "side-business": "Biznes poboczny"
       },
       "cost": {
         "living": "Życie",
         "equipment-upkeep": "Utrzymanie sprzętu",
         "equipment": "Zakup sprzętu",
-        "event": "Zdarzenie"
+        "event": "Zdarzenie",
+        "sponsor-penalty": "Kara od sponsora",
+        "wager": "Zakład (stawka)"
       }
     },
     "cause": {
@@ -273,8 +299,20 @@
       "stream": "stream",
       "practice": "praktyka",
       "network": "networking",
-      "event": "wydarzenie"
-    }
+      "event": "wydarzenie",
+      "sponsor": "sponsor",
+      "wager": "zakład",
+      "side-business": "biznes poboczny",
+      "migration": "przeprowadzka",
+      "decay": "drama przygasa"
+    },
+    "strike": "Kontrola regulaminu: rzut {{roll}}, próg {{threshold}} — {{result}}",
+    "strikeHit": "ostrzeżenie",
+    "strikeMiss": "bez ostrzeżenia",
+    "banned": "Platforma {{platform}} zbanowała kanał na stałe.",
+    "migration": "Przeprowadzka {{from}} → {{to}}: {{before}} → {{after}} obserwujących ({{retention}}).",
+    "followersMigration": "Obserwujący po przeprowadzce: {{value}}",
+    "pitchRoll": "Oferta dla sponsorów"
   },
   "batch": {
     "launch": "Auto: 13 tygodni",
@@ -298,7 +336,8 @@
     "week": "Tydzień {{week}}",
     "plan": "{{action}} · {{category}}",
     "choice": "{{event}}: {{choice}}",
-    "next": "Dalej"
+    "next": "Dalej",
+    "offers": "Oferty sponsorów"
   },
   "reason": {
     "forced-rest": "Brak energii albo pełne wypalenie — tylko odpoczynek.",
@@ -321,7 +360,90 @@
       "bonus": "mocna strona",
       "least-bored": "najmniej nudna",
       "rotation": "rotacja",
-      "fixed": "stała specjalizacja"
+      "fixed": "stała specjalizacja",
+      "sponsor-safe": "bez hazardu przy umowie sponsora"
+    },
+    "sponsor-due": "Zlecenie sponsora {{templateId}} w tym tygodniu.",
+    "offer-accepted": "Oferta {{templateId}} pasuje — przyjęta.",
+    "offer-declined": "Oferta {{templateId}} odrzucona: {{reason}}.",
+    "ban-move": "Ban — przeprowadzka na {{platform}} (zostaje do {{retention}}).",
+    "wager-scheduled": "Zakład {{tier}} przy streamie hazardowym.",
+    "side-business-scheduled": "Co {{everyWeeks}} tygodnie biznes poboczny.",
+    "pitch-scheduled": "Co {{everyWeeks}} tygodnie oferta dla sponsorów.",
+    "migration-scheduled": "Przeprowadzka na {{platform}}."
+  },
+  "platform": {
+    "czatnia": "Czatnia",
+    "pulsLive": "PulsLive",
+    "nurt": "Nurt",
+    "title": "Platforma",
+    "current": "Streamujesz na: {{platform}}",
+    "since": "Od tygodnia {{week}}",
+    "strikes": "Ostrzeżenia",
+    "strike": "{{platform}}: ostrzeżenie do tygodnia {{week}}",
+    "noStrikes": "Brak aktywnych ostrzeżeń",
+    "banned": "Zbanowane platformy",
+    "target": "Dokąd się przenosisz",
+    "factors": "Zasięg ×{{reach}}, suby ×{{subYield}}, reklamy ×{{adYield}}, ryzyko regulaminu ×{{policyRisk}}"
+  },
+  "wager": {
+    "title": "Zakład w wirtualnych złotówkach",
+    "none": "Bez zakładu",
+    "low": "Niski",
+    "medium": "Średni",
+    "high": "Wysoki",
+    "terms": "Stawka {{stake}}, szansa {{chance}}, wygrana {{payout}}, przegrana {{loss}}",
+    "virtual": "Tylko wirtualne złotówki z gry — żadnych prawdziwych pieniędzy, wpłat ani wypłat.",
+    "won": "Zakład wygrany: {{net}} (rzut {{roll}} ≤ {{threshold}})",
+    "lost": "Zakład przegrany: {{net}} (rzut {{roll}}, próg {{threshold}})"
+  },
+  "offer": {
+    "title": "Sponsorzy",
+    "offers": "Oferty",
+    "contracts": "Umowy",
+    "accept": "Przyjmij",
+    "decline": "Odrzuć",
+    "kind": {
+      "oneOff": "Jednorazowa akcja",
+      "contract": "Umowa"
+    },
+    "payment": "Płatność: {{amount}}",
+    "term": "Na {{weeks}} tyg., zlecenie co {{every}} tyg.",
+    "category": "Wymagana kategoria: {{category}}",
+    "platforms": "Tylko na: {{platforms}}",
+    "prerequisites": "Warunki: {{list}}",
+    "minFollowers": "min. {{value}} obserwujących",
+    "minCredibility": "wiarygodność od {{value}}",
+    "maxDrama": "drama do {{value}}",
+    "minDrama": "drama od {{value}}",
+    "incompatible": "Kłóci się z: {{list}}",
+    "incompatibility": {
+      "gambling": "hazard na streamie",
+      "adult-business": "biznes poboczny 18+"
+    },
+    "breach": "Za złamanie umowy: {{cash}} i wiarygodność {{credibility}}",
+    "expires": "Oferta ważna do tygodnia {{week}}",
+    "nextDue": "Najbliższe zlecenie: tydzień {{week}}",
+    "dueNow": "w tym tygodniu",
+    "missed": "Opuszczone zlecenia: {{count}}",
+    "blocked": {
+      "contract-limit": "Masz już dwie umowy",
+      "same-sponsor": "Masz już umowę z tą marką",
+      "prerequisite-followers": "Za mało obserwujących",
+      "prerequisite-credibility": "Za niska wiarygodność",
+      "prerequisite-drama": "Drama poza wymaganym zakresem",
+      "prerequisite-platform": "Ta marka nie współpracuje z twoją platformą",
+      "prerequisite-adult-business": "Marka nie współpracuje z biznesem pobocznym 18+",
+      "unknown": "Nie można teraz przyjąć"
     }
+  },
+  "risk": {
+    "title": "Ryzyko tego planu",
+    "policy": "Ryzyko ostrzeżenia od platformy: {{chance}} (ekspozycja {{exposure}})",
+    "announce": "Pierwszy krok: ogłosisz przeprowadzkę na {{platform}} — przeniesiesz się przy następnym użyciu w ciągu 4 tygodni.",
+    "move": "Przeprowadzka na {{platform}}: zostanie {{min}}–{{max}} obserwujących ({{retentionMin}}–{{retentionMax}}).",
+    "missedInstallment": "{{templateId}}: opuszczone zlecenie — kara {{penalty}}, wiarygodność {{credibility}}",
+    "breach": "{{templateId}}: złamanie umowy — kara {{penalty}}, wiarygodność {{credibility}}",
+    "terminates": "umowa się skończy"
   }
 }
