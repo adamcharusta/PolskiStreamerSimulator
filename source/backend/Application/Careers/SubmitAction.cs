@@ -19,6 +19,9 @@ public enum ActionType
 
     /// <summary>Accepts or declines the sponsor offer <see cref="ActionInput.OfferId"/> between weeks (M3-B).</summary>
     RespondOffer,
+
+    /// <summary>Ends the career between weeks with early retirement (M3-C).</summary>
+    Retire,
 }
 
 /// <summary>
@@ -158,6 +161,9 @@ public sealed class SubmitActionHandler(
             case ActionType.SettleWeek:
                 return Map(engine.SettleWeek(s, c, input.ExpectedVersion), settled => (settled.State, null, ReportViews.Report(settled.Report)));
 
+            case ActionType.Retire:
+                return Map(engine.Retire(s, c, input.ExpectedVersion), next => (next, null, null));
+
             case ActionType.RespondOffer:
                 if (string.IsNullOrEmpty(input.OfferId) || input.Accept is not { } accept)
                 {
@@ -196,6 +202,7 @@ public sealed class SubmitActionHandler(
         ActionType.ResolveEvent => ActionKind.ResolveEvent,
         ActionType.ResolveDecision => ActionKind.ResolveDecision,
         ActionType.RespondOffer => ActionKind.RespondOffer,
+        ActionType.Retire => ActionKind.Retire,
         _ => ActionKind.SettleWeek,
     };
 }

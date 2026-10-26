@@ -17,6 +17,7 @@ public enum ActionKind
     AutoWeek,
     ResolveDecision,
     RespondOffer,
+    Retire,
 }
 
 /// <summary>A log entry to append; the store assigns its sequence.</summary>

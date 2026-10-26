@@ -59,6 +59,9 @@ public static class Achievements
         };
     }
 
+    /// <summary>The M1 achievement IDs in order: the follower milestones, then completion.</summary>
+    public static IReadOnlyList<string> M1Ids { get; } = [.. FollowerMilestones.Select(m => m.Id), CareerCompleted];
+
     public static int Points(ImmutableHashSet<string> achievements)
         => FollowerMilestones.Where(m => achievements.Contains(m.Id)).Sum(m => m.Points)
             + (achievements.Contains(CareerCompleted) ? CareerCompletedPoints : 0);

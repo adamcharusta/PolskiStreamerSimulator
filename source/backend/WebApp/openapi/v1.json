@@ -371,6 +371,41 @@
   },
   "components": {
     "schemas": {
+      "AchievementView": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "points",
+          "earned"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "points": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "earned": {
+            "type": "boolean"
+          }
+        },
+        "description": "An achievement of the career's content with its Polish ICU name and description, its points and whether it is earned (earned first)."
+      },
       "ActionOutcome": {
         "required": [
           "career",
@@ -510,7 +545,8 @@
           "resolveEvent",
           "settleWeek",
           "resolveDecision",
-          "respondOffer"
+          "respondOffer",
+          "retire"
         ],
         "type": "string"
       },
@@ -881,7 +917,10 @@
           "bannedPlatforms",
           "offers",
           "contracts",
-          "sideBusiness"
+          "sideBusiness",
+          "achievements",
+          "score",
+          "summary"
         ],
         "type": "object",
         "properties": {
@@ -983,6 +1022,32 @@
               },
               {
                 "$ref": "#/components/schemas/SideBusinessView"
+              }
+            ]
+          },
+          "achievements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AchievementView"
+            }
+          },
+          "score": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ScoreView"
+              }
+            ]
+          },
+          "summary": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EndingSummaryView"
               }
             ]
           }
@@ -1263,6 +1328,54 @@
           "allPlatformsBanned"
         ],
         "type": "string"
+      },
+      "EndingSummaryView": {
+        "required": [
+          "reason",
+          "weeksPlayed",
+          "dominantCategory",
+          "reputation",
+          "platform",
+          "bannedPlatforms",
+          "peakFollowersMilestone",
+          "achievements"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "$ref": "#/components/schemas/EndingReason"
+          },
+          "weeksPlayed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dominantCategory": {
+            "$ref": "#/components/schemas/Category"
+          },
+          "reputation": {
+            "$ref": "#/components/schemas/Reputation"
+          },
+          "platform": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "bannedPlatforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Platform"
+            }
+          },
+          "peakFollowersMilestone": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "achievements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "What the ending narrative is built from: reason, weeks, dominant category, reputation, platforms, peak follower milestone and earned achievements."
       },
       "EquipmentSlot": {
         "enum": [
@@ -1889,6 +2002,15 @@
           }
         }
       },
+      "Reputation": {
+        "enum": [
+          "trusted",
+          "controversial",
+          "steady"
+        ],
+        "type": "string",
+        "description": "How the audience remembers the streamer at the end of a career."
+      },
       "RiskAppetite": {
         "enum": [
           "safe",
@@ -1946,6 +2068,64 @@
             "$ref": "#/components/schemas/RollOutcome"
           }
         }
+      },
+      "ScoreView": {
+        "required": [
+          "followers",
+          "wealth",
+          "achievements",
+          "followersPoints",
+          "wealthPoints",
+          "achievementPoints",
+          "baseScore",
+          "difficultyMultiplier",
+          "backgroundMultiplier",
+          "finalScore"
+        ],
+        "type": "object",
+        "properties": {
+          "followers": {
+            "type": "number",
+            "format": "double"
+          },
+          "wealth": {
+            "type": "number",
+            "format": "double"
+          },
+          "achievements": {
+            "type": "number",
+            "format": "double"
+          },
+          "followersPoints": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "wealthPoints": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "achievementPoints": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "baseScore": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "difficultyMultiplier": {
+            "type": "number",
+            "format": "double"
+          },
+          "backgroundMultiplier": {
+            "type": "number",
+            "format": "double"
+          },
+          "finalScore": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "The final score: the normalised components, their points, the base score, both multipliers and the total."
       },
       "SideBusinessView": {
         "required": [

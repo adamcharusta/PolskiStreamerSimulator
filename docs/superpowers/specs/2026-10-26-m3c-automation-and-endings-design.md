@@ -105,6 +105,7 @@ Proposed `content/m3` set (11 achievements, 16 points before tuning; the tuned s
 1. Event-response priorities are deferred (§3); risk appetite covers the gamble-or-safe choice. Cost: one gameplay §8 field missing until M5.
 2. Strategies are remembered in the browser per career and recorded in each batch request, not stored as server objects. Cost: a strategy does not follow the player to another browser.
 3. Ranked eligibility moves to #27 (leaderboard), because no career is ranked before M4. Cost: #23's scope text changes.
+5. The career API had no way to retire early, so `EarlyRetirement` was unreachable from the browser; the action list gains `retire` (log kind `Retire`), answered between weeks like the domain rule (refused while a decision is queued or a week runs). Cost: one more command to protect in the ranked log (M4).
 4. Achievements are content data, so the new set changes only careers whose content snapshot has the section; no new ruleset ID is needed (the snapshot is pinned per career).
 
 ## 11. Delivery

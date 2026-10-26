@@ -2,6 +2,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets.M3B;
+using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
 
@@ -35,7 +36,41 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             s.BannedPlatforms is { } banned ? [.. banned] : [],
             [.. (s.Offers ?? []).Select(o => Offer(s, c, o))],
             [.. (s.Contracts ?? []).Select(d => Contract(s, c, d))],
-            SideBusiness(s, c.Balance));
+            SideBusiness(s, c.Balance),
+            AchievementViews(s, c.Balance),
+            s.FinalScore is { } score ? Score(score) : null,
+            EndingSummary.Of(s, c) is { } summary ? Summary(summary) : null);
+
+    /// <summary>The content's achievements (or the M1 set), earned first, each in definition order.</summary>
+    private static AchievementView[] AchievementViews(CareerState s, BalanceConstants b)
+    {
+        IEnumerable<AchievementView> all = b.Achievements is { } defs
+            ? defs.Select(d => new AchievementView(d.Id, d.Name, d.Description, d.Points, s.Achievements.Contains(d.Id)))
+            : Achievements.M1Ids.Select(id => new AchievementView(id, null, null, Achievements.Points([id]), s.Achievements.Contains(id)));
+        return [.. all.OrderByDescending(a => a.Earned)];
+    }
+
+    private static ScoreView Score(ScoreBreakdown s) => new(
+        Decimals.Of(s.F),
+        Decimals.Of(s.W),
+        Decimals.Of(s.A),
+        s.FollowersPoints,
+        s.WealthPoints,
+        s.AchievementPoints,
+        s.BaseScore,
+        Decimals.Of(s.DifficultyMultiplier),
+        Decimals.Of(s.BackgroundMultiplier),
+        s.FinalScore);
+
+    private static EndingSummaryView Summary(EndingSummary s) => new(
+        s.Reason,
+        s.WeeksPlayed,
+        s.DominantCategory,
+        s.Reputation,
+        s.Platform,
+        [.. s.BannedPlatforms],
+        s.PeakFollowersMilestone,
+        [.. s.Achievements.Select(a => a.Id)]);
 
     /// <summary>Strikes that still count after the last settled week, with the last settled week in which each counts.</summary>
     private static StrikeView[] Strikes(CareerState s, ContentSnapshot c)
