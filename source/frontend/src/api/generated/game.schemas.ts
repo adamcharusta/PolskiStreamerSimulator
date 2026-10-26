@@ -296,6 +296,9 @@ export const RollOutcome = {
   guaranteed: 'guaranteed',
 } as const;
 
+/**
+ * A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them.
+ */
 export interface RollView {
   eventId: string;
   choiceId: string;
@@ -304,6 +307,12 @@ export interface RollView {
   threshold: number;
   modifiers: ModifierView[];
   outcome: RollOutcome;
+  /** @nullable */
+  eventTitle?: string | null;
+  /** @nullable */
+  choiceLabel?: string | null;
+  /** @nullable */
+  outcomeText?: string | null;
 }
 
 export interface ReportLineView {
@@ -729,6 +738,26 @@ export interface CreatedCareer {
   careerId: string;
   secret: string;
   career: CareerView;
+}
+
+/**
+ * One settled week in the history list: its plan, audience and cash, whether a batch played it, and its incident tags.
+ */
+export interface WeekSummaryView {
+  week: number;
+  plan: PlanView;
+  liveViewers: number;
+  followersNet: number;
+  cashDelta: number;
+  automatic: boolean;
+  tags: string[];
+}
+
+/**
+ * Every settled week of a career, in week order (M3-D).
+ */
+export interface HistoryView {
+  weeks: WeekSummaryView[];
 }
 
 /**

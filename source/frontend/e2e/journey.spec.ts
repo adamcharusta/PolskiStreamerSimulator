@@ -217,9 +217,25 @@ test('a 4-week batch under a custom strategy, then early retirement shows the sc
     await page.getByRole('button', { name: pl.roll.next }).click();
   }
 
+  await page.getByRole('link', { name: pl.dashboard.history }).click();
+  await expect(page.getByRole('heading', { name: pl.history.title, level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole('article', { name: fill(pl.history.year, { year: 1 }) }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: pl.history.show }).first().click();
+  await expect(
+    page.getByRole('heading', { name: fill(pl.report.title, { week: 1 }) }),
+  ).toBeVisible();
+  await expectAccessible(page, 'history');
+  await page.getByRole('link', { name: pl.history.back }).click();
+
   await page.getByRole('button', { name: pl.retire.action }).click();
   await page.getByRole('button', { name: pl.retire.confirm }).click();
   await expect(page.getByRole('table', { name: pl.ending.score.title })).toBeVisible();
   await expect(page.getByText(pl.career.ending.earlyRetirement)).toBeVisible();
   await expectAccessible(page, 'ending');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: pl.diploma.download }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe('dyplom-Strategia E2E.pdf');
 });

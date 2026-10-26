@@ -55,7 +55,16 @@ describe('weekly report', () => {
       <WeekReport
         report={weekReport(4, {
           decisionRolls: [
-            roll({ eventId: 'sponsor-offer', choiceId: 'sign', roll: 12, threshold: 50 }),
+            roll({
+              eventId: 'sponsor-offer',
+              choiceId: 'sign',
+              roll: 12,
+              threshold: 50,
+              eventTitle: 'Oferta sponsora',
+              choiceLabel: 'Podpisz',
+              outcomeText:
+                '{gender, select, female {Podpisałaś} male {Podpisałeś} other {Podpisałoś}}.',
+            }),
             roll({ eventId: 'sponsor-offer', choiceId: 'refuse', roll: null, threshold: 100 }),
           ],
           actionRoll: roll({
@@ -70,11 +79,11 @@ describe('weekly report', () => {
     );
 
     expect(items('Decyzje przed tygodniem')).toEqual([
-      'Sukces — Rzut 12 przy progu 50',
-      'Sukces — Pewny wybór — bez rzutu',
+      'Oferta sponsora: Podpisz — Sukces — Rzut 12 przy progu 50 Podpisałoś.',
+      'sponsor-offer: refuse — Sukces — Pewny wybór — bez rzutu',
     ]);
-    expect(screen.getByText('Networking').nextElementSibling).toHaveTextContent(
-      'Porażka — Rzut 77 przy progu 41',
+    expect(screen.getByText('Networking', { selector: 'dt' }).nextElementSibling).toHaveTextContent(
+      'Networking: collaborate — Porażka — Rzut 77 przy progu 41',
     );
   });
 

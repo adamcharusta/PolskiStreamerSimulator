@@ -252,7 +252,12 @@
       "criticalSuccess": "Krytyczny sukces",
       "criticalFailure": "Krytyczna porażka"
     },
-    "next": "Dalej"
+    "next": "Dalej",
+    "story": "{{event}}: {{choice}} — {{result}}",
+    "action": {
+      "network": "Networking",
+      "pitch": "Oferta dla sponsorów"
+    }
   },
   "settle": {
     "title": "Koniec streamu",
@@ -312,7 +317,9 @@
     "banned": "Platforma {{platform}} zbanowała kanał na stałe.",
     "migration": "Przeprowadzka {{from}} → {{to}}: {{before}} → {{after}} obserwujących ({{retention}}).",
     "followersMigration": "Obserwujący po przeprowadzce: {{value}}",
-    "pitchRoll": "Oferta dla sponsorów"
+    "pitchRoll": "Oferta dla sponsorów",
+    "events": "Wydarzenia na streamie",
+    "shortStream": "Krótszy stream po kryzysie albo przy lżejszym planie"
   },
   "batch": {
     "launch": "Auto: kilka tygodni",
@@ -535,5 +542,70 @@
     "body": "Kariera skończy się wcześniejszą emeryturą. Tego nie da się cofnąć.",
     "confirm": "Tak, kończę",
     "cancel": "Wracam do streamowania"
+  },
+  "categoryHint": {
+    "justChatting": "rozmowy, donejty i hojny czat",
+    "fps": "zasięg i reklamy, ale mniej subów",
+    "moba": "lojalna widownia, trochę dramy",
+    "chess": "spokojnie, wiarygodnie i wiernie",
+    "gambling": "duże wahania, dużo dramy, ryzyko regulaminu"
+  },
+  "dashboard": {
+    "title": "Twoja kariera",
+    "week": "Tydzień {{week}} z 1040 · {{age}} lat",
+    "obligations": "W tym tygodniu: {{list}}",
+    "noObligations": "Brak zleceń sponsorów w tym tygodniu",
+    "nextMilestone": "Do {{target}} obserwujących brakuje {{missing}}",
+    "history": "Historia kariery"
+  },
+  "history": {
+    "title": "Historia kariery",
+    "back": "Wróć do kariery",
+    "loading": "Wczytuję historię…",
+    "loadFailed": "Nie udało się wczytać historii.",
+    "weekFailed": "Nie udało się wczytać raportu tygodnia.",
+    "years": "Podsumowania lat",
+    "year": "Rok {{year}}",
+    "yearSummary": "{{weeks}} tygodni, obserwujący {{followers}}, kasa {{cash}}",
+    "topCategory": "Najczęściej: {{category}}",
+    "filters": "Filtry",
+    "fromWeek": "Od tygodnia",
+    "toWeek": "Do tygodnia",
+    "kind": "Rodzaj zdarzenia",
+    "allKinds": "Wszystkie",
+    "search": "Szukaj",
+    "count_one": "{{count}} tydzień",
+    "count_few": "{{count}} tygodnie",
+    "count_many": "{{count}} tygodni",
+    "count_other": "{{count}} tygodnia",
+    "weeks": "Tygodnie",
+    "row": "widzowie {{viewers}}, obserwujący {{followers}}, kasa {{cash}}",
+    "automatic": "automat",
+    "show": "Pokaż raport",
+    "hide": "Ukryj raport",
+    "tag": {
+      "viral": "viral",
+      "decision": "decyzja",
+      "strike": "ostrzeżenie",
+      "ban": "ban",
+      "migration": "przeprowadzka",
+      "wager": "zakład",
+      "sponsorPaid": "sponsor zapłacił",
+      "sponsorPenalty": "kara od sponsora",
+      "shortStream": "krótszy stream",
+      "ending": "koniec kariery"
+    }
+  },
+  "diploma": {
+    "download": "Pobierz dyplom (PDF)",
+    "failed": "Nie udało się przygotować dyplomu.",
+    "title": "Dyplom streamera",
+    "subtitle": "{{background}} · poziom: {{difficulty}}",
+    "weeks": "Tygodnie na wizji: {{weeks}}",
+    "final": "Na koniec: {{followers}} obserwujących i {{cash}}",
+    "score": "Wynik: {{score}} (obserwujący {{followers}}, majątek {{wealth}}, osiągnięcia {{achievements}})",
+    "achievements": "Osiągnięcia: {{list}}",
+    "noAchievements": "Bez osiągnięć — następnym razem!",
+    "footer": "Polski Streamer Simulator · fikcyjna kariera · {{date}}"
   }
 }

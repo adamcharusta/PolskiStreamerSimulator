@@ -92,18 +92,24 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
       <fieldset className="choices" disabled={locked}>
         <legend className="font-bold">{t('plan.category')}</legend>
         {Object.values(Category).map((option) => (
-          <label key={option} className="choice">
-            <input
-              type="radio"
-              name="category"
-              value={option}
-              checked={category === option}
-              onChange={() => {
-                setCategory(option);
-              }}
-            />
-            {t(`category.${option}`)}
-          </label>
+          <div key={option} className="choice">
+            <label>
+              <input
+                type="radio"
+                name="category"
+                value={option}
+                checked={category === option}
+                aria-describedby={`plan-category-${option}`}
+                onChange={() => {
+                  setCategory(option);
+                }}
+              />
+              {t(`category.${option}`)}
+            </label>
+            <span id={`plan-category-${option}`} className="muted">
+              {t(`categoryHint.${option}`)}
+            </span>
+          </div>
         ))}
       </fieldset>
 
@@ -241,7 +247,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
       {career.lastReport !== null && (
         <details className="panel">
           <summary>{t('plan.lastReport', { week: career.lastReport.week })}</summary>
-          <WeekReport report={career.lastReport} />
+          <WeekReport report={career.lastReport} pronouns={career.pronouns} />
         </details>
       )}
     </div>
