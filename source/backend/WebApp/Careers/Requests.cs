@@ -31,7 +31,11 @@ public sealed record ActionRequest(
     Category? Category = null,
     Category? TrainTarget = null,
     EquipmentSlot? UpgradeSlot = null,
-    string? ChoiceId = null);
+    string? ChoiceId = null,
+    WagerTier? Wager = null,
+    Platform? TargetPlatform = null,
+    string? OfferId = null,
+    bool? Accept = null);
 
 public sealed class ActionRequestValidator : AbstractValidator<ActionRequest>
 {
@@ -47,7 +51,14 @@ public sealed class ActionRequestValidator : AbstractValidator<ActionRequest>
             RuleFor(r => r.MainAction).NotNull().IsInEnum();
             RuleFor(r => r.Category).NotNull().IsInEnum();
         });
+        RuleFor(r => r.Wager).IsInEnum();
+        RuleFor(r => r.TargetPlatform).IsInEnum();
         When(r => r.Type is ActionType.ResolveEvent or ActionType.ResolveDecision, () => RuleFor(r => r.ChoiceId).NotEmpty().MaximumLength(64));
+        When(r => r.Type == ActionType.RespondOffer, () =>
+        {
+            RuleFor(r => r.OfferId).NotEmpty().MaximumLength(64);
+            RuleFor(r => r.Accept).NotNull();
+        });
     }
 
     protected override bool PreValidate(ValidationContext<ActionRequest> context, ValidationResult result)

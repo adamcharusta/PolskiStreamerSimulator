@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
@@ -15,9 +16,15 @@ public enum ActionType
 
     /// <summary>Answers the first queued mandatory decision between weeks with <see cref="ActionInput.ChoiceId"/>.</summary>
     ResolveDecision,
+
+    /// <summary>Accepts or declines the sponsor offer <see cref="ActionInput.OfferId"/> between weeks (M3-B).</summary>
+    RespondOffer,
 }
 
-/// <summary>One manual step; stored as the request of the command, so a repeat must send exactly the same values.</summary>
+/// <summary>
+/// One manual step; stored as the request of the command, so a repeat must send exactly the same values. The M3-B
+/// fields are omitted from JSON when null, so a stored request written before them serializes byte for byte.
+/// </summary>
 public sealed record ActionInput(
     long ExpectedVersion,
     ActionType Type,
@@ -25,7 +32,11 @@ public sealed record ActionInput(
     Category? Category,
     Category? TrainTarget,
     EquipmentSlot? UpgradeSlot,
-    string? ChoiceId);
+    string? ChoiceId,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] WagerTier? Wager = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Platform? TargetPlatform = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? OfferId = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] bool? Accept = null);
 
 public sealed record ActionOutcome(CareerView Career, RollView? Roll, WeekReportView? Report);
 
@@ -125,7 +136,8 @@ public sealed class SubmitActionHandler(
                     return Rejected(new AppError(ErrorCodes.ValidationFailed, "startWeek needs mainAction and category"));
                 }
 
-                return Map(engine.StartWeek(s, c, new WeekPlan(action, category, input.TrainTarget, input.UpgradeSlot), input.ExpectedVersion), next => (next, null, null));
+                var plan = new WeekPlan(action, category, input.TrainTarget, input.UpgradeSlot, input.Wager, input.TargetPlatform);
+                return Map(engine.StartWeek(s, c, plan, input.ExpectedVersion), next => (next, null, null));
 
             case ActionType.ResolveEvent:
                 if (string.IsNullOrEmpty(input.ChoiceId))
@@ -145,6 +157,14 @@ public sealed class SubmitActionHandler(
 
             case ActionType.SettleWeek:
                 return Map(engine.SettleWeek(s, c, input.ExpectedVersion), settled => (settled.State, null, ReportViews.Report(settled.Report)));
+
+            case ActionType.RespondOffer:
+                if (string.IsNullOrEmpty(input.OfferId) || input.Accept is not { } accept)
+                {
+                    return Rejected(new AppError(ErrorCodes.ValidationFailed, "respondOffer needs offerId and accept"));
+                }
+
+                return Map(engine.RespondOffer(s, c, input.OfferId, accept, input.ExpectedVersion), next => (next, null, null));
 
             default:
                 return Rejected(new AppError(ErrorCodes.ValidationFailed, "unknown action type"));
@@ -166,13 +186,16 @@ public sealed class SubmitActionHandler(
             && (input.MainAction is not { } action || Enum.IsDefined(action))
             && (input.Category is not { } category || Enum.IsDefined(category))
             && (input.TrainTarget is not { } target || Enum.IsDefined(target))
-            && (input.UpgradeSlot is not { } slot || Enum.IsDefined(slot));
+            && (input.UpgradeSlot is not { } slot || Enum.IsDefined(slot))
+            && (input.Wager is not { } wager || Enum.IsDefined(wager))
+            && (input.TargetPlatform is not { } platform || Enum.IsDefined(platform));
 
     private static ActionKind KindOf(ActionType type) => type switch
     {
         ActionType.StartWeek => ActionKind.StartWeek,
         ActionType.ResolveEvent => ActionKind.ResolveEvent,
         ActionType.ResolveDecision => ActionKind.ResolveDecision,
+        ActionType.RespondOffer => ActionKind.RespondOffer,
         _ => ActionKind.SettleWeek,
     };
 }

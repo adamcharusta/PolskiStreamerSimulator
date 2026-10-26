@@ -54,4 +54,19 @@ public sealed class M3CareerApiTests(M3ApiFactory api) : IClassFixture<M3ApiFact
         var reread = await (await client.GetCareerAsync(id, secret, Ct)).Content.ReadFromJsonAsync<JsonElement>(Ct);
         Assert.Equal(2, reread.GetProperty("lastReport").GetProperty("week").GetInt32());
     }
+
+    [Fact]
+    public async Task Respond_offer_round_trips_and_needs_an_answer()
+    {
+        var (id, secret, career) = await client.CreateCareerAsync(Ct);
+        var version = career.GetProperty("version").GetInt64();
+        var missing = await client.PostActionAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = version, type = "respondOffer", offerId = "x:1" }, Ct);
+        Assert.Equal(HttpStatusCode.BadRequest, missing.StatusCode);
+        Assert.Equal("validation-failed", await missing.CodeAsync(Ct));
+
+        var unknown = await client.PostActionAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = version, type = "respondOffer", offerId = "x:1", accept = true }, Ct);
+        Assert.Equal("illegal-action", await unknown.CodeAsync(Ct));
+        Assert.Equal("czatnia", career.GetProperty("platform").GetString());
+        Assert.Equal(0, career.GetProperty("offers").GetArrayLength());
+    }
 }

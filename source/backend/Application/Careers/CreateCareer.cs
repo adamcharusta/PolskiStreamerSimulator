@@ -35,14 +35,7 @@ public sealed class CreateCareerHandler(ICareerStore store, ICurrentContent cont
 
         var snapshot = content.Snapshot;
         var seed = BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(sizeof(ulong)));
-        var state = CareerFactory.Create(
-            snapshot.RulesetId,
-            snapshot.Digest,
-            snapshot.Profiles[command.Background],
-            command.Background,
-            command.Difficulty,
-            command.Pronouns,
-            seed);
+        var state = CareerFactory.Create(snapshot, command.Background, command.Difficulty, command.Pronouns, seed);
         var now = time.GetUtcNow();
         var id = Guid.CreateVersion7(now);
         var secret = secrets.NewSecret();

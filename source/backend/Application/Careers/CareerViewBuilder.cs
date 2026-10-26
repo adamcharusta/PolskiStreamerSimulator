@@ -1,7 +1,9 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
+using PolskiStreamerSimulator.Domain.Simulation.Policies;
 
 namespace PolskiStreamerSimulator.Application.Careers;
 
@@ -26,7 +28,71 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             s.LastSettledWeek,
             Stats(s),
             Next(s, c),
-            lastReport);
+            lastReport,
+            Economy.Current(s),
+            Economy.SinceWeek(s),
+            Strikes(s, c),
+            s.BannedPlatforms is { } banned ? [.. banned] : [],
+            [.. (s.Offers ?? []).Select(o => Offer(s, c, o))],
+            [.. (s.Contracts ?? []).Select(d => Contract(s, c, d))],
+            SideBusiness(s, c.Balance));
+
+    /// <summary>Strikes that still count after the last settled week, with the last settled week in which each counts.</summary>
+    private static StrikeView[] Strikes(CareerState s, ContentSnapshot c)
+    {
+        var weeks = c.Balance.Policy?.StrikeWeeks ?? 0;
+        return [.. (s.Strikes ?? []).Where(x => x.GivenWeek + weeks > s.LastSettledWeek).Select(x => new StrikeView(x.Platform, x.GivenWeek, x.GivenWeek + weeks - 1))];
+    }
+
+    private static OfferView Offer(CareerState s, ContentSnapshot c, SponsorOffer offer)
+    {
+        var t = SponsorRules.Template(c, offer.TemplateId);
+        return new OfferView(
+            offer.OfferId,
+            t.Id,
+            t.Name,
+            t.Pitch,
+            t.Kind,
+            offer.PaymentPln,
+            t.TermWeeks,
+            t.DueEveryWeeks,
+            t.RequiredCategory,
+            [.. t.Platforms],
+            new SponsorPrerequisitesView(
+                t.Prerequisites.MinFollowers,
+                t.Prerequisites.MinCredibility is { } minCredibility ? Decimals.Of(minCredibility) : null,
+                t.Prerequisites.MaxDrama is { } maxDrama ? Decimals.Of(maxDrama) : null,
+                t.Prerequisites.MinDrama is { } minDrama ? Decimals.Of(minDrama) : null),
+            [.. t.IncompatibleWith],
+            t.Breach.CashPln,
+            Decimals.Of(t.Breach.Credibility),
+            offer.ExpiresAfterWeek,
+            SponsorRules.AcceptRejection(s, c, offer));
+    }
+
+    private static ContractView Contract(CareerState s, ContentSnapshot c, SponsorContract d)
+    {
+        var t = SponsorRules.Template(c, d.TemplateId);
+        return new ContractView(
+            d.ContractId,
+            t.Id,
+            t.Name,
+            d.Kind,
+            d.PaymentPln,
+            t.RequiredCategory,
+            [.. t.Platforms],
+            d.NextDueWeek,
+            d.TermEndWeek,
+            d.Missed,
+            t.Breach.CashPln,
+            Decimals.Of(t.Breach.Credibility),
+            d.NextDueWeek == s.Week.Value);
+    }
+
+    private static SideBusinessView? SideBusiness(CareerState s, BalanceConstants b)
+        => s.SideBusiness is { } business && b.SideBusiness is { } balance
+            ? new SideBusinessView(business.OpenedWeek, Decimals.Of(business.Quality), SideBusinessRules.IsOpen(s) ? SideBusinessRules.Income(s.Followers, business.Quality, balance) : 0)
+            : null;
 
     public static CareerStatsView Stats(CareerState s) => new(
         s.CashPln,
@@ -82,12 +148,19 @@ public sealed class CareerViewBuilder(WeekEngine engine)
         return !decision.IsSuccess && decision.Error.Code == DomainErrorCode.NoPendingDecision ? null : Expect(decision);
     }
 
-    /// <summary>Every plan with its disabled reason and, for a rolled action (networking, a sponsor pitch), the odds of its roll.</summary>
+    /// <summary>Every plan with its disabled reason, the odds of a rolled action (networking, a sponsor pitch) and what it risks (one plan preview each).</summary>
     private PlanOptionView[] Plans(CareerState s, ContentSnapshot c)
         => [.. Expect(engine.LegalPlans(s, c)).Select(l => new PlanOptionView(
             ReportViews.Plan(l.Plan),
             l.DisabledReason,
-            Expect(engine.PresentAction(s, c, l.Plan)) is { } odds ? Choice(odds, ActionChoice(l.Plan, c.Balance)) : null))];
+            Expect(engine.PresentAction(s, c, l.Plan)) is { } odds ? Choice(odds, ActionChoice(l.Plan, c.Balance)) : null,
+            Expect(engine.PresentPlan(s, c, l.Plan)) is var preview && preview.Wager is { } w ? new WagerTermsView(w.Tier, w.StakePln, Decimals.Of(w.Chance), w.PayoutPln, w.LossPln) : null,
+            preview.Policy is { } p ? new PolicyExposureView(p.Exposure, Decimals.Of(p.Chance), p.Threshold) : null,
+            preview.Migration is { } m ? ReportViews.Migration(m) : null,
+            [.. preview.Sponsors.Select(Consequence)]))];
+
+    private static SponsorConsequenceView Consequence(SponsorConsequence x)
+        => new(x.ContractId, x.TemplateId, PolicyReason.Name(x.Kind), x.PenaltyPln, Decimals.Of(x.Credibility), x.Terminates);
 
     /// <summary>The choice definition behind a rolled action's odds.</summary>
     private static ChoiceDefinition ActionChoice(WeekPlan plan, BalanceConstants b)
@@ -116,7 +189,8 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             [.. odds.Modifiers.Select(ReportViews.Modifier)],
             odds.AllowsCritical,
             Decimals.Of(odds.ViralOnCritical),
-            odds.UnavailableReason);
+            odds.UnavailableReason,
+            odds.Migration is { } migration ? ReportViews.Migration(migration) : null);
 
     private static T Expect<T>(Result<T> result)
         => result.IsSuccess ? result.Value : throw new InvalidOperationException($"Career view failed: {result.Error.Code} ({result.Error.Detail}).");
