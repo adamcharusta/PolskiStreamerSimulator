@@ -64,7 +64,15 @@ public sealed class M3Ruleset(string id) : IRuleset
         }
 
         var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
-        var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
+        var started = afterAction with
+        {
+            Rng = rng,
+            Pending = afterAction.Pending! with
+            {
+                EventIds = eventIds,
+                Exposure = c.Balance.Policy is null ? null : PolicyRules.Exposure(s, plan, c),
+            },
+        };
         var pending = started.Pending;
         if (s.Carry is { } carry)
         {
@@ -112,7 +120,8 @@ public sealed class M3Ruleset(string id) : IRuleset
     }
 
     /// <summary>
-    /// Settles like M1 (after the sponsor deals and the side business), then applies the week's follower percentage, expires flags and — unless the career ended —
+    /// Settles like M1 (after the sponsor deals and the side business, with the platform's factors), then applies the week's follower
+    /// percentage, decays drama, rolls the policy strike and bans, ends the career on a global or total ban, expires flags and — unless the career ended —
     /// expires and rolls sponsor offers and opens the decisions due before the new week. The report lists the carried decision rolls.
     /// </summary>
     public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
@@ -147,7 +156,10 @@ public sealed class M3Ruleset(string id) : IRuleset
                 quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
             pending.FollowersPercent);
         core = PolicyRules.DecayDrama(core, core.StatLines, pending.Plan.Category, c.Balance.Policy);
-        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c);
+        var policyRng = core.State.Rng;
+        var (policed, strike) = PolicyRules.Settle(core.State, pending.Exposure ?? 0, c, s.Week.Value, ref policyRng);
+        core = core with { State = policed with { Rng = policyRng } };
+        var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c, PolicyRules.Ending(core.State));
         if (ending is null)
         {
             var rng = state.Rng;
@@ -160,6 +172,7 @@ public sealed class M3Ruleset(string id) : IRuleset
             ActionRoll = pending.ActionRoll,
             DecisionRolls = pending.Carry?.Rolls ?? [],
             Wager = pending.Wager,
+            Strike = strike,
         };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
@@ -231,9 +244,12 @@ public sealed class M3Ruleset(string id) : IRuleset
         });
     }
 
-    /// <summary>The wager terms of the plan's stake and the consequences the plan would have for the sponsor deals.</summary>
+    /// <summary>The wager terms of the plan's stake, the consequences the plan would have for the sponsor deals and its policy exposure.</summary>
     public PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan)
-        => new(plan.Wager is { } tier && c.Balance.Wagers is { } w ? WagerRules.Terms(tier, w) : null, SponsorRules.Consequences(s, c, plan));
+        => new(
+            plan.Wager is { } tier && c.Balance.Wagers is { } w ? WagerRules.Terms(tier, w) : null,
+            SponsorRules.Consequences(s, c, plan),
+            PolicyRules.Preview(s, plan, c));
 
     /// <summary>The visible odds of the action's roll (networking, or a pitch with nothing due); null for any other plan.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)

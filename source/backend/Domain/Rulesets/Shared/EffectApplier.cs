@@ -42,8 +42,6 @@ public static class EffectApplier
                 case EffectKind.SponsorOffer:
                     s = SponsorRules.Offer(s, c, effect.Target!);
                     break;
-                case EffectKind.PolicyStrike or EffectKind.GlobalBan:
-                    throw NotYetApplied(effect);
                 default:
                     s = ToCareer(s, effect, pending.Plan.Category);
                     break;
@@ -84,8 +82,6 @@ public static class EffectApplier
                 case EffectKind.SponsorOffer:
                     s = SponsorRules.Offer(s, c, effect.Target!);
                     break;
-                case EffectKind.PolicyStrike or EffectKind.GlobalBan:
-                    throw NotYetApplied(effect);
                 default:
                     s = ToCareer(s, effect, primary);
                     break;
@@ -112,14 +108,14 @@ public static class EffectApplier
                 return CareerFlags.Clear(s, effect.Target!);
             case EffectKind.FollowUp:
                 return s with { Scheduled = (s.Scheduled ?? []).Add(new ScheduledEvent(effect.Target!, s.Week.Value + effect.Weeks!.Value)) };
+            case EffectKind.PolicyStrike:
+                return PolicyRules.AddStrikes(s, (int)effect.Amount.RoundToLong());
+            case EffectKind.GlobalBan:
+                return CareerFlags.Set(s, PolicyRules.GlobalBanFlag, weeks: null);
             default:
                 throw new ArgumentOutOfRangeException(nameof(effect), effect.Kind, null);
         }
     }
-
-    /// <summary>The M3-B policy effect kinds are read from content but applied only once their rules exist; no content uses them yet.</summary>
-    private static ArgumentOutOfRangeException NotYetApplied(Effect effect)
-        => new(nameof(effect), effect.Kind, "The M3-B effect kinds are not applied yet.");
 
     private static ReportLine CashLine(long amount, string sourceId)
         => new(amount >= 0 ? "income:event" : "cost:event", AmountPln: Math.Abs(amount), Detail: sourceId);

@@ -84,15 +84,20 @@ public static class WeekSettlement
     }
 
     /// <summary>
-    /// Checks the ending (insolvency after all income and costs, then completion), evaluates achievements and ends
-    /// the career in the settled week when it is over. <paramref name="s"/> is the state before settlement.
+    /// Checks the ending (insolvency after all income and costs, then the ruleset's own <paramref name="ruleEnding"/>,
+    /// then completion), evaluates achievements and ends the career in the settled week when it is over.
+    /// <paramref name="s"/> is the state before settlement.
     /// </summary>
-    public static (CareerState State, EndingReason? Ending) Close(CareerState s, CareerState state, ContentSnapshot c)
+    public static (CareerState State, EndingReason? Ending) Close(CareerState s, CareerState state, ContentSnapshot c, EndingReason? ruleEnding = null)
     {
         EndingReason? ending = null;
         if (state.CashPln <= c.Balance.InsolvencyThresholdPln)
         {
             ending = EndingReason.Insolvency;
+        }
+        else if (ruleEnding is not null)
+        {
+            ending = ruleEnding;
         }
         else if (s.Week.IsLast)
         {
