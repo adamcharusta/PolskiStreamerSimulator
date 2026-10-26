@@ -39,6 +39,29 @@ public sealed record EventPaceSummary(string Group, int Careers, long Weeks, lon
     public double ViralsPerCareer => Careers == 0 ? 0 : (double)ViralWeeks / Careers;
 }
 
+/// <summary>The M3-B economy and risk measures of one policy's careers.</summary>
+public sealed record EconomySummary(
+    string Group,
+    int Careers,
+    int Insolvent,
+    long MedianCash,
+    long MedianScore,
+    long SponsorIncome,
+    long TotalIncome,
+    long Installments,
+    long Breaches,
+    long Strikes,
+    int CareersBanned,
+    int BanEndings,
+    long Migrations)
+{
+    public double SponsorShare => TotalIncome == 0 ? 0 : (double)SponsorIncome / TotalIncome;
+
+    public double BreachRate => Installments + Breaches == 0 ? 0 : (double)Breaches / (Installments + Breaches);
+
+    public double InsolvencyRate => Careers == 0 ? 0 : (double)Insolvent / Careers;
+}
+
 /// <summary>One spec §8 criterion: <c>PASS</c>, <c>FAIL</c> or <c>n/a</c> when the run lacks the policies it needs.</summary>
 public sealed record Criterion(string Name, string Result, string Evidence);
 
@@ -55,6 +78,11 @@ public static class BatchStatistics
     public const string Pass = "PASS";
     public const string Fail = "FAIL";
     public const string NotApplicable = "n/a";
+    public const double MinBalancedSolvency = 0.90;
+    public const double MaxSideBusinessCashMultiple = 1.5;
+    public const double MinRiskyCareersBanned = 0.01;
+    public const double MaxBanEndings = 0.02;
+    public const double MinSponsorShare = 0.10;
 
     /// <summary>Nearest-rank percentile of an ascending list: the value at rank <c>ceil(p × n / 100)</c>.</summary>
     public static long Percentile(IReadOnlyList<long> ascending, int percent)
@@ -107,6 +135,116 @@ public static class BatchStatistics
         => [.. careers.OrderBy(c => c.Index)
             .GroupBy(c => c.Policy)
             .Select(g => new EventPaceSummary(g.Key, g.Count(), g.Sum(c => (long)c.Weeks), g.Sum(c => (long)c.Decisions), g.Sum(c => (long)c.ViralWeeks)))];
+
+    /// <summary>Economy and risk measures per policy, in order of first appearance.</summary>
+    public static IReadOnlyList<EconomySummary> Economy(IEnumerable<CareerSummary> careers)
+        => [.. careers.OrderBy(c => c.Index)
+            .GroupBy(c => c.Policy)
+            .Select(g => new EconomySummary(
+                g.Key,
+                g.Count(),
+                g.Count(c => c.Ending == EndingReason.Insolvency),
+                Median(g.Select(c => c.Cash)),
+                Median(g.Select(c => c.Score)),
+                g.Sum(c => c.SponsorIncome),
+                g.Sum(c => c.TotalIncome),
+                g.Sum(c => (long)c.Installments),
+                g.Sum(c => (long)c.Breaches),
+                g.Sum(c => (long)c.Strikes),
+                g.Count(c => c.PlatformBans > 0),
+                g.Count(c => c.Ending is EndingReason.GlobalBan or EndingReason.AllPlatformsBanned),
+                g.Sum(c => (long)c.Migrations)))];
+
+    /// <summary>
+    /// Evaluates the M3-B criteria of the economy and risk spec (§9): no side business needed, gambling not dominant,
+    /// the side business a trade-off, rare but real bans, sponsors that matter, and reconciliation.
+    /// </summary>
+    public static IReadOnlyList<Criterion> M3BCriteria(IReadOnlyList<CareerSummary> careers)
+    {
+        var economy = Economy(careers);
+        var balanced = economy.FirstOrDefault(e => e.Group == "Balanced");
+        var gambler = economy.FirstOrDefault(e => e.Group == "Gambler");
+        var hustler = economy.FirstOrDefault(e => e.Group == "SideHustler");
+        var hunter = economy.FirstOrDefault(e => e.Group == "SponsorHunter");
+        return
+        [
+            NoSideBusinessNeeded(balanced),
+            GamblingNotDominant(balanced, gambler),
+            SideBusinessTradeOff(balanced, hustler),
+            RareButRealBans(careers.Count, gambler, hustler, economy.Sum(e => e.BanEndings)),
+            SponsorsMatter(hunter),
+            Reconciliation(careers),
+        ];
+    }
+
+    private static Criterion NoSideBusinessNeeded(EconomySummary? balanced)
+    {
+        const string name = "No side business needed (#20)";
+        if (balanced is null)
+        {
+            return new Criterion(name, NotApplicable, "Needs the Balanced policy.");
+        }
+
+        var solvent = 1 - balanced.InsolvencyRate;
+        return new Criterion(name, solvent >= MinBalancedSolvency ? Pass : Fail, Invariant($"Balanced, which never opens the side business, avoids insolvency in {Percent(solvent)} of careers (at least {Percent(MinBalancedSolvency)})."));
+    }
+
+    private static Criterion GamblingNotDominant(EconomySummary? balanced, EconomySummary? gambler)
+    {
+        const string name = "Gambling is not dominant (#20)";
+        if (balanced is null || gambler is null)
+        {
+            return new Criterion(name, NotApplicable, "Needs the Balanced and Gambler policies.");
+        }
+
+        var pass = gambler.MedianCash < balanced.MedianCash && gambler.MedianScore < balanced.MedianScore;
+        return new Criterion(name, pass ? Pass : Fail, Invariant($"Gambler median cash {gambler.MedianCash:N0} vs Balanced {balanced.MedianCash:N0}; median score {gambler.MedianScore:N0} vs {balanced.MedianScore:N0}; Gambler insolvency {Percent(gambler.InsolvencyRate)}."));
+    }
+
+    private static Criterion SideBusinessTradeOff(EconomySummary? balanced, EconomySummary? hustler)
+    {
+        const string name = "Side business is a trade-off (#20)";
+        if (balanced is null || hustler is null || balanced.MedianCash <= 0)
+        {
+            return new Criterion(name, NotApplicable, "Needs the Balanced and SideHustler policies and a positive Balanced median cash.");
+        }
+
+        var multiple = (double)hustler.MedianCash / balanced.MedianCash;
+        var pass = multiple >= 1.0 && multiple <= MaxSideBusinessCashMultiple;
+        return new Criterion(name, pass ? Pass : Fail, Invariant($"SideHustler median cash {hustler.MedianCash:N0} = {multiple:F2}x Balanced {balanced.MedianCash:N0} (between 1.00x and {MaxSideBusinessCashMultiple:F2}x)."));
+    }
+
+    private static Criterion RareButRealBans(int careerCount, EconomySummary? gambler, EconomySummary? hustler, int banEndings)
+    {
+        const string name = "Bans are rare but real (#19)";
+        if (gambler is null || hustler is null || careerCount == 0)
+        {
+            return new Criterion(name, NotApplicable, "Needs the Gambler and SideHustler policies.");
+        }
+
+        var risky = gambler.Careers + hustler.Careers;
+        var banned = risky == 0 ? 0 : (double)(gambler.CareersBanned + hustler.CareersBanned) / risky;
+        var endings = (double)banEndings / careerCount;
+        var pass = banned >= MinRiskyCareersBanned && endings < MaxBanEndings;
+        return new Criterion(name, pass ? Pass : Fail, Invariant($"{Percent(banned)} of Gambler and SideHustler careers lost a platform (at least {Percent(MinRiskyCareersBanned)}); {Percent(endings)} of all careers ended on a global or total ban (below {Percent(MaxBanEndings)})."));
+    }
+
+    private static Criterion SponsorsMatter(EconomySummary? hunter)
+    {
+        const string name = "Sponsors matter (#18)";
+        if (hunter is null)
+        {
+            return new Criterion(name, NotApplicable, "Needs the SponsorHunter policy.");
+        }
+
+        return new Criterion(name, hunter.SponsorShare >= MinSponsorShare ? Pass : Fail, Invariant($"SponsorHunter earns {Percent(hunter.SponsorShare)} of its income from sponsors (at least {Percent(MinSponsorShare)}); breach rate {Percent(hunter.BreachRate)}."));
+    }
+
+    private static Criterion Reconciliation(IReadOnlyList<CareerSummary> careers)
+    {
+        var violations = careers.Sum(c => (long)c.ReconciliationViolations);
+        return new Criterion("Reconciliation (#18)", violations == 0 ? Pass : Fail, Invariant($"{violations:N0} weeks whose cash change differs from their report lines."));
+    }
 
     /// <summary>Evaluates the M3-A criteria of the spec (§8): distinct paths, viable specialization and pacing.</summary>
     public static IReadOnlyList<Criterion> M3Criteria(IReadOnlyList<CareerSummary> careers)

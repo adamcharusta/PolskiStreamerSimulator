@@ -12,7 +12,8 @@ namespace PolskiStreamerSimulator.BatchSimulator;
 /// Summary of one simulated career; <see cref="Ending"/> is null only when the run stopped on a violation. The init
 /// members are the M3 measures (also filled for M1 careers): the most streamed category, final drama and credibility,
 /// the coefficient of variation of weekly live viewers, the income code with the largest total, the decisions answered
-/// and the weeks with a viral clip.
+/// and the weeks with a viral clip; then the M3-B measures: sponsor and total income, paid installments, sponsor
+/// penalties, policy strikes, platform bans, migrations and weeks whose cash did not reconcile with their report lines.
 /// </summary>
 public sealed record CareerSummary(
     int Index,
@@ -41,6 +42,22 @@ public sealed record CareerSummary(
     public int Decisions { get; init; }
 
     public int ViralWeeks { get; init; }
+
+    public long SponsorIncome { get; init; }
+
+    public long TotalIncome { get; init; }
+
+    public int Installments { get; init; }
+
+    public int Breaches { get; init; }
+
+    public int Strikes { get; init; }
+
+    public int PlatformBans { get; init; }
+
+    public int Migrations { get; init; }
+
+    public int ReconciliationViolations { get; init; }
 }
 
 public sealed record BatchResult(
@@ -105,9 +122,9 @@ public static class BatchRunner
                 var seed = SplitMix64(unchecked(o.Seed + (ulong)i));
                 var (background, difficulty) = Assign(i, policies.Length);
                 var policy = policies[i % policies.Length];
-                var start = CareerFactory.Create(content.RulesetId, content.Digest, content.Profiles[background], background, difficulty, PronounSet.Woman, seed);
-                var weeks = new WeekTally();
-                var run = CareerRunner.Run(engine, content, start, policy, (_, report) => weeks.Add(report));
+                var start = CareerFactory.Create(content, background, difficulty, PronounSet.Woman, seed);
+                var weeks = new WeekTally(start.CashPln);
+                var run = CareerRunner.Run(engine, content, start, policy, weeks.Add);
                 var final = run.Final;
                 results[i] = new CareerSummary(
                     i,
@@ -134,6 +151,14 @@ public static class BatchRunner
                         .FirstOrDefault() ?? "",
                     Decisions = weeks.Decisions,
                     ViralWeeks = weeks.ViralWeeks,
+                    SponsorIncome = weeks.SponsorIncome,
+                    TotalIncome = weeks.TotalIncome,
+                    Installments = weeks.Installments,
+                    Breaches = weeks.Breaches,
+                    Strikes = weeks.Strikes,
+                    PlatformBans = weeks.PlatformBans,
+                    Migrations = weeks.Migrations,
+                    ReconciliationViolations = weeks.ReconciliationViolations,
                 };
             });
         stopwatch.Stop();
@@ -162,11 +187,15 @@ public static class BatchRunner
         return (backgrounds[combination % backgrounds.Length], combination / backgrounds.Length % 2 == 0 ? Difficulty.Normal : Difficulty.Easy);
     }
 
+    private const string SponsorIncomeCode = "income:sponsor";
+    private const string SponsorPenaltyCode = "cost:sponsor-penalty";
+
     private static decimal ToDecimal(Fixed value) => (decimal)value.Raw / Fixed.Scale;
 
-    /// <summary>Running totals over a career's settled weeks.</summary>
-    private sealed class WeekTally
+    /// <summary>Running totals over a career's settled weeks; <paramref name="startCash"/> is the cash before the first week.</summary>
+    private sealed class WeekTally(long startCash)
     {
+        private long cash = startCash;
         private int weeks;
         private double viewers;
         private double viewersSquared;
@@ -174,6 +203,23 @@ public static class BatchRunner
         public int Decisions { get; private set; }
 
         public int ViralWeeks { get; private set; }
+
+        public long SponsorIncome { get; private set; }
+
+        public long TotalIncome { get; private set; }
+
+        public int Installments { get; private set; }
+
+        public int Breaches { get; private set; }
+
+        public int Strikes { get; private set; }
+
+        public int PlatformBans { get; private set; }
+
+        public int Migrations { get; private set; }
+
+        /// <summary>Weeks whose income minus costs differs from the cash change or from the career's cash movement.</summary>
+        public int ReconciliationViolations { get; private set; }
 
         /// <summary>Population standard deviation over mean of weekly live viewers; zero without viewers.</summary>
         public double ViewerCv
@@ -190,8 +236,19 @@ public static class BatchRunner
             }
         }
 
-        public void Add(WeekReport report)
+        public void Add(CareerState after, WeekReport report)
         {
+            var income = report.Income.Sum(l => l.AmountPln ?? 0);
+            var costs = report.Costs.Sum(l => l.AmountPln ?? 0);
+            ReconciliationViolations += income - costs != report.CashDelta || report.CashDelta != after.CashPln - cash ? 1 : 0;
+            cash = after.CashPln;
+            TotalIncome += income;
+            SponsorIncome += report.Income.Where(l => l.Code == SponsorIncomeCode).Sum(l => l.AmountPln ?? 0);
+            Installments += report.Income.Count(l => l.Code == SponsorIncomeCode);
+            Breaches += report.Costs.Count(l => l.Code == SponsorPenaltyCode);
+            Strikes += report.Strike is { Strike: true } ? 1 : 0;
+            PlatformBans += report.Strike is { Banned: true } ? 1 : 0;
+            Migrations += report.Migration is null ? 0 : 1;
             weeks++;
             viewers += report.LiveViewers;
             viewersSquared += (double)report.LiveViewers * report.LiveViewers;

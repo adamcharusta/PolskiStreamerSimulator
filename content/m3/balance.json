@@ -144,11 +144,11 @@
     "sideBusinessExposure": 1,
     "highDramaExposure": 1,
     "highDramaFrom": 70,
-    "chancePerExposure": 0.015,
-    "chanceCap": 0.15,
+    "chancePerExposure": 0.003,
+    "chanceCap": 0.06,
     "strikeWeeks": 26,
     "strikesToBan": 3,
-    "dramaDecay": 1
+    "dramaDecay": 0.2
   },
   "sponsors": {
     "offerBase": 0.08,
@@ -201,8 +201,8 @@
     "maxShareOfCash": 0.25,
     "chance": 0.45,
     "payoutMultiple": 2,
-    "winAudience": 1.15,
-    "lossAudience": 1.05,
+    "winAudience": 1.05,
+    "lossAudience": 0.85,
     "winDrama": 2,
     "lossDrama": 3
   },
@@ -214,7 +214,7 @@
     "qualityPerWork": 15,
     "qualityDecay": 3,
     "incomePerFollower": 0.0005,
-    "incomeScale": 10,
+    "incomeScale": 100,
     "credibilityPerWeek": -0.2
   },
   "platformBan": {
