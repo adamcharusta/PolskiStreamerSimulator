@@ -74,6 +74,10 @@ public sealed class AppTestKit
         return new SubmitActionHandler(new CareerAccess(s, Secrets), s, ContentStore, Engine, Views, Time);
     }
 
+    public GetHistoryHandler HistoryHandler() => new(Access, Careers);
+
+    public GetHistoryWeekHandler WeekHandler() => new(Access, Careers);
+
     public RunBatchHandler BatchHandler(ICareerStore? store = null)
     {
         var s = store ?? Careers;

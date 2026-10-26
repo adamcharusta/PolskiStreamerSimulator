@@ -51,6 +51,15 @@ public sealed class InMemoryCareerStore : ICareerStore
         }
     }
 
+    public Task<IReadOnlyList<StoredAction>> ListReportsAsync(Guid careerId, CancellationToken cancellationToken)
+    {
+        lock (gate)
+        {
+            IReadOnlyList<StoredAction> reports = logs.TryGetValue(careerId, out var log) ? [.. log.Where(a => a.ReportJson is not null)] : [];
+            return Task.FromResult(reports);
+        }
+    }
+
     public Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
     {
         lock (gate)

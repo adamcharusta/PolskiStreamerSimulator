@@ -11,6 +11,7 @@ public sealed class ApiProblemsTests
         { ErrorCodes.ValidationFailed, 400 },
         { ErrorCodes.MissingSecret, 401 },
         { ErrorCodes.CareerNotFound, 404 },
+        { ErrorCodes.WeekNotFound, 404 },
         { ErrorCodes.StaleVersion, 409 },
         { ErrorCodes.CareerEnded, 409 },
         { ErrorCodes.DecisionPending, 409 },
