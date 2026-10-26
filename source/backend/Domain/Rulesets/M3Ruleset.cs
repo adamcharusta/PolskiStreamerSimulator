@@ -63,6 +63,11 @@ public sealed class M3Ruleset(string id) : IRuleset
             afterAction = WagerRules.Roll(afterAction, plan, wagers, ref wagered, ref rng) with { Pending = wagered };
         }
 
+        if (plan is { Action: MainAction.PlanPlatformMigration, TargetPlatform: { } target } && c.Balance.Migration is { } migration)
+        {
+            afterAction = PlatformRules.Plan(s, afterAction, target, migration, ref rng);
+        }
+
         var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
         var started = afterAction with
         {
@@ -81,6 +86,7 @@ public sealed class M3Ruleset(string id) : IRuleset
                 CashDeltaFromEvents = pending.CashDeltaFromEvents + carry.CashPln,
                 Lines = carry.Lines.AddRange(pending.Lines),
                 FollowersPercent = carry.FollowersPercent,
+                Migration = carry.Migration ?? pending.Migration,
                 Carry = carry,
             };
         }
@@ -155,6 +161,7 @@ public sealed class M3Ruleset(string id) : IRuleset
                 shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,
                 quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
             pending.FollowersPercent);
+        (core, var moved) = PlatformRules.ApplyMigration(core, pending.Migration, c, s.Week.Value);
         core = PolicyRules.DecayDrama(core, core.StatLines, pending.Plan.Category, c.Balance.Policy);
         var policyRng = core.State.Rng;
         var (policed, strike) = PolicyRules.Settle(core.State, pending.Exposure ?? 0, c, s.Week.Value, ref policyRng);
@@ -173,6 +180,7 @@ public sealed class M3Ruleset(string id) : IRuleset
             DecisionRolls = pending.Carry?.Rolls ?? [],
             Wager = pending.Wager,
             Strike = strike,
+            Migration = moved,
         };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
@@ -210,9 +218,17 @@ public sealed class M3Ruleset(string id) : IRuleset
             ? Result<CareerState>.Fail(blocked)
             : RuleSteps.Retire(FoldCarry(s), c, expectedVersion);
 
-    /// <summary>Odds of the first queued decision, exactly as a live event's odds are shown.</summary>
+    /// <summary>
+    /// Odds of the first queued decision, exactly as a live event's odds are shown; the <c>platform-ban</c> decision
+    /// also carries its definition and the forced-move estimate of each choice.
+    /// </summary>
     public Result<EventPresentation> PresentDecision(CareerState s, ContentSnapshot c)
-        => LiveEvents.Present(s, c, NextDecision(s, c));
+    {
+        var presented = LiveEvents.Present(s, c, NextDecision(s, c));
+        return presented.IsSuccess && presented.Value.EventId == PlatformRules.BanDecisionId
+            ? Result<EventPresentation>.Ok(PlatformRules.PresentBan(s, c, presented.Value))
+            : presented;
+    }
 
     /// <summary>
     /// Rolls the chosen answer to the first queued decision: stat, skill, flag and follow-up effects apply now; cash,
@@ -224,6 +240,11 @@ public sealed class M3Ruleset(string id) : IRuleset
         if ((RuleSteps.CommandRejection(s, expectedVersion) ?? Unavailable(PresentDecision(s, c), choiceId)) is { } error)
         {
             return Result<CareerState>.Fail(error);
+        }
+
+        if (s.PendingDecisions is { Length: > 0 } queue && queue[0] == PlatformRules.BanDecisionId)
+        {
+            return PlatformRules.ResolveBan(s, c, choiceId);
         }
 
         var decision = NextDecision(s, c);
@@ -249,7 +270,8 @@ public sealed class M3Ruleset(string id) : IRuleset
         => new(
             plan.Wager is { } tier && c.Balance.Wagers is { } w ? WagerRules.Terms(tier, w) : null,
             SponsorRules.Consequences(s, c, plan),
-            PolicyRules.Preview(s, plan, c));
+            PolicyRules.Preview(s, plan, c),
+            PlatformRules.Preview(s, c, plan));
 
     /// <summary>The visible odds of the action's roll (networking, or a pitch with nothing due); null for any other plan.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
@@ -329,10 +351,16 @@ public sealed class M3Ruleset(string id) : IRuleset
         return Result<CareerState>.Ok(SponsorRules.Respond(s, c, offer, accept) with { StateVersion = s.StateVersion + 1 });
     }
 
+    /// <summary>The first queued decision: the ruleset-built <c>platform-ban</c> decision, or the content event.</summary>
     private static Result<EventDefinition> NextDecision(CareerState s, ContentSnapshot c)
-        => s.PendingDecisions is { Length: > 0 } queue
-            ? RuleSteps.FindEvent(c, queue[0])
-            : Result<EventDefinition>.Fail(DomainErrorCode.NoPendingDecision, "no-pending-decision");
+    {
+        if (s.PendingDecisions is not { Length: > 0 } queue)
+        {
+            return Result<EventDefinition>.Fail(DomainErrorCode.NoPendingDecision, "no-pending-decision");
+        }
+
+        return queue[0] == PlatformRules.BanDecisionId ? Result<EventDefinition>.Ok(PlatformRules.BanDecision(s, c)) : RuleSteps.FindEvent(c, queue[0]);
+    }
 
     /// <summary>
     /// <c>choice-unavailable</c> when the presented <paramref name="choiceId"/> has an unmet requirement; a failed
@@ -349,13 +377,17 @@ public sealed class M3Ruleset(string id) : IRuleset
         => RuleSteps.CommandRejection(s, expectedVersion)
             ?? (s.PendingDecisions is { Length: > 0 } ? new DomainError(DomainErrorCode.DecisionPending, "decision-pending") : null);
 
+    /// <summary>The carry's cash and follower percentage, then a carried platform move's retention (the rest become former followers).</summary>
     private static CareerState FoldCarry(CareerState s)
     {
         var carry = s.Carry ?? DecisionCarry.Empty;
+        var followers = s.Followers + FollowerChange(s.Followers, carry.FollowersPercent);
+        var kept = carry.Migration is { } move ? (Fixed.FromInt(followers) * move.Retention).RoundToLong() : followers;
         return s with
         {
             CashPln = s.CashPln + carry.CashPln,
-            Followers = s.Followers + FollowerChange(s.Followers, carry.FollowersPercent),
+            Followers = kept,
+            FormerFollowers = carry.Migration is null ? s.FormerFollowers : (s.FormerFollowers ?? 0) + followers - kept,
             Carry = null,
             Scheduled = null,
         };
