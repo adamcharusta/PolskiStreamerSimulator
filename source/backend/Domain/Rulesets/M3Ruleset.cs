@@ -137,14 +137,16 @@ public sealed class M3Ruleset(string id) : IRuleset
             pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
             c);
         var (sideBusiness, settling) = SideBusinessRules.Settle(sponsored, sponsoring, c.Balance.SideBusiness);
+        var onPlatform = c with { Balance = PlatformRules.Effective(c.Balance, s, pending.Plan.Category) };
         var core = ApplyFollowersPercent(
             WeekSettlement.Core(
                 sideBusiness,
                 settling,
-                c,
+                onPlatform,
                 shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,
                 quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
             pending.FollowersPercent);
+        core = PolicyRules.DecayDrama(core, core.StatLines, pending.Plan.Category, c.Balance.Policy);
         var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c);
         if (ending is null)
         {
