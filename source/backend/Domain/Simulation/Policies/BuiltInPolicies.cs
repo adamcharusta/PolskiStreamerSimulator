@@ -42,6 +42,28 @@ public static class BuiltInPolicies
     /// <summary>Balanced rules plus a move to PulsLive: announced in the first enabled week, executed the week after (M3-B).</summary>
     public static IChoicePolicy Migrator { get; } = new RulePolicy("Migrator", CategoryRule.BonusUnlessBored, restBelowEnergy: 30, PlanStyle.Migrate);
 
+    /// <summary>The M3-C simulator strategies (spec 2026-10-26 §9): the defaults, a cautious and a bold player.</summary>
+    public static IReadOnlyList<IChoicePolicy> Strategies { get; } =
+    [
+        new StrategyPolicy("Strategy-Default", Strategy.Default),
+        new StrategyPolicy("Strategy-Safe", Strategy.Default with
+        {
+            Risk = RiskAppetite.Safe,
+            RestBelowEnergy = 50,
+            ReservePln = 2_000,
+            Routine = [MainAction.NoAction, MainAction.ManageCommunity, MainAction.TrainCategory],
+        }),
+        new StrategyPolicy("Strategy-Bold", Strategy.Default with
+        {
+            Risk = RiskAppetite.Bold,
+            CategoryPlan = CategoryPlan.Focus,
+            Focus = Category.Gambling,
+            Wager = WagerTier.Medium,
+            SideBusiness = true,
+            Routine = [MainAction.NoAction, MainAction.NetworkCollaborate],
+        }),
+    ];
+
     /// <summary>The M1 policies.</summary>
     public static IReadOnlyList<IChoicePolicy> All { get; } = [Balanced, Grinder, RestHeavy, Specialist, Rotator];
 
@@ -57,6 +79,9 @@ public static class BuiltInPolicies
 
     /// <summary>The <c>m3-systems.2</c> policies: <see cref="M3All"/> plus the gambler, the side hustler, the sponsor hunter and the migrator.</summary>
     public static IReadOnlyList<IChoicePolicy> M3BAll { get; } = [.. M3All, Gambler, SideHustler, SponsorHunter, Migrator];
+
+    /// <summary>The <c>m3-systems.2</c> list with achievements and strategies: <see cref="M3BAll"/> plus <see cref="Strategies"/>.</summary>
+    public static IReadOnlyList<IChoicePolicy> M3CAll { get; } = [.. M3BAll, .. Strategies];
 
     /// <summary>Balanced rules on <paramref name="category"/> for the whole career, however bored (name <c>Specialist-{Category}</c>).</summary>
     public static IChoicePolicy SpecialistOf(Category category) => Specialists[(int)category];
@@ -134,7 +159,7 @@ public static class BuiltInPolicies
             var (preferred, code, args) = Wager(Prefer(s, c, category, legal), legal);
             (string Name, string Value)[] common = [("category", PolicyReason.Name(preferred.Category)), ("categoryRule", categoryRuleName)];
             var restOnly = legal.Any(l => l.DisabledReason == RestOnly);
-            return !restOnly && Enabled(legal, preferred)
+            return !restOnly && PolicyChoices.Enabled(legal, preferred)
                 ? new PlanDecision(preferred, PolicyReason.Of(code, [.. args, .. common]))
                 : new PlanDecision(
                     new WeekPlan(MainAction.Rest, preferred.Category),
@@ -146,41 +171,7 @@ public static class BuiltInPolicies
         /// Otherwise, among the choices the career can take: the highest-probability gamble when it is at least even
         /// odds, otherwise the guaranteed response.
         /// </summary>
-        public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
-        {
-            var available = e.Choices.Where(o => o.UnavailableReason is null).ToArray();
-            if (e.EventId == PlatformRules.BanDecisionId)
-            {
-                var move = available
-                    .OrderByDescending(o => o.Migration!.RetentionMax)
-                    .ThenByDescending(o => o.Migration!.Target.Reach)
-                    .First();
-                return new ChoiceDecision(
-                    move.ChoiceId,
-                    PolicyReason.Of("ban-move", ("platform", PolicyReason.Name(move.Migration!.To)), ("retention", move.Migration.RetentionMax.ToString())));
-            }
-
-            var bestGamble = available.Where(o => !o.Guaranteed).OrderByDescending(o => o.Probability).FirstOrDefault();
-            if (bestGamble is not null && bestGamble.Probability >= GambleThreshold)
-            {
-                return new ChoiceDecision(
-                    bestGamble.ChoiceId,
-                    PolicyReason.Of("gamble-best-odds", ("probability", bestGamble.Probability.ToString()), ("threshold", GambleThreshold.ToString())));
-            }
-
-            var guaranteed = available.FirstOrDefault(o => o.Guaranteed);
-            if (guaranteed is not null)
-            {
-                return new ChoiceDecision(
-                    guaranteed.ChoiceId,
-                    bestGamble is null
-                        ? PolicyReason.Of("take-guaranteed")
-                        : PolicyReason.Of("take-guaranteed", ("bestProbability", bestGamble.Probability.ToString())));
-            }
-
-            var only = bestGamble ?? available[0];
-            return new ChoiceDecision(only.ChoiceId, PolicyReason.Of("only-gambles", ("probability", only.Probability.ToString())));
-        }
+        public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e) => PolicyChoices.Event(e, GambleThreshold);
 
         /// <summary>
         /// Accepts an offer the engine would accept unless the deal clashes with how the policy plays: gambling deals
@@ -201,7 +192,7 @@ public static class BuiltInPolicies
         private string? Clash(SponsorTemplate t)
         {
             var gamblingSpecialist = categoryRule.FixedCategory == Category.Gambling;
-            if (!gamblingSpecialist && (t.RequiredCategory == Category.Gambling || t.Tags.Contains(SponsorTemplate.Gambling)))
+            if (!gamblingSpecialist && PolicyChoices.IsGamblingDeal(t))
             {
                 return SponsorTemplate.Gambling;
             }
@@ -235,7 +226,7 @@ public static class BuiltInPolicies
                 return due;
             }
 
-            category = DueOneOffCategory(s, c) ?? category;
+            category = PolicyChoices.DueOneOffCategory(s, c) ?? category;
             return style == PlanStyle.Grind
                 ? new(new WeekPlan(MainAction.TrainCategory, category), "train-every-week", [])
                 : PreferRest(s, category)
@@ -247,22 +238,9 @@ public static class BuiltInPolicies
 
         /// <summary>A pitch that fulfils the first installment due this week, in the contract's category.</summary>
         private static Preference? PreferDue(CareerState s, ContentSnapshot c, Category category)
-        {
-            if (SponsorRules.DueThisWeek(s) is not [var due, ..])
-            {
-                return null;
-            }
-
-            var t = SponsorRules.Template(c, due.TemplateId);
-            return new(new WeekPlan(MainAction.PitchFulfillSponsor, t.RequiredCategory ?? category), "sponsor-due", [("templateId", t.Id)]);
-        }
-
-        /// <summary>The required category of a one-off deal due this week (a one-off is paid by streaming its category).</summary>
-        private static Category? DueOneOffCategory(CareerState s, ContentSnapshot c)
-            => (s.Contracts ?? [])
-                .Where(d => d.Kind == SponsorKind.OneOff && d.NextDueWeek == s.Week.Value)
-                .Select(d => SponsorRules.Template(c, d.TemplateId).RequiredCategory)
-                .FirstOrDefault(required => required is not null);
+            => PolicyChoices.DueInstallment(s, c, category) is var (plan, templateId)
+                ? new(plan, "sponsor-due", [("templateId", templateId)])
+                : null;
 
         private Preference? PreferRest(CareerState s, Category category)
         {
@@ -317,7 +295,7 @@ public static class BuiltInPolicies
                     => new(new WeekPlan(MainAction.PlanPlatformMigration, category, TargetPlatform: MigrationTarget), "migration-scheduled", [("platform", PolicyReason.Name(MigrationTarget))]),
                 _ => null,
             };
-            return candidate is not null && Enabled(legal, candidate.Plan) ? candidate : null;
+            return candidate is not null && PolicyChoices.Enabled(legal, candidate.Plan) ? candidate : null;
         }
 
         private static Preference PreferRoutine(CareerState s, Category category)
@@ -336,13 +314,10 @@ public static class BuiltInPolicies
         private Preference Wager(Preference preferred, IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal)
         {
             var staked = preferred.Plan with { Wager = WagerTier.Medium };
-            return style == PlanStyle.Gamble && preferred.Plan is { Category: Category.Gambling, Action: not MainAction.Rest } && Enabled(legal, staked)
+            return style == PlanStyle.Gamble && preferred.Plan is { Category: Category.Gambling, Action: not MainAction.Rest } && PolicyChoices.Enabled(legal, staked)
                 ? new(staked, "wager-scheduled", [("tier", PolicyReason.Name(WagerTier.Medium)), ("routine", preferred.Code)])
                 : preferred;
         }
-
-        private static bool Enabled(IReadOnlyList<(WeekPlan Plan, string? DisabledReason)> legal, WeekPlan plan)
-            => legal.Any(l => l.Plan == plan && l.DisabledReason is null);
 
         /// <summary>
         /// The category rule's choice; a policy that is not fixed on a category never picks Gambling while a contract that
@@ -351,13 +326,10 @@ public static class BuiltInPolicies
         private (Category Category, string Rule) ChooseCategory(CareerState s, ContentSnapshot c)
         {
             var (category, rule) = RuleCategory(s, c);
-            return category == Category.Gambling && categoryRule.FixedCategory is null && GamblingForbidden(s, c)
+            return category == Category.Gambling && categoryRule.FixedCategory is null && PolicyChoices.GamblingForbidden(s, c)
                 ? (Enum.GetValues<Category>().Where(x => x != Category.Gambling).MinBy(x => s.Boredom[x]), "sponsor-safe")
                 : (category, rule);
         }
-
-        private static bool GamblingForbidden(CareerState s, ContentSnapshot c)
-            => (s.Contracts ?? []).Any(d => SponsorRules.Template(c, d.TemplateId).IncompatibleWith.Contains(SponsorTemplate.Gambling));
 
         private (Category Category, string Rule) RuleCategory(CareerState s, ContentSnapshot c)
         {

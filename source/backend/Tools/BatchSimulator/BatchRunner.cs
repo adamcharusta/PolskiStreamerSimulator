@@ -84,15 +84,15 @@ public static class BatchRunner
     }
 
     /// <summary>Every built-in policy by name: the M1 list followed by the M3-only and M3-B-only ones.</summary>
-    public static IReadOnlyList<IChoicePolicy> KnownPolicies { get; } = [.. BuiltInPolicies.All.Concat(BuiltInPolicies.M3BAll).Distinct()];
+    public static IReadOnlyList<IChoicePolicy> KnownPolicies { get; } = [.. BuiltInPolicies.All.Concat(BuiltInPolicies.M3CAll).Distinct()];
 
     /// <summary>
-    /// The policies offered for content of <paramref name="rulesetId"/>: <see cref="BuiltInPolicies.M3BAll"/> for
+    /// The policies offered for content of <paramref name="rulesetId"/>: <see cref="BuiltInPolicies.M3CAll"/> for
     /// <c>m3-systems.2</c>, <see cref="BuiltInPolicies.M3All"/> for <c>m3-systems.1</c>, otherwise the M1 list.
     /// </summary>
     public static IReadOnlyList<IChoicePolicy> PoliciesFor(string rulesetId) => rulesetId switch
     {
-        M3Ruleset.SystemsV2 => BuiltInPolicies.M3BAll,
+        M3Ruleset.SystemsV2 => BuiltInPolicies.M3CAll,
         M3Ruleset.SystemsV1 => BuiltInPolicies.M3All,
         _ => BuiltInPolicies.All,
     };
