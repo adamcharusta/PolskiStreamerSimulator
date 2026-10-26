@@ -109,7 +109,16 @@ public sealed class DecisionFlowTests
         Assert.NotNull(network.Odds);
         Assert.False(network.Odds.Guaranteed);
         Assert.Equal(TestContent.Of(TestPaths.ContentM3).Balance.NetworkCollaborate!.LabelPl, network.Odds.Label);
-        Assert.All(view.Next.Plans.Where(p => p.Plan.MainAction != MainAction.NetworkCollaborate), p => Assert.Null(p.Odds));
+        Assert.All(view.Next.Plans.Where(p => p.Plan.MainAction is not (MainAction.NetworkCollaborate or MainAction.PitchFulfillSponsor)), p => Assert.Null(p.Odds));
+    }
+
+    [Fact]
+    public async Task Pitch_plan_carries_the_pitch_odds()
+    {
+        var kit = AppTestKit.WithContent(TestPaths.ContentM3);
+        var view = (await kit.NewCareerAsync()).Career;
+        var pitch = view.Next.Plans.First(p => p.Plan.MainAction == MainAction.PitchFulfillSponsor);
+        Assert.Equal(TestContent.Of(TestPaths.ContentM3).Balance.Sponsors!.Pitch.LabelPl, pitch.Odds!.Label);
     }
 
     [Fact]

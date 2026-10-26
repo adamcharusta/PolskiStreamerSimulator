@@ -82,16 +82,20 @@ public sealed class CareerViewBuilder(WeekEngine engine)
         return !decision.IsSuccess && decision.Error.Code == DomainErrorCode.NoPendingDecision ? null : Expect(decision);
     }
 
-    /// <summary>Every plan with its disabled reason and, for a rolled action (networking), the odds of its roll.</summary>
+    /// <summary>Every plan with its disabled reason and, for a rolled action (networking, a sponsor pitch), the odds of its roll.</summary>
     private PlanOptionView[] Plans(CareerState s, ContentSnapshot c)
         => [.. Expect(engine.LegalPlans(s, c)).Select(l => new PlanOptionView(
             ReportViews.Plan(l.Plan),
             l.DisabledReason,
-            Expect(engine.PresentAction(s, c, l.Plan)) is { } odds ? Choice(odds, c.Balance.NetworkCollaborate!) : null))];
+            Expect(engine.PresentAction(s, c, l.Plan)) is { } odds ? Choice(odds, ActionChoice(l.Plan, c.Balance)) : null))];
+
+    /// <summary>The choice definition behind a rolled action's odds.</summary>
+    private static ChoiceDefinition ActionChoice(WeekPlan plan, BalanceConstants b)
+        => plan.Action == MainAction.PitchFulfillSponsor ? b.Sponsors!.Pitch : b.NetworkCollaborate!;
 
     private static EventView Event(EventPresentation presented, ContentSnapshot c, bool mandatory)
     {
-        var definition = c.Events.First(e => string.Equals(e.Id, presented.EventId, StringComparison.Ordinal));
+        var definition = presented.Definition ?? c.Events.First(e => string.Equals(e.Id, presented.EventId, StringComparison.Ordinal));
         return new EventView(
             presented.EventId,
             definition.TitleKey,
