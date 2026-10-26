@@ -59,6 +59,9 @@ public static class StoredContract
         Default(career, "offers", new JsonArray());
         Default(career, "contracts", new JsonArray());
         Default(career, "sideBusiness", null);
+        Default(career, "achievements", new JsonArray());
+        Default(career, "score", null);
+        Default(career, "summary", null);
         UpgradeReport(career["lastReport"] as JsonObject);
         if (career["next"] is not JsonObject next)
         {

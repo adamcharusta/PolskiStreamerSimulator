@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/Button';
 
 import { RetryBanner } from '../RetryBanner';
 import { useBatchCommand } from '../useCareerCommand';
+import {
+  type BatchLength,
+  batchLengths,
+  normalised,
+  saveStrategy,
+  storedStrategy,
+  strategyErrors,
+} from './strategy';
+import { StrategyForm } from './StrategyForm';
 
 export interface BatchLauncherProps {
   readonly career: CareerView;
@@ -14,10 +23,16 @@ export interface BatchLauncherProps {
   readonly onDone: (outcome: BatchOutcome) => void;
 }
 
-/** One request plays up to 13 weeks; each week is already saved, so the dialog only closes when it is done. */
+/**
+ * One request plays 4, 13 or 52 weeks under the player's strategy; each week is already saved, so the dialog only
+ * closes when it is done. The strategy is remembered per career in this browser.
+ */
 export function BatchLauncher({ career, secret, onDone }: BatchLauncherProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [weeks, setWeeks] = useState<BatchLength>(13);
+  const [strategy, setStrategy] = useState(() => storedStrategy(career.careerId));
+  const valid = strategyErrors(strategy).length === 0;
   const command = useBatchCommand(
     career.careerId,
     secret,
@@ -49,18 +64,46 @@ export function BatchLauncher({ career, secret, onDone }: BatchLauncherProps) {
         <AlertDialog.Content className="dialog panel">
           <AlertDialog.Title className="panel-title">{t('batch.confirmTitle')}</AlertDialog.Title>
           <AlertDialog.Description>{t('batch.confirmBody')}</AlertDialog.Description>
+          <fieldset className="choices" disabled={busy}>
+            <legend className="font-bold">{t('batch.length')}</legend>
+            {batchLengths.map((length) => (
+              <label key={length} className="choice">
+                <input
+                  type="radio"
+                  name="batch-weeks"
+                  value={length}
+                  checked={weeks === length}
+                  onChange={() => {
+                    setWeeks(length);
+                  }}
+                />
+                {t('batch.weeks', { count: length })}
+              </label>
+            ))}
+          </fieldset>
+          <details>
+            <summary>{t('strategy.title')}</summary>
+            <StrategyForm
+              value={strategy}
+              onChange={setStrategy}
+              disabled={busy}
+              economy={career.rulesetId === 'm3-systems.2'}
+            />
+          </details>
           {command.pending && <output className="block">{t('batch.running')}</output>}
           <RetryBanner command={command} />
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               variant="primary"
-              disabled={command.stalled}
+              disabled={command.stalled || !valid}
               pending={command.pending}
               onClick={() => {
-                command.run({ expectedVersion: career.version, weeks: 13 });
+                const sent = normalised(strategy);
+                saveStrategy(career.careerId, sent);
+                command.run({ expectedVersion: career.version, weeks, strategy: sent });
               }}
             >
-              {t('batch.confirm')}
+              {t('batch.confirm', { count: weeks })}
             </Button>
             <AlertDialog.Cancel asChild>
               <Button disabled={busy}>{t('batch.cancel')}</Button>

@@ -7,7 +7,7 @@ import { blockedKey } from '../offers';
 
 const numbers = new Set(['energy', 'burnout', 'drama', 'limit', 'threshold', 'everyWeeks']);
 const probabilities = new Set(['probability', 'bestProbability', 'retention']);
-const money = new Set(['pricePln', 'cashPln']);
+const money = new Set(['pricePln', 'cashPln', 'reservePln']);
 const labels: Record<string, string> = {
   slot: 'slot',
   category: 'category',
@@ -15,6 +15,7 @@ const labels: Record<string, string> = {
   categoryRule: 'reason.rule',
   platform: 'platform',
   tier: 'wager',
+  action: 'action',
 };
 
 /** Policy values arrive as invariant strings (`20.000000`, `0.600000`, `microphone`); show them the Polish way. */

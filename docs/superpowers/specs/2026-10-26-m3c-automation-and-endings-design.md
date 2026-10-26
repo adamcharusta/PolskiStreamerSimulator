@@ -1,7 +1,7 @@
 # M3-C Automation and Endings — Design
 
 Date: 2026-10-26
-Status: **Agent proposal; rules, content and simulation delivered in PR 1 (2026-10-26), numbers tuned by the [M3-C baseline simulation](../../reports/m3c-baseline-simulation.md)** (final values in [gameplay §13](../../gameplay-systems.md#13-m3-c-automation-and-endings)). The owner asked the agent to design sub-project C without a design interview ("tak rób", 2026-10-26, answering whether the agent should design C itself as it did B). Every rule and number below is an agent proposal to validate in review and by the M3-C simulation; nothing here is a confirmed owner choice unless it cites the GDD.
+Status: **Agent proposal; rules, content and simulation delivered in PR 1 ([#88](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/88), 2026-10-26), API and browser play in PR 2 (2026-10-26), numbers tuned by the [M3-C baseline simulation](../../reports/m3c-baseline-simulation.md)** (final values in [gameplay §13](../../gameplay-systems.md#13-m3-c-automation-and-endings)). The owner asked the agent to design sub-project C without a design interview ("tak rób", 2026-10-26, answering whether the agent should design C itself as it did B). Every rule and number below is an agent proposal to validate in review and by the M3-C simulation; nothing here is a confirmed owner choice unless it cites the GDD.
 Milestone: [M3 — Complete gameplay systems](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3), sub-project C, delivering [#22](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/22) and [#23](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/23) ([TD-109](../../technical-decisions.md)).
 Builds on: [M3-B economy and risk](2026-10-21-m3b-economy-and-risk-design.md) (ruleset `m3-systems.2`, sponsor offers, platform bans, policies `M3BAll`).
 
@@ -105,6 +105,7 @@ Proposed `content/m3` set (11 achievements, 16 points before tuning; the tuned s
 1. Event-response priorities are deferred (§3); risk appetite covers the gamble-or-safe choice. Cost: one gameplay §8 field missing until M5.
 2. Strategies are remembered in the browser per career and recorded in each batch request, not stored as server objects. Cost: a strategy does not follow the player to another browser.
 3. Ranked eligibility moves to #27 (leaderboard), because no career is ranked before M4. Cost: #23's scope text changes.
+5. The career API had no way to retire early, so `EarlyRetirement` was unreachable from the browser; the action list gains `retire` (log kind `Retire`), answered between weeks like the domain rule (refused while a decision is queued or a week runs). Cost: one more command to protect in the ranked log (M4).
 4. Achievements are content data, so the new set changes only careers whose content snapshot has the section; no new ruleset ID is needed (the snapshot is pinned per career).
 
 ## 11. Delivery

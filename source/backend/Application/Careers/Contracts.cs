@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Application.Careers;
@@ -39,7 +40,37 @@ public sealed record CareerView(
     IReadOnlyList<Platform> BannedPlatforms,
     IReadOnlyList<OfferView> Offers,
     IReadOnlyList<ContractView> Contracts,
-    SideBusinessView? SideBusiness);
+    SideBusinessView? SideBusiness,
+    IReadOnlyList<AchievementView> Achievements,
+    ScoreView? Score,
+    EndingSummaryView? Summary);
+
+/// <summary>An achievement of the career's content with its Polish ICU name and description, its points and whether it is earned (earned first).</summary>
+public sealed record AchievementView(string Id, string? Name, string? Description, int Points, bool Earned);
+
+/// <summary>The final score: the normalised components, their points, the base score, both multipliers and the total.</summary>
+public sealed record ScoreView(
+    decimal Followers,
+    decimal Wealth,
+    decimal Achievements,
+    long FollowersPoints,
+    long WealthPoints,
+    long AchievementPoints,
+    long BaseScore,
+    decimal DifficultyMultiplier,
+    decimal BackgroundMultiplier,
+    long FinalScore);
+
+/// <summary>What the ending narrative is built from: reason, weeks, dominant category, reputation, platforms, peak follower milestone and earned achievements.</summary>
+public sealed record EndingSummaryView(
+    EndingReason Reason,
+    int WeeksPlayed,
+    Category DominantCategory,
+    Reputation Reputation,
+    Platform Platform,
+    IReadOnlyList<Platform> BannedPlatforms,
+    int PeakFollowersMilestone,
+    IReadOnlyList<string> Achievements);
 
 /// <summary>An active policy strike on a platform and the last settled week in which it still counts.</summary>
 public sealed record StrikeView(Platform Platform, int GivenWeek, int ExpiresAfterWeek);

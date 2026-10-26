@@ -82,7 +82,7 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
 
   await page.getByRole('button', { name: pl.batch.launch }).click();
-  await page.getByRole('button', { name: pl.batch.confirm }).click();
+  await page.getByRole('button', { name: fill(pl.batch.confirm_many, { count: 13 }) }).click();
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
     timeout: 60_000,
   });
@@ -180,4 +180,46 @@ test('an Industry Insider accepts the lead sponsor offer and plays the deal week
       .getByRole('heading', { name: pl.plan.title })
       .or(page.getByRole('button', { name: pl.event.choose })),
   ).toBeVisible();
+});
+
+test('a 4-week batch under a custom strategy, then early retirement shows the score', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Strategia E2E');
+  await page.getByRole('button', { name: pl.create.submit }).click();
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+
+  await page.getByRole('button', { name: pl.batch.launch }).click();
+  await page.getByRole('radio', { name: fill(pl.batch.weeks_few, { count: 4 }) }).check();
+  await page.getByText(pl.strategy.title, { exact: true }).first().click();
+  await page.getByLabel(pl.strategy.risk).selectOption('safe');
+  await expectAccessible(page, 'batch strategy');
+  await page.getByRole('button', { name: fill(pl.batch.confirm_few, { count: 4 }) }).click();
+  await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole('button', { name: pl.batch.next }).click();
+
+  const decision = page.getByRole('button', { name: pl.event.choose });
+  const retire = page.getByRole('button', { name: pl.retire.action });
+  for (;;) {
+    await expect(decision.or(retire)).toBeVisible();
+    if (await retire.isVisible()) {
+      break;
+    }
+
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await decision.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+  }
+
+  await page.getByRole('button', { name: pl.retire.action }).click();
+  await page.getByRole('button', { name: pl.retire.confirm }).click();
+  await expect(page.getByRole('table', { name: pl.ending.score.title })).toBeVisible();
+  await expect(page.getByText(pl.career.ending.earlyRetirement)).toBeVisible();
+  await expectAccessible(page, 'ending');
 });

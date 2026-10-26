@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Domain.Careers;
@@ -17,7 +18,32 @@ public enum BatchStopReason
     Interrupted,
 }
 
-public sealed record BatchInput(long ExpectedVersion, int Weeks);
+/// <summary>A batch of 4, 13 or 52 weeks; without a strategy it plays <c>Balanced</c>. The strategy is omitted from JSON when null, so stored requests compare byte for byte.</summary>
+public sealed record BatchInput(
+    long ExpectedVersion,
+    int Weeks,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StrategyInput? Strategy = null);
+
+/// <summary>The player's strategy for a batch (M3-C spec §5), as the contract carries it.</summary>
+public sealed record StrategyInput(
+    CategoryPlan CategoryPlan,
+    Category? Focus,
+    IReadOnlyList<MainAction> Routine,
+    int RestBelowEnergy,
+    int RestAboveBurnout,
+    long ReservePln,
+    bool Upgrades,
+    RiskAppetite Risk,
+    bool AcceptOffers,
+    WagerTier? Wager,
+    bool SideBusiness)
+{
+    public static StrategyInput From(Strategy s)
+        => new(s.CategoryPlan, s.Focus, [.. s.Routine], s.RestBelowEnergy, s.RestAboveBurnout, s.ReservePln, s.Upgrades, s.Risk, s.AcceptOffers, s.Wager, s.SideBusiness);
+
+    public Strategy ToStrategy()
+        => new(CategoryPlan, Focus, [.. Routine ?? []], RestBelowEnergy, RestAboveBurnout, ReservePln, Upgrades, Risk, AcceptOffers, Wager, SideBusiness);
+}
 
 public sealed record ReasonView(string Code, IReadOnlyDictionary<string, string> Args);
 
@@ -46,8 +72,8 @@ public sealed record RunBatch(Guid CareerId, string? Secret, Guid CommandId, Bat
 }
 
 /// <summary>
-/// Plays up to 13 weeks with the fixed <c>Balanced</c> policy (TD-90), committing each week on its own; stops at an
-/// ending, before a week that needs the player, or when another request changes the career.
+/// Plays 4, 13 or 52 weeks with the player's strategy, or with <c>Balanced</c> without one (TD-90, TD-118), committing
+/// each week on its own; stops at an ending, before a week that needs the player, or when another request changes the career.
 /// </summary>
 public sealed class RunBatchHandler(
     CareerAccess access,
@@ -57,15 +83,23 @@ public sealed class RunBatchHandler(
     CareerViewBuilder views,
     TimeProvider time)
 {
+    /// <summary>The batch length of the M2 slice, still the default of the client.</summary>
     public const int Weeks = 13;
 
-    private static readonly IChoicePolicy Policy = BuiltInPolicies.Balanced;
+    /// <summary>The batch lengths a player may choose (GDD: 4, 13 or 52 weeks).</summary>
+    public static readonly IReadOnlySet<int> AllowedWeeks = new HashSet<int> { 4, 13, 52 };
 
     public async Task<AppResult<BatchOutcome>> Handle(RunBatch command, CancellationToken cancellationToken)
     {
-        if (command.Input.Weeks != Weeks)
+        if (!AllowedWeeks.Contains(command.Input.Weeks))
         {
-            return AppResult<BatchOutcome>.Fail(ErrorCodes.ValidationFailed, "weeks must be 13");
+            return AppResult<BatchOutcome>.Fail(ErrorCodes.ValidationFailed, "weeks must be 4, 13 or 52");
+        }
+
+        if (PolicyFor(command.Input) is not { } policy)
+        {
+            var errors = command.Input.Strategy!.ToStrategy().Errors();
+            return AppResult<BatchOutcome>.Fail(ErrorCodes.ValidationFailed, string.Join(",", errors.Select(e => $"strategy:{e}")));
         }
 
         var opened = await access.OpenAsync(command.CareerId, command.Secret, cancellationToken);
@@ -91,17 +125,17 @@ public sealed class RunBatchHandler(
                 return AppResult<BatchOutcome>.Fail(refusal);
             }
 
-            stop = await PlayAsync(career, content, command.CommandId, requestJson, records, cancellationToken);
+            stop = await PlayAsync(career, content, command, requestJson, records, policy, cancellationToken);
         }
         else if (Owns(career, stored))
         {
             // Nothing else happened since this batch's last week: finish it (after a crash or beside a repeat) or report the same stop.
-            stop = await PlayAsync(career, content, command.CommandId, requestJson, records, cancellationToken);
+            stop = await PlayAsync(career, content, command, requestJson, records, policy, cancellationToken);
         }
         else
         {
             // Another command moved the career on; report what the batch committed and never play further weeks.
-            stop = records.Count == Weeks ? BatchStopReason.Completed : BatchStopReason.Interrupted;
+            stop = records.Count == command.Input.Weeks ? BatchStopReason.Completed : BatchStopReason.Interrupted;
         }
 
         var current = await store.FindAsync(career.Id, cancellationToken) ?? throw new InvalidOperationException("The career disappeared.");
@@ -155,9 +189,28 @@ public sealed class RunBatchHandler(
         }
     }
 
-    private async Task<BatchStopReason> PlayAsync(
-        StoredCareer career, ContentSnapshot c, Guid commandId, string requestJson, List<AutoWeekRecord> records, CancellationToken cancellationToken)
+    /// <summary><c>Balanced</c> without a strategy, the strategy's policy for a valid one, null for an invalid one.</summary>
+    private static IChoicePolicy? PolicyFor(BatchInput input)
     {
+        if (input.Strategy is not { } given)
+        {
+            return BuiltInPolicies.Balanced;
+        }
+
+        var strategy = given.ToStrategy();
+        return strategy.Errors().Count == 0 ? new StrategyPolicy("Strategy", strategy) : null;
+    }
+
+    private async Task<BatchStopReason> PlayAsync(
+        StoredCareer career,
+        ContentSnapshot c,
+        RunBatch command,
+        string requestJson,
+        List<AutoWeekRecord> records,
+        IChoicePolicy policy,
+        CancellationToken cancellationToken)
+    {
+        var commandId = command.CommandId;
         var s = career.State;
         while (true)
         {
@@ -166,7 +219,7 @@ public sealed class RunBatchHandler(
                 return BatchStopReason.CareerEnded;
             }
 
-            if (records.Count == Weeks)
+            if (records.Count == command.Input.Weeks)
             {
                 return BatchStopReason.Completed;
             }
@@ -176,7 +229,7 @@ public sealed class RunBatchHandler(
                 return BatchStopReason.PausedForDecision;
             }
 
-            var (next, week) = PlayWeek(s, c);
+            var (next, week) = PlayWeek(s, c, policy);
             var record = new AutoWeekRecord(CareerViewBuilder.Stats(s), CareerViewBuilder.Stats(next), week);
             var entry = new NewAction(commandId, records.Count + 1, ActionKind.AutoWeek, requestJson, ContractJson.Serialize(record), ContractJson.Serialize(week.Report));
             if (await store.AppendAsync(career.Id, s.StateVersion, next, entry, time.GetUtcNow(), cancellationToken) == AppendOutcome.Appended)
@@ -200,23 +253,23 @@ public sealed class RunBatchHandler(
     }
 
     /// <summary>Answers every open offer with the policy first (inside the week's log entry), then plans, plays and settles the week.</summary>
-    private (CareerState State, AutoWeekView Week) PlayWeek(CareerState s, ContentSnapshot c)
+    private (CareerState State, AutoWeekView Week) PlayWeek(CareerState s, ContentSnapshot c, IChoicePolicy policy)
     {
         var offers = new List<AutoOfferView>();
         foreach (var offer in s.Offers ?? [])
         {
-            var decision = Policy.ChooseOffer(s, c, offer, SponsorRules.AcceptRejection(s, c, offer));
+            var decision = policy.ChooseOffer(s, c, offer, SponsorRules.AcceptRejection(s, c, offer));
             s = Expect(engine.RespondOffer(s, c, offer.OfferId, decision.Accept, s.StateVersion));
             offers.Add(new AutoOfferView(offer.OfferId, offer.TemplateId, decision.Accept, Reason(decision.Reason)));
         }
 
-        var plan = Policy.ChoosePlan(s, c, Expect(engine.LegalPlans(s, c)));
+        var plan = policy.ChoosePlan(s, c, Expect(engine.LegalPlans(s, c)));
         s = Expect(engine.StartWeek(s, c, plan.Plan, s.StateVersion));
         var choices = new List<AutoChoiceView>();
         while (s.Pending!.Resolved.Length < s.Pending.EventIds.Length)
         {
             var presented = Expect(engine.PresentEvent(s, c));
-            var choice = Policy.ChooseEventChoice(s, presented);
+            var choice = policy.ChooseEventChoice(s, presented);
             s = Expect(engine.ResolveEvent(s, c, choice.ChoiceId, s.StateVersion));
             choices.Add(new AutoChoiceView(presented.EventId, choice.ChoiceId, Reason(choice.Reason), ReportViews.Roll(s.Pending!.Resolved[^1])));
         }

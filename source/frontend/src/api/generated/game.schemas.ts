@@ -4,6 +4,19 @@
  * Polski Streamer Simulator API
  * OpenAPI spec version: v1
  */
+/**
+ * An achievement of the career's content with its Polish ICU name and description, its points and whether it is earned (earned first).
+ */
+export interface AchievementView {
+  id: string;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  description: string | null;
+  points: number;
+  earned: boolean;
+}
+
 export type CareerStatus = typeof CareerStatus[keyof typeof CareerStatus];
 
 
@@ -457,6 +470,48 @@ export interface SideBusinessView {
 }
 
 /**
+ * The final score: the normalised components, their points, the base score, both multipliers and the total.
+ */
+export interface ScoreView {
+  followers: number;
+  wealth: number;
+  achievements: number;
+  followersPoints: number;
+  wealthPoints: number;
+  achievementPoints: number;
+  baseScore: number;
+  difficultyMultiplier: number;
+  backgroundMultiplier: number;
+  finalScore: number;
+}
+
+/**
+ * How the audience remembers the streamer at the end of a career.
+ */
+export type Reputation = typeof Reputation[keyof typeof Reputation];
+
+
+export const Reputation = {
+  trusted: 'trusted',
+  controversial: 'controversial',
+  steady: 'steady',
+} as const;
+
+/**
+ * What the ending narrative is built from: reason, weeks, dominant category, reputation, platforms, peak follower milestone and earned achievements.
+ */
+export interface EndingSummaryView {
+  reason: EndingReason;
+  weeksPlayed: number;
+  dominantCategory: Category;
+  reputation: Reputation;
+  platform: Platform;
+  bannedPlatforms: Platform[];
+  peakFollowersMilestone: number;
+  achievements: string[];
+}
+
+/**
  * A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.
  */
 export interface CareerView {
@@ -481,6 +536,9 @@ export interface CareerView {
   offers: OfferView[];
   contracts: ContractView[];
   sideBusiness: null | SideBusinessView;
+  achievements: AchievementView[];
+  score: null | ScoreView;
+  summary: null | EndingSummaryView;
 }
 
 export interface ActionOutcome {
@@ -498,6 +556,7 @@ export const ActionType = {
   settleWeek: 'settleWeek',
   resolveDecision: 'resolveDecision',
   respondOffer: 'respondOffer',
+  retire: 'retire',
 } as const;
 
 /**
@@ -594,10 +653,52 @@ export interface BatchOutcome {
   career: CareerView;
 }
 
+/**
+ * How a strategy picks the week's category.
+ */
+export type CategoryPlan = typeof CategoryPlan[keyof typeof CategoryPlan];
+
+
+export const CategoryPlan = {
+  strongest: 'strongest',
+  focus: 'focus',
+  rotate: 'rotate',
+} as const;
+
+/**
+ * How much a strategy gambles on event choices and how much drama it tolerates.
+ */
+export type RiskAppetite = typeof RiskAppetite[keyof typeof RiskAppetite];
+
+
+export const RiskAppetite = {
+  safe: 'safe',
+  balanced: 'balanced',
+  bold: 'bold',
+} as const;
+
+/**
+ * The player's strategy for a batch (M3-C spec §5), as the contract carries it.
+ */
+export interface StrategyInput {
+  categoryPlan: CategoryPlan;
+  focus: null | Category;
+  routine: MainAction[];
+  restBelowEnergy: number;
+  restAboveBurnout: number;
+  reservePln: number;
+  upgrades: boolean;
+  risk: RiskAppetite;
+  acceptOffers: boolean;
+  wager: null | WagerTier;
+  sideBusiness: boolean;
+}
+
 export interface BatchRequest {
   commandId: string;
   expectedVersion: number;
   weeks: number;
+  strategy?: null | StrategyInput;
 }
 
 export interface DifficultyOptionView {

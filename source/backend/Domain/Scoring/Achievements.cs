@@ -46,6 +46,9 @@ public static class Achievements
         => FollowerMilestones.Where(m => achievements.Contains(m.Id)).Sum(m => m.Points)
             + (achievements.Contains(CareerCompleted) ? CareerCompletedPoints : 0);
 
+    /// <summary>The M1 achievement IDs in order: the follower milestones, then completion.</summary>
+    public static IReadOnlyList<string> M1Ids { get; } = [.. FollowerMilestones.Select(m => m.Id), CareerCompleted];
+
     private static bool Met(CareerState s, bool completed, AchievementDefinition d)
     {
         var threshold = d.Threshold ?? Fixed.Zero;

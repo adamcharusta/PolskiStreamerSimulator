@@ -15,6 +15,7 @@ import { CommandNotice } from './CommandNotice';
 import { EndedView } from './stage/EndedView';
 import { LiveEvent } from './stage/LiveEvent';
 import { PlanWeek } from './stage/PlanWeek';
+import { RetireButton } from './stage/RetireButton';
 import { RollResult } from './stage/RollResult';
 import { SettleWeek } from './stage/SettleWeek';
 import { WeekReport } from './stage/WeekReport';
@@ -90,6 +91,7 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
               onReveal({ kind: 'batch', outcome }, t(`batch.stop.${outcome.stopReason}`));
             }}
           />
+          <RetireButton career={career} secret={secret} />
         </PlanWeek>
       );
     }

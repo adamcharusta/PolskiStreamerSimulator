@@ -65,7 +65,7 @@ public sealed class ActionRequestValidator : AbstractValidator<ActionRequest>
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 
-public sealed record BatchRequest(Guid CommandId, long ExpectedVersion, int Weeks);
+public sealed record BatchRequest(Guid CommandId, long ExpectedVersion, int Weeks, StrategyInput? Strategy = null);
 
 public sealed class BatchRequestValidator : AbstractValidator<BatchRequest>
 {
@@ -73,7 +73,17 @@ public sealed class BatchRequestValidator : AbstractValidator<BatchRequest>
     {
         RuleFor(r => r.CommandId).NotEmpty();
         RuleFor(r => r.ExpectedVersion).GreaterThanOrEqualTo(0);
-        RuleFor(r => r.Weeks).Equal(RunBatchHandler.Weeks);
+        RuleFor(r => r.Weeks).Must(RunBatchHandler.AllowedWeeks.Contains).WithMessage("Weeks must be 4, 13 or 52.");
+        When(r => r.Strategy is not null, () =>
+        {
+            RuleFor(r => r.Strategy!.CategoryPlan).IsInEnum();
+            RuleFor(r => r.Strategy!.Focus).IsInEnum();
+            RuleFor(r => r.Strategy!.Risk).IsInEnum();
+            RuleFor(r => r.Strategy!.Wager).IsInEnum();
+            RuleFor(r => r.Strategy!.Routine).NotNull();
+            RuleForEach(r => r.Strategy!.Routine).IsInEnum();
+            RuleFor(r => r.Strategy!).Must(s => s.Routine is null || s.ToStrategy().Errors().Count == 0).WithMessage(s => string.Join(", ", s.Strategy!.ToStrategy().Errors()));
+        });
     }
 
     protected override bool PreValidate(ValidationContext<BatchRequest> context, ValidationResult result)
