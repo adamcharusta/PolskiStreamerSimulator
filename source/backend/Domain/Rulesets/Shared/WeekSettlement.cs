@@ -106,7 +106,7 @@ public static class WeekSettlement
 
         state = state with
         {
-            Achievements = Achievements.Evaluate(state, completed: ending == EndingReason.Completed),
+            Achievements = Achievements.Evaluate(state, completed: ending == EndingReason.Completed, c.Balance.Achievements),
             Metrics = state.Metrics with
             {
                 PeakFollowersMilestone = Math.Max(state.Metrics.PeakFollowersMilestone, Achievements.FollowersMilestone(state.Followers)),

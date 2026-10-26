@@ -1,9 +1,14 @@
 using System.Collections.Immutable;
 using PolskiStreamerSimulator.Domain.Careers;
+using PolskiStreamerSimulator.Domain.Content;
+using PolskiStreamerSimulator.Domain.Numerics;
 
 namespace PolskiStreamerSimulator.Domain.Scoring;
 
-/// <summary>Minimal M1 achievement set; points feed the 10% achievement component of the score.</summary>
+/// <summary>
+/// Achievements and their points, which feed the 10% achievement component of the score: the minimal M1 set, or the
+/// content's <c>balance.achievements</c> definitions when it has them (M3-C).
+/// </summary>
 public static class Achievements
 {
     public const string CareerCompleted = "career-completed";
@@ -22,6 +27,33 @@ public static class Achievements
     {
         var earned = s.Achievements.Union(FollowerMilestones.Where(m => s.Followers >= m.Followers).Select(m => m.Id));
         return completed ? earned.Add(CareerCompleted) : earned;
+    }
+
+    /// <summary>Earned achievements by <paramref name="definitions"/>, or by the M1 set when there are none; never revoked.</summary>
+    public static ImmutableHashSet<string> Evaluate(CareerState s, bool completed, ImmutableArray<AchievementDefinition>? definitions)
+        => definitions is { } defs
+            ? s.Achievements.Union(defs.Where(d => Met(s, completed, d)).Select(d => d.Id))
+            : Evaluate(s, completed);
+
+    /// <summary>Points of the earned achievements by <paramref name="definitions"/>, or by the M1 set when there are none.</summary>
+    public static int Points(ImmutableHashSet<string> achievements, ImmutableArray<AchievementDefinition>? definitions)
+        => definitions is { } defs ? defs.Where(d => achievements.Contains(d.Id)).Sum(d => d.Points) : Points(achievements);
+
+    private static bool Met(CareerState s, bool completed, AchievementDefinition d)
+    {
+        var threshold = d.Threshold ?? Fixed.Zero;
+        return d.Kind switch
+        {
+            AchievementKind.Followers => Fixed.FromInt(s.Followers) >= threshold,
+            AchievementKind.Cash => Fixed.FromInt(s.CashPln) >= threshold,
+            AchievementKind.Completed => completed,
+            AchievementKind.Mastery => s.Skill.Values.Any(skill => skill >= threshold),
+            AchievementKind.Specialist => s.Metrics.WeeksPerCategory.Values.Any(weeks => Fixed.FromInt(weeks) >= threshold),
+            AchievementKind.PlatformMove => s.PlatformSinceWeek is > 1,
+            AchievementKind.SponsorInstallments => Fixed.FromInt(s.Metrics.SponsorInstallments ?? 0) >= threshold,
+            AchievementKind.DramaSurvived => completed && (s.Metrics.PeakDrama ?? Fixed.Zero) >= threshold,
+            _ => false,
+        };
     }
 
     public static int Points(ImmutableHashSet<string> achievements)

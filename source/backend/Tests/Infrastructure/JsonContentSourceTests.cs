@@ -397,6 +397,32 @@ public sealed class JsonContentSourceTests : IDisposable
     private static byte[] M3bEvents() => SchemaTwoWith(sponsors: TrustedTea);
 
     [Fact]
+    public void Balance_reads_the_achievements()
+    {
+        var balance = M3bBalance(sections => sections["achievements"] = JsonNode.Parse("""
+            [ { "id": "fans", "name": "Fani", "description": "10 000 obserwujących", "kind": "followers", "threshold": 10000, "points": 1 },
+              { "id": "done", "name": "Meta", "description": "Cała kariera", "kind": "completed", "points": 2 },
+              { "id": "partner", "name": "Partner", "description": "Raty", "kind": "sponsorInstallments", "threshold": 24, "points": 2 } ]
+            """));
+        var defs = JsonContentSource.Parse(balance, M3bEvents(), "test").Balance.Achievements!.Value;
+        Assert.Equal(new AchievementDefinition("fans", "Fani", "10 000 obserwujących", AchievementKind.Followers, Fixed.FromInt(10_000), 1), defs[0]);
+        Assert.Equal((AchievementKind.Completed, (Fixed?)null), (defs[1].Kind, defs[1].Threshold));
+        Assert.Equal(AchievementKind.SponsorInstallments, defs[2].Kind);
+    }
+
+    [Fact]
+    public void Unknown_achievement_kind_is_rejected()
+    {
+        var balance = M3bBalance(sections => sections["achievements"] = JsonNode.Parse("""[ { "id": "x", "name": "X", "description": "X", "kind": "luck", "points": 1 } ]"""));
+        var error = Assert.Throws<InvalidDataException>(() => JsonContentSource.Parse(balance, M3bEvents(), "test"));
+        Assert.Contains("achievements[0].kind", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Balance_without_achievements_leaves_them_null()
+        => Assert.Null(new JsonContentSource(TestPaths.Golden("m3-systems.1")).Load().Balance.Achievements);
+
+    [Fact]
     public void Balance_without_m3b_sections_leaves_them_null()
     {
         var b = new JsonContentSource(TestPaths.Golden("m3-systems.1")).Load().Balance;
