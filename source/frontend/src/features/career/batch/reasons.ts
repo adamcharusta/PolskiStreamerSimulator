@@ -56,7 +56,7 @@ export function reasonText(t: TFunction, reason: ReasonView): string {
       : reason.code;
   const decision = t(`reason.${key}`, { ...args, defaultValue: t('reason.unknown') });
   const { category, categoryRule } = args;
-  return category === undefined
+  return category === undefined || categoryRule === undefined
     ? decision
-    : `${decision} ${t('reason.category', { category, rule: categoryRule ?? '' })}`;
+    : `${decision} ${t('reason.category', { category, rule: categoryRule })}`;
 }

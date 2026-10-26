@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { count, pln, signed, stat } from '@/format';
 
+import { RollStory } from '../RollStory';
 import { WeekReport } from '../stage/WeekReport';
 import { reasonText } from './reasons';
 
@@ -100,13 +101,7 @@ export function BatchResult({
                 <ul>
                   {week.choices.map((choice, index) => (
                     <li key={`${choice.eventId}-${String(index)}`}>
-                      {t('batch.choice', {
-                        event: t(`event.${choice.eventId}.title`, { defaultValue: choice.eventId }),
-                        choice: t(`event.${choice.eventId}.${choice.choiceId}`, {
-                          defaultValue: choice.choiceId,
-                        }),
-                      })}{' '}
-                      — {t(`roll.outcome.${choice.roll.outcome}`)}.{' '}
+                      <RollStory roll={choice.roll} pronouns={outcome.career.pronouns} />{' '}
                       <span className="muted">{reasonText(t, choice.reason)}</span>
                     </li>
                   ))}
@@ -114,7 +109,7 @@ export function BatchResult({
               )}
               <details>
                 <summary>{t('report.title', { week: week.report.week })}</summary>
-                <WeekReport report={week.report} />
+                <WeekReport report={week.report} pronouns={outcome.career.pronouns} />
               </details>
             </li>
           );

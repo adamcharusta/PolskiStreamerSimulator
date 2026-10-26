@@ -7,6 +7,7 @@ import {
 
 import { CareerScreen } from '@/features/career/CareerScreen';
 import { CreateCareerScreen } from '@/features/create-career/CreateCareerScreen';
+import { HistoryScreen } from '@/features/history/HistoryScreen';
 import { HomeScreen } from '@/features/home/HomeScreen';
 
 import { RootLayout } from './RootLayout';
@@ -29,9 +30,15 @@ const careerRoute = createRoute({
   component: CareerScreen,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, createCareerRoute, careerRoute]);
+const historyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/kariera/$careerId/historia',
+  component: HistoryScreen,
+});
 
-/** One game route per career: its stage follows the server's next step, not the URL (TD-98). */
+const routeTree = rootRoute.addChildren([homeRoute, createCareerRoute, careerRoute, historyRoute]);
+
+/** One game route per career (its stage follows the server's next step, not the URL, TD-98) and its history (M3-D). */
 export function createAppRouter(history?: RouterHistory) {
   return createRouter({
     routeTree,

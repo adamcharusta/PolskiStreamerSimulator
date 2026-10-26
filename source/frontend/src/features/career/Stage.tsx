@@ -69,11 +69,11 @@ export function Stage({
 function StageView({ career, secret, revealed, onReveal, onClose }: StageViewProps) {
   const { t } = useTranslation();
   if (revealed?.kind === 'roll') {
-    return <RollResult roll={revealed.roll} onNext={onClose} />;
+    return <RollResult roll={revealed.roll} onNext={onClose} pronouns={career.pronouns} />;
   }
 
   if (revealed?.kind === 'report') {
-    return <WeekReport report={revealed.report} onNext={onClose} />;
+    return <WeekReport report={revealed.report} onNext={onClose} pronouns={career.pronouns} />;
   }
 
   if (revealed?.kind === 'batch') {

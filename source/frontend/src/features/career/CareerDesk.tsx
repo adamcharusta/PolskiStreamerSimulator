@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type CareerView, NextStepKind } from '@/api/generated/game.schemas';
 
+import { DashboardCard } from './DashboardCard';
 import { OffersCard } from './OffersCard';
 import { PlatformCard } from './PlatformCard';
 import { Stage } from './Stage';
@@ -32,6 +33,7 @@ export function CareerDesk({
       <TopBar career={career} />
       <div className="desk">
         <div className="grid min-w-0 content-start gap-3">
+          <DashboardCard career={career} />
           {planning && career.rulesetId === ECONOMY_RULESET && <PlatformCard career={career} />}
           {planning && <OffersCard key={career.version} career={career} secret={secret} />}
           <Stage key={career.careerId} career={career} secret={secret} />

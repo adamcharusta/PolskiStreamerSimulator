@@ -57,7 +57,32 @@ export function offeredActions(plans: readonly PlanOptionView[]): MainAction[] {
   return [...new Set(plans.map((option) => option.plan.mainAction))];
 }
 
-/** Why an action cannot be chosen in a category, or null when at least one of its options is legal. */
+/**
+ * The reasons that explain a blocked action best come first (#76): the week's own limits, then energy and cash, then
+ * the action's requirements; any other reason ranks after these.
+ */
+const reasonPriority = [
+  'decision-pending',
+  'rest-only',
+  'forced-rest',
+  'not-enough-energy',
+  'negative-cash',
+  'unaffordable',
+  'needs-cash',
+  'too-early',
+  'needs-followers',
+  'too-soon',
+  'platform-banned',
+  'no-sponsor-fits',
+  'max-tier',
+];
+
+const rank = (reason: string) => {
+  const index = reasonPriority.indexOf(reason);
+  return index === -1 ? reasonPriority.length : index;
+};
+
+/** Why an action cannot be chosen in a category (the most relevant reason of its options), or null when one is legal. */
 export function actionBlock(
   plans: readonly PlanOptionView[],
   action: MainAction,
@@ -70,7 +95,8 @@ export function actionBlock(
     return null;
   }
 
-  return options[0]?.disabledReason ?? 'unknown';
+  const reasons = options.map((option) => option.disabledReason ?? 'unknown');
+  return reasons.toSorted((a, b) => rank(a) - rank(b))[0] ?? 'unknown';
 }
 
 export function strongestCategory(stats: CareerStatsView): Category {

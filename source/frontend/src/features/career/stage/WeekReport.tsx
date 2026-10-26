@@ -1,19 +1,27 @@
 import { useTranslation } from 'react-i18next';
 
-import type { ReportLineView, RollView, WeekReportView } from '@/api/generated/game.schemas';
+import {
+  PronounSet,
+  type ReportLineView,
+  type RollView,
+  type WeekReportView,
+} from '@/api/generated/game.schemas';
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { count, multiplier, percent, pln, signed } from '@/format';
 
-import { lineLabel, rollLine, statChangeText } from '../reportLabels';
+import { lineLabel, statChangeText } from '../reportLabels';
+import { RollStory } from '../RollStory';
 
 export interface WeekReportProps {
   readonly report: WeekReportView;
   /** Given when the report is the current step; folded reports (last report, batch ledger) have no button. */
   readonly onNext?: () => void;
+  /** The career's pronouns for the authored roll texts; the neutral form without them. */
+  readonly pronouns?: PronounSet;
 }
 
-export function WeekReport({ report, onNext }: WeekReportProps) {
+export function WeekReport({ report, onNext, pronouns = PronounSet.nonbinary }: WeekReportProps) {
   const { t } = useTranslation();
   const title = t('report.title', { week: report.week });
   return (
@@ -33,7 +41,9 @@ export function WeekReport({ report, onNext }: WeekReportProps) {
         {report.actionRoll !== null && (
           <>
             <dt>{t('report.actionRoll')}</dt>
-            <dd className="m-0">{rollLine(t, report.actionRoll)}</dd>
+            <dd className="m-0">
+              <RollStory roll={report.actionRoll} pronouns={pronouns} />
+            </dd>
           </>
         )}
       </dl>
@@ -48,7 +58,8 @@ export function WeekReport({ report, onNext }: WeekReportProps) {
         </p>
       )}
       <RiskLines report={report} />
-      <DecisionRolls rolls={report.decisionRolls} />
+      <Rolls title={t('report.decisions')} rolls={report.decisionRolls} pronouns={pronouns} />
+      <Rolls title={t('report.events')} rolls={report.rolls} pronouns={pronouns} />
       <MoneyLines title={t('report.income')} lines={report.income} sign={1} />
       <MoneyLines title={t('report.costs')} lines={report.costs} sign={-1} />
       <h3 className="font-bold">{t('report.statChanges')}</h3>
@@ -143,20 +154,28 @@ function RiskLines({ report }: { readonly report: WeekReportView }) {
   );
 }
 
-/** The rolls of the mandatory decisions answered before the week (M3); nothing when there were none. */
-function DecisionRolls({ rolls }: { readonly rolls: readonly RollView[] }) {
-  const { t } = useTranslation();
+/** Rolls with their event, response, result and authored outcome text; nothing when there were none. */
+function Rolls({
+  title,
+  rolls,
+  pronouns,
+}: {
+  readonly title: string;
+  readonly rolls: readonly RollView[];
+  readonly pronouns: PronounSet;
+}) {
   if (rolls.length === 0) {
     return null;
   }
 
-  const title = t('report.decisions');
   return (
     <>
       <h3 className="font-bold">{title}</h3>
       <ul aria-label={title}>
         {rolls.map((roll, index) => (
-          <li key={`${roll.eventId}-${String(index)}`}>{rollLine(t, roll)}</li>
+          <li key={`${roll.eventId}-${String(index)}`}>
+            <RollStory roll={roll} pronouns={pronouns} />
+          </li>
         ))}
       </ul>
     </>

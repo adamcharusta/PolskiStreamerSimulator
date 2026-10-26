@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CareerView, EndingSummaryView, ScoreView } from '@/api/generated/game.schemas';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { formatContent } from '@/content/icu';
+import { DiplomaButton } from '@/features/diploma/DiplomaButton';
 import { count, multiplier, percent } from '@/format';
 
 /** The ending: the narrative from the summary, the score breakdown with both multipliers, and the achievements. */
@@ -16,6 +17,7 @@ export function EndedView({ career }: { readonly career: CareerView }) {
       {career.summary !== null && <Narrative career={career} summary={career.summary} />}
       {career.score !== null && <ScoreTable score={career.score} />}
       <Achievements career={career} />
+      {career.score !== null && <DiplomaButton career={career} score={career.score} />}
       <p>
         <Link className="btn btn-secondary" to="/">
           {t('career.backHome')}
