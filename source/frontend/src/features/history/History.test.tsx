@@ -5,7 +5,7 @@ import extBold from '@fontsource/comic-relief/files/comic-relief-latin-ext-700-n
 import { screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { PDFDocument } from 'pdf-lib';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   Category,
@@ -14,7 +14,7 @@ import {
   type WeekSummaryView,
 } from '@/api/generated/game.schemas';
 import { ageAt, nextMilestone } from '@/features/career/dashboard';
-import { buildDiploma, runs } from '@/features/diploma/diploma';
+import { buildDiploma, fontkitOf, runs } from '@/features/diploma/diploma';
 import pl from '@/locales/pl/translation.json';
 
 import { serveCareer } from '../../../test/api';
@@ -176,6 +176,12 @@ describe('history screen', () => {
 });
 
 describe('diploma', () => {
+  it('takes fontkit from the default export of the browser build', () => {
+    const kit = { create: vi.fn() };
+    expect(fontkitOf({ default: kit })).toBe(kit);
+    expect(fontkitOf(kit as never)).toBe(kit);
+  });
+
   it('splits text into Latin and Latin Extended runs', () => {
     expect(runs('Żółw ok', new Set(Array.from('w ok', (c) => c.codePointAt(0) ?? 0)))).toEqual([
       { text: 'Żół', ext: true },

@@ -1,5 +1,17 @@
-import * as fontkit from '@pdf-lib/fontkit';
+import * as fontkitModule from '@pdf-lib/fontkit';
 import { PDFDocument, type PDFFont, type PDFPage, rgb } from 'pdf-lib';
+
+type Fontkit = typeof fontkitModule;
+
+/**
+ * The fontkit object: the browser build of `@pdf-lib/fontkit` exports it only as `default`, while the CommonJS build the
+ * tests load exposes `create` on the namespace.
+ */
+export function fontkitOf(module: Fontkit | { readonly default: Fontkit }): Fontkit {
+  return 'default' in module ? module.default : module;
+}
+
+const fontkit = fontkitOf(fontkitModule);
 
 /** The font files of one weight: the basic Latin subset and the Latin Extended subset with the Polish letters. */
 export interface FontPair {
