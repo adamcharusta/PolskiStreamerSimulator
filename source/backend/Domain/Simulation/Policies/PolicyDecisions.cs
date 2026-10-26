@@ -20,3 +20,5 @@ public sealed record PolicyReason(string Code, ImmutableSortedDictionary<string,
 public sealed record PlanDecision(WeekPlan Plan, PolicyReason Reason);
 
 public sealed record ChoiceDecision(string ChoiceId, PolicyReason Reason);
+
+public sealed record OfferDecision(bool Accept, PolicyReason Reason);

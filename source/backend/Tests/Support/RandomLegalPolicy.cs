@@ -34,6 +34,18 @@ public sealed class RandomLegalPolicy(ulong seed, int retireFromWeek = 900) : IC
         return new ChoiceDecision(available[index].ChoiceId, PolicyReason.Of("random"));
     }
 
+    /// <summary>Accepts at random when the engine would accept; declines a blocked offer.</summary>
+    public OfferDecision ChooseOffer(CareerState s, ContentSnapshot c, SponsorOffer offer, string? blockedReason)
+    {
+        if (blockedReason is not null)
+        {
+            return new OfferDecision(false, PolicyReason.Of("random"));
+        }
+
+        (var accept, rng) = rng.NextInt(0, 1);
+        return new OfferDecision(accept == 1, PolicyReason.Of("random"));
+    }
+
     public bool ShouldRetire(CareerState s)
     {
         if (s.Week.Value < retireFromWeek)
