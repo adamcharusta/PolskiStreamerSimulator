@@ -94,7 +94,7 @@ describe('game screen', () => {
     captureBatches(() => HttpResponse.json(batchOutcome()));
     const { user } = renderApp(path);
 
-    await user.click(await screen.findByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(await screen.findByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
     expect(
       await screen.findByRole('heading', { name: 'Wynik automatycznych tygodni' }),

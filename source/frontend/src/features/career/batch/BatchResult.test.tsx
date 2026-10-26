@@ -9,7 +9,7 @@ import { BatchResult } from './BatchResult';
 
 describe('batch result', () => {
   it.each([
-    [BatchStopReason.completed, 'Wszystkie 13 tygodni rozegrane.'],
+    [BatchStopReason.completed, 'Wszystkie tygodnie rozegrane.'],
     [BatchStopReason.pausedForDecision, 'Gra czeka na twoją decyzję.'],
     [BatchStopReason.careerEnded, 'Kariera zakończyła się w trakcie.'],
     [BatchStopReason.interrupted, 'Kariera zmieniła się w innej karcie — automat się zatrzymał.'],

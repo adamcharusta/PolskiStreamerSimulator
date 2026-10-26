@@ -315,16 +315,15 @@
     "pitchRoll": "Oferta dla sponsorów"
   },
   "batch": {
-    "launch": "Auto: 13 tygodni",
-    "confirmTitle": "Streamować automatycznie 13 tygodni?",
-    "confirmBody": "Grę poprowadzi strategia „Zbalansowana”. Każdy tydzień zapisuje się osobno, a gra zatrzyma się przed decyzją, która należy do ciebie.",
-    "confirm": "Streamuj 13 tygodni",
+    "launch": "Auto: kilka tygodni",
+    "confirmTitle": "Streamować automatycznie?",
+    "confirmBody": "Grę poprowadzi twoja strategia. Każdy tydzień zapisuje się osobno, a gra zatrzyma się przed decyzją, która należy do ciebie.",
     "cancel": "Anuluj",
-    "running": "Streamujesz 13 tygodni…",
+    "running": "Automat streamuje…",
     "title": "Wynik automatycznych tygodni",
     "weeksCommitted": "Rozegrane tygodnie: {{value}}",
     "stop": {
-      "completed": "Wszystkie 13 tygodni rozegrane.",
+      "completed": "Wszystkie tygodnie rozegrane.",
       "pausedForDecision": "Gra czeka na twoją decyzję.",
       "careerEnded": "Kariera zakończyła się w trakcie.",
       "interrupted": "Kariera zmieniła się w innej karcie — automat się zatrzymał."
@@ -337,7 +336,16 @@
     "plan": "{{action}} · {{category}}",
     "choice": "{{event}}: {{choice}}",
     "next": "Dalej",
-    "offers": "Oferty sponsorów"
+    "offers": "Oferty sponsorów",
+    "confirm_one": "Streamuj {{count}} tydzień",
+    "confirm_few": "Streamuj {{count}} tygodnie",
+    "confirm_many": "Streamuj {{count}} tygodni",
+    "confirm_other": "Streamuj {{count}} tygodnia",
+    "length": "Ile tygodni",
+    "weeks_one": "{{count}} tydzień",
+    "weeks_few": "{{count}} tygodnie",
+    "weeks_many": "{{count}} tygodni",
+    "weeks_other": "{{count}} tygodnia"
   },
   "reason": {
     "forced-rest": "Brak energii albo pełne wypalenie — tylko odpoczynek.",
@@ -370,7 +378,12 @@
     "wager-scheduled": "Zakład {{tier}} przy streamie hazardowym.",
     "side-business-scheduled": "Co {{everyWeeks}} tygodnie biznes poboczny.",
     "pitch-scheduled": "Co {{everyWeeks}} tygodnie oferta dla sponsorów.",
-    "migration-scheduled": "Przeprowadzka na {{platform}}."
+    "migration-scheduled": "Przeprowadzka na {{platform}}.",
+    "routine-step": "Plan strategii: tydzień {{step}} z {{of}} — {{action}}.",
+    "fallback-safe": "„{{preferred}}” niedostępne ({{disabledReason}}) — bezpieczny wybór.",
+    "strategy-wager": "Zakład {{tier}} według strategii.",
+    "strategy-side-business": "Biznes poboczny według strategii.",
+    "strategy-upgrade": "{{slot}} za {{pricePln}} — zostaje rezerwa {{reservePln}}."
   },
   "platform": {
     "czatnia": "Czatnia",
@@ -445,5 +458,82 @@
     "missedInstallment": "{{templateId}}: opuszczone zlecenie — kara {{penalty}}, wiarygodność {{credibility}}",
     "breach": "{{templateId}}: złamanie umowy — kara {{penalty}}, wiarygodność {{credibility}}",
     "terminates": "umowa się skończy"
+  },
+  "strategy": {
+    "title": "Strategia",
+    "categoryPlan": "Kategoria",
+    "plan": {
+      "strongest": "Mocna strona (zmiana, gdy się nudzi)",
+      "focus": "Jedna kategoria",
+      "rotate": "Rotacja co tydzień"
+    },
+    "focus": "Wybrana kategoria",
+    "chooseFocus": "Wybierz kategorię",
+    "routine": "Plan wolnych tygodni",
+    "step": "Tydzień {{step}} cyklu",
+    "addStep": "Dodaj tydzień",
+    "removeStep": "Usuń tydzień",
+    "restBelowEnergy": "Odpoczynek, gdy energia spadnie poniżej",
+    "restAboveBurnout": "Odpoczynek, gdy wypalenie przekroczy",
+    "reserve": "Rezerwa kasy (zł), której automat nie wyda",
+    "risk": "Ryzyko",
+    "riskLevel": {
+      "safe": "Ostrożnie",
+      "balanced": "Zbalansowanie",
+      "bold": "Odważnie"
+    },
+    "upgrades": "Kupuj lepszy sprzęt, gdy stać",
+    "acceptOffers": "Przyjmuj pasujące oferty sponsorów",
+    "wager": "Zakład na streamach hazardowych (wirtualne złotówki)",
+    "sideBusiness": "Pracuj nad biznesem pobocznym 18+ co 4 tygodnie",
+    "error": {
+      "focus-missing": "Wybierz kategorię dla strategii jednej kategorii.",
+      "routine-length": "Plan musi mieć od 1 do 8 tygodni.",
+      "energy-range": "Próg energii: od 0 do 80.",
+      "burnout-range": "Próg wypalenia: od 50 do 100.",
+      "reserve-range": "Rezerwa: od 0 do 1 000 000 zł."
+    }
+  },
+  "ending": {
+    "narrativeTitle": "Twoja kariera",
+    "narrative": "{{weeks}} tygodni na wizji, najczęściej w kategorii {{category}}. Kończysz na platformie {{platform}} jako {{reputation}}.",
+    "reputation": {
+      "trusted": "twórca godny zaufania",
+      "controversial": "postać kontrowersyjna",
+      "steady": "stała część sceny"
+    },
+    "banned": "Bany po drodze: {{platforms}}.",
+    "highlights": "Najważniejsze chwile: {{list}}.",
+    "achievements": "Osiągnięcia",
+    "points_one": "{{count}} pkt",
+    "points_few": "{{count}} pkt",
+    "points_many": "{{count}} pkt",
+    "points_other": "{{count}} pkt",
+    "m1": {
+      "followers-1k": "1000 obserwujących",
+      "followers-10k": "10 000 obserwujących",
+      "followers-100k": "100 000 obserwujących",
+      "career-completed": "Cała kariera"
+    },
+    "score": {
+      "title": "Wynik końcowy",
+      "component": "Składnik",
+      "share": "Wartość",
+      "points": "Punkty",
+      "followers": "Obserwujący (45%)",
+      "wealth": "Majątek (45%)",
+      "achievements": "Osiągnięcia (10%)",
+      "base": "Wynik bazowy",
+      "difficulty": "Mnożnik trudności",
+      "background": "Mnożnik pochodzenia",
+      "final": "Wynik"
+    }
+  },
+  "retire": {
+    "action": "Zakończ karierę",
+    "title": "Zakończyć karierę teraz?",
+    "body": "Kariera skończy się wcześniejszą emeryturą. Tego nie da się cofnąć.",
+    "confirm": "Tak, kończę",
+    "cancel": "Wracam do streamowania"
   }
 }

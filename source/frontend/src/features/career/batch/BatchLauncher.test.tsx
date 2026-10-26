@@ -15,9 +15,9 @@ describe('batch launcher', () => {
       <BatchLauncher career={careerView({ version: 4 })} secret="secret-1" onDone={onDone} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Auto: kilka tygodni' }));
     expect(
-      screen.getByRole('alertdialog', { name: 'Streamować automatycznie 13 tygodni?' }),
+      screen.getByRole('alertdialog', { name: 'Streamować automatycznie?' }),
     ).toBeInTheDocument();
     expect(received).toEqual([]);
     await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
@@ -47,10 +47,10 @@ describe('batch launcher', () => {
       <BatchLauncher career={careerView()} secret="secret-1" onDone={onDone} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.dblClick(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Streamujesz 13 tygodni…');
+    expect(await screen.findByRole('status')).toHaveTextContent('Automat streamuje…');
     release?.();
     await waitFor(() => {
       expect(onDone).toHaveBeenCalledOnce();
@@ -71,7 +71,7 @@ describe('batch launcher', () => {
       <BatchLauncher career={careerView()} secret="secret-1" onDone={vi.fn()} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
     await screen.findByRole('status');
     await user.keyboard('{Escape}');
@@ -93,7 +93,7 @@ describe('batch launcher', () => {
       <BatchLauncher career={careerView()} secret="secret-1" onDone={onDone} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
     const retry = await screen.findByRole('button', { name: 'Spróbuj ponownie' });
 
@@ -118,7 +118,7 @@ describe('batch launcher', () => {
       <BatchLauncher career={careerView()} secret="secret-1" onDone={onDone} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
 
     await waitFor(() => {
@@ -133,7 +133,7 @@ describe('batch launcher', () => {
       <BatchLauncher career={careerView()} secret="secret-1" onDone={vi.fn()} />,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(screen.getByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.click(screen.getByRole('button', { name: 'Anuluj' }));
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();

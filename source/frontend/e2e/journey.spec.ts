@@ -82,7 +82,7 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
 
   await page.getByRole('button', { name: pl.batch.launch }).click();
-  await page.getByRole('button', { name: pl.batch.confirm }).click();
+  await page.getByRole('button', { name: fill(pl.batch.confirm_many, { count: 13 }) }).click();
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
     timeout: 60_000,
   });

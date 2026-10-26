@@ -371,6 +371,9 @@ export function careerView(overrides: Partial<CareerView> = {}): CareerView {
     offers: [],
     contracts: [],
     sideBusiness: null,
+    achievements: [],
+    score: null,
+    summary: null,
     ...overrides,
   };
 }
