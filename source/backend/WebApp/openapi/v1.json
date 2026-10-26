@@ -707,6 +707,16 @@
           "weeks": {
             "type": "integer",
             "format": "int32"
+          },
+          "strategy": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StrategyInput"
+              }
+            ]
           }
         }
       },
@@ -988,6 +998,15 @@
           "gambling"
         ],
         "type": "string"
+      },
+      "CategoryPlan": {
+        "enum": [
+          "strongest",
+          "focus",
+          "rotate"
+        ],
+        "type": "string",
+        "description": "How a strategy picks the week's category."
       },
       "CategoryValuesView": {
         "required": [
@@ -1870,6 +1889,15 @@
           }
         }
       },
+      "RiskAppetite": {
+        "enum": [
+          "safe",
+          "balanced",
+          "bold"
+        ],
+        "type": "string",
+        "description": "How much a strategy gambles on event choices and how much drama it tolerates."
+      },
       "RollOutcome": {
         "enum": [
           "success",
@@ -2019,6 +2047,78 @@
             "format": "double"
           }
         }
+      },
+      "StrategyInput": {
+        "required": [
+          "categoryPlan",
+          "focus",
+          "routine",
+          "restBelowEnergy",
+          "restAboveBurnout",
+          "reservePln",
+          "upgrades",
+          "risk",
+          "acceptOffers",
+          "wager",
+          "sideBusiness"
+        ],
+        "type": "object",
+        "properties": {
+          "categoryPlan": {
+            "$ref": "#/components/schemas/CategoryPlan"
+          },
+          "focus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Category"
+              }
+            ]
+          },
+          "routine": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MainAction"
+            }
+          },
+          "restBelowEnergy": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "restAboveBurnout": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reservePln": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "upgrades": {
+            "type": "boolean"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskAppetite"
+          },
+          "acceptOffers": {
+            "type": "boolean"
+          },
+          "wager": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WagerTier"
+              }
+            ]
+          },
+          "sideBusiness": {
+            "type": "boolean"
+          }
+        },
+        "description": "The player's strategy for a batch (M3-C spec §5), as the contract carries it."
       },
       "StrikeRollView": {
         "required": [

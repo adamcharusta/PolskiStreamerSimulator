@@ -30,14 +30,41 @@ public sealed class BatchApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task Only_thirteen_weeks_are_accepted()
+    public async Task Only_four_thirteen_or_fifty_two_weeks_are_accepted()
     {
         var (id, secret, career) = await client.CreateCareerAsync(Ct);
 
-        var response = await client.PostBatchAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = career.GetProperty("version").GetInt64(), weeks = 52 }, Ct);
+        var response = await client.PostBatchAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = career.GetProperty("version").GetInt64(), weeks = 26 }, Ct);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("validation-failed", await response.CodeAsync(Ct));
+    }
+
+    [Fact]
+    public async Task A_four_week_batch_with_a_strategy_runs_and_a_bad_strategy_is_refused()
+    {
+        var (id, secret, career) = await client.CreateCareerAsync(Ct);
+        var version = career.GetProperty("version").GetInt64();
+        object Strategy(int restBelowEnergy) => new
+        {
+            categoryPlan = "strongest",
+            focus = (string?)null,
+            routine = new[] { "noAction", "trainCategory" },
+            restBelowEnergy,
+            restAboveBurnout = 70,
+            reservePln = 0,
+            upgrades = true,
+            risk = "balanced",
+            acceptOffers = true,
+            wager = (string?)null,
+            sideBusiness = false,
+        };
+
+        var bad = await client.PostBatchAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = version, weeks = 4, strategy = Strategy(99) }, Ct);
+        Assert.Equal(HttpStatusCode.BadRequest, bad.StatusCode);
+
+        var ok = await client.PostBatchAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = version, weeks = 4, strategy = Strategy(30) }, Ct);
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
     }
 
     [Fact]

@@ -127,7 +127,7 @@ public sealed class RunBatchTests
         var v = career.Career.Version;
 
         Assert.Equal(ErrorCodes.StaleVersion, (await RunAsync(kit, career, v + 1)).Error.Code);
-        Assert.Equal(ErrorCodes.ValidationFailed, (await RunAsync(kit, career, v, weeks: 4)).Error.Code);
+        Assert.Equal(ErrorCodes.ValidationFailed, (await RunAsync(kit, career, v, weeks: 5)).Error.Code);
         await kit.SubmitHandler().Handle(new SubmitAction(career.CareerId, career.Secret, Guid.NewGuid(), new ActionInput(v, ActionType.StartWeek, MainAction.Rest, Category.Fps, null, null, null)), Ct);
         Assert.Equal(ErrorCodes.WeekInProgress, (await RunAsync(kit, career, v + 1)).Error.Code);
     }
