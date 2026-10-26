@@ -1,6 +1,7 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Rulesets;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 
 namespace PolskiStreamerSimulator.Domain.Simulation;
 
@@ -70,6 +71,18 @@ public sealed class WeekEngine(RulesetRegistry registry)
     {
         var ruleset = Resolve(s, c);
         return ruleset.IsSuccess ? Result<ChoiceOdds?>.Ok(ruleset.Value.PresentAction(s, c, plan)) : Result<ChoiceOdds?>.Fail(ruleset.Error);
+    }
+
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+    {
+        var ruleset = Resolve(s, c);
+        return ruleset.IsSuccess ? ruleset.Value.RespondOffer(s, c, offerId, accept, expectedVersion) : Result<CareerState>.Fail(ruleset.Error);
+    }
+
+    public Result<PlanPreview> PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan)
+    {
+        var ruleset = Resolve(s, c);
+        return ruleset.IsSuccess ? Result<PlanPreview>.Ok(ruleset.Value.PresentPlan(s, c, plan)) : Result<PlanPreview>.Fail(ruleset.Error);
     }
 
     private Result<IRuleset> Resolve(CareerState s, ContentSnapshot c)

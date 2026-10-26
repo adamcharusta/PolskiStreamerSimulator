@@ -111,15 +111,22 @@ export function stats(overrides: Partial<CareerStatsView> = {}): CareerStatsView
 
 /**
  * Every plan of a week, like the API lists them; `disabled` decides each option's reason. Networking is offered
- * only with its odds (an M3 career); an M1 career's plans leave it out.
+ * only with its odds (an M3 career); an M1 career's plans leave it out. The M3-B actions (pitch, side business,
+ * migration) are left out, as for a career whose content has no M3-B sections.
  */
 export function planNext(
   disabled: (plan: PlanView) => string | null = () => null,
   network: ChoiceView | null = null,
 ): NextStepView {
   const plans: PlanOptionView[] = [];
+  const m3bActions = new Set<MainAction>([
+    MainAction.pitchFulfillSponsor,
+    MainAction.sideBusinessWork,
+    MainAction.planPlatformMigration,
+  ]);
   const actions = Object.values(MainAction).filter(
-    (action) => network !== null || action !== MainAction.networkCollaborate,
+    (action) =>
+      !m3bActions.has(action) && (network !== null || action !== MainAction.networkCollaborate),
   );
   for (const category of Object.values(Category)) {
     for (const mainAction of actions) {

@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets.M3;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Rulesets.Shared;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Settlement;
@@ -36,8 +37,8 @@ public sealed class M3Ruleset(string id) : IRuleset
     public static bool IsM3(string rulesetId) => rulesetId is SystemsV1 or SystemsV2;
 
     /// <summary>
-    /// Rejects while decisions are queued; otherwise applies the action, selects the events (due live follow-ups
-    /// first) and moves the decision carry into the new pending week.
+    /// Rejects while decisions are queued; otherwise applies the action (and its roll), rolls the wager, selects the
+    /// events (due live follow-ups first) and moves the decision carry into the new pending week.
     /// </summary>
     public Result<CareerState> StartWeek(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
@@ -53,9 +54,15 @@ public sealed class M3Ruleset(string id) : IRuleset
         }
 
         var rng = applied.Value.Rng;
-        var afterAction = plan.Action == MainAction.NetworkCollaborate
-            ? RollNetwork(s, c, plan, applied.Value, ref rng)
+        var afterAction = ActionChoice(s, c, plan) is (var eventId, var choice)
+            ? RollAction(s, c, plan, applied.Value, eventId, choice, ref rng)
             : WeekActions.Started(s, applied.Value, plan, [], rng);
+        if (plan.Wager is not null && c.Balance.Wagers is { } wagers)
+        {
+            var wagered = afterAction.Pending!;
+            afterAction = WagerRules.Roll(afterAction, plan, wagers, ref wagered, ref rng) with { Pending = wagered };
+        }
+
         var (eventIds, scheduled) = EventSelector.Select(afterAction, c, plan.Category, afterAction.Scheduled ?? [], ref rng);
         var started = afterAction with { Rng = rng, Pending = afterAction.Pending! with { EventIds = eventIds } };
         var pending = started.Pending;
@@ -105,8 +112,8 @@ public sealed class M3Ruleset(string id) : IRuleset
     }
 
     /// <summary>
-    /// Settles like M1, then applies the week's follower percentage, expires flags and — unless the career ended —
-    /// opens the decisions due before the new week. The report lists the carried decision rolls.
+    /// Settles like M1 (after the sponsor deals and the side business), then applies the week's follower percentage, expires flags and — unless the career ended —
+    /// expires and rolls sponsor offers and opens the decisions due before the new week. The report lists the carried decision rolls.
     /// </summary>
     public Result<(CareerState State, WeekReport Report)> SettleWeek(CareerState s, ContentSnapshot c, long expectedVersion)
     {
@@ -125,10 +132,15 @@ public sealed class M3Ruleset(string id) : IRuleset
 
         var streamed = ProgressionRules.ApplyCategoryReputation(s, pending.Plan.Category, c.Balance);
         var criticals = CriticalCount(pending);
+        var (sponsored, sponsoring) = SponsorRules.Settle(
+            streamed,
+            pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
+            c);
+        var (sideBusiness, settling) = SideBusinessRules.Settle(sponsored, sponsoring, c.Balance.SideBusiness);
         var core = ApplyFollowersPercent(
             WeekSettlement.Core(
-                streamed,
-                pending with { Lines = pending.Lines.AddRange(Stats.Changes(s, streamed, "category")) },
+                sideBusiness,
+                settling,
                 c,
                 shortStream ? c.Balance.ShortStreamFatigue : Fixed.One,
                 quality => ViralChance(c.Balance, pending.Plan.Category, quality, criticals, pending.ViralChance ?? Fixed.Zero)),
@@ -137,10 +149,16 @@ public sealed class M3Ruleset(string id) : IRuleset
         if (ending is null)
         {
             var rng = state.Rng;
+            state = SponsorRules.AfterSettlement(state, c, s.Week.Value, ref rng);
             state = DecisionQueue.Open(state, c, ref rng) with { Rng = rng };
         }
 
-        var report = WeekSettlement.Report(s, pending, core, ending) with { ActionRoll = pending.ActionRoll, DecisionRolls = pending.Carry?.Rolls ?? [] };
+        var report = WeekSettlement.Report(s, pending, core, ending) with
+        {
+            ActionRoll = pending.ActionRoll,
+            DecisionRolls = pending.Carry?.Rolls ?? [],
+            Wager = pending.Wager,
+        };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
     }
 
@@ -201,7 +219,7 @@ public sealed class M3Ruleset(string id) : IRuleset
         }
 
         var e = answer.Value.Event;
-        var state = EffectApplier.ToCarry(s, e.Id, answer.Value.Effects);
+        var state = EffectApplier.ToCarry(s, c, e.Id, answer.Value.Effects);
         var carry = state.Carry!;
         return Result<CareerState>.Ok(EventRolls.Recorded(s, state, answer.Value) with
         {
@@ -211,37 +229,86 @@ public sealed class M3Ruleset(string id) : IRuleset
         });
     }
 
-    /// <summary>The visible odds of the networking roll for a network plan; null for any other plan.</summary>
+    /// <summary>The wager terms of the plan's stake and the consequences the plan would have for the sponsor deals.</summary>
+    public PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan)
+        => new(plan.Wager is { } tier && c.Balance.Wagers is { } w ? WagerRules.Terms(tier, w) : null, SponsorRules.Consequences(s, c, plan));
+
+    /// <summary>The visible odds of the action's roll (networking, or a pitch with nothing due); null for any other plan.</summary>
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan)
-        => plan.Action == MainAction.NetworkCollaborate && c.Balance.NetworkCollaborate is { } choice
-            ? NetworkOdds(s, choice, c.Balance, plan)
-            : null;
+        => ActionChoice(s, c, plan) is (_, var choice) ? ActionOdds(s, choice, c.Balance, plan) : null;
 
     /// <summary>
-    /// The one place the networking odds are computed: from the state before the action with the plan's category,
+    /// The rolled choice of the plan's action: the collaboration for a network plan, the pitch for a pitch plan with
+    /// no installment due (a due installment is fulfilled without a roll); null for an action without a roll.
+    /// </summary>
+    private static (string EventId, ChoiceDefinition Choice)? ActionChoice(CareerState s, ContentSnapshot c, WeekPlan plan)
+        => plan.Action switch
+        {
+            MainAction.NetworkCollaborate when c.Balance.NetworkCollaborate is { } network => ("network", network),
+            MainAction.PitchFulfillSponsor when c.Balance.Sponsors is { } sponsors && SponsorRules.DueThisWeek(s).IsEmpty => ("pitch", sponsors.Pitch),
+            _ => null,
+        };
+
+    /// <summary>
+    /// The one place an action's odds are computed: from the state before the action with the plan's category,
     /// so the odds shown are the odds rolled and the action's own energy cost does not change them.
     /// </summary>
-    private static ChoiceOdds NetworkOdds(CareerState before, ChoiceDefinition choice, BalanceConstants b, WeekPlan plan)
+    private static ChoiceOdds ActionOdds(CareerState before, ChoiceDefinition choice, BalanceConstants b, WeekPlan plan)
         => OddsCalculator.For(before, choice, b, plan.Category);
 
     /// <summary>
-    /// Opens the network week and rolls the collaboration with the odds shown beforehand; its effects apply to the
-    /// week, the roll is recorded for the report and a critical counts in the metrics.
+    /// Opens the week and rolls the action's choice with the odds shown beforehand; its effects apply to the week,
+    /// the roll is recorded for the report and a critical counts in the metrics. A successful pitch then opens one
+    /// offer at once.
     /// </summary>
-    private static CareerState RollNetwork(CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, ref Pcg32 rng)
+    private static CareerState RollAction(
+        CareerState s, ContentSnapshot c, WeekPlan plan, ActionApplied applied, string eventId, ChoiceDefinition choice, ref Pcg32 rng)
     {
-        var choice = c.Balance.NetworkCollaborate!;
-        var odds = NetworkOdds(s, choice, c.Balance, plan);
+        var odds = ActionOdds(s, choice, c.Balance, plan);
         var (roll, outcome, effects) = RuleSteps.Roll(choice, odds, ref rng);
         var started = WeekActions.Started(s, applied, plan, [], rng);
         var pending = started.Pending!;
-        var state = EffectApplier.ToWeek(started, "network", effects, ref pending);
+        var state = EffectApplier.ToWeek(started, c, eventId, effects, ref pending);
         var critical = outcome is RollOutcome.CriticalSuccess or RollOutcome.CriticalFailure;
+        if (plan.Action == MainAction.PitchFulfillSponsor && outcome is RollOutcome.Success or RollOutcome.CriticalSuccess)
+        {
+            state = SponsorRules.Pitched(state, c, ref rng);
+        }
+
         return state with
         {
-            Pending = pending with { ActionRoll = new RollResult("network", choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
+            Pending = pending with { ActionRoll = new RollResult(eventId, choice.Id, roll, odds.Threshold, odds.Modifiers, outcome) },
             Metrics = state.Metrics with { Criticals = state.Metrics.Criticals + (critical ? 1 : 0) },
         };
+    }
+
+    /// <summary>
+    /// Answers an open sponsor offer between weeks, also while decisions are queued: refused during a week, for an
+    /// unknown or expired offer, and on acceptance when <see cref="SponsorRules.AcceptRejection"/> gives a reason.
+    /// </summary>
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+    {
+        if (RuleSteps.CommandRejection(s, expectedVersion) is { } error)
+        {
+            return Result<CareerState>.Fail(error);
+        }
+
+        if (s.Pending is not null)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "week-in-progress");
+        }
+
+        if (s.Offers?.FirstOrDefault(o => string.Equals(o.OfferId, offerId, StringComparison.Ordinal)) is not { } offer)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "unknown-offer");
+        }
+
+        if (accept && SponsorRules.AcceptRejection(s, c, offer) is { } refusal)
+        {
+            return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, refusal);
+        }
+
+        return Result<CareerState>.Ok(SponsorRules.Respond(s, c, offer, accept) with { StateVersion = s.StateVersion + 1 });
     }
 
     private static Result<EventDefinition> NextDecision(CareerState s, ContentSnapshot c)

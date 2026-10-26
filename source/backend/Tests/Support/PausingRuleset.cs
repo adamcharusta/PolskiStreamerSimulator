@@ -1,6 +1,7 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Rulesets;
+using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Tests.Support;
@@ -32,6 +33,11 @@ public sealed class PausingRuleset(int pauseBeforeWeek) : IRuleset
         => inner.ResolveDecision(s, c, choiceId, expectedVersion);
 
     public ChoiceOdds? PresentAction(CareerState s, ContentSnapshot c, WeekPlan plan) => inner.PresentAction(s, c, plan);
+
+    public Result<CareerState> RespondOffer(CareerState s, ContentSnapshot c, string offerId, bool accept, long expectedVersion)
+        => inner.RespondOffer(s, c, offerId, accept, expectedVersion);
+
+    public PlanPreview PresentPlan(CareerState s, ContentSnapshot c, WeekPlan plan) => inner.PresentPlan(s, c, plan);
 
     public static WeekEngine Engine(int pauseBeforeWeek) => new(new RulesetRegistry([new PausingRuleset(pauseBeforeWeek)]));
 }

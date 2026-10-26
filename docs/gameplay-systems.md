@@ -116,6 +116,8 @@ Gambling is an optional stream activity using **only in-game PLN**. A wager requ
 
 When cash is negative, all spend options are disabled; non-spend recovery actions remain available. Apply insolvency at the **end of settlement**, after all earned income and required costs for that week; at ≤ −1,000 PLN the career ends. End-of-week events cannot create hidden charges after the insolvency check.
 
+M3-B rules for sponsors, the wager and the side business: [§12](#12-m3-b-ruleset-m3-systems2).
+
 ## 7. Drama, Credibility, Platforms, and Bans
 
 Drama measures public controversy; credibility measures trust. A provocative event can raise both audience and drama while lowering credibility, but consequences depend on context. Drama decays slowly when not fed; credibility requires sustained reliable conduct or explicit repair. Both remain in 0–100. Low drama opens trusted collaborations; high drama opens sensational opportunities with larger upside and policy risk. Neither route should be a guaranteed higher-scoring strategy.
@@ -291,3 +293,26 @@ A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, n
 ### Flags and follow-ups
 
 `CareerState` stores career flags (optionally expiring after a number of weeks) and scheduled follow-ups; both are part of the state hash. `SetFlag`, `ClearFlag` and `FollowUp` are declarative effects ([content §2](content-and-experience.md#2-content-structure)). A scheduled `live` follow-up takes one of the event slots of its due stream; a `milestone` or `crisis` follow-up becomes a mandatory decision. Flags prefixed `sys:` are reserved for the ruleset (`sys:rest-only`, `sys:short-stream`). The rivalry arc is the reference: `rivalry-callout` (rare, cooldown 52 weeks) sets `rivalry`, and only a failed riposte schedules `rivalry-crisis`; `rivalry-rematch` can end the flag.
+
+## 12. M3-B Ruleset (`m3-systems.2`)
+
+Status: in progress; rules from the [M3-B design](superpowers/specs/2026-10-21-m3b-economy-and-risk-design.md); Task 19 of the [M3-B plan](superpowers/plans/2026-10-21-m3b-economy-and-risk.md) records the tuned numbers. `m3-systems.2` is the M3-A ruleset plus the rules below; each rule reads an optional balance section and is inert without it, so `m3-systems.1` careers play exactly as before ([TD-117](technical-decisions.md)).
+
+### Sponsors
+
+- **Offers.** After each settlement (unless the career ended) offers whose last week was the settled week expire, then one seeded roll opens at most one offer: `chance = min(20 %, 8 % + 2 points × magnitude)`, where the magnitude counts the `k ≥ 1` with `followers ≥ 1,000 × 10^k`. The template is chosen by weight among those whose prerequisites hold now, that allow the current platform and that have no open offer or deal; no template, no draw. Payment `= min(cap, base + perThousand × ⌊followers / 1,000⌋)`, fixed when the offer opens. An offer can be answered in its week and the next one (`offerWeeks` = 2). The Industry Insider starts with its lead offer.
+- **`respondOffer(offerId, accept)`** is a free command between weeks, also while decisions are queued; it is refused during a week (`week-in-progress`), for an unknown or expired offer (`unknown-offer`) and, on acceptance, with `contract-limit` (two deals), `same-sponsor` or `prerequisite:<name>`. It draws nothing.
+- **Deals.** A one-off is due in the week it was accepted for; a contract's first installment is due `dueEveryWeeks − 1` weeks after acceptance, then every `dueEveryWeeks` weeks through the term. At settlement, in deal order: an incompatible activity (`gambling` for a Gambling stream, `adult-business` for side-business work or an open side business) breaches the deal once and ends it; a due installment is paid (`income:sponsor`) when the plan is `PitchFulfillSponsor` with the required category, is moved one week (with the term end) by a week off (`sys:rest-only`), and is otherwise missed: `cost:sponsor-penalty = min(breach.cashPln, installment)` and the breach credibility; the second miss ends the contract with a further −5 credibility as its own `stat:Credibility` line. A one-off is paid when the stream's category matches and breached otherwise.
+- **Pitch.** `PitchFulfillSponsor` (8 energy) fulfils the installments due this week without a roll; with nothing due it rolls the pitch with visible odds (15 % + 0.4 points per credibility point, burnout penalty) and a success opens one fitting offer at once. It is disabled with `no-sponsor-fits` when nothing is due and no template fits.
+
+### Wager
+
+A Gambling plan may stake Low 100, Medium 500 or High 2,000 PLN when the stake is at most 25 % of spendable cash (cash, minus a negative decision carry, minus the plan's equipment price); otherwise the variant is disabled with `needs-cash`, and `StartWeek` refuses a stale plan the same way. The wager rolls once after the action's roll: 45 % to win 2× the stake. A win adds `income:wager` (the net win), +2 drama and ×1.15 live viewers; a loss adds `cost:wager` (the stake), +3 drama and ×1.05 live viewers. The money settles with the week; the report shows the roll and threshold.
+
+### Side business
+
+From week 52 with at least 2,000 followers, `SideBusinessWork` (12 energy, +4 burnout) opens the text-only business on first use (permanent flag `side-business`) and adds 15 quality (max 100). While its quality is above zero it pays `income:side-business = round(followers × 0.0005 × quality / 100 × 10)`, costs 0.2 credibility a week (`stat:Credibility`, detail `side-business`) and loses 3 quality per week.
+
+### Plan preview
+
+`PresentPlan` shows, before the player commits, the wager terms of the plan's stake and every missed installment or breach the plan would cause (penalty, credibility, whether the deal ends). It never draws a random value.

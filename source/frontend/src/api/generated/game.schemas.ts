@@ -96,7 +96,7 @@ export const NextStepKind = {
 } as const;
 
 /**
- * Between-stream main actions (network collaboration is M3 only); exactly one per week.
+ * Between-stream main actions, one per week; networking is M3 only, the last three need M3-B balance sections.
  */
 export type MainAction = typeof MainAction[keyof typeof MainAction];
 
@@ -108,6 +108,9 @@ export const MainAction = {
   manageCommunity: 'manageCommunity',
   noAction: 'noAction',
   networkCollaborate: 'networkCollaborate',
+  pitchFulfillSponsor: 'pitchFulfillSponsor',
+  sideBusinessWork: 'sideBusinessWork',
+  planPlatformMigration: 'planPlatformMigration',
 } as const;
 
 export type Category = typeof Category[keyof typeof Category];
