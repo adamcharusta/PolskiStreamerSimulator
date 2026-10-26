@@ -146,7 +146,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
           <legend className="font-bold">{t('wager.title')}</legend>
           {[null, ...tiers].map((option) => {
             const block = optionFor(plans, action, category, slot, option)?.disabledReason ?? null;
-            const name = option === null ? 'none' : option;
+            const name = option ?? 'none';
             const hint = `plan-wager-${name}`;
             return (
               <label key={name} className="choice">

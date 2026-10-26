@@ -90,9 +90,15 @@ public sealed class CareerViewBuilder(WeekEngine engine)
     }
 
     private static SideBusinessView? SideBusiness(CareerState s, BalanceConstants b)
-        => s.SideBusiness is { } business && b.SideBusiness is { } balance
-            ? new SideBusinessView(business.OpenedWeek, Decimals.Of(business.Quality), SideBusinessRules.IsOpen(s) ? SideBusinessRules.Income(s.Followers, business.Quality, balance) : 0)
-            : null;
+    {
+        if (s.SideBusiness is not { } business || b.SideBusiness is not { } balance)
+        {
+            return null;
+        }
+
+        var income = SideBusinessRules.IsOpen(s) ? SideBusinessRules.Income(s.Followers, business.Quality, balance) : 0;
+        return new SideBusinessView(business.OpenedWeek, Decimals.Of(business.Quality), income);
+    }
 
     public static CareerStatsView Stats(CareerState s) => new(
         s.CashPln,

@@ -9,6 +9,8 @@ namespace PolskiStreamerSimulator.Tests.Application.Careers;
 /// <summary>M3-B through the application: sponsor offers, wagers, platform bans and the batch on <c>content/m3</c>.</summary>
 public class EconomyFlowTests
 {
+    private static readonly string[] OfferReasons = ["offer-accepted", "offer-declined"];
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static ActionInput Respond(CareerView view, bool? accept, string? offerId = null)
@@ -148,6 +150,6 @@ public class EconomyFlowTests
         var batch = (await kit.RunBatchAsync(view.CareerId, view.Version)).Value;
         var answered = Assert.Single(batch.Weeks[0].Offers);
         Assert.Equal("bank-skarbonka", answered.TemplateId);
-        Assert.Contains(answered.Reason.Code, new[] { "offer-accepted", "offer-declined" });
+        Assert.Contains(answered.Reason.Code, OfferReasons);
     }
 }

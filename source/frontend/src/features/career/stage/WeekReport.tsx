@@ -114,7 +114,7 @@ function RiskLines({ report }: { readonly report: WeekReportView }) {
           })}
         </p>
       )}
-      {strike !== null && strike.roll !== null && (
+      {typeof strike?.roll === 'number' && (
         <p className={strike.strike ? 'bad' : undefined}>
           {t('report.strike', {
             roll: strike.roll,
