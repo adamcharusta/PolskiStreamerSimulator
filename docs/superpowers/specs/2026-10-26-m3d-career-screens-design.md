@@ -1,7 +1,7 @@
 # M3-D Career Screens — Design
 
 Date: 2026-10-26
-Status: **Agent proposal.** The owner asked the agent to continue with sub-project D ("tak", 2026-10-26, answering "merge #88 and #89 and start M3-D?") without a design interview, as for B and C. Every screen, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; contract and history in PR 1 ([#90](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/90)), screens in PR 2 (2026-10-26).** The diploma generator (pdf-lib with fontkit, about 1.1 MB) is loaded only when the player asks for a diploma. The owner asked the agent to continue with sub-project D ("tak", 2026-10-26, answering "merge #88 and #89 and start M3-D?") without a design interview, as for B and C. Every screen, field and wording below is an agent proposal for owner review.
 Milestone: [M3 — Complete gameplay systems](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3), sub-project D, delivering [#24](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/24), [#76](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/76) and [#82](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/82) ([TD-109](../../technical-decisions.md)).
 Builds on: [M3-C automation and endings](2026-10-26-m3c-automation-and-endings-design.md) (ending summary, score view, achievements).
 
