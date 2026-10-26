@@ -97,7 +97,9 @@ export function HistoryScreen() {
             {Object.keys(year.incidents).length > 0 && (
               <p className="m-0 muted">
                 {Object.entries(year.incidents)
-                  .map(([tag, n]) => `${t(`history.tag.${tag}`)}: ${String(n)}`)
+                  .map(([tag, n]) =>
+                    t('history.incident', { tag: t(`history.tag.${tag}`), count: n }),
+                  )
                   .join(', ')}
               </p>
             )}

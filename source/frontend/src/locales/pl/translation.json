@@ -594,7 +594,8 @@
       "sponsorPenalty": "kara od sponsora",
       "shortStream": "krótszy stream",
       "ending": "koniec kariery"
-    }
+    },
+    "incident": "{{tag}}: {{count}}"
   },
   "diploma": {
     "download": "Pobierz dyplom (PDF)",
