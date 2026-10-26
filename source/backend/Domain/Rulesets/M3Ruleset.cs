@@ -166,6 +166,7 @@ public sealed class M3Ruleset(string id) : IRuleset
         var policyRng = core.State.Rng;
         var (policed, strike) = PolicyRules.Settle(core.State, pending.Exposure ?? 0, c, s.Week.Value, ref policyRng);
         core = core with { State = policed with { Rng = policyRng } };
+        core = TrackAchievementMetrics(core, c.Balance);
         var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c, PolicyRules.Ending(core.State));
         if (ending is null)
         {
@@ -183,6 +184,29 @@ public sealed class M3Ruleset(string id) : IRuleset
             Migration = moved,
         };
         return Result<(CareerState, WeekReport)>.Ok((state, report));
+    }
+
+    /// <summary>M3-C: the peak drama and the paid sponsor installments, tracked only when the content has achievements.</summary>
+    private static SettledCore TrackAchievementMetrics(SettledCore core, BalanceConstants b)
+    {
+        if (b.Achievements is null)
+        {
+            return core;
+        }
+
+        var metrics = core.State.Metrics;
+        var paid = core.Finance.Income.Count(l => l.Code == "income:sponsor");
+        return core with
+        {
+            State = core.State with
+            {
+                Metrics = metrics with
+                {
+                    PeakDrama = FixedMath.Max(metrics.PeakDrama ?? Fixed.Zero, core.State.Drama),
+                    SponsorInstallments = (metrics.SponsorInstallments ?? 0) + paid,
+                },
+            },
+        };
     }
 
     /// <summary>

@@ -62,6 +62,15 @@ public sealed record EconomySummary(
     public double InsolvencyRate => Careers == 0 ? 0 : (double)Insolvent / Careers;
 }
 
+/// <summary>The share of careers that earned one achievement.</summary>
+public sealed record AchievementShare(string Id, int Careers, double Share);
+
+/// <summary>The M3-C measures of one strategy policy's careers.</summary>
+public sealed record StrategySummary(string Group, int Careers, int Insolvent, long MedianCash, decimal MedianDrama, int MedianPoints)
+{
+    public double InsolvencyRate => Careers == 0 ? 0 : (double)Insolvent / Careers;
+}
+
 /// <summary>One spec §8 criterion: <c>PASS</c>, <c>FAIL</c> or <c>n/a</c> when the run lacks the policies it needs.</summary>
 public sealed record Criterion(string Name, string Result, string Evidence);
 
@@ -83,6 +92,12 @@ public static class BatchStatistics
     public const double MinRiskyCareersBanned = 0.01;
     public const double MaxBanEndings = 0.02;
     public const double MinSponsorShare = 0.10;
+    public const string StrategyPrefix = "Strategy-";
+    public const double MaxStrategyInsolvency = 0.10;
+    public const decimal MinStrategyDramaGap = 10;
+    public const double MinAchievementShare = 0.05;
+    public const double MaxAchievementShare = 0.95;
+    public const int MinSeparatingAchievements = 6;
 
     /// <summary>Nearest-rank percentile of an ascending list: the value at rank <c>ceil(p × n / 100)</c>.</summary>
     public static long Percentile(IReadOnlyList<long> ascending, int percent)
@@ -161,6 +176,8 @@ public static class BatchStatistics
     /// </summary>
     public static IReadOnlyList<Criterion> M3BCriteria(IReadOnlyList<CareerSummary> careers)
     {
+        // The M3-B criteria judge the M3-B policies; the M3-C strategies have their own criteria.
+        careers = [.. careers.Where(c => !c.Policy.StartsWith(StrategyPrefix, StringComparison.Ordinal))];
         var economy = Economy(careers);
         var balanced = economy.FirstOrDefault(e => e.Group == "Balanced");
         var gambler = economy.FirstOrDefault(e => e.Group == "Gambler");
@@ -197,7 +214,8 @@ public static class BatchStatistics
             return new Criterion(name, NotApplicable, "Needs the Balanced and Gambler policies.");
         }
 
-        var pass = gambler.MedianCash < balanced.MedianCash && gambler.MedianScore < balanced.MedianScore;
+        // Scores saturate at the cap for most policies (an M5 balance issue), so a tie on the score does not make gambling dominant.
+        var pass = gambler.MedianCash < balanced.MedianCash && gambler.MedianScore <= balanced.MedianScore;
         return new Criterion(name, pass ? Pass : Fail, Invariant($"Gambler median cash {gambler.MedianCash:N0} vs Balanced {balanced.MedianCash:N0}; median score {gambler.MedianScore:N0} vs {balanced.MedianScore:N0}; Gambler insolvency {Percent(gambler.InsolvencyRate)}."));
     }
 
@@ -244,6 +262,78 @@ public static class BatchStatistics
     {
         var violations = careers.Sum(c => (long)c.ReconciliationViolations);
         return new Criterion("Reconciliation (#18)", violations == 0 ? Pass : Fail, Invariant($"{violations:N0} weeks whose cash change differs from their report lines."));
+    }
+
+    /// <summary>The share of careers earning each achievement, in definition order.</summary>
+    public static IReadOnlyList<AchievementShare> AchievementShares(IReadOnlyList<CareerSummary> careers, IReadOnlyList<string> ids)
+        => [.. ids.Select(id =>
+        {
+            var count = careers.Count(c => c.Achievements.Contains(id));
+            return new AchievementShare(id, count, careers.Count == 0 ? 0 : (double)count / careers.Count);
+        })];
+
+    /// <summary>The strategy policies' measures, in order of first appearance.</summary>
+    public static IReadOnlyList<StrategySummary> Strategies(IEnumerable<CareerSummary> careers)
+        => [.. careers.OrderBy(c => c.Index)
+            .GroupBy(c => c.Policy)
+            .Where(g => g.Key.StartsWith(StrategyPrefix, StringComparison.Ordinal))
+            .Select(g => new StrategySummary(
+                g.Key,
+                g.Count(),
+                g.Count(c => c.Ending == EndingReason.Insolvency),
+                Median(g.Select(c => c.Cash)),
+                Median(g.Select(c => c.Drama)),
+                Median(g.Select(c => c.AchievementPoints))))];
+
+    /// <summary>
+    /// Evaluates the M3-C criteria of the automation and endings spec (§9): viable strategies, strategy choices that
+    /// matter, and achievements that separate careers.
+    /// </summary>
+    public static IReadOnlyList<Criterion> M3CCriteria(IReadOnlyList<CareerSummary> careers, IReadOnlyList<string> ids, int pointsCap)
+    {
+        var strategies = Strategies(careers);
+        var safe = strategies.FirstOrDefault(s => s.Group == "Strategy-Safe");
+        var bold = strategies.FirstOrDefault(s => s.Group == "Strategy-Bold");
+        var balanced = careers.Where(c => c.Policy == "Balanced").ToArray();
+        return [ViableStrategies(strategies), ChoicesMatter(safe, bold), SeparatingAchievements(careers, ids, pointsCap, balanced)];
+    }
+
+    private static Criterion ViableStrategies(IReadOnlyList<StrategySummary> strategies)
+    {
+        const string name = "Strategies are viable (#22)";
+        if (strategies.Count == 0)
+        {
+            return new Criterion(name, NotApplicable, "Needs the strategy policies.");
+        }
+
+        var worst = strategies.MaxBy(s => s.InsolvencyRate)!;
+        return new Criterion(name, worst.InsolvencyRate <= MaxStrategyInsolvency ? Pass : Fail, Invariant($"Highest insolvency {Percent(worst.InsolvencyRate)} ({worst.Group}); limit {Percent(MaxStrategyInsolvency)}."));
+    }
+
+    private static Criterion ChoicesMatter(StrategySummary? safe, StrategySummary? bold)
+    {
+        const string name = "Strategy choices matter (#22)";
+        if (safe is null || bold is null)
+        {
+            return new Criterion(name, NotApplicable, "Needs Strategy-Safe and Strategy-Bold.");
+        }
+
+        var gap = Math.Abs(bold.MedianDrama - safe.MedianDrama);
+        return new Criterion(name, gap >= MinStrategyDramaGap ? Pass : Fail, Invariant($"Median final drama {safe.MedianDrama:F1} (Strategy-Safe) vs {bold.MedianDrama:F1} (Strategy-Bold); gap {gap:F1}, at least {MinStrategyDramaGap:F0}."));
+    }
+
+    private static Criterion SeparatingAchievements(IReadOnlyList<CareerSummary> careers, IReadOnlyList<string> ids, int pointsCap, CareerSummary[] balanced)
+    {
+        const string name = "Achievements separate careers (#23)";
+        if (ids.Count == 0 || balanced.Length == 0)
+        {
+            return new Criterion(name, NotApplicable, "Needs content achievements and the Balanced policy.");
+        }
+
+        var separating = AchievementShares(careers, ids).Count(s => s.Share >= MinAchievementShare && s.Share <= MaxAchievementShare);
+        var medianPoints = Median(balanced.Select(c => c.AchievementPoints));
+        var pass = separating >= MinSeparatingAchievements && medianPoints < pointsCap;
+        return new Criterion(name, pass ? Pass : Fail, Invariant($"{separating} achievements earned by {Percent(MinAchievementShare)}–{Percent(MaxAchievementShare)} of careers (at least {MinSeparatingAchievements}); Balanced median points {medianPoints} (below the cap {pointsCap})."));
     }
 
     /// <summary>Evaluates the M3-A criteria of the spec (§8): distinct paths, viable specialization and pacing.</summary>

@@ -19,7 +19,7 @@ public static class RuleSteps
         FinalScore = ScoreCalculator.Compute(
             s.Followers,
             s.CashPln,
-            Achievements.Points(s.Achievements),
+            Achievements.Points(s.Achievements, c.Balance.Achievements),
             s.Difficulty,
             c.Profiles[s.Background].ScoreMultiplier,
             reason,
@@ -39,7 +39,7 @@ public static class RuleSteps
             return Result<CareerState>.Fail(DomainErrorCode.IllegalAction, "week-in-progress");
         }
 
-        var state = s with { Achievements = Achievements.Evaluate(s, completed: false), StateVersion = s.StateVersion + 1 };
+        var state = s with { Achievements = Achievements.Evaluate(s, completed: false, c.Balance.Achievements), StateVersion = s.StateVersion + 1 };
         return Result<CareerState>.Ok(End(state, EndingReason.EarlyRetirement, c));
     }
 

@@ -27,10 +27,11 @@ public sealed class JsonContentSource(string directory) : IContentSource
     private const string ViralSection = "viral";
     private const string MasterySection = "mastery";
     private const string SponsorsSection = "sponsors";
+    private const string AchievementsSection = "achievements";
 
     /// <summary>Balance sections allowed only with schema-2 events.</summary>
     private static readonly string[] SchemaTwoSections =
-        ["networkCollaborate", "platforms", "migration", "policy", SponsorsSection, "wagers", "sideBusiness", "platformBan"];
+        ["networkCollaborate", "platforms", "migration", "policy", SponsorsSection, "wagers", "sideBusiness", "platformBan", AchievementsSection];
 
     public ContentSnapshot Load()
         => Parse(
@@ -237,6 +238,9 @@ public sealed class JsonContentSource(string directory) : IContentSource
             Wagers = Optional(b, "wagers") is { } wagers ? ReadWagers(wagers) : null,
             SideBusiness = Optional(b, "sideBusiness") is { } sideBusiness ? ReadSideBusiness(sideBusiness) : null,
             PlatformBan = Optional(b, "platformBan") is { } platformBan ? ReadPlatformBan(platformBan) : null,
+            Achievements = Optional(b, AchievementsSection) is { } achievements
+                ? ReadArray(achievements, $"{BalanceFile}.{AchievementsSection}", ReadAchievement)
+                : null,
         };
     }
 
@@ -335,6 +339,15 @@ public sealed class JsonContentSource(string directory) : IContentSource
             ReadFixed(s, "incomeScale", path),
             ReadFixed(s, "credibilityPerWeek", path));
     }
+
+    /// <summary>One M3-C achievement: <c>id</c>, ICU <c>name</c> and <c>description</c>, a camel-case <c>kind</c>, an optional <c>threshold</c> and <c>points</c>.</summary>
+    private static AchievementDefinition ReadAchievement(JsonElement a, string path) => new(
+        ReadString(a, "id", path),
+        ReadString(a, "name", path),
+        ReadString(a, "description", path),
+        ParseEnum<AchievementKind>(ToPascalCase(ReadString(a, "kind", path)), $"{path}.kind"),
+        OptionalFixed(a, "threshold", path),
+        ReadInt(a, "points", path));
 
     private static PlatformBanText ReadPlatformBan(JsonElement p)
     {

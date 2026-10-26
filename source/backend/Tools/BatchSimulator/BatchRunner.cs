@@ -2,6 +2,7 @@ using System.Diagnostics;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Rulesets;
+using PolskiStreamerSimulator.Domain.Scoring;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
 using PolskiStreamerSimulator.Infrastructure.Content;
@@ -58,6 +59,11 @@ public sealed record CareerSummary(
     public int Migrations { get; init; }
 
     public int ReconciliationViolations { get; init; }
+
+    /// <summary>M3-C: the earned achievements in ordinal order and their points.</summary>
+    public IReadOnlyList<string> Achievements { get; init; } = [];
+
+    public int AchievementPoints { get; init; }
 }
 
 public sealed record BatchResult(
@@ -67,7 +73,13 @@ public sealed record BatchResult(
     IReadOnlyList<CareerSummary> Careers,
     TimeSpan Elapsed,
     long AllocatedBytes,
-    long PeakWorkingSetBytes);
+    long PeakWorkingSetBytes)
+{
+    /// <summary>M3-C: the content's achievement IDs in definition order (empty without the section) and the point cap.</summary>
+    public IReadOnlyList<string> AchievementIds { get; init; } = [];
+
+    public int AchievementPointsCap { get; init; }
+}
 
 public static class BatchRunner
 {
@@ -84,15 +96,15 @@ public static class BatchRunner
     }
 
     /// <summary>Every built-in policy by name: the M1 list followed by the M3-only and M3-B-only ones.</summary>
-    public static IReadOnlyList<IChoicePolicy> KnownPolicies { get; } = [.. BuiltInPolicies.All.Concat(BuiltInPolicies.M3BAll).Distinct()];
+    public static IReadOnlyList<IChoicePolicy> KnownPolicies { get; } = [.. BuiltInPolicies.All.Concat(BuiltInPolicies.M3CAll).Distinct()];
 
     /// <summary>
-    /// The policies offered for content of <paramref name="rulesetId"/>: <see cref="BuiltInPolicies.M3BAll"/> for
+    /// The policies offered for content of <paramref name="rulesetId"/>: <see cref="BuiltInPolicies.M3CAll"/> for
     /// <c>m3-systems.2</c>, <see cref="BuiltInPolicies.M3All"/> for <c>m3-systems.1</c>, otherwise the M1 list.
     /// </summary>
     public static IReadOnlyList<IChoicePolicy> PoliciesFor(string rulesetId) => rulesetId switch
     {
-        M3Ruleset.SystemsV2 => BuiltInPolicies.M3BAll,
+        M3Ruleset.SystemsV2 => BuiltInPolicies.M3CAll,
         M3Ruleset.SystemsV1 => BuiltInPolicies.M3All,
         _ => BuiltInPolicies.All,
     };
@@ -159,6 +171,8 @@ public static class BatchRunner
                     PlatformBans = weeks.PlatformBans,
                     Migrations = weeks.Migrations,
                     ReconciliationViolations = weeks.ReconciliationViolations,
+                    Achievements = [.. final.Achievements.Order(StringComparer.Ordinal)],
+                    AchievementPoints = Achievements.Points(final.Achievements, content.Balance.Achievements),
                 };
             });
         stopwatch.Stop();
@@ -171,7 +185,11 @@ public static class BatchRunner
             results,
             stopwatch.Elapsed,
             GC.GetTotalAllocatedBytes(precise: true) - allocatedBefore,
-            process.PeakWorkingSet64);
+            process.PeakWorkingSet64)
+        {
+            AchievementIds = content.Balance.Achievements is { } defs ? [.. defs.Select(d => d.Id)] : [],
+            AchievementPointsCap = content.Balance.AchievementPointsCap,
+        };
     }
 
     /// <summary>

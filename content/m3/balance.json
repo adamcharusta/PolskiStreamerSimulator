@@ -226,6 +226,19 @@
       "Nurt": "Przenieś się na Nurt"
     }
   },
+  "achievements": [
+    {"id": "followers-1m", "name": "Pierwszy milion widzów", "description": "1 000 000 obserwujących.", "kind": "followers", "threshold": 1000000, "points": 1},
+    {"id": "followers-10m", "name": "Dziesięć milionów oczu", "description": "10 000 000 obserwujących.", "kind": "followers", "threshold": 10000000, "points": 1},
+    {"id": "followers-100m", "name": "Stumilionowa widownia", "description": "100 000 000 obserwujących.", "kind": "followers", "threshold": 100000000, "points": 2},
+    {"id": "cash-100m", "name": "Sto baniek", "description": "100 000 000 zł na koncie.", "kind": "cash", "threshold": 100000000, "points": 1},
+    {"id": "cash-1b", "name": "Miliarder z czatu", "description": "1 000 000 000 zł na koncie.", "kind": "cash", "threshold": 1000000000, "points": 1},
+    {"id": "career-completed", "name": "Dwadzieścia lat na wizji", "description": "{gender, select, female {Dotrwałaś do ostatniego tygodnia kariery.} male {Dotrwałeś do ostatniego tygodnia kariery.} other {Dotrwałoś do ostatniego tygodnia kariery.}}", "kind": "completed", "points": 1},
+    {"id": "skill-master", "name": "Mistrzostwo", "description": "Umiejętność 100 w dowolnej kategorii.", "kind": "mastery", "threshold": 100, "points": 1},
+    {"id": "one-category", "name": "Wierność jednej grze", "description": "780 tygodni streamów w jednej kategorii.", "kind": "specialist", "threshold": 780, "points": 1},
+    {"id": "new-home", "name": "Nowy dom", "description": "Przeprowadzka z wyboru, bez żadnego bana.", "kind": "platformMove", "points": 2},
+    {"id": "trusted-partner", "name": "Zaufany partner", "description": "150 opłaconych zleceń sponsorów.", "kind": "sponsorInstallments", "threshold": 150, "points": 1},
+    {"id": "scandal-survivor", "name": "Przetrwanie burzy", "description": "{gender, select, female {Po dramie na poziomie 90 uspokoiłaś czat do 30 i ukończyłaś karierę.} male {Po dramie na poziomie 90 uspokoiłeś czat do 30 i ukończyłeś karierę.} other {Po dramie na poziomie 90 uspokoiłoś czat do 30 i ukończyłoś karierę.}}", "kind": "dramaSurvived", "threshold": 90, "points": 2}
+  ],
   "profiles": {
     "DormRoomNewcomer": {
       "cashPln": 2000,

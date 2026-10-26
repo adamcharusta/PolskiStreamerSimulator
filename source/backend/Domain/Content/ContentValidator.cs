@@ -306,6 +306,7 @@ public static class ContentValidator
         ValidateCategorySupply(c, violations);
         ValidateSponsors(c, violations);
         ValidateEconomyBalance(c, violations);
+        ValidateAchievements(c.Balance, violations);
     }
 
     private static void ValidateSponsors(ContentSnapshot c, List<string> violations)
@@ -355,6 +356,31 @@ public static class ContentValidator
 
     /// <summary>In [0, 100].</summary>
     private static bool IsStat(Fixed value) => value >= Fixed.Zero && value <= Fixed.Hundred;
+
+    /// <summary>
+    /// M3-C <c>balance.achievements</c>: not empty, unique IDs, 1–5 points, a positive threshold exactly for the kinds that
+    /// need one, and a non-empty ICU name and description.
+    /// </summary>
+    private static void ValidateAchievements(BalanceConstants b, List<string> violations)
+    {
+        if (b.Achievements is not { } defs)
+        {
+            return;
+        }
+
+        AddUnless(!defs.IsEmpty, "achievement:empty", violations);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var d in defs)
+        {
+            AddUnless(seen.Add(d.Id), $"achievement:duplicate:{d.Id}", violations);
+            AddUnless(d.Points is >= 1 and <= 5, $"achievement:points:{d.Id}", violations);
+            var needs = AchievementDefinition.NeedsThreshold(d.Kind);
+            AddUnless(needs ? d.Threshold is { } t && t > Fixed.Zero : d.Threshold is null, $"achievement:threshold:{d.Id}", violations);
+            AddUnless(IsText(d.Name) && IsText(d.Description), $"achievement:text:{d.Id}", violations);
+        }
+    }
+
+    private static bool IsText(string text) => !string.IsNullOrWhiteSpace(text) && IcuMessage.Validate(text) is null;
 
     /// <summary>The M3-B balance sections; each is checked only when present.</summary>
     private static void ValidateEconomyBalance(ContentSnapshot c, List<string> violations)

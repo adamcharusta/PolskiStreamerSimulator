@@ -206,6 +206,9 @@ public sealed record BalanceConstants
     /// <summary>M3-B texts of the platform-ban decision; null when content has none.</summary>
     public PlatformBanText? PlatformBan { get; init; }
 
+    /// <summary>M3-C achievements; null keeps the hard-coded M1 set.</summary>
+    public ImmutableArray<AchievementDefinition>? Achievements { get; init; }
+
     /// <summary>The profile of <paramref name="category"/>; neutral when no profiles are configured.</summary>
     public CategoryProfile Profile(Category category) => Categories is { } all ? all[category] : CategoryProfile.Neutral(this);
 }

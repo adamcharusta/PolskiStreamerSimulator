@@ -71,6 +71,12 @@ public static class ReportWriter
             AppendCriteria(md, "M3-B criteria", BatchStatistics.M3BCriteria(careers));
         }
 
+        if (r.AchievementIds.Count > 0)
+        {
+            AppendAchievements(md, r);
+            AppendCriteria(md, "M3-C criteria", BatchStatistics.M3CCriteria(careers, r.AchievementIds, r.AchievementPointsCap));
+        }
+
         var byScore = careers.OrderByDescending(c => c.Score).ThenBy(c => c.Index).ToArray();
         AppendCareers(md, $"Top {ExtremeCount} careers by score", byScore.Take(ExtremeCount));
         AppendCareers(md, $"Bottom {ExtremeCount} careers by score", careers.OrderBy(c => c.Score).ThenBy(c => c.Index).Take(ExtremeCount));
@@ -126,6 +132,9 @@ public static class ReportWriter
                 Criteria = IsM3(r) ? BatchStatistics.M3Criteria(r.Careers) : null,
                 EconomyAndRisk = IsM3B(r) ? BatchStatistics.Economy(r.Careers) : null,
                 M3BCriteria = IsM3B(r) ? BatchStatistics.M3BCriteria(r.Careers) : null,
+                Achievements = r.AchievementIds.Count > 0 ? BatchStatistics.AchievementShares(r.Careers, r.AchievementIds) : null,
+                StrategyPolicies = r.AchievementIds.Count > 0 ? BatchStatistics.Strategies(r.Careers) : null,
+                M3CCriteria = r.AchievementIds.Count > 0 ? BatchStatistics.M3CCriteria(r.Careers, r.AchievementIds, r.AchievementPointsCap) : null,
                 r.Careers,
             },
             performance = new
@@ -159,6 +168,31 @@ public static class ReportWriter
     private static bool IsM3(BatchResult r) => M3Ruleset.IsM3(r.RulesetId);
 
     private static bool IsM3B(BatchResult r) => r.RulesetId == M3Ruleset.SystemsV2;
+
+    private static void AppendAchievements(StringBuilder md, BatchResult r)
+    {
+        md.AppendLine("### Achievements and strategies");
+        md.AppendLine();
+        var points = BatchStatistics.Of(r.Careers.Select(c => (long)c.AchievementPoints));
+        md.AppendLine(Invariant($"Achievement points per career p5 / p50 / p95 / max: {points.P5} / {points.P50} / {points.P95} / {points.Max} (the score counts at most {r.AchievementPointsCap})."));
+        md.AppendLine();
+        md.AppendLine("| Achievement | Careers | Share |");
+        md.AppendLine("| --- | ---: | ---: |");
+        foreach (var a in BatchStatistics.AchievementShares(r.Careers, r.AchievementIds))
+        {
+            md.AppendLine(Invariant($"| {a.Id} | {a.Careers:N0} | {BatchStatistics.Percent(a.Share)} |"));
+        }
+
+        md.AppendLine();
+        md.AppendLine("| Strategy | Careers | Insolvency | Median cash PLN | Median drama | Median achievement points |");
+        md.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: |");
+        foreach (var s in BatchStatistics.Strategies(r.Careers))
+        {
+            md.AppendLine(Invariant($"| {s.Group} | {s.Careers:N0} | {BatchStatistics.Percent(s.InsolvencyRate)} | {s.MedianCash:N0} | {s.MedianDrama:F1} | {s.MedianPoints} |"));
+        }
+
+        md.AppendLine();
+    }
 
     private static void AppendEconomy(StringBuilder md, IReadOnlyList<EconomySummary> economy)
     {
