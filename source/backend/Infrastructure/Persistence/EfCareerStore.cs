@@ -58,6 +58,16 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
         return [.. rows.Select(ToStored)];
     }
 
+    public async Task<IReadOnlyList<StoredAction>> ListReportsAsync(Guid careerId, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        var rows = await db.CareerActions.AsNoTracking()
+            .Where(a => a.CareerId == careerId && a.ReportJson != null)
+            .OrderBy(a => a.Sequence)
+            .ToListAsync(cancellationToken);
+        return [.. rows.Select(ToStored)];
+    }
+
     public async Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);

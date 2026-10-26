@@ -14,6 +14,9 @@ public interface ICareerStore
     /// <summary>Every logged step of one command, ordered by step; empty when the command was never stored.</summary>
     Task<IReadOnlyList<StoredAction>> FindCommandAsync(Guid careerId, Guid commandId, CancellationToken cancellationToken);
 
+    /// <summary>Every logged entry that carries a week report, in log order (M3-D history).</summary>
+    Task<IReadOnlyList<StoredAction>> ListReportsAsync(Guid careerId, CancellationToken cancellationToken);
+
     /// <summary>The newest logged entry that carries a week report, or <c>null</c>.</summary>
     Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken);
 

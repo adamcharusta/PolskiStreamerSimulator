@@ -24,6 +24,9 @@ public sealed class M3Ruleset(string id) : IRuleset
 
     private const string RestOnlyFlag = "sys:rest-only";
     private const string ShortStreamFlag = "sys:short-stream";
+
+    /// <summary>The report line of a short stream (M3-D); it changes no state.</summary>
+    private const string ShortStreamLineCode = "week:short-stream";
     private const string ViralClipFlag = "viral-clip";
     private const int ViralFlagWeeks = 4;
     private const string FollowersEventCode = "followers:event";
@@ -167,6 +170,11 @@ public sealed class M3Ruleset(string id) : IRuleset
         var (policed, strike) = PolicyRules.Settle(core.State, pending.Exposure ?? 0, c, s.Week.Value, ref policyRng);
         core = core with { State = policed with { Rng = policyRng } };
         core = TrackAchievementMetrics(core, c.Balance);
+        if (shortStream)
+        {
+            core = core with { StatLines = core.StatLines.Add(new ReportLine(ShortStreamLineCode)) };
+        }
+
         var (state, ending) = WeekSettlement.Close(s, CareerFlags.Expire(ViralFlag(core), s.Week.Value), c, PolicyRules.Ending(core.State));
         if (ending is null)
         {

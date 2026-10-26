@@ -148,7 +148,7 @@ public sealed class SubmitActionHandler(
                     return Rejected(new AppError(ErrorCodes.ValidationFailed, "resolveEvent needs choiceId"));
                 }
 
-                return Map(engine.ResolveEvent(s, c, input.ChoiceId, input.ExpectedVersion), next => (next, ReportViews.Roll(next.Pending!.Resolved[^1]), null));
+                return Map(engine.ResolveEvent(s, c, input.ChoiceId, input.ExpectedVersion), next => (next, RollTexts.Of(next.Pending!.Resolved[^1], c), null));
 
             case ActionType.ResolveDecision:
                 if (string.IsNullOrEmpty(input.ChoiceId))
@@ -156,10 +156,10 @@ public sealed class SubmitActionHandler(
                     return Rejected(new AppError(ErrorCodes.ValidationFailed, "resolveDecision needs choiceId"));
                 }
 
-                return Map(engine.ResolveDecision(s, c, input.ChoiceId, input.ExpectedVersion), next => (next, ReportViews.Roll(next.Carry!.Rolls[^1]), null));
+                return Map(engine.ResolveDecision(s, c, input.ChoiceId, input.ExpectedVersion), next => (next, RollTexts.Of(next.Carry!.Rolls[^1], c), null));
 
             case ActionType.SettleWeek:
-                return Map(engine.SettleWeek(s, c, input.ExpectedVersion), settled => (settled.State, null, ReportViews.Report(settled.Report)));
+                return Map(engine.SettleWeek(s, c, input.ExpectedVersion), settled => (settled.State, null, ReportViews.Report(settled.Report, c)));
 
             case ActionType.Retire:
                 return Map(engine.Retire(s, c, input.ExpectedVersion), next => (next, null, null));

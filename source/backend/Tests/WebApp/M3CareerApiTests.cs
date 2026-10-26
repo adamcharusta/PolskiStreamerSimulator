@@ -69,4 +69,22 @@ public sealed class M3CareerApiTests(M3ApiFactory api) : IClassFixture<M3ApiFact
         Assert.Equal("czatnia", career.GetProperty("platform").GetString());
         Assert.Equal(0, career.GetProperty("offers").GetArrayLength());
     }
+
+    [Fact]
+    public async Task History_lists_the_played_week_and_returns_its_report()
+    {
+        var (id, secret, career) = await client.CreateCareerAsync(Ct);
+        await client.PlayWeekAsync(id, secret, career, Ct);
+
+        using var history = new HttpRequestMessage(HttpMethod.Get, $"/v1/careers/{id}/history");
+        history.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", secret);
+        var list = await (await client.SendAsync(history, Ct)).Content.ReadFromJsonAsync<JsonElement>(Ct);
+        Assert.Equal(1, list.GetProperty("weeks")[0].GetProperty("week").GetInt32());
+
+        using var week = new HttpRequestMessage(HttpMethod.Get, $"/v1/careers/{id}/history/2");
+        week.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", secret);
+        var missing = await client.SendAsync(week, Ct);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal("week-not-found", await missing.CodeAsync(Ct));
+    }
 }

@@ -271,11 +271,11 @@ public sealed class RunBatchHandler(
             var presented = Expect(engine.PresentEvent(s, c));
             var choice = policy.ChooseEventChoice(s, presented);
             s = Expect(engine.ResolveEvent(s, c, choice.ChoiceId, s.StateVersion));
-            choices.Add(new AutoChoiceView(presented.EventId, choice.ChoiceId, Reason(choice.Reason), ReportViews.Roll(s.Pending!.Resolved[^1])));
+            choices.Add(new AutoChoiceView(presented.EventId, choice.ChoiceId, Reason(choice.Reason), RollTexts.Of(s.Pending!.Resolved[^1], c)));
         }
 
         var settled = Expect(engine.SettleWeek(s, c, s.StateVersion));
-        var report = ReportViews.Report(settled.Report);
+        var report = ReportViews.Report(settled.Report, c);
         return (settled.State, new AutoWeekView(report.Week, ReportViews.Plan(plan.Plan), Reason(plan.Reason), choices, report, offers));
     }
 

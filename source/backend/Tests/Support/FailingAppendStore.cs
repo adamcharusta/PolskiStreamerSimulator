@@ -17,6 +17,9 @@ public sealed class FailingAppendStore(ICareerStore inner, int failOnAppend) : I
     public Task<IReadOnlyList<StoredAction>> FindCommandAsync(Guid careerId, Guid commandId, CancellationToken cancellationToken)
         => inner.FindCommandAsync(careerId, commandId, cancellationToken);
 
+    public Task<IReadOnlyList<StoredAction>> ListReportsAsync(Guid careerId, CancellationToken cancellationToken)
+        => inner.ListReportsAsync(careerId, cancellationToken);
+
     public Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
         => inner.FindLatestReportAsync(careerId, cancellationToken);
 

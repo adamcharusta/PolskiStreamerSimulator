@@ -36,6 +36,26 @@ public static class CareerEndpoints
         return result.IsSuccess ? TypedResults.Ok(result.Value) : ApiProblems.From(result.Error);
     }
 
+    [WolverineGet("/v1/careers/{id}/history", OperationId = "getHistory")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson)]
+    public static async Task<Results<Ok<HistoryView>, ProblemHttpResult>> GetHistory(
+        Guid id, [FromHeader(Name = "Authorization")] string? authorization, IMessageBus bus, CancellationToken cancellationToken)
+    {
+        var result = await bus.InvokeAsync<AppResult<HistoryView>>(new GetHistory(id, Bearer.Secret(authorization)), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : ApiProblems.From(result.Error);
+    }
+
+    [WolverineGet("/v1/careers/{id}/history/{week}", OperationId = "getHistoryWeek")]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound, ProblemJson)]
+    public static async Task<Results<Ok<WeekReportView>, ProblemHttpResult>> GetHistoryWeek(
+        Guid id, int week, [FromHeader(Name = "Authorization")] string? authorization, IMessageBus bus, CancellationToken cancellationToken)
+    {
+        var result = await bus.InvokeAsync<AppResult<WeekReportView>>(new GetHistoryWeek(id, Bearer.Secret(authorization), week), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : ApiProblems.From(result.Error);
+    }
+
     [WolverinePost("/v1/careers/{id}/actions", OperationId = "submitAction")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest, ProblemJson)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized, ProblemJson)]

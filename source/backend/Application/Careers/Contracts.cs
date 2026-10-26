@@ -186,7 +186,17 @@ public sealed record ChoiceView(
 
 public sealed record ModifierView(string LabelKey, decimal Value);
 
-public sealed record RollView(string EventId, string ChoiceId, int? Roll, int Threshold, IReadOnlyList<ModifierView> Modifiers, RollOutcome Outcome);
+/// <summary>A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them.</summary>
+public sealed record RollView(
+    string EventId,
+    string ChoiceId,
+    int? Roll,
+    int Threshold,
+    IReadOnlyList<ModifierView> Modifiers,
+    RollOutcome Outcome,
+    string? EventTitle = null,
+    string? ChoiceLabel = null,
+    string? OutcomeText = null);
 
 public sealed record ReportLineView(string Code, long? AmountPln, decimal? Delta, string? Detail);
 

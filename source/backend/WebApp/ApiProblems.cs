@@ -12,6 +12,7 @@ public static class ApiProblems
         [ErrorCodes.ValidationFailed] = StatusCodes.Status400BadRequest,
         [ErrorCodes.MissingSecret] = StatusCodes.Status401Unauthorized,
         [ErrorCodes.CareerNotFound] = StatusCodes.Status404NotFound,
+        [ErrorCodes.WeekNotFound] = StatusCodes.Status404NotFound,
         [ErrorCodes.StaleVersion] = StatusCodes.Status409Conflict,
         [ErrorCodes.CareerEnded] = StatusCodes.Status409Conflict,
         [ErrorCodes.DecisionPending] = StatusCodes.Status409Conflict,

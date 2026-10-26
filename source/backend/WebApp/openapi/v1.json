@@ -154,6 +154,139 @@
         ]
       }
     },
+    "/v1/careers/{id}/history": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "getHistory",
+        "operationId": "getHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/careers/{id}/history/{week}": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "getHistoryWeek",
+        "operationId": "getHistoryWeek",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "week",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeekReportView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/careers/{id}/actions": {
       "post": {
         "tags": [
@@ -1454,6 +1587,21 @@
         },
         "description": "An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks."
       },
+      "HistoryView": {
+        "required": [
+          "weeks"
+        ],
+        "type": "object",
+        "properties": {
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeekSummaryView"
+            }
+          }
+        },
+        "description": "Every settled week of a career, in week order (M3-D)."
+      },
       "MainAction": {
         "enum": [
           "rest",
@@ -2066,8 +2214,27 @@
           },
           "outcome": {
             "$ref": "#/components/schemas/RollOutcome"
+          },
+          "eventTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "choiceLabel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "outcomeText": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
-        }
+        },
+        "description": "A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them."
       },
       "ScoreView": {
         "required": [
@@ -2605,6 +2772,49 @@
           }
         },
         "description": "A settled week with the decision rolls, the action roll, its viral clip, the strike roll, the wager and a platform move."
+      },
+      "WeekSummaryView": {
+        "required": [
+          "week",
+          "plan",
+          "liveViewers",
+          "followersNet",
+          "cashDelta",
+          "automatic",
+          "tags"
+        ],
+        "type": "object",
+        "properties": {
+          "week": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PlanView"
+          },
+          "liveViewers": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "followersNet": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "cashDelta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "automatic": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "One settled week in the history list: its plan, audience and cash, whether a batch played it, and its incident tags."
       }
     },
     "securitySchemes": {

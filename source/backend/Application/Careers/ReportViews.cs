@@ -1,3 +1,4 @@
+using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Rulesets.M3B;
 using PolskiStreamerSimulator.Domain.Simulation;
 
@@ -15,6 +16,14 @@ public static class ReportViews
 
     public static ReportLineView Line(ReportLine line)
         => new(line.Code, line.AmountPln, line.Delta is { } delta ? Decimals.Of(delta) : null, line.Detail);
+
+    /// <summary>The report with the roll texts of <paramref name="c"/> (M3-D).</summary>
+    public static WeekReportView Report(WeekReport report, ContentSnapshot c) => Report(report) with
+    {
+        Rolls = [.. report.Rolls.Select(r => RollTexts.Of(r, c))],
+        DecisionRolls = report.DecisionRolls.IsDefault ? [] : [.. report.DecisionRolls.Select(r => RollTexts.Of(r, c))],
+        ActionRoll = report.ActionRoll is { } action ? RollTexts.Of(action, c) : null,
+    };
 
     public static WeekReportView Report(WeekReport report) => new(
         report.Week.Value,
