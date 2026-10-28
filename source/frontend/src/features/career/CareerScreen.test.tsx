@@ -10,6 +10,7 @@ import {
   actionOutcome,
   batchOutcome,
   careerView,
+  decisionNext,
   endedNext,
   eventNext,
   roll,
@@ -65,13 +66,35 @@ describe('game screen', () => {
     expect(desk()).toHaveTextContent('Zapisano');
   });
 
+  it('asks for a mandatory decision before the next week is planned', async () => {
+    rememberTestCareer();
+    serveCareer(careerView({ rulesetId: 'm3-systems.1', version: 5, next: decisionNext() }));
+    const received = captureActions(() =>
+      HttpResponse.json(
+        actionOutcome(careerView({ rulesetId: 'm3-systems.1', version: 6 }), {
+          roll: roll({ eventId: 'sponsor-offer', choiceId: 'refuse', roll: null, threshold: 100 }),
+        }),
+      ),
+    );
+    const { user } = renderApp(path);
+
+    expect(await screen.findByRole('heading', { name: 'Sponsorka pisze' })).toHaveFocus();
+    await user.click(screen.getByRole('radio', { name: /Odmów/u }));
+    await user.click(screen.getByRole('button', { name: 'Wybieram' }));
+    expect(await screen.findByText('Pewny wybór — bez rzutu')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Dalej' }));
+
+    expect(await screen.findByRole('heading', { name: 'Plan tygodnia' })).toBeInTheDocument();
+    expect(received[0]?.body).toMatchObject({ type: 'resolveDecision', choiceId: 'refuse' });
+  });
+
   it('runs a 13-week batch from the week plan and returns to the next plan', async () => {
     rememberTestCareer();
     serveCareer(careerView());
     captureBatches(() => HttpResponse.json(batchOutcome()));
     const { user } = renderApp(path);
 
-    await user.click(await screen.findByRole('button', { name: 'Auto: 13 tygodni' }));
+    await user.click(await screen.findByRole('button', { name: 'Auto: kilka tygodni' }));
     await user.click(screen.getByRole('button', { name: 'Streamuj 13 tygodni' }));
     expect(
       await screen.findByRole('heading', { name: 'Wynik automatycznych tygodni' }),

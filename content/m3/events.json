@@ -1,0 +1,2615 @@
+{
+  "schema": 2,
+  "events": [
+    {
+      "id": "jc-hot-take",
+      "version": 1,
+      "phase": "live",
+      "title": "Gorąca teza",
+      "text": "Rzucasz na wizji, że pierogi ruskie są przereklamowane. Czat dzieli się na dwa obozy, a moderator prosi wszystkich, żeby napili się wody.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["JustChatting"]
+      },
+      "choices": [
+        {
+          "id": "defend",
+          "label": "Broń tezy do upadłego",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Argumenty o twarogu trafiają. Nawet obóz przeciwny zostaje, żeby dalej się kłócić.",
+          "failureText": "Ktoś wkleja przepis babci i przegrywasz debatę w trzy minuty.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "ViralChance", "amount": 8 } ]
+          }
+        },
+        {
+          "id": "retract",
+          "label": "Wycofaj się rakiem i zmień temat",
+          "guaranteed": true,
+          "successText": "Czat wzdycha z zawodem, ale nikt już nie pisze capslockiem.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Drama", "amount": -1 }, { "kind": "EventQuality", "amount": -2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "jc-donate-tts",
+      "version": 1,
+      "phase": "live",
+      "title": "Donejt z lektorem",
+      "text": "Syntezator mowy czyta donejta za 5 zł: rymowany poemat o twojej fryzurze z 2019 roku. W całości. Czat płacze ze śmiechu.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["JustChatting"]
+      },
+      "choices": [
+        {
+          "id": "rhyme-back",
+          "label": "Odpowiedz rymem na żywo",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Twój freestyle o grzywce zbiera falę emotek z koroną.",
+          "failureText": "Rym „fryzura” na „figura” nie ratuje sytuacji.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ],
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        },
+        {
+          "id": "raise-minimum",
+          "label": "Podnieś minimalną kwotę donejtów z lektorem",
+          "guaranteed": true,
+          "successText": "Poematów jest mniej, za to droższych. Część czatu marudzi o „skąpstwie”.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": 80 }, { "kind": "AudienceMultiplier", "amount": 0.95 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "jc-first-regulars",
+      "version": 1,
+      "phase": "live",
+      "title": "Pierwsi stali bywalcy",
+      "text": "Kilkanaście tych samych nicków wpada na każdy stream. Pytają, jak ma się nazywać społeczność. Propozycje: „Kartoflisko”, „Bractwo Kabla” i „Ekipa”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 260,
+        "categories": ["JustChatting"]
+      },
+      "choices": [
+        {
+          "id": "vote",
+          "label": "Zrób uczciwe głosowanie na czacie",
+          "guaranteed": true,
+          "successText": "Wygrywa „Bractwo Kabla”. Głosowanie zajęło pół streamu, ale wszyscy czują się wysłuchani.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "pick-absurd",
+          "label": "Wybierz najbardziej absurdalną nazwę",
+          "baseChance": 0.55,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "successText": "„Kartoflisko” przyjmuje się od razu. Ktoś już rysuje herb z ziemniakiem.",
+          "failureText": "Połowa bywalców uważa, że nikt ich nie pytał o zdanie.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "FollowersPercent", "amount": 2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "EventQuality", "amount": -2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "jc-podcast-invite",
+      "version": 1,
+      "phase": "live",
+      "title": "Telefon do studia",
+      "text": "Mały podcast „Rozmowy przy Kablu” dzwoni w trakcie streamu i chce cię mieć na antenie. Prowadzący ma trzystu słuchaczy i bardzo dużo pytań o twoje zarobki.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 261,
+        "toWeek": 780,
+        "categories": ["JustChatting"]
+      },
+      "choices": [
+        {
+          "id": "call-in",
+          "label": "Wejdź na antenę i odpowiadaj szczerze",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "allowsCritical": true,
+          "successText": "Rozmowa wychodzi naturalnie. Słuchacze podcastu wpadają zobaczyć, kim jesteś.",
+          "failureText": "Pytanie o zarobki zadane trzeci raz wyprowadza cię z równowagi. Klip już jest.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 } ],
+            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "ViralChance", "amount": 6 } ]
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Grzecznie odmów, stream ma pierwszeństwo",
+          "guaranteed": true,
+          "successText": "Prowadzący obiecuje zadzwonić kiedy indziej. Czat docenia, że trzymasz się planu.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "jc-old-clip",
+      "version": 1,
+      "phase": "live",
+      "title": "Archeologia czatu",
+      "text": "Ktoś odkopał klip z pierwszego roku: {gender, select, female {śpiewałaś} male {śpiewałeś} other {śpiewałoś}} disco polo do mikrofonu za 40 zł. Czat żąda powtórki.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 781,
+        "toWeek": 1040,
+        "categories": ["JustChatting"]
+      },
+      "choices": [
+        {
+          "id": "reprise",
+          "label": "Zaśpiewaj jeszcze raz, tym razem lepiej",
+          "baseChance": 0.4,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Wersja po latach jest nawet znośna. Czat tworzy z tego tradycję.",
+          "failureText": "Lepszy mikrofon tylko wyraźniej pokazuje, że śpiewać nadal nie umiesz.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "ViralChance", "amount": 6 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "ViralChance", "amount": 15 } ]
+          }
+        },
+        {
+          "id": "laugh",
+          "label": "Pośmiej się z siebie i leć dalej",
+          "guaranteed": true,
+          "successText": "Dystans do siebie zawsze dobrze wygląda. Stream wraca na swoje tory, choć z opóźnieniem.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "EventQuality", "amount": -1 } ]
+          }
+        },
+        {
+          "id": "delete-links",
+          "label": "Poproś moderację o usuwanie linków",
+          "guaranteed": true,
+          "successText": "Link znika z czatu i pojawia się w trzech innych miejscach. Rozmowa za to wraca do tematu.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "fps-clutch",
+      "version": 1,
+      "phase": "live",
+      "title": "Jeden na czterech",
+      "text": "W „Froncie 404” zostajesz {gender, select, female {sama} male {sam} other {samo}} przeciwko czterem. Czat już pisze „GG”, ale amunicji starczy na jedną odważną próbę.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Fps"]
+      },
+      "choices": [
+        {
+          "id": "go-for-it",
+          "label": "Idź po clutcha",
+          "baseChance": 0.35,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.005, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Cztery trafienia, cztery fragi. Czat na moment zapomina, jak się pisze.",
+          "failureText": "Pierwszy przeciwnik pada, drugi już nie. Ale próba była piękna.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 8 }, { "kind": "AudienceMultiplier", "amount": 1.15 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -2 } ],
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 10 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "ViralChance", "amount": 15 } ]
+          }
+        },
+        {
+          "id": "save",
+          "label": "Schowaj się i ratuj broń",
+          "guaranteed": true,
+          "successText": "Czat pisze „tchórz”, ale następną rundę zaczynasz z pełnym ekwipunkiem.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 1 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "fps-cheater-accusation",
+      "version": 1,
+      "phase": "live",
+      "title": "Strzał przez dwie ściany",
+      "text": "Przeciwnik trafia cię przez dwie ściany i dym. Czat krzyczy „cheater!”, a jego widzowie już piszą, że to ty nie umiesz grać.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Fps"]
+      },
+      "choices": [
+        {
+          "id": "report",
+          "label": "Zgłoś go i pokaż powtórkę",
+          "baseChance": 0.55,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Powtórka nie zostawia wątpliwości. Czat docenia spokojną analizę.",
+          "failureText": "Na powtórce widać, że po prostu dobrze słyszał kroki. Niezręcznie.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "EventQuality", "amount": 3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "EventQuality", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "make-a-scene",
+          "label": "Zrób z tego aferę na cały stream",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "Drama", "perPoint": 0.002, "labelKey": "modifier.drama" } ],
+          "successText": "Afera przyciąga gapiów z całej Czatni. Oglądalność rośnie, spokój znika.",
+          "failureText": "Afera obraca się przeciwko tobie: ktoś wrzuca twoje najgorsze strzały.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 4 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 5 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -3 } ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Wzrusz ramionami i graj dalej",
+          "guaranteed": true,
+          "successText": "Następna runda, następny przeciwnik. Czat trochę się nudzi.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "fps-ranked-grind",
+      "version": 1,
+      "phase": "live",
+      "title": "Mecz o utrzymanie",
+      "text": "Jeszcze jedna porażka i spadasz do Srebra III. Czat szykuje emotki pogrzebowe, a myszka ślizga się w spoconej dłoni.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 260,
+        "categories": ["Fps"]
+      },
+      "choices": [
+        {
+          "id": "tryhard",
+          "label": "Wycisz czat i graj na maksa",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Ranga uratowana. Po meczu czytasz czat i widzisz, że wszyscy trzymali kciuki.",
+          "failureText": "Przegrana. Srebro III wita cię jak starego znajomego.",
+          "outcomes": {
+            "success": [ { "kind": "SkillDelta", "category": "Fps", "amount": 1 }, { "kind": "EventQuality", "amount": 5 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ]
+          }
+        },
+        {
+          "id": "chill",
+          "label": "Graj na luzie i gadaj z czatem",
+          "guaranteed": true,
+          "successText": "Spadasz, ale stream był najprzyjemniejszy od tygodnia.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 2 }, { "kind": "StatDelta", "stat": "Burnout", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "fps-tournament-qual",
+      "version": 1,
+      "phase": "live",
+      "title": "Puchar Piwnicy",
+      "text": "Społecznościowy „Puchar Piwnicy” zaprasza na kwalifikacje. Wpisowe 100 zł, nagroda 500 zł i sława w trzech powiatach.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 261,
+        "toWeek": 780,
+        "categories": ["Fps"]
+      },
+      "choices": [
+        {
+          "id": "enter",
+          "label": "Zapłać wpisowe i graj",
+          "baseChance": 0.3,
+          "requires": { "minCashPln": 100 },
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.005, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Przechodzisz kwalifikacje i zgarniasz nagrodę. Trzy powiaty mówią o tobie.",
+          "failureText": "Odpadasz w drugiej rundzie. Wpisowe przepadło, wspomnienia zostają.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
+            "failure": [ { "kind": "CashDelta", "amount": -100 } ],
+            "criticalSuccess": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        },
+        {
+          "id": "commentate",
+          "label": "Skomentuj turniej zamiast grać",
+          "guaranteed": true,
+          "successText": "Twoja komentatorska chrypka robi furorę. Gadać umiesz, to pewne.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 3 }, { "kind": "SkillDelta", "category": "JustChatting", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "fps-aim-decline",
+      "version": 1,
+      "phase": "live",
+      "title": "Refleks emeryta",
+      "text": "Młodzi widzowie mierzą twój czas reakcji stoperem i wrzucają wyniki na czat. Ktoś proponuje zbiórkę na „trenera celowania dla seniora”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 781,
+        "toWeek": 1040,
+        "categories": ["Fps"]
+      },
+      "choices": [
+        {
+          "id": "train",
+          "label": "Odpal trening celowania na żywo",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Wyniki rosną z każdą serią. Stoper na czacie milknie.",
+          "failureText": "Wyniki spadają z każdą serią. Stoper na czacie triumfuje.",
+          "outcomes": {
+            "success": [ { "kind": "SkillDelta", "category": "Fps", "amount": 2 }, { "kind": "EventQuality", "amount": 2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -3 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 }, { "kind": "StatDelta", "stat": "Energy", "amount": -3 } ]
+          }
+        },
+        {
+          "id": "glasses",
+          "label": "Załóż okulary do czytania i graj dalej",
+          "guaranteed": true,
+          "successText": "Autoironia działa. Czat śmieje się z tobą, a nie z ciebie. Prawie.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.05 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "moba-tilt",
+      "version": 1,
+      "phase": "live",
+      "title": "Sojusznik w tilcie",
+      "text": "Twój support w „Wieżach Chaosu” pisze wyłącznie wielkimi literami i stoi w bazie. Do końca meczu zostało pół godziny.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Moba"]
+      },
+      "choices": [
+        {
+          "id": "calm-down",
+          "label": "Uspokój go na czacie głosowym",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Po pięciu minutach terapii support wraca na linię. Wygrywacie.",
+          "failureText": "Support wyłącza mikrofon, ale włącza tilt na pełną moc.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ],
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "ViralChance", "amount": 8 } ]
+          }
+        },
+        {
+          "id": "tilt-back",
+          "label": "Odpowiedz mu tym samym, capslockiem",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "Drama", "perPoint": 0.002, "labelKey": "modifier.drama" } ],
+          "successText": "Czat uwielbia tę kłótnię. Mecz przegrany, ale oglądalność rośnie.",
+          "failureText": "Kłótnia robi się nieprzyjemna i czat zaczyna brać stronę supporta.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "surrender",
+          "label": "Zagłosuj za poddaniem",
+          "guaranteed": true,
+          "successText": "Mecz kończy się szybciej, a ty oszczędzasz nerwy.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Energy", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "moba-backseat",
+      "version": 1,
+      "phase": "live",
+      "title": "Trener z czatu",
+      "text": "Każdy twój ruch komentuje czat: „kup buty”, „nie idź tam”, „czemu stoisz”. Najgłośniej pisze widz z rangą niższą od twojej.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Moba"]
+      },
+      "choices": [
+        {
+          "id": "obey",
+          "label": "Graj dokładnie tak, jak każe czat",
+          "baseChance": 0.4,
+          "successText": "Czat czuje się współautorem zwycięstwa i nie zamierza o tym milczeć.",
+          "failureText": "Rady czatu wzajemnie się wykluczają. Przegrywasz w dwudziestej minucie.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 3 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        },
+        {
+          "id": "slow-mode",
+          "label": "Włącz tryb powolny na czacie",
+          "guaranteed": true,
+          "successText": "Rady przychodzą rzadziej, gra płynie spokojniej. Część widzów się obraża.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "moba-new-patch",
+      "version": 1,
+      "phase": "live",
+      "title": "Dzień łatki",
+      "text": "Nowa łatka zmieniła połowę bohaterów. Nikt nie zna mety, łącznie z twórcami gry. Czat proponuje najdziwniejszy zestaw przedmiotów.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 260,
+        "categories": ["Moba"]
+      },
+      "choices": [
+        {
+          "id": "experiment",
+          "label": "Testuj dziwne buildy na żywo",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Build z trzema tarczami okazuje się zepsuty w najlepszy możliwy sposób.",
+          "failureText": "Build z trzema tarczami okazuje się po prostu zepsuty.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 5 }, { "kind": "SkillDelta", "category": "Moba", "amount": 1 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 } ],
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "SkillDelta", "category": "Moba", "amount": 1 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        },
+        {
+          "id": "patch-notes",
+          "label": "Przeczytaj z czatem całe notatki do łatki",
+          "guaranteed": true,
+          "successText": "Wiesz już wszystko o zmianach. Połowa czatu zasnęła przy akapicie o tarczach.",
+          "outcomes": {
+            "success": [ { "kind": "SkillDelta", "category": "Moba", "amount": 1 }, { "kind": "AudienceMultiplier", "amount": 0.9 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "moba-duo-pro",
+      "version": 1,
+      "phase": "live",
+      "title": "Duo z półzawodowcem",
+      "text": "Gracz z ligi półzawodowej proponuje wspólną kolejkę. Jego widzowie są wymagający, a on sam mówi, że „nie gra z byle kim”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 261,
+        "toWeek": 780,
+        "categories": ["Moba"]
+      },
+      "choices": [
+        {
+          "id": "accept",
+          "label": "Graj w duo i nie przynieś wstydu",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Dajecie radę. Jego widzowie zaczynają obserwować także ciebie.",
+          "failureText": "Trzy zgony w pierwszych pięciu minutach. Jego czat jest bezlitosny.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "SkillDelta", "category": "Moba", "amount": 2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Podziękuj i graj ze swoją ekipą",
+          "guaranteed": true,
+          "successText": "Twoja ekipa doceniła lojalność. Kolejka jak zwykle długa.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "EventQuality", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "moba-veteran-guide",
+      "version": 1,
+      "phase": "live",
+      "title": "Maraton poradnikowy",
+      "text": "Nowi widzowie proszą o poradnik dla początkujących. Weterani ostrzegają, że to będzie sześć godzin tłumaczenia, czym jest „farma”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 781,
+        "toWeek": 1040,
+        "categories": ["Moba"]
+      },
+      "choices": [
+        {
+          "id": "marathon",
+          "label": "Zrób sześciogodzinny poradnik",
+          "guaranteed": true,
+          "successText": "Poradnik jest długi, ale kompletny. Nowi widzowie zostają na dłużej.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Energy", "amount": -8 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "FollowersPercent", "amount": 2 }, { "kind": "EventQuality", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "three-rules",
+          "label": "Pokaż trzy najważniejsze zasady i graj",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.002, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Trzy zasady, jeden mecz, wszystko jasne. Weterani kiwają głowami.",
+          "failureText": "Zasada numer trzy okazuje się nieaktualna od czterech łatek.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -1 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chess-blunder",
+      "version": 1,
+      "phase": "live",
+      "title": "Hetman na widelcu",
+      "text": "{gender, select, female {Podstawiłaś} male {Podstawiłeś} other {Podstawiłoś}} hetmana w trzecim ruchu. Czat spamuje „??”, a ktoś już robi klipa.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Chess"]
+      },
+      "choices": [
+        {
+          "id": "own-it",
+          "label": "Przyznaj się i zrób z tego lekcję",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.002, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Widzowie doceniają szczerość. Analiza błędu ląduje w ulubionych.",
+          "failureText": "Tłumaczenie brzmi jak wymówka i czat to wyczuwa.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "EventQuality", "amount": 4 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ],
+            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "EventQuality", "amount": 4 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        },
+        {
+          "id": "play-on",
+          "label": "Graj dalej, jakby to był plan",
+          "guaranteed": true,
+          "successText": "Partia się sypie, ale stream leci dalej.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": -2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chess-gambit",
+      "version": 1,
+      "phase": "live",
+      "title": "Gambit od czatu",
+      "text": "Czat przegłosowuje gambit, o którym nikt nie słyszał. Nazywa się „Atak Wujka Zbyszka” i podobno wygrywa w ośmiu ruchach.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Chess"]
+      },
+      "choices": [
+        {
+          "id": "play-gambit",
+          "label": "Zagraj „Atak Wujka Zbyszka”",
+          "baseChance": 0.4,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Mat w dziewięciu ruchach. Wujek Zbyszek byłby dumny.",
+          "failureText": "Gambit pada w szóstym ruchu, a z nim twoja pozycja.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 5 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 6 }, { "kind": "ViralChance", "amount": 12 } ]
+          }
+        },
+        {
+          "id": "solid",
+          "label": "Zagraj solidne otwarcie",
+          "guaranteed": true,
+          "successText": "Partia jest poprawna i trochę nudna. Puryści są zachwyceni.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 1 }, { "kind": "AudienceMultiplier", "amount": 0.95 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chess-puzzle-rush",
+      "version": 1,
+      "phase": "live",
+      "title": "Zadania na czas",
+      "text": "Trzy minuty, trzy błędy i koniec. Czat liczy na głos każde rozwiązanie i każdy błąd, ten drugi znacznie głośniej.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 260,
+        "categories": ["Chess"]
+      },
+      "choices": [
+        {
+          "id": "go-fast",
+          "label": "Klikaj szybko, licz później",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Nowy rekord! Czat liczył tak szybko, że pomylił się dwa razy.",
+          "failureText": "Trzy błędy w czterdzieści sekund. Czat liczył bez trudu.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 5 }, { "kind": "SkillDelta", "category": "Chess", "amount": 1 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ]
+          }
+        },
+        {
+          "id": "explain",
+          "label": "Rozwiązuj powoli i tłumacz każdy ruch",
+          "guaranteed": true,
+          "successText": "Wynik słaby, ale widzowie wreszcie rozumieją, o co chodzi w tych zadaniach.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chess-simul",
+      "version": 1,
+      "phase": "live",
+      "title": "Symultana z widzami",
+      "text": "Grasz jednocześnie dwadzieścia partii z widzami. Na jednej szachownicy ktoś gra podejrzanie dobrze i podejrzanie szybko.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 261,
+        "toWeek": 780,
+        "categories": ["Chess"]
+      },
+      "choices": [
+        {
+          "id": "play-all",
+          "label": "Graj wszystkie partie do końca",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Dziewiętnaście wygranych i jeden remis. Podejrzany widz gratuluje.",
+          "failureText": "Pod koniec mylisz szachownice. Czat zapisuje każdą pomyłkę.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
+            "criticalSuccess": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 }, { "kind": "ViralChance", "amount": 8 } ]
+          }
+        },
+        {
+          "id": "ask-engine",
+          "label": "Zapytaj podejrzanego gracza o silnik",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Widz przyznaje, że pomagał mu kuzyn. Czat docenia czujność.",
+          "failureText": "To był po prostu bardzo dobry gracz. Teraz jest bardzo obrażony.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "resign-one",
+          "label": "Poddaj podejrzaną partię i graj resztę",
+          "guaranteed": true,
+          "successText": "Jedna partia mniej, reszta idzie gładko i bez nerwów.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 1 }, { "kind": "StatDelta", "stat": "Drama", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "chess-old-rival",
+      "version": 1,
+      "phase": "live",
+      "title": "Rywal z osiedlowego klubu",
+      "text": "Dawny rywal z osiedlowego klubu szachowego wpada na czat i wyzywa cię na partię. Wciąż pamięta remis sprzed dwudziestu lat.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 781,
+        "toWeek": 1040,
+        "categories": ["Chess"]
+      },
+      "choices": [
+        {
+          "id": "accept",
+          "label": "Przyjmij wyzwanie na żywo",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Wygrywasz i wreszcie zamykasz temat remisu. Czat ogląda jak finał mistrzostw.",
+          "failureText": "Przegrywasz. Rywal czekał na to dwadzieścia lat i nie ukrywa radości.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": -2 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        },
+        {
+          "id": "reminisce",
+          "label": "Zaproś go na rozmowę zamiast partii",
+          "guaranteed": true,
+          "successText": "Wspomnienia z klubu bawią czat bardziej niż niejedna partia.",
+          "outcomes": {
+            "success": [ { "kind": "SkillDelta", "category": "JustChatting", "amount": 1 }, { "kind": "EventQuality", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "gamba-big-win",
+      "version": 1,
+      "phase": "live",
+      "title": "Jackpot w żetonach",
+      "text": "Wirtualny automat „Złoty Ogórek” wypluwa 50 000 żetonów. To waluta tylko w grze, bez żadnej wartości, ale czat skanduje jak na stadionie.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["gambling"],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Gambling"]
+      },
+      "choices": [
+        {
+          "id": "all-in",
+          "label": "Postaw całą wygraną na jeden spin",
+          "baseChance": 0.25,
+          "allowsCritical": true,
+          "successText": "Kolejny jackpot. Czat nie wierzy, ty też nie.",
+          "failureText": "Wszystkie żetony znikają w sekundę. Czat zapisuje to na zawsze.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "ViralChance", "amount": 10 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "EventQuality", "amount": -2 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "ViralChance", "amount": 20 } ]
+          }
+        },
+        {
+          "id": "end-session",
+          "label": "Zakończ sesję i pokaż wygraną",
+          "guaranteed": true,
+          "successText": "Kończysz na plusie i z godnością. Rzadki widok w tej kategorii.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "AudienceMultiplier", "amount": 1.05 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "gamba-promo-code",
+      "version": 1,
+      "phase": "live",
+      "title": "Kod na bonus",
+      "text": "Czat dopytuje o „kod na bonus” do wirtualnego kasyna z gry. Kodu nie ma, żetony nie mają wartości, ale pytań przybywa z każdą minutą.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["gambling"],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": ["Gambling"]
+      },
+      "choices": [
+        {
+          "id": "explain",
+          "label": "Wyjaśnij, że to tylko żetony w grze",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Czat przyjmuje wyjaśnienie. Ktoś nawet dziękuje za szczerość.",
+          "failureText": "Połowa czatu i tak uważa, że coś ukrywasz.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "EventQuality", "amount": 2 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        },
+        {
+          "id": "troll-code",
+          "label": "Ogłoś, że kod brzmi „CZYTAJREGULAMIN”",
+          "guaranteed": true,
+          "successText": "Czat docenia żart, choć kilka osób naprawdę go wpisuje.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.05 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "gamba-first-slots",
+      "version": 1,
+      "phase": "live",
+      "title": "Pierwsze kręcenie",
+      "text": "Pierwszy raz odpalasz wirtualne automaty za darmowe żetony. Po kwadransie czat pisze: „tylko jeszcze jeden spin, co nie?”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["gambling"],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 260,
+        "categories": ["Gambling"]
+      },
+      "choices": [
+        {
+          "id": "set-limit",
+          "label": "Ustaw limit żetonów i trzymaj się go",
+          "guaranteed": true,
+          "successText": "Limit kończy sesję wcześniej, niż chciałby czat. Rozsądek nie jest widowiskowy.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        },
+        {
+          "id": "chase",
+          "label": "Goń stratę, przecież zaraz siądzie",
+          "baseChance": 0.35,
+          "allowsCritical": true,
+          "successText": "Siada. Czat wpada w szał, a ty wiesz, że to był czysty fart.",
+          "failureText": "Nie siada. Ani za piątym, ani za piętnastym razem.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": 3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "EventQuality", "amount": 3 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "gamba-mod-warning",
+      "version": 1,
+      "phase": "live",
+      "title": "Moderator ostrzega",
+      "text": "Moderator pisze prywatnie: Czatnia coraz uważniej przygląda się streamom z automatami. Kolejne zgłoszenie może zaboleć.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["gambling"],
+      "eligibility": {
+        "fromWeek": 261,
+        "toWeek": 780,
+        "categories": ["Gambling"]
+      },
+      "choices": [
+        {
+          "id": "switch",
+          "label": "Przełącz stream na coś bez automatów",
+          "guaranteed": true,
+          "successText": "Część widzów wychodzi, ale kanał zyskuje opinię odpowiedzialnego.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "AudienceMultiplier", "amount": 0.9 } ]
+          }
+        },
+        {
+          "id": "warnings",
+          "label": "Graj dalej z ostrzeżeniami na ekranie",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Ostrzeżenia na ekranie uspokajają moderację platformy.",
+          "failureText": "Ktoś i tak zgłasza stream. Ostrzeżenia nie przekonały zgłaszającego.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "EventQuality", "amount": 2 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Zignoruj, przecież to tylko żetony",
+          "baseChance": 0.4,
+          "modifiers": [ { "stat": "Drama", "perPoint": -0.003, "labelKey": "modifier.drama" } ],
+          "successText": "Nic się nie dzieje, a czat bawi się świetnie.",
+          "failureText": "Zgłoszenie przychodzi jeszcze tego samego wieczoru. Afera gotowa.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 5 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -4 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "gamba-still-fun",
+      "version": 1,
+      "phase": "live",
+      "title": "Czy to jeszcze zabawa?",
+      "text": "Stały widz pyta wprost, czy po tylu latach automaty to jeszcze rozrywka, czy już rutyna. Czat na chwilę cichnie.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["gambling"],
+      "eligibility": {
+        "fromWeek": 781,
+        "toWeek": 1040,
+        "categories": ["Gambling"]
+      },
+      "choices": [
+        {
+          "id": "honest",
+          "label": "Odpowiedz szczerze i zrób przerwę od automatów",
+          "guaranteed": true,
+          "successText": "Szczera rozmowa porusza czat. Oglądalność spada, ale oddychasz lżej.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "StatDelta", "stat": "Burnout", "amount": -3 }, { "kind": "AudienceMultiplier", "amount": 0.9 } ]
+          }
+        },
+        {
+          "id": "deflect",
+          "label": "Obróć to w żart i kręć dalej",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Żart siada, a sesja leci dalej w dobrym humorze.",
+          "failureText": "Żart nie siada. Pytanie zostaje w powietrzu do końca streamu.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "EventQuality", "amount": 2 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-raid",
+      "version": 1,
+      "phase": "live",
+      "title": "Nalot z innego kanału",
+      "text": "Streamerka „Bambik” kończy transmisję i wysyła do ciebie czterysta osób. Ekran zalewa fala nieznanych emotek.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["community"],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "welcome",
+          "label": "Przywitaj gości i odpal szybkie show",
+          "baseChance": 0.55,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.002, "labelKey": "modifier.credibility" } ],
+          "allowsCritical": true,
+          "successText": "Goście zostają, a niektórzy klikają „obserwuj”. Bambik pisze „dobra robota”.",
+          "failureText": "Show się nie klei i goście wracają tam, skąd przyszli.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "EventQuality", "amount": 5 } ],
+            "failure": [ { "kind": "AudienceMultiplier", "amount": 0.95 }, { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "EventQuality", "amount": 5 }, { "kind": "FollowersPercent", "amount": 3 }, { "kind": "ViralChance", "amount": 8 } ]
+          }
+        },
+        {
+          "id": "keep-going",
+          "label": "Graj dalej swoje",
+          "guaranteed": true,
+          "successText": "Część gości zostaje z ciekawości. Reszta szybko się ulatnia.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.05 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-tech-failure",
+      "version": 1,
+      "phase": "live",
+      "title": "Awaria w połowie",
+      "text": "Obraz się zacina, mikrofon trzeszczy jak radio z meblościanki, a router mruga na czerwono. Czat już pisze „F”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "fix-live",
+          "label": "Napraw to na żywo i komentuj",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Udaje się. Czat ogląda naprawę jak program o remontach.",
+          "failureText": "Naprawa trwa godzinę i kończy się na tym, od czego się zaczęło.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 4 }, { "kind": "AudienceMultiplier", "amount": 1.05 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -5 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 2 } ],
+            "criticalSuccess": [ { "kind": "EventQuality", "amount": 6 }, { "kind": "AudienceMultiplier", "amount": 1.05 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "ViralChance", "amount": 6 } ],
+            "criticalFailure": [ { "kind": "EventQuality", "amount": -5 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 3 }, { "kind": "CashDelta", "amount": -150 } ]
+          }
+        },
+        {
+          "id": "restart",
+          "label": "Zrestartuj wszystko i przeproś",
+          "guaranteed": true,
+          "successText": "Po restarcie wszystko działa. Przerwa kosztowała trochę widzów i nerwów.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Energy", "amount": -2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-pizza-delivery",
+      "version": 1,
+      "phase": "live",
+      "title": "Pizza w złym momencie",
+      "text": "Zamówiona pizza przyjeżdża dokładnie w kluczowym momencie streamu. Kurier dzwoni trzeci raz, a czat skanduje „jedz na wizji”.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "eat-live",
+          "label": "Jedz na wizji i gadaj z czatem",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.002, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Recenzja pizzy na żywo okazuje się hitem wieczoru.",
+          "failureText": "Ser ląduje na klawiaturze, a ketchup na kamerze.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "StatDelta", "stat": "Energy", "amount": 4 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ]
+          }
+        },
+        {
+          "id": "brb",
+          "label": "Włącz ekran „zaraz wracam”",
+          "guaranteed": true,
+          "successText": "Jesz w spokoju. Część czatu nie doczekała powrotu.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Energy", "amount": 5 }, { "kind": "AudienceMultiplier", "amount": 0.9 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-neighbour-noise",
+      "version": 1,
+      "phase": "live",
+      "title": "Sąsiad z wiertarką",
+      "text": "Sąsiad zza ściany zaczyna wiercić dokładnie wtedy, gdy włączasz stream. Czat zgaduje, czy to remont, czy osobista wendeta.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "negotiate",
+          "label": "Idź do sąsiada z ciastem i negocjuj",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.002, "labelKey": "modifier.credibility" } ],
+          "successText": "Sąsiad bierze ciasto i odkłada wiertarkę. Zgoda na klatce.",
+          "failureText": "Sąsiad bierze ciasto i wierci dalej. Wendeta potwierdzona.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 3 }, { "kind": "StatDelta", "stat": "Energy", "amount": -2 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "embrace",
+          "label": "Zrób z wiertarki stały element streamu",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Czat wymyśla emotkę wiertarki. Sąsiad nieświadomie zostaje gwiazdą.",
+          "failureText": "Po kwadransie nikt już nie słyszy, co mówisz.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 2 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -4 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "EventQuality", "amount": 2 }, { "kind": "ViralChance", "amount": 10 } ]
+          }
+        },
+        {
+          "id": "endure",
+          "label": "Podgłośnij muzykę i przetrwaj",
+          "guaranteed": true,
+          "successText": "Stream przetrwał, nerwy trochę mniej.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-chat-meme",
+      "version": 1,
+      "phase": "live",
+      "title": "Ziemniak w okularach",
+      "text": "Czat od godziny spamuje tę samą emotkę: ziemniaka w okularach. Nikt nie pamięta, skąd się wziął, ale wszyscy wiedzą, że jest ważny.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["community"],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "adopt",
+          "label": "Zrób z ziemniaka maskotkę kanału",
+          "baseChance": 0.55,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Ziemniak dostaje imię i własną komendę. Czat jest wniebowzięty.",
+          "failureText": "Maskotka wychodzi na siłę i mem umiera na twoich oczach.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 1 }, { "kind": "EventQuality", "amount": -2 } ],
+            "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "ViralChance", "amount": 10 }, { "kind": "FollowersPercent", "amount": 2 } ]
+          }
+        },
+        {
+          "id": "ban-emote",
+          "label": "Zablokuj emotkę, bo psuje rozmowę",
+          "guaranteed": true,
+          "successText": "Rozmowa wraca na tory, ale czat ma ci to za złe.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-pet-cameo",
+      "version": 1,
+      "phase": "live",
+      "title": "Gościnny występ kota",
+      "text": "Kot wchodzi na klawiaturę, wyłącza grę i siada przed kamerą. Czat natychmiast przestaje cię zauważać.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "let-him",
+          "label": "Oddaj kotu stream na pięć minut",
+          "guaranteed": true,
+          "successText": "Pięć minut kota przyciąga więcej ludzi niż godzina twojej gry.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "EventQuality", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "shoo",
+          "label": "Zdejmij kota i wróć do gry",
+          "baseChance": 0.7,
+          "successText": "Kot obrażony, gra wznowiona.",
+          "failureText": "Kot wraca. I jeszcze raz. Czat zakłada mu fanklub.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": 2 } ],
+            "failure": [ { "kind": "EventQuality", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-copyright-music",
+      "version": 1,
+      "phase": "live",
+      "title": "Muzyka z ostrzeżeniem",
+      "text": "W tle leci hit z listy przebojów i platforma przysyła automatyczne ostrzeżenie o prawach autorskich. Czat już wie, co się stanie z VOD.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "mute",
+          "label": "Wycisz muzykę i graj w ciszy",
+          "guaranteed": true,
+          "successText": "Cisza jest bezpieczna i bardzo, bardzo cicha.",
+          "outcomes": {
+            "success": [ { "kind": "EventQuality", "amount": -3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ]
+          }
+        },
+        {
+          "id": "hum",
+          "label": "Zanuć melodię, to przecież nie to samo",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Nucenie staje się koncertem życzeń. Czat zamawia kolejne utwory.",
+          "failureText": "Platforma przysyła drugie ostrzeżenie. Nucenie też się liczy.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.1 }, { "kind": "EventQuality", "amount": 3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        },
+        {
+          "id": "buy-library",
+          "label": "Kup pakiet muzyki z licencją do streamów za 200 zł",
+          "guaranteed": true,
+          "requires": { "minCashPln": 200 },
+          "successText": "Nowa muzyka jest legalna i nawet całkiem przyjemna.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": -200 }, { "kind": "EventQuality", "amount": 2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "x-sub-train",
+      "version": 1,
+      "phase": "live",
+      "title": "Pociąg subów",
+      "text": "Ktoś daruje dziesięć subów, potem następna osoba dwadzieścia. Pasek pociągu rośnie, a czat żąda spełnienia każdej obietnicy z celu na ekranie.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["community"],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "promise",
+          "label": "Obiecaj wyzwanie za każdy kolejny poziom",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.002, "labelKey": "modifier.credibility" } ],
+          "allowsCritical": true,
+          "successText": "Pociąg jedzie do ostatniej stacji. Wyzwania wykonane, portfel pełniejszy.",
+          "failureText": "Wyzwań jest więcej niż sił. Część obietnic zostaje na „kiedyś”.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": 200 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 } ],
+            "criticalSuccess": [ { "kind": "CashDelta", "amount": 400 }, { "kind": "AudienceMultiplier", "amount": 1.15 }, { "kind": "StatDelta", "stat": "Energy", "amount": -4 }, { "kind": "ViralChance", "amount": 8 } ]
+          }
+        },
+        {
+          "id": "thank",
+          "label": "Podziękuj każdemu z nicku",
+          "guaranteed": true,
+          "successText": "Spokojne podziękowania. Pociąg zwalnia, ale nikt nie czuje się pominięty.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "CashDelta", "amount": 80 }, { "kind": "EventQuality", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "rivalry-callout",
+      "version": 1,
+      "phase": "live",
+      "title": "Wywołanie do tablicy",
+      "text": "Streamer „Kapitan Kebab” mówi na swoim kanale, że twoje wyniki to „zasługa kolegów z czatu”. Klip ma już tysiące wyświetleń.",
+      "weight": 1,
+      "cooldownWeeks": 52,
+      "tags": ["rivalry"],
+      "eligibility": {
+        "fromWeek": 27,
+        "toWeek": 1040,
+        "forbidsFlags": ["rivalry"]
+      },
+      "choices": [
+        {
+          "id": "fire-back",
+          "label": "Odpowiedz ostro na wizji",
+          "baseChance": 0.55,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.003, "labelKey": "modifier.primary-skill" } ],
+          "successText": "Riposta trafia w punkt. Oba czaty szaleją, a wojna dopiero się zaczyna.",
+          "failureText": "Riposta wychodzi blado. Kapitan już nagrywa odpowiedź.",
+          "outcomes": {
+            "success": [ { "kind": "AudienceMultiplier", "amount": 1.25 }, { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "SetFlag", "flag": "rivalry", "weeks": 52, "amount": 0 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "SetFlag", "flag": "rivalry", "weeks": 52, "amount": 0 }, { "kind": "FollowUp", "event": "rivalry-crisis", "weeks": 4, "amount": 0 } ]
+          }
+        },
+        {
+          "id": "laugh-off",
+          "label": "Wyśmiej to i wróć do streamu",
+          "guaranteed": true,
+          "successText": "Kapitan nie dostaje reakcji, na którą liczył. Ty nie dostajesz jego widzów.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "rivalry-rematch",
+      "version": 1,
+      "phase": "live",
+      "title": "Rewanż na żywo",
+      "text": "„Kapitan Kebab” proponuje publiczny pojedynek w dowolnej grze. Oba czaty już zbroją się w emotki i memy.",
+      "weight": 3,
+      "cooldownWeeks": 4,
+      "tags": ["rivalry"],
+      "eligibility": {
+        "fromWeek": 27,
+        "toWeek": 1040,
+        "requiresFlags": ["rivalry"]
+      },
+      "choices": [
+        {
+          "id": "accept",
+          "label": "Przyjmij rewanż",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "PrimarySkill", "perPoint": 0.004, "labelKey": "modifier.primary-skill" } ],
+          "allowsCritical": true,
+          "successText": "Wygrywasz. Kapitan podaje rękę na wizji i temat jest zamknięty.",
+          "failureText": "Przegrywasz, a Kapitan nie daje o tym zapomnieć.",
+          "outcomes": {
+            "success": [ { "kind": "ClearFlag", "flag": "rivalry", "amount": 0 }, { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "AudienceMultiplier", "amount": 1.1 } ],
+            "criticalSuccess": [ { "kind": "ClearFlag", "flag": "rivalry", "amount": 0 }, { "kind": "AudienceMultiplier", "amount": 1.3 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 3 }, { "kind": "ViralChance", "amount": 15 }, { "kind": "FollowersPercent", "amount": 3 } ]
+          }
+        },
+        {
+          "id": "peace",
+          "label": "Zaproponuj wspólny stream na zgodę",
+          "baseChance": 0.4,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Kapitan się zgadza. Wspólny stream kończy wojnę i zaczyna przyjaźń.",
+          "failureText": "Kapitan wyśmiewa propozycję na swoim kanale.",
+          "outcomes": {
+            "success": [ { "kind": "ClearFlag", "flag": "rivalry", "amount": 0 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "StatDelta", "stat": "Drama", "amount": -3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 3 } ]
+          }
+        },
+        {
+          "id": "decline",
+          "label": "Odmów, nie dasz mu darmowych widzów",
+          "guaranteed": true,
+          "successText": "Odmowa. Kapitan ogłasza zwycięstwo walkowerem.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Drama", "amount": 1 }, { "kind": "AudienceMultiplier", "amount": 0.95 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "first-week",
+      "version": 1,
+      "phase": "milestone",
+      "title": "Pierwszy tydzień za tobą",
+      "text": "Pierwszy tydzień streamowania za tobą. Kilka osób wraca, jedna pyta, „o czym w ogóle jest ten kanał”. Czas wybrać jego charakter.",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": [],
+      "eligibility": { "fromWeek": 2, "toWeek": 2 },
+      "choices": [
+        {
+          "id": "steady",
+          "label": "Stawiaj na rzetelność i stały plan",
+          "guaranteed": true,
+          "successText": "Plan wisi na ścianie, a widzowie wiedzą, czego się spodziewać.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 5 }, { "kind": "StatDelta", "stat": "Drama", "amount": -2 }, { "kind": "StatDelta", "stat": "Energy", "amount": -3 } ]
+          }
+        },
+        {
+          "id": "spicy",
+          "label": "Stawiaj na kontrowersje i gorące tematy",
+          "guaranteed": true,
+          "successText": "Gorące tematy przyciągają ludzi. I kłopoty.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "FollowersPercent", "amount": 5 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "burnout-recovery",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Ciało mówi dość",
+      "text": "Bateria na zero. Kawa już nie działa, a widok przycisku „start transmisji” wywołuje tik w oku. Trzeba coś postanowić, zanim zdecyduje organizm.",
+      "weight": 1,
+      "cooldownWeeks": 4,
+      "tags": [],
+      "eligibility": { "fromWeek": 1, "toWeek": 1040 },
+      "choices": [
+        {
+          "id": "week-off",
+          "label": "Weź tydzień wolnego, potem krótszy stream",
+          "guaranteed": true,
+          "successText": "Tydzień bez transmisji. Czat tęskni, ale wreszcie się wysypiasz.",
+          "outcomes": {
+            "success": [ { "kind": "SetFlag", "flag": "sys:rest-only", "weeks": 1, "amount": 0 }, { "kind": "SetFlag", "flag": "sys:short-stream", "weeks": 1, "amount": 0 } ]
+          }
+        },
+        {
+          "id": "push-through",
+          "label": "Zaciśnij zęby i streamuj dalej",
+          "baseChance": 0.5,
+          "successText": "Jakimś cudem łapiesz drugi oddech.",
+          "failureText": "{gender, select, female {Zasnęłaś} male {Zasnąłeś} other {Zasnęłoś}} w połowie streamu. Czat to widział i ma klipy.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Energy", "amount": 10 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Burnout", "amount": 10 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -5 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "first-viral",
+      "version": 1,
+      "phase": "milestone",
+      "title": "Klip poszedł w świat",
+      "text": "Twój klip krąży po całej Czatni i dalej. Nieznajomi cytują go w komentarzach, a skrzynka pęka od wiadomości. Jak to wykorzystasz?",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": ["viral-clip"]
+      },
+      "choices": [
+        {
+          "id": "ride-wave",
+          "label": "Streamuj codziennie, póki jest szum",
+          "guaranteed": true,
+          "successText": "Szum przekłada się na obserwujących. I na worki pod oczami.",
+          "outcomes": {
+            "success": [ { "kind": "FollowersPercent", "amount": 6 }, { "kind": "StatDelta", "stat": "Energy", "amount": -10 }, { "kind": "StatDelta", "stat": "Burnout", "amount": 6 } ]
+          }
+        },
+        {
+          "id": "context",
+          "label": "Nagraj spokojne wyjaśnienie kontekstu",
+          "baseChance": 0.6,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Ludzie doceniają, że za klipem stoi ktoś normalny.",
+          "failureText": "Wyjaśnienie samo staje się memem, i to nie tym dobrym.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 5 }, { "kind": "FollowersPercent", "amount": 3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ]
+          }
+        },
+        {
+          "id": "lay-low",
+          "label": "Przeczekaj i nic nie zmieniaj",
+          "guaranteed": true,
+          "successText": "Szum mija tak szybko, jak przyszedł. Przynajmniej nie musisz nic robić.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Burnout", "amount": -5 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-10k",
+      "version": 1,
+      "phase": "milestone",
+      "title": "10 000 obserwujących",
+      "text": "Licznik pokazuje 10 000 obserwujących. Czat domaga się świętowania z rozmachem: tort, konkurs i coś, czego nikt jeszcze nie widział.",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": ["sponsor", "community"],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "min": { "Followers": 10000 }
+      },
+      "choices": [
+        {
+          "id": "party",
+          "label": "Zrób wielką imprezę z nagrodami za 1000 zł",
+          "guaranteed": true,
+          "requires": { "minCashPln": 1000 },
+          "successText": "Tort, nagrody i konkurs. Społeczność długo będzie to wspominać.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": -1000 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 4 }, { "kind": "FollowersPercent", "amount": 3 } ]
+          }
+        },
+        {
+          "id": "sponsored",
+          "label": "Niech imprezę opłaci napój „Turbo Kisiel”",
+          "guaranteed": true,
+          "successText": "Sponsor płaci, a ty co dziesięć minut zachwalasz smak kisielu.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": 500 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        },
+        {
+          "id": "humble",
+          "label": "Podziękuj skromnie na zwykłym streamie",
+          "guaranteed": true,
+          "successText": "Skromnie i miło. Część czatu liczyła na więcej.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "FollowersPercent", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "rivalry-crisis",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Wojna na filmy",
+      "text": "Rywal wrzuca film „Cała prawda”: czterdzieści minut, dramatyczna muzyka i zrzuty ekranu sprzed lat. Komentarze płoną, a twoi widzowie czekają.",
+      "weight": 1,
+      "cooldownWeeks": 26,
+      "tags": ["rivalry"],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "forbidsFlags": []
+      },
+      "choices": [
+        {
+          "id": "diss",
+          "label": "Nagraj ostrą odpowiedź",
+          "baseChance": 0.45,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Odpowiedź robi więcej wyświetleń niż oryginał. Wojna trwa, ale wygrywasz rundę.",
+          "failureText": "Odpowiedź tylko dolewa oliwy. Rywal ma materiał na drugi film.",
+          "outcomes": {
+            "success": [ { "kind": "FollowersPercent", "amount": 6 }, { "kind": "StatDelta", "stat": "Drama", "amount": 6 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 8 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -5 }, { "kind": "FollowersPercent", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "receipts",
+          "label": "Pokaż spokojnie fakty i zrzuty ekranu",
+          "baseChance": 0.55,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" }, { "stat": "Drama", "perPoint": -0.002, "labelKey": "modifier.drama" } ],
+          "successText": "Fakty bronią się same. Część komentujących zmienia zdanie.",
+          "failureText": "Nikt nie czyta zrzutów ekranu. Wszyscy wolą dramatyczną muzykę.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 5 }, { "kind": "StatDelta", "stat": "Drama", "amount": -3 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -3 }, { "kind": "StatDelta", "stat": "Drama", "amount": 3 } ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Nie komentuj i rób swoje",
+          "guaranteed": true,
+          "successText": "Burza przechodzi bokiem. Kilka osób odchodzi do obozu rywala.",
+          "outcomes": {
+            "success": [ { "kind": "FollowersPercent", "amount": -2 }, { "kind": "StatDelta", "stat": "Drama", "amount": -2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "collab-fallout",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Po wspólnym streamie",
+      "text": "Twórca, z którym {gender, select, female {zrobiłaś} male {zrobiłeś} other {zrobiłoś}} wspólny stream, publikuje film o tym, jak źle mu się z tobą pracowało. Oba czaty już wybrały strony.",
+      "weight": 1,
+      "cooldownWeeks": 26,
+      "tags": ["rivalry"],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "forbidsFlags": []
+      },
+      "choices": [
+        {
+          "id": "apologize",
+          "label": "Przeproś publicznie i wyjaśnij nieporozumienie",
+          "guaranteed": true,
+          "successText": "Przeprosiny gaszą pożar. Część widzów uznaje je za słabość.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Drama", "amount": -5 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 2 }, { "kind": "FollowersPercent", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "counter",
+          "label": "Kontratakuj własnym filmem",
+          "baseChance": 0.4,
+          "modifiers": [ { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" } ],
+          "successText": "Twój film przekonuje więcej osób. Obserwujący przybywa, spokoju ubywa.",
+          "failureText": "Kontratak wygląda małostkowo. Obie strony dostają po głowie, ty mocniej.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "FollowersPercent", "amount": 4 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 8 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -6 }, { "kind": "FollowersPercent", "amount": -3 } ]
+          }
+        },
+        {
+          "id": "silence",
+          "label": "Milcz i przeczekaj burzę",
+          "guaranteed": true,
+          "successText": "Milczenie niczego nie wyjaśnia, ale też niczego nie pogarsza. Prawie.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Drama", "amount": 2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -1 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "community-burnout-poll",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Czat się martwi",
+      "text": "Ktoś na czacie robi ankietę „Czy naszemu kanałowi należy się urlop?”. 87% głosuje na tak, a reszta pyta, skąd te podkrążone oczy.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": ["community"],
+      "eligibility": {
+        "fromWeek": 53,
+        "toWeek": 1040,
+        "min": { "Burnout": 50 }
+      },
+      "choices": [
+        {
+          "id": "cut-hours",
+          "label": "Skróć streamy na dwa tygodnie",
+          "guaranteed": true,
+          "successText": "Krótsze streamy, dłuższy sen. Kilka osób szuka dłuższych transmisji gdzie indziej.",
+          "outcomes": {
+            "success": [ { "kind": "SetFlag", "flag": "sys:short-stream", "weeks": 2, "amount": 0 }, { "kind": "StatDelta", "stat": "Burnout", "amount": -10 }, { "kind": "FollowersPercent", "amount": -2 } ]
+          }
+        },
+        {
+          "id": "hire-mod",
+          "label": "Wynajmij pomoc do moderacji za 300 zł",
+          "guaranteed": true,
+          "requires": { "minCashPln": 300 },
+          "successText": "Ktoś inny pilnuje czatu, a ty możesz wreszcie skupić się na streamie.",
+          "outcomes": {
+            "success": [ { "kind": "CashDelta", "amount": -300 }, { "kind": "StatDelta", "stat": "Burnout", "amount": -6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ]
+          }
+        },
+        {
+          "id": "reassure",
+          "label": "Zapewnij, że wszystko gra",
+          "baseChance": 0.5,
+          "modifiers": [ { "stat": "Energy", "perPoint": 0.004, "labelKey": "modifier.energy" } ],
+          "successText": "Czat ci wierzy. Na razie.",
+          "failureText": "Ziewasz w połowie zapewnień. Czat nie daje się nabrać.",
+          "outcomes": {
+            "success": [ { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
+            "failure": [ { "kind": "StatDelta", "stat": "Credibility", "amount": -4 }, { "kind": "StatDelta", "stat": "Drama", "amount": 2 } ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-copyright-strike",
+      "version": 1,
+      "phase": "live",
+      "title": "Automat od praw autorskich",
+      "text": "Algorytm platformy wyłapuje w tle fragment piosenki. Na ekranie miga ostrzeżenie, a czat zaczyna liczyć, ile to już razy.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 27,
+        "toWeek": 1040
+      },
+      "choices": [
+        {
+          "id": "keep-music",
+          "label": "Zostaw muzykę, przecież to tylko refren",
+          "baseChance": 0.75,
+          "successText": "Algorytm tym razem odpuszcza. Refren zostaje, czat śpiewa razem z tobą.",
+          "failureText": "Przychodzi oficjalne upomnienie od platformy. Refren kosztował więcej, niż był wart.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "EventQuality",
+                "amount": 2
+              }
+            ],
+            "failure": [
+              {
+                "kind": "PolicyStrike",
+                "amount": 1
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "mute",
+          "label": "Wycisz wszystko i graj dalej w ciszy",
+          "guaranteed": true,
+          "successText": "Cisza jest bezpieczna. Czat zaczyna nucić za ciebie, ale to już nie twój problem.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "EventQuality",
+                "amount": -3
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-gambling-promo",
+      "version": 1,
+      "phase": "live",
+      "title": "Kod promocyjny w wiadomościach",
+      "text": "Ktoś z bardzo błyszczącym awatarem proponuje, żeby na wizji pojawił się kod do wirtualnych żetonów. Regulamin platformy ma na ten temat osobny rozdział.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "refuse",
+          "label": "Odmów i przypnij regulamin na czacie",
+          "guaranteed": true,
+          "successText": "Czat docenia, że nie każdy kod musi trafić na ekran. Moderatorzy oddychają z ulgą.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "show-code",
+          "label": "Pokaż kod, raz się żyje",
+          "baseChance": 0.35,
+          "successText": "Kod znika z czatu szybciej, niż się pojawił. Partner przysyła symboliczne podziękowanie.",
+          "failureText": "Zgłoszenie trafia do działu zgodności. Platforma wpisuje ci upomnienie.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 150
+              }
+            ],
+            "failure": [
+              {
+                "kind": "PolicyStrike",
+                "amount": 1
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-privacy-leak",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Wyciek z prywatnej rozmowy",
+      "text": "W sieci krąży zrzut ekranu z twojej prywatnej rozmowy, w której mało pochlebnie oceniasz moderatorów platformy. Dział zaufania i bezpieczeństwa prosi o wyjaśnienia.",
+      "weight": 1,
+      "cooldownWeeks": 104,
+      "tags": [
+        "privacy-incident"
+      ],
+      "eligibility": {
+        "fromWeek": 105,
+        "toWeek": 1040,
+        "minStrikes": 1
+      },
+      "choices": [
+        {
+          "id": "apologise",
+          "label": "Przyznaj się i przeproś publicznie",
+          "guaranteed": true,
+          "successText": "{gender, select, female {Przeprosiłaś bez wykrętów. Część widzów kręci głową, ale sprawa przycicha.} male {Przeprosiłeś bez wykrętów. Część widzów kręci głową, ale sprawa przycicha.} other {Przeprosiłoś bez wykrętów. Część widzów kręci głową, ale sprawa przycicha.}}",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -3
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "deny",
+          "label": "Zaprzeczaj wszystkiemu (ryzyko trwałej blokady wszędzie)",
+          "baseChance": 0.3,
+          "successText": "Nikt nie potrafi udowodnić, że zrzut jest prawdziwy. Temat umiera po weekendzie.",
+          "failureText": "Pojawia się nagranie. Wszystkie platformy jednocześnie zamykają ci konta na stałe.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              }
+            ],
+            "failure": [
+              {
+                "kind": "GlobalBan",
+                "amount": 0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "puls-discovery",
+      "version": 1,
+      "phase": "live",
+      "title": "Wyróżnienie na stronie głównej",
+      "text": "PulsLive testuje nowy algorytm odkrywania i twój stream ląduje w karuzeli na stronie głównej. Na czacie pojawiają się nicki, których nikt tu wcześniej nie widział.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "platforms": [
+          "PulsLive"
+        ]
+      },
+      "choices": [
+        {
+          "id": "showcase",
+          "label": "Zrób show dla nowych widzów",
+          "baseChance": 0.55,
+          "modifiers": [
+            {
+              "stat": "PrimarySkill",
+              "perPoint": 0.003,
+              "labelKey": "modifier.primary-skill"
+            }
+          ],
+          "allowsCritical": true,
+          "successText": "Nowi widzowie zostają do końca. Algorytm zapisuje sobie twoje nazwisko.",
+          "failureText": "Robisz za dużo hałasu i nowi widzowie uciekają do kolejnego kafelka.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "AudienceMultiplier",
+                "amount": 1.3
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        },
+        {
+          "id": "business-as-usual",
+          "label": "Rób swoje, jakby nic się nie stało",
+          "guaranteed": true,
+          "successText": "Kilka osób zostaje, reszta przewija dalej. Spokojny stream to też stream.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "AudienceMultiplier",
+                "amount": 1.05
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "nurt-community",
+      "version": 1,
+      "phase": "live",
+      "title": "Wieczór patronów",
+      "text": "Społeczność Nurtu organizuje wieczór dla patronów. Ktoś przygotował nawet tabelkę z listą tematów i harmonogramem przerw na herbatę.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "community"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "platforms": [
+          "Nurt"
+        ]
+      },
+      "choices": [
+        {
+          "id": "patron-night",
+          "label": "Poprowadź wieczór patronów",
+          "guaranteed": true,
+          "successText": "Patroni dziękują za spokojną rozmowę i zostawiają drobne wsparcie.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 2
+              },
+              {
+                "kind": "CashDelta",
+                "amount": 100
+              }
+            ]
+          }
+        },
+        {
+          "id": "skip",
+          "label": "Podziękuj i zostań przy zwykłym planie",
+          "guaranteed": true,
+          "successText": "Patroni rozumieją. Tabelka czeka na lepszy termin.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy-first-strike",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Pierwsze upomnienie",
+      "text": "Platforma przysyła oficjalne upomnienie z numerem paragrafu. Trzy takie listy w pół roku i kanał może zniknąć.",
+      "weight": 1,
+      "cooldownWeeks": 26,
+      "tags": [],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "minStrikes": 1
+      },
+      "choices": [
+        {
+          "id": "read-rules",
+          "label": "Przeczytaj regulamin od deski do deski",
+          "guaranteed": true,
+          "successText": "{gender, select, female {Przeczytałaś wszystkie czterdzieści stron. Teraz wiesz, czego unikać.} male {Przeczytałeś wszystkie czterdzieści stron. Teraz wiesz, czego unikać.} other {Przeczytałoś wszystkie czterdzieści stron. Teraz wiesz, czego unikać.}}",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": -2
+              }
+            ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Zignoruj, przecież to tylko automat",
+          "guaranteed": true,
+          "successText": "List ląduje w folderze z innymi listami. Czat zauważa, że temat cię nie obchodzi.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-first-catalog",
+      "version": 1,
+      "phase": "milestone",
+      "title": "Pierwszy cennik po godzinach",
+      "text": "Biznes po godzinach ma już pierwszych subskrybentów. Trzeba ustalić cennik, zanim zrobi to za ciebie dział plotek.",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": [
+        "adult-business"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ]
+      },
+      "choices": [
+        {
+          "id": "premium",
+          "label": "Ustal wysokie ceny dla wąskiego grona",
+          "guaranteed": true,
+          "successText": "Grono jest wąskie, ale hojne. Część widzów streamów uważa, że to przesada.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 300
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -1
+              }
+            ]
+          }
+        },
+        {
+          "id": "affordable",
+          "label": "Ustal przystępne ceny i jasne zasady",
+          "guaranteed": true,
+          "successText": "Zasady są proste, a ceny uczciwe. Mniej pieniędzy, mniej pytań.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 100
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-workload",
+      "version": 1,
+      "phase": "crisis",
+      "title": "Dwa etaty naraz",
+      "text": "Streamy w dzień, biznes po godzinach w nocy. Kalendarz wygląda jak plansza do Tetrisa, a ty coraz częściej zasypiasz przy klawiaturze.",
+      "weight": 1,
+      "cooldownWeeks": 26,
+      "tags": [
+        "adult-business"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ],
+        "min": {
+          "Burnout": 40
+        }
+      },
+      "choices": [
+        {
+          "id": "cut-hours",
+          "label": "Ogranicz godziny biznesu po godzinach",
+          "guaranteed": true,
+          "successText": "Mniej pracy, więcej snu. Konto trochę na tym traci, głowa zyskuje.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Burnout",
+                "amount": -5
+              }
+            ]
+          }
+        },
+        {
+          "id": "push",
+          "label": "Dociśnij jeszcze ten tydzień",
+          "guaranteed": true,
+          "successText": "Kolejna noc przy biurku. Przelew przychodzi, siły odchodzą.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Energy",
+                "amount": -5
+              },
+              {
+                "kind": "CashDelta",
+                "amount": 200
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-leak-rumour",
+      "version": 1,
+      "phase": "live",
+      "title": "Plotka o wycieku",
+      "text": "Na forum ktoś twierdzi, że wyciekły materiały z twojego biznesu po godzinach. Szybko okazuje się, że to wygenerowane, syntetyczne dane, ale czat już o tym mówi.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "adult-business",
+        "privacy-incident"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ]
+      },
+      "choices": [
+        {
+          "id": "deny-loudly",
+          "label": "Ostro zdementuj plotkę na wizji",
+          "baseChance": 0.5,
+          "modifiers": [
+            {
+              "stat": "Credibility",
+              "perPoint": 0.003,
+              "labelKey": "modifier.credibility"
+            }
+          ],
+          "successText": "Dementi trafia. Czat zgadza się, że to podróbka, i wraca do tematu streamu.",
+          "failureText": "Im głośniej zaprzeczasz, tym więcej osób szuka podróbki. Temat żyje dalej.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 3
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -2
+              }
+            ]
+          }
+        },
+        {
+          "id": "calm-statement",
+          "label": "Wydaj krótkie, spokojne oświadczenie",
+          "guaranteed": true,
+          "successText": "Oświadczenie jest nudne, a o to chodziło. Plotka gaśnie bez paliwa.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "side-fan-request",
+      "version": 1,
+      "phase": "live",
+      "title": "Prośba od fana",
+      "text": "Fan z biznesu po godzinach pisze na czacie streamu i prosi o coś specjalnego. Moderatorzy patrzą na ciebie pytająco.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "adult-business"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "requiresFlags": [
+          "side-business"
+        ]
+      },
+      "choices": [
+        {
+          "id": "decline",
+          "label": "Grzecznie odmów i oddziel oba światy",
+          "guaranteed": true,
+          "successText": "Granica jest jasna. Moderatorzy kiwają głowami z uznaniem.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "upsell",
+          "label": "Odeślij fana do płatnej oferty",
+          "guaranteed": true,
+          "successText": "Fan płaci, czat komentuje. Obie rzeczy były do przewidzenia.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "CashDelta",
+                "amount": 100
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wager-chat-hype",
+      "version": 1,
+      "phase": "live",
+      "title": "Czat chce więcej",
+      "text": "Czat skanduje, żeby stawka wirtualnych żetonów poszła w górę. Ktoś już wkleja emotkę z rakietą po raz czterdziesty.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "keep-limit",
+          "label": "Trzymam limit ustalony przed streamem",
+          "guaranteed": true,
+          "successText": "Limit to limit. Część czatu marudzi, reszta szanuje konsekwencję.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "hype-back",
+          "label": "Podkręć emocje gadaniem, nie stawką",
+          "guaranteed": true,
+          "successText": "Robisz z tego teatr bez ruszania żetonów. Czat dostaje show.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              },
+              {
+                "kind": "EventQuality",
+                "amount": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wager-streak",
+      "version": 1,
+      "phase": "live",
+      "title": "Szczęśliwa passa",
+      "text": "Trzy wygrane z rzędu w wirtualnych żetonach. Czat jest przekonany, że masz dar, a ty wiesz, że to tylko statystyka.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "keep-playing",
+          "label": "Graj dalej, póki karta idzie",
+          "baseChance": 0.45,
+          "successText": "Passa trwa jeszcze chwilę. Widzowie zostają, żeby zobaczyć, jak się skończy.",
+          "failureText": "Passa kończy się efektownie. Czat ma nowe ulubione nagranie.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "AudienceMultiplier",
+                "amount": 1.1
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 3
+              }
+            ]
+          }
+        },
+        {
+          "id": "stop",
+          "label": "Zatrzymaj się i pogadaj o prawdopodobieństwie",
+          "guaranteed": true,
+          "successText": "Mała lekcja statystyki. Nie wszyscy są zachwyceni, ale nikt nie wychodzi.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "wager-mod-limit",
+      "version": 1,
+      "phase": "live",
+      "title": "Limit od moderatora",
+      "text": "Moderator proponuje, żeby na kanale obowiązywał tygodniowy limit stawek wirtualnych żetonów. Przygotował nawet grafikę.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "gambling"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "categories": [
+          "Gambling"
+        ]
+      },
+      "choices": [
+        {
+          "id": "accept",
+          "label": "Przyjmij limit i przypnij grafikę",
+          "guaranteed": true,
+          "successText": "Limit wisi na ekranie. Temat zakładów na czacie wyraźnie się uspokaja.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": -2
+              }
+            ]
+          }
+        },
+        {
+          "id": "reject",
+          "label": "Odrzuć limit, przecież wiesz najlepiej",
+          "guaranteed": true,
+          "successText": "Moderator wzdycha i chowa grafikę. Czat odnotowuje wymianę zdań.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              },
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sponsor-agency-call",
+      "version": 1,
+      "phase": "milestone",
+      "title": "Telefon z agencji",
+      "text": "Dzwoni agencja, która reprezentuje kilka marek. Mają klienta, który szuka twórcy z twoim zasięgiem i spokojnym czatem.",
+      "weight": 1,
+      "cooldownWeeks": 13,
+      "oneTime": true,
+      "tags": [
+        "sponsor"
+      ],
+      "eligibility": {
+        "fromWeek": 1,
+        "toWeek": 1040,
+        "min": {
+          "Followers": 5000
+        }
+      },
+      "choices": [
+        {
+          "id": "meet",
+          "label": "Umów spotkanie z agencją",
+          "guaranteed": true,
+          "successText": "Agencja przysyła ofertę jeszcze tego samego dnia.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "SponsorOffer",
+                "sponsor": "ksiegarnia-strona",
+                "amount": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "not-now",
+          "label": "Podziękuj, nie teraz",
+          "guaranteed": true,
+          "successText": "Agencja zapisuje twój numer. Może zadzwoni jeszcze raz.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "StatDelta",
+                "stat": "Credibility",
+                "amount": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "sponsor-brand-rep",
+      "version": 1,
+      "phase": "live",
+      "title": "Przedstawiciel marki na czacie",
+      "text": "Na czacie odzywa się przedstawiciel napoju o smaku, którego nikt nie potrafi nazwać. Pyta, czy można by tak na żywo coś pokazać.",
+      "weight": 2,
+      "cooldownWeeks": 13,
+      "tags": [
+        "sponsor"
+      ],
+      "eligibility": {
+        "fromWeek": 27,
+        "toWeek": 1040
+      },
+      "choices": [
+        {
+          "id": "pitch-live",
+          "label": "Zrób szybką prezentację na wizji",
+          "baseChance": 0.5,
+          "successText": "Prezentacja wychodzi zabawnie. Przedstawiciel prosi o kontakt w sprawie oferty.",
+          "failureText": "Prezentacja wychodzi drętwo. Czat robi z niej mema.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "SponsorOffer",
+                "sponsor": "turbo-kisiel",
+                "amount": 0
+              }
+            ],
+            "failure": [
+              {
+                "kind": "StatDelta",
+                "stat": "Drama",
+                "amount": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "ignore",
+          "label": "Zignoruj i wróć do streamu",
+          "guaranteed": true,
+          "successText": "Przedstawiciel znika równie szybko, jak się pojawił.",
+          "outcomes": {
+            "success": [
+              {
+                "kind": "EventQuality",
+                "amount": -1
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sponsors": [
+    {"id": "herbata-spokoj", "version": 1, "name": "Herbata Spokój", "pitch": "Marka herbaty szuka kanału, przy którym nikt nie podnosi głosu.", "kind": "contract", "paymentPln": 250, "paymentPerThousandFollowersPln": 15, "paymentCapPln": 240000, "termWeeks": 12, "dueEveryWeeks": 4, "platforms": [], "prerequisites": {"minFollowers": 1000, "minCredibility": 55, "maxDrama": 30}, "incompatibleWith": ["adult-business"], "breach": {"cashPln": 200, "credibility": -3}, "weight": 3, "tags": ["sponsor"]},
+    {"id": "bank-skarbonka", "version": 1, "name": "Bank Skarbonka", "pitch": "Bank z okrągłym logo chce jednego odcinka o oszczędzaniu na mikrofon.", "kind": "oneOff", "paymentPln": 300, "paymentPerThousandFollowersPln": 10, "paymentCapPln": 180000, "platforms": [], "prerequisites": {"minFollowers": 1000, "minCredibility": 45, "maxDrama": 35}, "incompatibleWith": [], "breach": {"cashPln": 150, "credibility": -2}, "weight": 3, "tags": ["sponsor"]},
+    {"id": "ksiegarnia-strona", "version": 1, "name": "Księgarnia Strona", "pitch": "Księgarnia internetowa szuka kogoś, kto czyta coś więcej niż czat.", "kind": "contract", "paymentPln": 200, "paymentPerThousandFollowersPln": 10, "paymentCapPln": 160000, "termWeeks": 8, "dueEveryWeeks": 4, "platforms": [], "prerequisites": {"minFollowers": 2000, "minCredibility": 50, "maxDrama": 40}, "incompatibleWith": ["adult-business"], "breach": {"cashPln": 150, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "meble-ergo", "version": 1, "name": "Meble Ergo", "pitch": "Producent krzeseł obiecuje, że twój kręgosłup podziękuje w napisach końcowych.", "kind": "oneOff", "paymentPln": 600, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 500000, "platforms": [], "prerequisites": {"minFollowers": 10000, "minCredibility": 60, "maxDrama": 25}, "incompatibleWith": ["adult-business"], "breach": {"cashPln": 300, "credibility": -3}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "turbo-kisiel", "version": 1, "name": "Turbo Kisiel", "pitch": "Kisiel o smaku błyskawicy chce, żeby o nim było głośno. Bardzo głośno.", "kind": "oneOff", "paymentPln": 400, "paymentPerThousandFollowersPln": 25, "paymentCapPln": 400000, "platforms": [], "prerequisites": {"minFollowers": 2000, "minDrama": 50}, "incompatibleWith": [], "breach": {"cashPln": 200, "credibility": -1}, "weight": 3, "tags": ["sponsor"]},
+    {"id": "energol-max", "version": 1, "name": "Energol Max", "pitch": "Napój energetyczny szuka kanału, na którym zawsze coś się pali.", "kind": "contract", "paymentPln": 500, "paymentPerThousandFollowersPln": 30, "paymentCapPln": 600000, "termWeeks": 12, "dueEveryWeeks": 4, "platforms": [], "prerequisites": {"minFollowers": 5000, "minDrama": 60}, "incompatibleWith": [], "breach": {"cashPln": 400, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "apka-plotki", "version": 1, "name": "Apka Plotki", "pitch": "Aplikacja z plotkami płaci za każdy temat, który rozgrzeje komentarze.", "kind": "contract", "paymentPln": 350, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 360000, "termWeeks": 8, "dueEveryWeeks": 2, "platforms": [], "prerequisites": {"minFollowers": 3000, "minDrama": 55}, "incompatibleWith": [], "breach": {"cashPln": 300, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "szachy-pionek", "version": 1, "name": "Klub Pionek", "pitch": "Szachowy klub online szuka ambasadora spokojnych partii.", "kind": "contract", "paymentPln": 250, "paymentPerThousandFollowersPln": 15, "paymentCapPln": 200000, "termWeeks": 12, "dueEveryWeeks": 4, "requiredCategory": "Chess", "platforms": [], "prerequisites": {"minFollowers": 1000, "minCredibility": 50}, "incompatibleWith": ["gambling"], "breach": {"cashPln": 150, "credibility": -2}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "myszka-celownik", "version": 1, "name": "Myszka Celownik", "pitch": "Producent myszek chce jednego streama, na którym trafiasz wszystko.", "kind": "oneOff", "paymentPln": 350, "paymentPerThousandFollowersPln": 15, "paymentCapPln": 300000, "requiredCategory": "Fps", "platforms": [], "prerequisites": {"minFollowers": 1500}, "incompatibleWith": [], "breach": {"cashPln": 200, "credibility": -1}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "zetonik-wirtualny", "version": 1, "name": "Żetonik", "pitch": "Studio gry promuje nową skórkę żetonu w grze. Wyłącznie kosmetyka, bez żadnych wygranych.", "kind": "oneOff", "paymentPln": 450, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 360000, "requiredCategory": "Gambling", "platforms": [], "prerequisites": {"minFollowers": 2000, "minDrama": 30}, "incompatibleWith": [], "breach": {"cashPln": 250, "credibility": -2}, "weight": 1, "tags": ["sponsor", "gambling"]},
+    {"id": "puls-boost", "version": 1, "name": "Puls Boost", "pitch": "Program partnerski PulsLive nagradza twórców, którzy zostają na platformie.", "kind": "contract", "paymentPln": 400, "paymentPerThousandFollowersPln": 25, "paymentCapPln": 400000, "termWeeks": 8, "dueEveryWeeks": 4, "platforms": ["PulsLive"], "prerequisites": {"minFollowers": 3000}, "incompatibleWith": [], "breach": {"cashPln": 300, "credibility": -3}, "weight": 2, "tags": ["sponsor"]},
+    {"id": "nurt-patron", "version": 1, "name": "Patronat Nurtu", "pitch": "Nurt dopłaca twórcom, którzy budują spokojną i wierną społeczność.", "kind": "contract", "paymentPln": 300, "paymentPerThousandFollowersPln": 20, "paymentCapPln": 300000, "termWeeks": 12, "dueEveryWeeks": 4, "platforms": ["Nurt"], "prerequisites": {"minFollowers": 1500, "minCredibility": 55}, "incompatibleWith": [], "breach": {"cashPln": 200, "credibility": -3}, "weight": 2, "tags": ["sponsor"]}
+  ]
+}

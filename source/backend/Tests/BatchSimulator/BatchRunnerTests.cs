@@ -4,6 +4,7 @@ using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Domain.Simulation.Policies;
+using PolskiStreamerSimulator.Tests.Support;
 using BatchProgram = PolskiStreamerSimulator.BatchSimulator.Program;
 
 namespace PolskiStreamerSimulator.Tests.BatchSimulator;
@@ -46,6 +47,23 @@ public sealed class BatchRunnerTests : IDisposable
         Assert.Equal(40, careers.Select(c => (c.Policy, c.Background, c.Difficulty)).Distinct().Count());
         Assert.Equal((Background.ChessClubRegular, Difficulty.Easy, "Grinder"), (careers[6].Background, careers[6].Difficulty, careers[6].Policy));
     }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(10)]
+    public void Every_policy_plays_every_background_and_difficulty(int policies)
+    {
+        var assignments = Enumerable.Range(0, policies * 8).Select(i => (i % policies, BatchRunner.Assign(i, policies))).ToArray();
+        Assert.Equal(policies * 8, assignments.Distinct().Count());
+    }
+
+    [Fact]
+    public void An_odd_policy_count_keeps_the_m1_assignment()
+        => Assert.All(Enumerable.Range(0, 200), i => Assert.Equal(
+            (Enum.GetValues<Background>()[i % 4], i / 4 % 2 == 0 ? Difficulty.Normal : Difficulty.Easy),
+            BatchRunner.Assign(i, 5)));
 
     [Fact]
     public void Deterministic_section_is_identical_across_runs()
@@ -108,5 +126,137 @@ public sealed class BatchRunnerTests : IDisposable
         Assert.True(File.Exists(Path.Combine(outputDirectory, "report.md")));
         Assert.True(File.Exists(Path.Combine(outputDirectory, "report.json")));
         Assert.StartsWith("# M1 batch simulation report", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void M3_content_runs_the_m3_ruleset_and_policies_and_reports_the_criteria()
+    {
+        using var output = new StringWriter();
+        Assert.Equal(0, BatchProgram.Run(["--content", TestPaths.ContentM3, "--careers", "20", "--out", outputDirectory], output, null));
+        var md = output.ToString();
+        Assert.StartsWith("# M3 batch simulation report", md, StringComparison.Ordinal);
+        Assert.Contains("Ruleset `m3-systems.2`", md, StringComparison.Ordinal);
+        Assert.Contains($"policies: {string.Join(", ", BuiltInPolicies.M3CAll.Select(p => p.Name))}.", md, StringComparison.Ordinal);
+        Assert.Contains("### By category specialist", md, StringComparison.Ordinal);
+        Assert.Contains("| Specialist-Gambling |", md, StringComparison.Ordinal);
+        Assert.Contains("### Decisions and virals", md, StringComparison.Ordinal);
+        Assert.Contains("### Criteria", md, StringComparison.Ordinal);
+        Assert.Contains("Distinct paths", md, StringComparison.Ordinal);
+        Assert.Contains("Viable specialization", md, StringComparison.Ordinal);
+        Assert.Contains("Pacing", md, StringComparison.Ordinal);
+        Assert.Contains("Invariant failures: none", md, StringComparison.Ordinal);
+        Assert.DoesNotContain("\n\n\n", md.ReplaceLineEndings("\n"), StringComparison.Ordinal);
+
+        using var json = JsonDocument.Parse(File.ReadAllText(Path.Combine(outputDirectory, "report.json")));
+        var deterministic = json.RootElement.GetProperty("deterministic");
+        Assert.Equal("m3-systems.2", deterministic.GetProperty("rulesetId").GetString());
+        Assert.Equal(BuiltInPolicies.M3CAll.Count, deterministic.GetProperty("careers").EnumerateArray().Select(c => c.GetProperty("policy").GetString()).Distinct().Count());
+    }
+
+    [Fact]
+    public void M3b_content_reports_economy_and_risk_with_its_criteria()
+    {
+        var o = BatchOptions.Parse(["--content", TestPaths.ContentM3, "--careers", "34"], BatchRunner.PoliciesFor("m3-systems.2")).Value;
+        var r = BatchRunner.Run(o, BuiltInPolicies.M3CAll);
+        Assert.Equal("m3-systems.2", r.RulesetId);
+        Assert.Equal(BuiltInPolicies.M3CAll.Select(p => p.Name), o.Policies);
+        Assert.All(r.Careers, c => Assert.Equal(0, c.ReconciliationViolations));
+        Assert.All(r.Careers, c => Assert.True(c.SponsorIncome <= c.TotalIncome));
+        Assert.Contains(r.Careers, c => c.Installments > 0);
+        var md = ReportWriter.Markdown(r, o);
+        Assert.Contains("### Economy and risk", md, StringComparison.Ordinal);
+        Assert.Contains("### M3-B criteria", md, StringComparison.Ordinal);
+        foreach (var name in new[] { "No side business needed", "Gambling is not dominant", "Side business is a trade-off", "Bans are rare but real", "Sponsors matter", "Reconciliation" })
+        {
+            Assert.Contains($"| {name}", md, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("### Achievements and strategies", md, StringComparison.Ordinal);
+        Assert.Contains("### M3-C criteria", md, StringComparison.Ordinal);
+        Assert.Contains("| scandal-survivor |", md, StringComparison.Ordinal);
+        foreach (var name in new[] { "Strategies are viable", "Strategy choices matter", "Achievements separate careers" })
+        {
+            Assert.Contains($"| {name}", md, StringComparison.Ordinal);
+        }
+
+        Assert.All(r.Careers, c => Assert.Equal(c.Achievements.Count == 0, c.AchievementPoints == 0));
+    }
+
+    [Fact]
+    public void M3a_content_has_no_m3b_sections()
+    {
+        var o = BatchOptions.Parse(["--content", TestPaths.Golden("m3-systems.1"), "--careers", "10"], BuiltInPolicies.M3All).Value;
+        var md = ReportWriter.Markdown(BatchRunner.Run(o, BuiltInPolicies.M3All), o);
+        Assert.DoesNotContain("M3-B criteria", md, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void M1_content_keeps_the_m1_policies_and_has_no_m3_sections()
+    {
+        using var output = new StringWriter();
+        Assert.Equal(0, BatchProgram.Run(["--content", TestPaths.ContentM1, "--careers", "5"], output, null));
+        var md = output.ToString();
+        Assert.Contains("Ruleset `m1-prototype.1`", md, StringComparison.Ordinal);
+        Assert.Contains("policies: Balanced, Grinder, RestHeavy, Specialist, Rotator.", md, StringComparison.Ordinal);
+        Assert.DoesNotContain("### Criteria", md, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Policies_are_checked_against_the_content_ruleset()
+    {
+        using var output = new StringWriter();
+        Assert.Equal(2, BatchProgram.Run(["--content", TestPaths.ContentM1, "--policies", "Networker"], output, null));
+        Assert.Contains("Unknown policy", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Career_rows_carry_the_m3_measures()
+    {
+        var o = BatchOptions.Parse(["--content", TestPaths.ContentM3, "--careers", "10", "--policies", "Networker,Specialist-Gambling"], BuiltInPolicies.M3All).Value;
+        var careers = BatchRunner.Run(o, BuiltInPolicies.M3All).Careers;
+        var gambler = careers[1];
+        Assert.Equal("Specialist-Gambling", gambler.Policy);
+        Assert.Equal(Category.Gambling, gambler.DominantCategory);
+        Assert.StartsWith("income:", gambler.LeadingIncome, StringComparison.Ordinal);
+        Assert.InRange(gambler.Drama, 0m, 100m);
+        Assert.InRange(gambler.Credibility, 0m, 100m);
+        Assert.True(gambler.ViewerCv > 0);
+        Assert.True(careers.Sum(c => c.Decisions) > 0);
+        Assert.True(careers.Sum(c => c.ViralWeeks) > 0);
+    }
+
+    [Fact]
+    public void Criteria_compare_specialists_with_each_other_and_with_the_rotator()
+    {
+        CareerSummary Row(string policy, long followers, decimal drama, double cv, string income = "income:subscriptions", int decisions = 0, EndingReason ending = EndingReason.Completed)
+            => new(0, 0, policy, Background.DormRoomNewcomer, Difficulty.Normal, ending, 1040, followers, 0, 0, [], "h")
+            {
+                Drama = drama,
+                Credibility = 50,
+                ViewerCv = cv,
+                LeadingIncome = income,
+                Decisions = decisions,
+            };
+
+        var distinct = BatchStatistics.M3Criteria(
+        [
+            Row("Specialist-Chess", 1000, 10, 0.10),
+            Row("Specialist-Moba", 1000, 30, 0.10),
+            Row("Rotator", 1000, 0, 0.1),
+            Row("Balanced", 1000, 0, 0.1, decisions: 80),
+        ]);
+        Assert.All(distinct, c => Assert.Equal("PASS", c.Result));
+
+        var alike = BatchStatistics.M3Criteria(
+        [
+            Row("Specialist-Chess", 400, 10, 0.10, ending: EndingReason.Insolvency),
+            Row("Specialist-Moba", 1000, 14, 0.14),
+            Row("Rotator", 1000, 0, 0.1),
+            Row("Balanced", 1000, 0, 0.1, decisions: 81),
+        ]);
+        Assert.All(alike, c => Assert.Equal("FAIL", c.Result));
+        Assert.Contains("Specialist-Chess ~ Specialist-Moba", alike[0].Evidence, StringComparison.Ordinal);
+
+        Assert.All(BatchStatistics.M3Criteria([Row("Grinder", 1, 0, 0)]), c => Assert.Equal("n/a", c.Result));
     }
 }

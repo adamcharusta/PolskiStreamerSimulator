@@ -18,6 +18,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Domain/Rulesets/m1-golden-hashes.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Domain/Rulesets/m3-golden-hashes.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />

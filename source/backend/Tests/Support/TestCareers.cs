@@ -22,6 +22,9 @@ public static class TestCareers
     public static CareerState For(Background background, Difficulty difficulty, ulong seed, PronounSet pronouns = PronounSet.Woman)
         => CareerFactory.Create(RulesetId, TestContent.Valid().Digest, TestContent.Valid().Profiles[background], background, difficulty, pronouns, seed);
 
+    /// <summary>The default dorm career (seed 7) for rule tests.</summary>
+    public static CareerState Fresh() => Dorm(7);
+
     public static CareerState Dorm(ulong seed)
         => CareerFactory.Create(RulesetId, TestContent.Valid().Digest, DormProfile, Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Woman, seed);
 }

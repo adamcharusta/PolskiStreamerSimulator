@@ -27,6 +27,13 @@ describe('policy reasons in Polish', () => {
     ],
     [
       {
+        code: 'network-scheduled',
+        args: { everyWeeks: '3', category: 'gambling', categoryRule: 'fixed' },
+      },
+      'Co 3 tygodnie networking. Kategoria Hazard: stała specjalizacja.',
+    ],
+    [
+      {
         code: 'fallback-rest',
         args: { preferred: 'improveProduction', category: 'moba', categoryRule: 'least-bored' },
       },

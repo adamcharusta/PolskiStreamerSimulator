@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { planNext, stats } from '../../../test/fixtures';
-import { actionBlock, optionFor, strongestCategory } from './plans';
+import { networkOdds, planNext, stats } from '../../../test/fixtures';
+import { actionBlock, offeredActions, optionFor, strongestCategory } from './plans';
 
 describe('plans', () => {
   it('finds the option of an action, category and slot', () => {
@@ -23,6 +23,20 @@ describe('plans', () => {
     expect(actionBlock(plans, 'rest', 'fps')).toBeNull();
     expect(actionBlock(plans, 'improveProduction', 'fps')).toBeNull();
     expect(actionBlock(plans, 'trainCategory', 'fps')).toBe('forced-rest');
+  });
+
+  it('offers each action once, in the order the server lists them', () => {
+    expect(offeredActions(planNext().plans)).toEqual([
+      'rest',
+      'trainCategory',
+      'improveProduction',
+      'manageCommunity',
+      'noAction',
+    ]);
+    expect(offeredActions(planNext(undefined, networkOdds()).plans)).toContain(
+      'networkCollaborate',
+    );
+    expect(offeredActions([])).toEqual([]);
   });
 
   it('starts on the strongest category', () => {

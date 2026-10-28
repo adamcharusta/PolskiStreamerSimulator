@@ -3,14 +3,19 @@ import type { TFunction } from 'i18next';
 import type { ReasonView } from '@/api/generated/game.schemas';
 import { percent, pln, stat } from '@/format';
 
+import { blockedKey } from '../offers';
+
 const numbers = new Set(['energy', 'burnout', 'drama', 'limit', 'threshold', 'everyWeeks']);
-const probabilities = new Set(['probability', 'bestProbability']);
-const money = new Set(['pricePln', 'cashPln']);
+const probabilities = new Set(['probability', 'bestProbability', 'retention']);
+const money = new Set(['pricePln', 'cashPln', 'reservePln']);
 const labels: Record<string, string> = {
   slot: 'slot',
   category: 'category',
   preferred: 'action',
   categoryRule: 'reason.rule',
+  platform: 'platform',
+  tier: 'wager',
+  action: 'action',
 };
 
 /** Policy values arrive as invariant strings (`20.000000`, `0.600000`, `microphone`); show them the Polish way. */
@@ -25,6 +30,12 @@ function formatArg(t: TFunction, code: string, name: string, value: string): str
 
   if (money.has(name)) {
     return pln(Number(value));
+  }
+
+  if (name === 'reason' && code === 'offer-declined') {
+    return t(blockedKey(value), {
+      defaultValue: t(`offer.incompatibility.${value}`, { defaultValue: value }),
+    });
   }
 
   const prefix = labels[name];
@@ -45,7 +56,7 @@ export function reasonText(t: TFunction, reason: ReasonView): string {
       : reason.code;
   const decision = t(`reason.${key}`, { ...args, defaultValue: t('reason.unknown') });
   const { category, categoryRule } = args;
-  return category === undefined
+  return category === undefined || categoryRule === undefined
     ? decision
-    : `${decision} ${t('reason.category', { category, rule: categoryRule ?? '' })}`;
+    : `${decision} ${t('reason.category', { category, rule: categoryRule })}`;
 }

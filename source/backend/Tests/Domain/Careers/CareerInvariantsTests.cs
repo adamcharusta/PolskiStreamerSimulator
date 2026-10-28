@@ -1,12 +1,70 @@
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Numerics;
 using PolskiStreamerSimulator.Domain.Scoring;
+using PolskiStreamerSimulator.Domain.Simulation;
 using PolskiStreamerSimulator.Tests.Support;
 
 namespace PolskiStreamerSimulator.Tests.Domain.Careers;
 
 public class CareerInvariantsTests
 {
+    private static CareerState BannedNurt() => M3Play.Fresh() with
+    {
+        Platform = Platform.Nurt,
+        BannedPlatforms = [Platform.Nurt],
+        PendingDecisions = [],
+    };
+
+    private static SponsorContract Contract(string id) => new(id, "hype", SponsorKind.Contract, 1, 4, 12, 500, 0);
+
+    /// <summary>Each violation code with a state that breaks only that rule; tests take the code, which serializes.</summary>
+    private static readonly Dictionary<string, CareerState> EconomyViolationStates = new()
+    {
+        ["contract-limit"] = M3Play.Fresh() with { Contracts = [Contract("a"), Contract("b"), Contract("c")] },
+        ["offer-duplicate"] = M3Play.Fresh() with { Offers = [new SponsorOffer("x:1", "tea", 1, 2, 100), new SponsorOffer("x:2", "tea", 1, 2, 100)] },
+        ["banned-platform-unanswered"] = BannedNurt(),
+        ["side-business-quality"] = M3Play.Fresh() with { SideBusiness = new SideBusiness(60, Fixed.FromInt(101)) },
+        ["former-followers-negative"] = M3Play.Fresh() with { FormerFollowers = -1 },
+    };
+
+    public static TheoryData<string> EconomyViolations() => [.. EconomyViolationStates.Keys];
+
+    [Theory]
+    [MemberData(nameof(EconomyViolations))]
+    public void Economy_state_violations_are_reported(string code)
+        => Assert.Equal([code], CareerInvariants.Validate(EconomyViolationStates[code]));
+
+    [Fact]
+    public void Banned_platform_with_the_ban_decision_queued_is_valid()
+        => Assert.Empty(CareerInvariants.Validate(BannedNurt() with { PendingDecisions = ["platform-ban"] }));
+
+    [Fact]
+    public void Two_contracts_and_distinct_offers_are_valid()
+        => Assert.Empty(CareerInvariants.Validate(M3Play.Fresh() with
+        {
+            Contracts = [Contract("a"), Contract("b")],
+            Offers = [new SponsorOffer("x:1", "tea", 1, 2, 100), new SponsorOffer("y:1", "mug", 1, 2, 100)],
+        }));
+
+    [Fact]
+    public void Decisions_pending_during_a_week_are_reported()
+    {
+        var s = TestCareers.Dorm(1);
+        var pending = new PendingWeek(s.Week, new WeekPlan(MainAction.Rest, Category.Fps), [], [], Fixed.Zero, Fixed.One, 0, []);
+        Assert.Empty(CareerInvariants.Validate(s with { PendingDecisions = ["d"] }));
+        Assert.Empty(CareerInvariants.Validate(s with { Pending = pending, PendingDecisions = [] }));
+        Assert.Equal(["decision-during-week"], CareerInvariants.Validate(s with { Pending = pending, PendingDecisions = ["d"] }));
+    }
+
+    [Fact]
+    public void Expired_flags_are_reported_but_the_boundary_week_is_still_active()
+    {
+        var s = TestCareers.Dorm(1) with { LastSettledWeek = 10 };
+        var flags = System.Collections.Immutable.ImmutableDictionary<string, int>.Empty.WithComparers(StringComparer.Ordinal);
+        Assert.Empty(CareerInvariants.Validate(s with { Flags = flags.Add("edge", 10) }));
+        Assert.Equal(["expired-flag-kept"], CareerInvariants.Validate(s with { Flags = flags.Add("old", 9) }));
+    }
+
     [Fact]
     public void Invariants_report_each_violation()
     {

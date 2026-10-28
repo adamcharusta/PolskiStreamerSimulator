@@ -17,10 +17,11 @@ public static class FinanceRules
     public static FinanceResult Compute(CareerState s, PendingWeek p, long liveViewers, BalanceConstants b)
     {
         var live = Fixed.FromInt(liveViewers);
+        var profile = b.Profile(p.Plan.Category);
         var income = ImmutableArray.CreateBuilder<ReportLine>();
-        income.Add(new ReportLine("income:subscriptions", (live * b.PaidConversion * b.PlatformSubYield * b.SubPricePln).RoundToLong()));
-        income.Add(new ReportLine("income:donations", (live * b.DonationYield).RoundToLong()));
-        income.Add(new ReportLine("income:ads", (live * b.AdYield * b.PlatformAdYield * b.AdLoad).RoundToLong()));
+        income.Add(new ReportLine("income:subscriptions", (live * b.PaidConversion * b.PlatformSubYield * b.SubPricePln * profile.SubYield).RoundToLong()));
+        income.Add(new ReportLine("income:donations", (live * b.DonationYield * profile.DonationYield).RoundToLong()));
+        income.Add(new ReportLine("income:ads", (live * b.AdYield * b.PlatformAdYield * b.AdLoad * profile.AdYield).RoundToLong()));
         income.AddRange(p.Lines.Where(l => l.Code.StartsWith("income:", StringComparison.Ordinal)));
 
         var upkeep = s.Equipment.Values.Sum(tier => b.EquipmentUpkeepPerTierPln[tier]);

@@ -1,15 +1,15 @@
 # Content Production Capacity Estimate
 
-Status: **Agent proposal, pending owner measurement and approval**, 2026-10-13 ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7)). **Scheduled for M3** (owner decision, 2026-10-16): the measurement and sign-off happen with the M3 content work, and the M2 release closes M1 without them. This document gives a method to measure how long event content takes to produce, an effort model, an agent estimate built on stated assumptions, and a proposed launch floor by career phase and category. Nothing here is a launch requirement until the owner records measured times and an approved floor in the sign-off section below and in the [content specification](content-and-experience.md#2-content-structure).
+Status: **Agent proposal, pending owner measurement and approval**, 2026-10-13 ([#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7)). **Scheduled for M5** (owner decision, 2026-10-28, TD-120): the M3 release closes M3 without the measurement and sign-off, which now happen before the M5 content lock. Previously scheduled for M3 (owner decision, 2026-10-16). This document gives a method to measure how long event content takes to produce, an effort model, an agent estimate built on stated assumptions, and a proposed launch floor by career phase and category. Nothing here is a launch requirement until the owner records measured times and an approved floor in the sign-off section below and in the [content specification](content-and-experience.md#2-content-structure).
 
 ## 1. What one template is
 
-A **template** is one publishable event record as defined in [content and experience §2](content-and-experience.md#2-content-structure):
+A **template** is one publishable schema-v2 event as defined in [content and experience §2](content-and-experience.md#2-content-structure) (the representative set is `content/m3/events.json`); the pronoun-variant time is the time to write its ICU `select` branches:
 
 - stable ID, phase, title and Polish situation text;
 - eligibility (week range, category, platform, stats, flags), weight and cooldown;
 - two or three responses with disclosed costs, odds, modifiers and declarative outcomes for success, failure and any permitted critical result;
-- the Polish grammatical forms required for the woman, man and nonbinary character options (pronoun agreement only; no gender-specific content);
+- the Polish grammatical forms required for the woman, man and nonbinary character options, written as ICU `select` branches (pronoun agreement only; no gender-specific content);
 - the explanation text shown with the outcome;
 - QA: a validator pass, a proofread, a check of every grammatical form, and a simulated run that shows the event and each outcome at least once.
 

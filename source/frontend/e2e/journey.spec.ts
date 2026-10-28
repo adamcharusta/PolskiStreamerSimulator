@@ -74,8 +74,15 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expectAccessible(page, 'weekly report');
   await page.getByRole('button', { name: pl.report.next }).click();
 
+  await expect(page.getByText(pl.event.decision)).toBeVisible();
+  await expectAccessible(page, 'mandatory decision');
+  await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+  await page.getByRole('button', { name: pl.event.choose }).click();
+  await page.getByRole('button', { name: pl.roll.next }).click();
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+
   await page.getByRole('button', { name: pl.batch.launch }).click();
-  await page.getByRole('button', { name: pl.batch.confirm }).click();
+  await page.getByRole('button', { name: fill(pl.batch.confirm_many, { count: 13 }) }).click();
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
     timeout: 60_000,
   });
@@ -100,6 +107,19 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
 
   const desk = page.getByRole('region', { name: pl.career.summaryLabel });
   await expect(desk).toContainText(fill(pl.career.week, { week: 2 + weeks }));
+  // A batch that paused for a decision lands on that decision first; answer it to reach the plan.
+  const planOrEnd = page.getByRole('heading', {
+    name: new RegExp(`^(${pl.plan.title}|${pl.career.endedTitle})$`, 'u'),
+  });
+  const decision = page.getByRole('button', { name: pl.event.choose });
+  await expect(planOrEnd.or(decision)).toBeVisible();
+  while (await decision.isVisible()) {
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await decision.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+    await expect(planOrEnd.or(decision)).toBeVisible();
+  }
+
   const next = page.getByRole('heading', {
     name: new RegExp(`^(${pl.plan.title}|${pl.career.endedTitle})$`, 'u'),
   });
@@ -109,4 +129,113 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await page.reload();
   await expect(desk).toHaveText(before);
   await expect(page.getByRole('heading', { name: step ?? '' })).toBeVisible();
+});
+
+test('an Industry Insider accepts the lead sponsor offer and plays the deal week', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Sponsor E2E');
+  await page.getByRole('radio', { name: pl.background.industryInsider }).check();
+  await page.getByRole('button', { name: pl.create.submit }).click();
+
+  const offers = page.getByRole('region', { name: pl.offer.title });
+  await expect(offers).toBeVisible();
+  await expectAccessible(page, 'sponsor offers');
+  await offers.getByRole('button', { name: pl.offer.accept }).click();
+  await expect(offers.getByRole('list', { name: pl.offer.contracts })).toBeVisible();
+  await expect(offers.getByText(pl.offer.dueNow)).toBeVisible();
+
+  await page.getByRole('radio', { name: pl.action.noAction }).check();
+  await page.getByRole('button', { name: pl.plan.start }).click();
+  const choose = page.getByRole('button', { name: pl.event.choose });
+  const settle = page.getByRole('button', { name: pl.settle.action });
+  for (;;) {
+    await expect(choose.or(settle)).toBeVisible();
+    if (await settle.isVisible()) {
+      break;
+    }
+
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await choose.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+  }
+
+  await settle.click();
+  await expect(
+    page.getByRole('heading', { name: fill(pl.report.title, { week: 1 }) }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByText(pl.report.line.income.sponsor, { exact: false })
+      .or(page.getByText(pl.report.line.cost['sponsor-penalty'], { exact: false }))
+      .first(),
+  ).toBeVisible();
+  await page.getByRole('button', { name: pl.report.next }).click();
+  await expect(
+    page
+      .getByRole('heading', { name: pl.plan.title })
+      .or(page.getByRole('button', { name: pl.event.choose })),
+  ).toBeVisible();
+});
+
+test('a 4-week batch under a custom strategy, then early retirement shows the score', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Strategia E2E');
+  await page.getByRole('button', { name: pl.create.submit }).click();
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+
+  await page.getByRole('button', { name: pl.batch.launch }).click();
+  await page.getByRole('radio', { name: fill(pl.batch.weeks_few, { count: 4 }) }).check();
+  await page.getByText(pl.strategy.title, { exact: true }).first().click();
+  await page.getByLabel(pl.strategy.risk).selectOption('safe');
+  await expectAccessible(page, 'batch strategy');
+  await page.getByRole('button', { name: fill(pl.batch.confirm_few, { count: 4 }) }).click();
+  await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
+    timeout: 30_000,
+  });
+  await page.getByRole('button', { name: pl.batch.next }).click();
+
+  const decision = page.getByRole('button', { name: pl.event.choose });
+  const retire = page.getByRole('button', { name: pl.retire.action });
+  for (;;) {
+    await expect(decision.or(retire)).toBeVisible();
+    if (await retire.isVisible()) {
+      break;
+    }
+
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await decision.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+  }
+
+  await page.getByRole('link', { name: pl.dashboard.history }).click();
+  await expect(page.getByRole('heading', { name: pl.history.title, level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole('article', { name: fill(pl.history.year, { year: 1 }) }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: pl.history.show }).first().click();
+  await expect(
+    page.getByRole('heading', { name: fill(pl.report.title, { week: 1 }) }),
+  ).toBeVisible();
+  await expectAccessible(page, 'history');
+  await page.getByRole('link', { name: pl.history.back }).click();
+
+  await page.getByRole('button', { name: pl.retire.action }).click();
+  await page.getByRole('button', { name: pl.retire.confirm }).click();
+  await expect(page.getByRole('table', { name: pl.ending.score.title })).toBeVisible();
+  await expect(page.getByText(pl.career.ending.earlyRetirement)).toBeVisible();
+  await expectAccessible(page, 'ending');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: pl.diploma.download }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe('dyplom-Strategia E2E.pdf');
 });

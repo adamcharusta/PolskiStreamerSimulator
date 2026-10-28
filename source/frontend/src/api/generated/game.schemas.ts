@@ -4,6 +4,19 @@
  * Polski Streamer Simulator API
  * OpenAPI spec version: v1
  */
+/**
+ * An achievement of the career's content with its Polish ICU name and description, its points and whether it is earned (earned first).
+ */
+export interface AchievementView {
+  id: string;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  description: string | null;
+  points: number;
+  earned: boolean;
+}
+
 export type CareerStatus = typeof CareerStatus[keyof typeof CareerStatus];
 
 
@@ -19,6 +32,8 @@ export const EndingReason = {
   completed: 'completed',
   insolvency: 'insolvency',
   earlyRetirement: 'earlyRetirement',
+  globalBan: 'globalBan',
+  allPlatformsBanned: 'allPlatformsBanned',
 } as const;
 
 export type Background = typeof Background[keyof typeof Background];
@@ -90,10 +105,11 @@ export const NextStepKind = {
   resolveEvent: 'resolveEvent',
   settleWeek: 'settleWeek',
   ended: 'ended',
+  resolveDecision: 'resolveDecision',
 } as const;
 
 /**
- * M1 between-stream main actions; exactly one per week.
+ * Between-stream main actions, one per week; networking is M3 only, the last three need M3-B balance sections.
  */
 export type MainAction = typeof MainAction[keyof typeof MainAction];
 
@@ -104,6 +120,10 @@ export const MainAction = {
   improveProduction: 'improveProduction',
   manageCommunity: 'manageCommunity',
   noAction: 'noAction',
+  networkCollaborate: 'networkCollaborate',
+  pitchFulfillSponsor: 'pitchFulfillSponsor',
+  sideBusinessWork: 'sideBusinessWork',
+  planPlatformMigration: 'planPlatformMigration',
 } as const;
 
 export type Category = typeof Category[keyof typeof Category];
@@ -127,17 +147,31 @@ export const EquipmentSlot = {
   connection: 'connection',
 } as const;
 
+export type WagerTier = typeof WagerTier[keyof typeof WagerTier];
+
+
+export const WagerTier = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type Platform = typeof Platform[keyof typeof Platform];
+
+
+export const Platform = {
+  czatnia: 'czatnia',
+  pulsLive: 'pulsLive',
+  nurt: 'nurt',
+} as const;
+
 export interface PlanView {
   mainAction: MainAction;
   category: Category;
   trainTarget: null | Category;
   upgradeSlot: null | EquipmentSlot;
-}
-
-export interface PlanOptionView {
-  plan: PlanView;
-  /** @nullable */
-  disabledReason: string | null;
+  wager: null | WagerTier;
+  targetPlatform: null | Platform;
 }
 
 export interface ModifierView {
@@ -145,26 +179,105 @@ export interface ModifierView {
   value: number;
 }
 
+export interface PlatformProfileView {
+  reach: number;
+  subYield: number;
+  adYield: number;
+  policyRisk: number;
+}
+
+/**
+ * A platform move: the retention and follower range, whether this use executes it, and the target platform's factors.
+ */
+export interface MigrationEstimateView {
+  from: Platform;
+  to: Platform;
+  executes: boolean;
+  retentionMin: number;
+  retentionMax: number;
+  followersMin: number;
+  followersMax: number;
+  target: PlatformProfileView;
+}
+
+/**
+ * A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so.
+ */
 export interface ChoiceView {
   choiceId: string;
-  labelKey: string;
-  labelPl: string;
+  /** @nullable */
+  labelKey: string | null;
+  label: string;
   guaranteed: boolean;
   probability: number;
   threshold: number;
   modifiers: ModifierView[];
   allowsCritical: boolean;
+  viralOnCritical: number;
+  /** @nullable */
+  unavailableReason: string | null;
+  migration: null | MigrationEstimateView;
 }
 
-export interface EventView {
-  eventId: string;
-  titleKey: string;
-  textPl: string;
-  choices: ChoiceView[];
+export interface WagerTermsView {
+  tier: WagerTier;
+  stakePln: number;
+  chance: number;
+  payoutPln: number;
+  lossPln: number;
 }
 
 /**
- * IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent.
+ * The week's policy exposure, the strike chance and the 1–100 threshold of the strike roll.
+ */
+export interface PolicyExposureView {
+  exposure: number;
+  chance: number;
+  threshold: number;
+}
+
+/**
+ * A missed installment or breach the plan would cause: missedInstallment or breach, the penalty, the credibility change and whether the deal ends.
+ */
+export interface SponsorConsequenceView {
+  contractId: string;
+  templateId: string;
+  kind: string;
+  penaltyPln: number;
+  credibility: number;
+  terminates: boolean;
+}
+
+/**
+ * A plan with the reason it is disabled, the odds of a rolled action and what it risks: wager terms, policy exposure, a platform move and sponsor consequences.
+ */
+export interface PlanOptionView {
+  plan: PlanView;
+  /** @nullable */
+  disabledReason: string | null;
+  odds: null | ChoiceView;
+  wager: null | WagerTermsView;
+  policy: null | PolicyExposureView;
+  migration: null | MigrationEstimateView;
+  sponsorConsequences: SponsorConsequenceView[];
+}
+
+/**
+ * An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks.
+ */
+export interface EventView {
+  eventId: string;
+  /** @nullable */
+  titleKey: string | null;
+  /** @nullable */
+  title: string | null;
+  text: string;
+  choices: ChoiceView[];
+  mandatory: boolean;
+}
+
+/**
+ * IReadOnlyList&lt;PlanOptionView&gt; NextStepView.Plans is filled for NextStepKind.PlanWeek, EventView? NextStepView.Event for NextStepKind.ResolveEvent and NextStepKind.ResolveDecision.
  */
 export interface NextStepView {
   kind: NextStepKind;
@@ -183,6 +296,9 @@ export const RollOutcome = {
   guaranteed: 'guaranteed',
 } as const;
 
+/**
+ * A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them.
+ */
 export interface RollView {
   eventId: string;
   choiceId: string;
@@ -191,6 +307,12 @@ export interface RollView {
   threshold: number;
   modifiers: ModifierView[];
   outcome: RollOutcome;
+  /** @nullable */
+  eventTitle?: string | null;
+  /** @nullable */
+  choiceLabel?: string | null;
+  /** @nullable */
+  outcomeText?: string | null;
 }
 
 export interface ReportLineView {
@@ -203,6 +325,55 @@ export interface ReportLineView {
   detail: string | null;
 }
 
+/**
+ * A viral clip: the 1–100 roll against the threshold, the viewer multiplier and the follower bonus.
+ */
+export interface ViralView {
+  roll: number;
+  threshold: number;
+  multiplier: number;
+  followersBonus: number;
+}
+
+/**
+ * The week's policy exposure and strike roll (no roll without exposure), and whether it banned the platform.
+ */
+export interface StrikeRollView {
+  platform: Platform;
+  exposure: number;
+  threshold: number;
+  /** @nullable */
+  roll: number | null;
+  strike: boolean;
+  banned: boolean;
+}
+
+/**
+ * The week's wager: the stake, the 1–100 roll against the win threshold and the net cash.
+ */
+export interface WagerResultView {
+  tier: WagerTier;
+  stakePln: number;
+  roll: number;
+  threshold: number;
+  won: boolean;
+  netPln: number;
+}
+
+/**
+ * A completed platform move with the retention and the followers before and after.
+ */
+export interface MigrationView {
+  from: Platform;
+  to: Platform;
+  retention: number;
+  followersBefore: number;
+  followersAfter: number;
+}
+
+/**
+ * A settled week with the decision rolls, the action roll, its viral clip, the strike roll, the wager and a platform move.
+ */
 export interface WeekReportView {
   week: number;
   plan: PlanView;
@@ -216,14 +387,146 @@ export interface WeekReportView {
   cashDelta: number;
   statChanges: ReportLineView[];
   ending: null | EndingReason;
+  decisionRolls: RollView[];
+  actionRoll: null | RollView;
+  viral: null | ViralView;
+  strike: null | StrikeRollView;
+  wager: null | WagerResultView;
+  migration: null | MigrationView;
 }
 
 /**
- * A career as the client sees it at one version; also the stored response of each step.
+ * An active policy strike on a platform and the last settled week in which it still counts.
+ */
+export interface StrikeView {
+  platform: Platform;
+  givenWeek: number;
+  expiresAfterWeek: number;
+}
+
+/**
+ * M3-B: a one-off sponsor deal or a multi-week contract.
+ */
+export type SponsorKind = typeof SponsorKind[keyof typeof SponsorKind];
+
+
+export const SponsorKind = {
+  oneOff: 'oneOff',
+  contract: 'contract',
+} as const;
+
+export interface SponsorPrerequisitesView {
+  minFollowers: number;
+  /** @nullable */
+  minCredibility: number | null;
+  /** @nullable */
+  maxDrama: number | null;
+  /** @nullable */
+  minDrama: number | null;
+}
+
+/**
+ * A sponsor offer with every term shown before acceptance and why it cannot be accepted now, if so.
+ */
+export interface OfferView {
+  offerId: string;
+  templateId: string;
+  name: string;
+  pitch: string;
+  kind: SponsorKind;
+  paymentPln: number;
+  /** @nullable */
+  termWeeks: number | null;
+  /** @nullable */
+  dueEveryWeeks: number | null;
+  requiredCategory: null | Category;
+  platforms: Platform[];
+  prerequisites: SponsorPrerequisitesView;
+  incompatibleWith: string[];
+  breachCashPln: number;
+  breachCredibility: number;
+  expiresAfterWeek: number;
+  /** @nullable */
+  acceptBlockedReason: string | null;
+}
+
+/**
+ * An accepted sponsor deal: its next due week, the term end, the misses so far and whether it is due this week.
+ */
+export interface ContractView {
+  contractId: string;
+  templateId: string;
+  name: string;
+  kind: SponsorKind;
+  paymentPln: number;
+  requiredCategory: null | Category;
+  platforms: Platform[];
+  nextDueWeek: number;
+  termEndWeek: number;
+  missed: number;
+  breachCashPln: number;
+  breachCredibility: number;
+  dueThisWeek: boolean;
+}
+
+/**
+ * The text-only side business: when it opened, its quality and the income it pays at the next settlement.
+ */
+export interface SideBusinessView {
+  openedWeek: number;
+  quality: number;
+  weeklyIncomePln: number;
+}
+
+/**
+ * The final score: the normalised components, their points, the base score, both multipliers and the total.
+ */
+export interface ScoreView {
+  followers: number;
+  wealth: number;
+  achievements: number;
+  followersPoints: number;
+  wealthPoints: number;
+  achievementPoints: number;
+  baseScore: number;
+  difficultyMultiplier: number;
+  backgroundMultiplier: number;
+  finalScore: number;
+}
+
+/**
+ * How the audience remembers the streamer at the end of a career.
+ */
+export type Reputation = typeof Reputation[keyof typeof Reputation];
+
+
+export const Reputation = {
+  trusted: 'trusted',
+  controversial: 'controversial',
+  steady: 'steady',
+} as const;
+
+/**
+ * What the ending narrative is built from: reason, weeks, dominant category, reputation, platforms, peak follower milestone and earned achievements.
+ */
+export interface EndingSummaryView {
+  reason: EndingReason;
+  weeksPlayed: number;
+  dominantCategory: Category;
+  reputation: Reputation;
+  platform: Platform;
+  bannedPlatforms: Platform[];
+  peakFollowersMilestone: number;
+  achievements: string[];
+}
+
+/**
+ * A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.
  */
 export interface CareerView {
   careerId: string;
   nickname: string;
+  rulesetId: string;
   version: number;
   status: CareerStatus;
   ending: null | EndingReason;
@@ -235,6 +538,16 @@ export interface CareerView {
   stats: CareerStatsView;
   next: NextStepView;
   lastReport: null | WeekReportView;
+  platform: Platform;
+  platformSinceWeek: number;
+  strikes: StrikeView[];
+  bannedPlatforms: Platform[];
+  offers: OfferView[];
+  contracts: ContractView[];
+  sideBusiness: null | SideBusinessView;
+  achievements: AchievementView[];
+  score: null | ScoreView;
+  summary: null | EndingSummaryView;
 }
 
 export interface ActionOutcome {
@@ -250,6 +563,9 @@ export const ActionType = {
   startWeek: 'startWeek',
   resolveEvent: 'resolveEvent',
   settleWeek: 'settleWeek',
+  resolveDecision: 'resolveDecision',
+  respondOffer: 'respondOffer',
+  retire: 'retire',
 } as const;
 
 /**
@@ -265,6 +581,12 @@ export interface ActionRequest {
   upgradeSlot?: null | EquipmentSlot;
   /** @nullable */
   choiceId?: string | null;
+  wager?: null | WagerTier;
+  targetPlatform?: null | Platform;
+  /** @nullable */
+  offerId?: string | null;
+  /** @nullable */
+  accept?: boolean | null;
 }
 
 export type ReasonViewArgs = {[key: string]: string};
@@ -281,12 +603,23 @@ export interface AutoChoiceView {
   roll: RollView;
 }
 
+/**
+ * A sponsor offer the batch answered before planning the week, with the policy's reason.
+ */
+export interface AutoOfferView {
+  offerId: string;
+  templateId: string;
+  accepted: boolean;
+  reason: ReasonView;
+}
+
 export interface AutoWeekView {
   week: number;
   plan: PlanView;
   planReason: ReasonView;
   choices: AutoChoiceView[];
   report: WeekReportView;
+  offers: AutoOfferView[];
 }
 
 export interface BackgroundOptionView {
@@ -329,10 +662,52 @@ export interface BatchOutcome {
   career: CareerView;
 }
 
+/**
+ * How a strategy picks the week's category.
+ */
+export type CategoryPlan = typeof CategoryPlan[keyof typeof CategoryPlan];
+
+
+export const CategoryPlan = {
+  strongest: 'strongest',
+  focus: 'focus',
+  rotate: 'rotate',
+} as const;
+
+/**
+ * How much a strategy gambles on event choices and how much drama it tolerates.
+ */
+export type RiskAppetite = typeof RiskAppetite[keyof typeof RiskAppetite];
+
+
+export const RiskAppetite = {
+  safe: 'safe',
+  balanced: 'balanced',
+  bold: 'bold',
+} as const;
+
+/**
+ * The player's strategy for a batch (M3-C spec §5), as the contract carries it.
+ */
+export interface StrategyInput {
+  categoryPlan: CategoryPlan;
+  focus: null | Category;
+  routine: MainAction[];
+  restBelowEnergy: number;
+  restAboveBurnout: number;
+  reservePln: number;
+  upgrades: boolean;
+  risk: RiskAppetite;
+  acceptOffers: boolean;
+  wager: null | WagerTier;
+  sideBusiness: boolean;
+}
+
 export interface BatchRequest {
   commandId: string;
   expectedVersion: number;
   weeks: number;
+  strategy?: null | StrategyInput;
 }
 
 export interface DifficultyOptionView {
@@ -363,6 +738,26 @@ export interface CreatedCareer {
   careerId: string;
   secret: string;
   career: CareerView;
+}
+
+/**
+ * One settled week in the history list: its plan, audience and cash, whether a batch played it, and its incident tags.
+ */
+export interface WeekSummaryView {
+  week: number;
+  plan: PlanView;
+  liveViewers: number;
+  followersNet: number;
+  cashDelta: number;
+  automatic: boolean;
+  tags: string[];
+}
+
+/**
+ * Every settled week of a career, in week order (M3-D).
+ */
+export interface HistoryView {
+  weeks: WeekSummaryView[];
 }
 
 /**

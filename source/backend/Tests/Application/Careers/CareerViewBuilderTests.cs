@@ -49,8 +49,9 @@ public sealed class CareerViewBuilderTests
         Assert.Equal(NextStepKind.ResolveEvent, view.Next.Kind);
         var shown = view.Next.Event!;
         var definition = Content.Events.Single(e => e.Id == shown.EventId);
-        Assert.Equal(definition.TextPl, shown.TextPl);
-        Assert.Equal(definition.Choices.Select(c => c.LabelPl), shown.Choices.Select(c => c.LabelPl));
+        Assert.Equal((definition.TitleKey, (string?)null, definition.TextPl, false), (shown.TitleKey, shown.Title, shown.Text, shown.Mandatory));
+        Assert.Equal(definition.Choices.Select(c => c.LabelPl), shown.Choices.Select(c => c.Label));
+        Assert.All(shown.Choices, c => Assert.Null(c.UnavailableReason));
         Assert.All(shown.Choices, c => Assert.InRange(c.Probability, 0m, 1m));
         Assert.Empty(view.Next.Plans);
     }
@@ -68,6 +69,29 @@ public sealed class CareerViewBuilderTests
 
         Assert.Equal(NextStepKind.Ended, view.Next.Kind);
         Assert.Equal(EndingReason.Insolvency, view.Ending);
+    }
+
+    [Fact]
+    public void A_queued_decision_that_cannot_be_presented_is_a_server_fault_not_a_plan()
+    {
+        var c = M3Play.C;
+        var broken = M3Play.Fresh() with { PendingDecisions = ["missing-event"] };
+
+        var error = Assert.Throws<InvalidOperationException>(() => new CareerViewBuilder(M3Play.Engine).Build(Guid.NewGuid(), "x", broken, c, null));
+
+        Assert.Contains("ContentMismatch", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_queued_decision_is_shown_as_a_mandatory_event()
+    {
+        var queued = M3Play.Fresh() with { PendingDecisions = ["first-week"] };
+
+        var view = new CareerViewBuilder(M3Play.Engine).Build(Guid.NewGuid(), "x", queued, M3Play.C, null);
+
+        Assert.Equal(NextStepKind.ResolveDecision, view.Next.Kind);
+        Assert.True(view.Next.Event!.Mandatory);
+        Assert.Empty(view.Next.Plans);
     }
 
     [Fact]

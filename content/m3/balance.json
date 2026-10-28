@@ -1,0 +1,284 @@
+{
+  "version": "m3.2",
+  "ruleset": "m3-systems.2",
+  "livingCostPln": 100,
+  "easyUpkeepDiscount": 0.15,
+  "equipmentUpkeepPerTierPln": [10, 20, 35, 55, 80],
+  "equipmentPricePln": [0, 600, 1500, 3500, 8000],
+  "streamEnergyCost": 8,
+  "streamBurnoutGain": 3,
+  "restEnergy": 25,
+  "restBurnout": 12,
+  "noActionEnergy": 5,
+  "trainEnergyCost": 8,
+  "trainSkillMin": 2,
+  "trainSkillMax": 4,
+  "manageCommunityCredibility": 3,
+  "manageCommunityDramaRelief": 4,
+  "manageCommunityBoredomRelief": 5,
+  "qualityBase": 25,
+  "qualitySkill": 0.35,
+  "qualityEquipment": 4,
+  "qualityBurnout": 0.20,
+  "qualityEnergy": 0.10,
+  "viewersBase": 50,
+  "viewersSkill": 1.5,
+  "viewersSqrtFollowers": 35,
+  "viewersLinearFollowers": 0.025,
+  "viewersMin": 5,
+  "platformReach": 1.0,
+  "platformSubYield": 1.0,
+  "platformAdYield": 1.0,
+  "noiseMin": 0.85,
+  "noiseMax": 1.15,
+  "boredomDivisor": 600,
+  "viralCapMultiplier": 3,
+  "conversionRate": 0.05,
+  "churnRate": 0.004,
+  "churnBoredomFactor": 0.00001,
+  "paidConversion": 0.02,
+  "subPricePln": 10,
+  "donationYield": 0.15,
+  "adYield": 0.05,
+  "adLoad": 1.0,
+  "skillDecayPerWeek": 0.1,
+  "skillDecayAfterWeeks": 13,
+  "boredomGainMin": 2,
+  "boredomGainMax": 4,
+  "boredomReliefMin": 1,
+  "boredomReliefMax": 2,
+  "insolvencyThresholdPln": -1000,
+  "scoreFollowersCap": 1000000,
+  "scoreCashCap": 10000000,
+  "scoreWeights": {
+    "followers": 0.45,
+    "wealth": 0.45,
+    "achievements": 0.10
+  },
+  "achievementPointsCap": 10,
+  "difficultyMultiplier": {
+    "Easy": 1.00,
+    "Normal": 1.10
+  },
+  "easyChanceBonus": 0.10,
+  "eventsPerWeekMin": 2,
+  "eventsPerWeekMax": 3,
+  "categories": {
+    "JustChatting": { "reach": 1.00, "noiseMin": 0.85, "noiseMax": 1.15, "conversion": 1.15, "churn": 1.00, "boredomGainMin": 2, "boredomGainMax": 4, "subYield": 0.90, "donationYield": 1.40, "adYield": 1.00, "qualitySkillWeight": 1.0, "credibilityPerStream": 0, "dramaPerStream": 0, "viralBase": 0.02 },
+    "Fps":          { "reach": 1.10, "noiseMin": 0.85, "noiseMax": 1.15, "conversion": 1.00, "churn": 1.00, "boredomGainMin": 2, "boredomGainMax": 4, "subYield": 0.65, "donationYield": 0.80, "adYield": 2.80, "qualitySkillWeight": 1.2, "credibilityPerStream": 0, "dramaPerStream": 0, "viralBase": 0.03 },
+    "Moba":         { "reach": 1.00, "noiseMin": 0.85, "noiseMax": 1.15, "conversion": 1.00, "churn": 0.75, "boredomGainMin": 1, "boredomGainMax": 3, "subYield": 1.10, "donationYield": 1.00, "adYield": 1.00, "qualitySkillWeight": 1.0, "credibilityPerStream": 0, "dramaPerStream": 0.5, "viralBase": 0.02 },
+    "Chess":        { "reach": 0.85, "noiseMin": 0.92, "noiseMax": 1.08, "conversion": 1.25, "churn": 0.50, "boredomGainMin": 1, "boredomGainMax": 3, "subYield": 1.30, "donationYield": 1.00, "adYield": 1.00, "qualitySkillWeight": 1.0, "credibilityPerStream": 0.2, "dramaPerStream": -0.5, "viralBase": 0.01 },
+    "Gambling":     { "reach": 1.15, "noiseMin": 0.70, "noiseMax": 1.40, "conversion": 0.90, "churn": 1.20, "boredomGainMin": 2, "boredomGainMax": 4, "subYield": 1.00, "donationYield": 1.20, "adYield": 1.00, "qualitySkillWeight": 1.0, "credibilityPerStream": -0.3, "dramaPerStream": 2, "viralBase": 0.04 }
+  },
+  "mastery": { "fromSkill": 70, "boredomRelief": 2, "churnFactor": 0.85 },
+  "burnoutPenalty": { "from": 60, "perPoint": 0.0025, "cap": 0.10 },
+  "shortStream": { "fatigue": 0.5, "audience": 0.7 },
+  "viral": { "qualityFrom": 70, "perQualityPoint": 0.002, "perCritical": 0.05, "chanceCap": 0.30, "multiplierMin": 1.5, "multiplierMax": 3.0, "followerShare": 0.10, "viewerShare": 0.20, "followerMin": 100 },
+  "decisionChancePerWeek": 0.06,
+  "recoveryCrisisEventId": "burnout-recovery",
+  "networkEnergyCost": 10,
+  "networkCollaborate": {
+    "id": "collaborate",
+    "label": "Zagadaj do innych twórców",
+    "baseChance": 0.35,
+    "allowsCritical": true,
+    "modifiers": [
+      { "stat": "Credibility", "perPoint": 0.003, "labelKey": "modifier.credibility" },
+      { "stat": "Drama", "perPoint": -0.003, "labelKey": "modifier.drama" }
+    ],
+    "successText": "Wspólny stream siadł. Czat drugiej strony został u ciebie na dłużej.",
+    "failureText": "{gender, select, female {Trafiłaś} male {Trafiłeś} other {Trafiłoś}} na kogoś, kto szuka afery. Klipy już krążą.",
+    "outcomes": {
+      "success": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 } ],
+      "failure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 4 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 } ],
+      "criticalSuccess": [ { "kind": "AudienceMultiplier", "amount": 1.2 }, { "kind": "StatDelta", "stat": "Credibility", "amount": 1 }, { "kind": "SetFlag", "flag": "collab-friend", "weeks": 26, "amount": 0 } ],
+      "criticalFailure": [ { "kind": "StatDelta", "stat": "Drama", "amount": 6 }, { "kind": "StatDelta", "stat": "Credibility", "amount": -2 }, { "kind": "FollowUp", "event": "collab-fallout", "weeks": 1, "amount": 0 } ]
+    }
+  },
+  "platforms": {
+    "Czatnia": {
+      "reach": 1.0,
+      "subYield": 1.0,
+      "adYield": 1.0,
+      "policyRisk": 1.0
+    },
+    "PulsLive": {
+      "reach": 1.2,
+      "subYield": 0.85,
+      "adYield": 1.1,
+      "policyRisk": 1.3,
+      "categoryReach": {
+        "Fps": 1.1,
+        "Moba": 1.1,
+        "Chess": 0.9
+      }
+    },
+    "Nurt": {
+      "reach": 0.85,
+      "subYield": 1.25,
+      "adYield": 0.7,
+      "policyRisk": 0.8,
+      "categoryReach": {
+        "Chess": 1.2,
+        "JustChatting": 1.1,
+        "Gambling": 0.8
+      }
+    }
+  },
+  "migration": {
+    "energyCost": 6,
+    "minWeeksOnPlatform": 26,
+    "announceWeeks": 4,
+    "announceCredibility": -1,
+    "announcedBonus": 0.1,
+    "banPenalty": 0.1,
+    "retentionBase": 0.4,
+    "credibilityDivisor": 250,
+    "dramaDivisor": 500,
+    "retentionMin": 0.2,
+    "retentionMax": 0.8,
+    "jitter": 0.05
+  },
+  "policy": {
+    "gamblingExposure": 1,
+    "sideBusinessExposure": 1,
+    "highDramaExposure": 1,
+    "highDramaFrom": 70,
+    "chancePerExposure": 0.003,
+    "chanceCap": 0.06,
+    "strikeWeeks": 26,
+    "strikesToBan": 3,
+    "dramaDecay": 0.2
+  },
+  "sponsors": {
+    "offerBase": 0.08,
+    "offerPerMagnitude": 0.02,
+    "offerCap": 0.2,
+    "offerWeeks": 2,
+    "maxContracts": 2,
+    "pitchEnergyCost": 8,
+    "pitch": {
+      "id": "pitch",
+      "label": "Rozpisz ofertę dla sponsorów",
+      "baseChance": 0.15,
+      "modifiers": [
+        {
+          "stat": "Credibility",
+          "perPoint": 0.004,
+          "labelKey": "modifier.credibility"
+        }
+      ],
+      "successText": "Ktoś odpisał. W skrzynce czeka propozycja.",
+      "failureText": "Cisza w skrzynce. Marki mają dziś inne plany.",
+      "outcomes": {
+        "success": [
+          {
+            "kind": "StatDelta",
+            "stat": "Credibility",
+            "amount": 1
+          }
+        ],
+        "failure": []
+      }
+    },
+    "terminationCredibility": -5,
+    "missesToTerminate": 2,
+    "startingLeads": {
+      "IndustryInsider": "bank-skarbonka"
+    }
+  },
+  "wagers": {
+    "stakePln": {
+      "Low": 100,
+      "Medium": 500,
+      "High": 2000
+    },
+    "exposure": {
+      "Low": 1,
+      "Medium": 2,
+      "High": 3
+    },
+    "maxShareOfCash": 0.25,
+    "chance": 0.45,
+    "payoutMultiple": 2,
+    "winAudience": 1.05,
+    "lossAudience": 0.85,
+    "winDrama": 2,
+    "lossDrama": 3
+  },
+  "sideBusiness": {
+    "fromWeek": 52,
+    "minFollowers": 2000,
+    "energyCost": 12,
+    "burnoutGain": 4,
+    "qualityPerWork": 15,
+    "qualityDecay": 3,
+    "incomePerFollower": 0.0005,
+    "incomeScale": 100,
+    "credibilityPerWeek": -0.2
+  },
+  "platformBan": {
+    "title": "Ban na platformie",
+    "text": "Platforma zamyka ci kanał na stałe. Dokąd przenosisz społeczność?",
+    "choices": {
+      "Czatnia": "Przenieś się na Czatnię",
+      "PulsLive": "Przenieś się na PulsLive",
+      "Nurt": "Przenieś się na Nurt"
+    }
+  },
+  "achievements": [
+    {"id": "followers-1m", "name": "Pierwszy milion widzów", "description": "1 000 000 obserwujących.", "kind": "followers", "threshold": 1000000, "points": 1},
+    {"id": "followers-10m", "name": "Dziesięć milionów oczu", "description": "10 000 000 obserwujących.", "kind": "followers", "threshold": 10000000, "points": 1},
+    {"id": "followers-100m", "name": "Stumilionowa widownia", "description": "100 000 000 obserwujących.", "kind": "followers", "threshold": 100000000, "points": 2},
+    {"id": "cash-100m", "name": "Sto baniek", "description": "100 000 000 zł na koncie.", "kind": "cash", "threshold": 100000000, "points": 1},
+    {"id": "cash-1b", "name": "Miliarder z czatu", "description": "1 000 000 000 zł na koncie.", "kind": "cash", "threshold": 1000000000, "points": 1},
+    {"id": "career-completed", "name": "Dwadzieścia lat na wizji", "description": "{gender, select, female {Dotrwałaś do ostatniego tygodnia kariery.} male {Dotrwałeś do ostatniego tygodnia kariery.} other {Dotrwałoś do ostatniego tygodnia kariery.}}", "kind": "completed", "points": 1},
+    {"id": "skill-master", "name": "Mistrzostwo", "description": "Umiejętność 100 w dowolnej kategorii.", "kind": "mastery", "threshold": 100, "points": 1},
+    {"id": "one-category", "name": "Wierność jednej grze", "description": "780 tygodni streamów w jednej kategorii.", "kind": "specialist", "threshold": 780, "points": 1},
+    {"id": "new-home", "name": "Nowy dom", "description": "Przeprowadzka z wyboru, bez żadnego bana.", "kind": "platformMove", "points": 2},
+    {"id": "trusted-partner", "name": "Zaufany partner", "description": "150 opłaconych zleceń sponsorów.", "kind": "sponsorInstallments", "threshold": 150, "points": 1},
+    {"id": "scandal-survivor", "name": "Przetrwanie burzy", "description": "{gender, select, female {Po dramie na poziomie 90 uspokoiłaś czat do 30 i ukończyłaś karierę.} male {Po dramie na poziomie 90 uspokoiłeś czat do 30 i ukończyłeś karierę.} other {Po dramie na poziomie 90 uspokoiłoś czat do 30 i ukończyłoś karierę.}}", "kind": "dramaSurvived", "threshold": 90, "points": 2}
+  ],
+  "profiles": {
+    "DormRoomNewcomer": {
+      "cashPln": 2000,
+      "followers": 0,
+      "drama": 0,
+      "credibility": 50,
+      "energy": 70,
+      "skill": { "JustChatting": 10, "Fps": 18, "Moba": 10, "Chess": 10, "Gambling": 10 },
+      "equipment": { "Microphone": 0, "Camera": 0, "Computer": 0, "Connection": 0 },
+      "scoreMultiplier": 1.00
+    },
+    "LocalMemeCreator": {
+      "cashPln": 1000,
+      "followers": 600,
+      "drama": 20,
+      "credibility": 42,
+      "energy": 70,
+      "skill": { "JustChatting": 18, "Fps": 10, "Moba": 10, "Chess": 10, "Gambling": 10 },
+      "equipment": { "Microphone": 1, "Camera": 1, "Computer": 1, "Connection": 1 },
+      "scoreMultiplier": 0.96
+    },
+    "ChessClubRegular": {
+      "cashPln": 500,
+      "followers": 0,
+      "drama": 0,
+      "credibility": 58,
+      "energy": 70,
+      "skill": { "JustChatting": 10, "Fps": 10, "Moba": 10, "Chess": 25, "Gambling": 10 },
+      "equipment": { "Microphone": 1, "Camera": 1, "Computer": 1, "Connection": 1 },
+      "scoreMultiplier": 0.98
+    },
+    "IndustryInsider": {
+      "cashPln": 5000,
+      "followers": 1500,
+      "drama": 15,
+      "credibility": 50,
+      "energy": 70,
+      "skill": { "JustChatting": 10, "Fps": 10, "Moba": 10, "Chess": 10, "Gambling": 10 },
+      "equipment": { "Microphone": 2, "Camera": 2, "Computer": 2, "Connection": 2 },
+      "scoreMultiplier": 0.90
+    }
+  }
+}

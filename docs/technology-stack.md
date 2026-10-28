@@ -8,7 +8,7 @@ The proposed layout applies the owner's four-project .NET solution and keeps Rea
 
 ```text
 docs/                         English project documentation
-content/                      versioned content and balance snapshots (M1: content/m1/*.json; TD-76)
+content/                      versioned content and balance snapshots (M1: content/m1/*.json; M3: content/m3/*.json, used by new careers; TD-76)
 .github/
   workflows/                  GitHub Actions workflows
 source/
@@ -96,7 +96,7 @@ The admin route is hidden from normal navigation and protected by Identity, but 
 | --- | --- |
 | Runtime and build | Node 24.22.0 LTS (`.nvmrc`), React/React DOM 19.3.1, TypeScript 6.0.3, Vite 8.3.4 with `@vitejs/plugin-react` 6.1.2 |
 | Routing, data and state | `@tanstack/react-router` 1.170.44, `@tanstack/react-query` 5.104.2, Axios 1.20.0, Orval 8.43.0, Zustand 5.0.15 |
-| Forms and copy | React Hook Form 7.90.0, Zod 4.6.7, `@hookform/resolvers` 5.9.1, i18next 26.4.5, `react-i18next` 17.0.16 |
+| Forms and copy | React Hook Form 7.90.0, Zod 4.6.7, `@hookform/resolvers` 5.9.1, i18next 26.4.5, `react-i18next` 17.0.16, `intl-messageformat` 12.1.4 (formats the ICU event text from the career's pinned snapshot, TD-111) |
 | UI | Tailwind CSS 4.3.3, `radix-ui` 1.8.1, `class-variance-authority` 0.7.1, `clsx` 2.1.1, `tailwind-merge` 3.7.0, `@fontsource/anton` and `@fontsource/comic-relief` 5.3.0 (TD-107) |
 | Tests | Vitest 5.0.4 with V8 coverage, jsdom 30.1.2, Testing Library (React 16.3.3, DOM 10.4.2, user-event 14.6.8, jest-dom 7.0.1), MSW 3.0.3, Playwright 1.64.1, `@axe-core/playwright` 4.13.0 |
 | Lint and format | ESLint 9.39.5 with the owner's plugin set (see repository standards), `typescript-eslint` 8.71.2, Prettier 3.9.10 |

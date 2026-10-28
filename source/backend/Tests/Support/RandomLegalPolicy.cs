@@ -7,7 +7,7 @@ using PolskiStreamerSimulator.Domain.Simulation.Policies;
 namespace PolskiStreamerSimulator.Tests.Support;
 
 /// <summary>Test policy that picks uniformly among enabled plans and offered choices, and sometimes retires late.</summary>
-public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
+public sealed class RandomLegalPolicy(ulong seed, int retireFromWeek = 900) : IChoicePolicy
 {
     private Pcg32 rng = Pcg32.Create(seed, 7);
 
@@ -29,13 +29,26 @@ public sealed class RandomLegalPolicy(ulong seed) : IChoicePolicy
 
     public ChoiceDecision ChooseEventChoice(CareerState s, EventPresentation e)
     {
-        (var index, rng) = rng.NextInt(0, e.Choices.Length - 1);
-        return new ChoiceDecision(e.Choices[index].ChoiceId, PolicyReason.Of("random"));
+        var available = e.Choices.Where(o => o.UnavailableReason is null).ToArray();
+        (var index, rng) = rng.NextInt(0, available.Length - 1);
+        return new ChoiceDecision(available[index].ChoiceId, PolicyReason.Of("random"));
+    }
+
+    /// <summary>Accepts at random when the engine would accept; declines a blocked offer.</summary>
+    public OfferDecision ChooseOffer(CareerState s, ContentSnapshot c, SponsorOffer offer, string? blockedReason)
+    {
+        if (blockedReason is not null)
+        {
+            return new OfferDecision(false, PolicyReason.Of("random"));
+        }
+
+        (var accept, rng) = rng.NextInt(0, 1);
+        return new OfferDecision(accept == 1, PolicyReason.Of("random"));
     }
 
     public bool ShouldRetire(CareerState s)
     {
-        if (s.Week.Value < 900)
+        if (s.Week.Value < retireFromWeek)
         {
             return false;
         }

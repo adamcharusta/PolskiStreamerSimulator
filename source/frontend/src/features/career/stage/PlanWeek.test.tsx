@@ -7,6 +7,7 @@ import {
   actionOutcome,
   careerView,
   eventNext,
+  networkOdds,
   planNext,
   weekReport,
 } from '../../../../test/fixtures';
@@ -146,5 +147,56 @@ describe('week plan', () => {
 
     const summary = screen.getByText('Ostatni raport (tydzień 3)');
     expect(summary.closest('details')).not.toHaveAttribute('open');
+  });
+
+  it('offers only the actions the career has: no networking for an M1 career', () => {
+    renderWithClient(<PlanWeek career={careerView()} secret="secret-1" />);
+
+    expect(
+      screen.queryByRole('radio', { name: /Networking i kolaboracje/u }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Odpoczynek' })).toBeInTheDocument();
+  });
+
+  it('shows the networking odds before the week starts', async () => {
+    const received = captureActions(answer);
+    const { user } = renderWithClient(
+      <PlanWeek
+        career={careerView({ rulesetId: 'm3-systems.1', next: planNext(undefined, networkOdds()) })}
+        secret="secret-1"
+      />,
+    );
+
+    expect(screen.queryByText('Szansa: 41%')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Networking i kolaboracje' }));
+    const odds = screen.getByRole('region', { name: 'Szansa networkingu' });
+    expect(odds).toHaveTextContent('Szansa: 41%');
+    expect(odds).toHaveTextContent('Wiarygodność +9 pp');
+    expect(odds).toHaveTextContent('Drama −3 pp');
+    expect(odds).toHaveTextContent('Możliwy wynik krytyczny');
+    await user.click(screen.getByRole('button', { name: 'Zaczynam stream' }));
+
+    await waitFor(() => {
+      expect(received[0]?.body).toMatchObject({ mainAction: 'networkCollaborate' });
+    });
+  });
+
+  it('explains a week that allows only rest', () => {
+    renderWithClient(
+      <PlanWeek
+        career={careerView({
+          rulesetId: 'm3-systems.1',
+          next: planNext(
+            (plan) => (plan.mainAction === 'rest' ? null : 'rest-only'),
+            networkOdds(),
+          ),
+        })}
+        secret="secret-1"
+      />,
+    );
+
+    const network = screen.getByRole('radio', { name: /Networking/u });
+    expect(network).toBeDisabled();
+    expect(network).toHaveAccessibleDescription('Ten tydzień to odpoczynek');
   });
 });

@@ -78,8 +78,15 @@
     "chessClubRegular": "Bywalec klubu szachowego",
     "industryInsider": "Człowiek z branży"
   },
-  "difficulty": { "easy": "Łatwy", "normal": "Normalny" },
-  "pronouns": { "woman": "ona/jej", "man": "on/jego", "nonbinary": "forma neutralna" },
+  "difficulty": {
+    "easy": "Łatwy",
+    "normal": "Normalny"
+  },
+  "pronouns": {
+    "woman": "ona/jej",
+    "man": "on/jego",
+    "nonbinary": "forma neutralna"
+  },
   "category": {
     "justChatting": "Just Chatting",
     "fps": "FPS",
@@ -92,7 +99,11 @@
     "trainCategory": "Trening",
     "improveProduction": "Ulepszenie sprzętu",
     "manageCommunity": "Ogarnianie społeczności",
-    "noAction": "Zwykły stream"
+    "noAction": "Zwykły stream",
+    "networkCollaborate": "Networking i kolaboracje",
+    "pitchFulfillSponsor": "Sponsorzy: oferta lub zlecenie",
+    "sideBusinessWork": "Biznes poboczny",
+    "planPlatformMigration": "Przeprowadzka na inną platformę"
   },
   "slot": {
     "microphone": "Mikrofon",
@@ -113,7 +124,9 @@
   "modifier": {
     "credibility": "Wiarygodność",
     "primary-skill": "Umiejętność w kategorii",
-    "drama": "Drama"
+    "drama": "Drama",
+    "burnout": "Wypalenie",
+    "energy": "Energia"
   },
   "career": {
     "summaryLabel": "Stan kariery",
@@ -138,7 +151,9 @@
     "ending": {
       "completed": "Kariera ukończona — dwadzieścia lat streamowania za tobą.",
       "insolvency": "Bankructwo — kasa skończyła się na dobre.",
-      "earlyRetirement": "Wcześniejsza emerytura."
+      "earlyRetirement": "Wcześniejsza emerytura.",
+      "globalBan": "Globalny ban — kariera zakończona",
+      "allPlatformsBanned": "Bany na wszystkich platformach — kariera zakończona"
     },
     "errors": {
       "stale-version": "Kariera zmieniła się w innej karcie. Pokazuję aktualny stan.",
@@ -148,6 +163,8 @@
       "unknown-choice": "Tej odpowiedzi już nie ma.",
       "events-unresolved": "Najpierw rozegraj zdarzenia tego tygodnia.",
       "no-pending-week": "Nie ma trwającego tygodnia.",
+      "decision-pending": "Najpierw podejmij decyzję.",
+      "no-pending-decision": "Ta decyzja została już podjęta.",
       "generic": "Coś poszło nie tak. Odśwież stronę."
     }
   },
@@ -157,6 +174,7 @@
     "category": "Kategoria",
     "slot": "Sprzęt do ulepszenia",
     "start": "Zaczynam stream",
+    "odds": "Szansa networkingu",
     "lastReport": "Ostatni raport (tydzień {{week}})"
   },
   "disabled": {
@@ -167,14 +185,33 @@
     "negative-cash": "Masz debet",
     "career-ended": "Kariera zakończona",
     "week-in-progress": "Tydzień już trwa",
-    "unknown": "Niedostępne"
+    "unsupported-action": "Niedostępne w tej karierze",
+    "decision-pending": "Najpierw podejmij decyzję",
+    "rest-only": "Ten tydzień to odpoczynek",
+    "not-enough-energy": "Za mało energii",
+    "unknown": "Niedostępne",
+    "needs-cash": "Za mało kasy na tę stawkę",
+    "too-early": "Jeszcze za wcześnie w karierze",
+    "needs-followers": "Za mało obserwujących",
+    "too-soon": "Za krótko na obecnej platformie",
+    "platform-banned": "Ta platforma cię zbanowała",
+    "no-sponsor-fits": "Żaden sponsor teraz nie pasuje",
+    "wager-category": "Zakład tylko na streamie hazardowym",
+    "missing-target": "Wybierz platformę",
+    "same-platform": "Już tu streamujesz"
+  },
+  "choice": {
+    "needs-cash": "Brakuje pieniędzy",
+    "needs-energy": "Brakuje energii"
   },
   "event": {
     "live": "Na żywo",
+    "decision": "Decyzja",
     "choices": "Odpowiedzi",
     "chance": "Szansa: {{value}}",
     "certain": "pewne",
     "critical": "Możliwy wynik krytyczny",
+    "viralHint": "kryt. sukces: +{{value}} pp szansy na viral",
     "modifiers": "Modyfikatory",
     "points": "{{value}} pp",
     "choose": "Wybieram",
@@ -215,7 +252,12 @@
       "criticalSuccess": "Krytyczny sukces",
       "criticalFailure": "Krytyczna porażka"
     },
-    "next": "Dalej"
+    "next": "Dalej",
+    "story": "{{event}}: {{choice}} — {{result}}",
+    "action": {
+      "network": "Networking",
+      "pitch": "Oferta dla sponsorów"
+    }
   },
   "settle": {
     "title": "Koniec streamu",
@@ -234,33 +276,61 @@
     "statChanges": "Zmiany statystyk",
     "none": "Brak",
     "next": "Następny tydzień",
+    "viral": "Klip poszedł viralem: widzowie ×{{multiplier}}, +{{followers}} obserwujących (rzut {{roll}} ≤ {{threshold}})",
+    "decisions": "Decyzje przed tygodniem",
+    "actionRoll": "Networking",
+    "followersEvent": "Obserwujący (wydarzenia): {{value}}%",
     "line": {
       "income": {
         "subscriptions": "Suby",
         "donations": "Donejty",
         "ads": "Reklamy",
-        "event": "Zdarzenie"
+        "event": "Zdarzenie",
+        "sponsor": "Sponsor",
+        "wager": "Zakład (wygrana)",
+        "side-business": "Biznes poboczny"
       },
       "cost": {
         "living": "Życie",
         "equipment-upkeep": "Utrzymanie sprzętu",
         "equipment": "Zakup sprzętu",
-        "event": "Zdarzenie"
+        "event": "Zdarzenie",
+        "sponsor-penalty": "Kara od sponsora",
+        "wager": "Zakład (stawka)"
       }
     },
-    "cause": { "action": "akcja tygodnia", "stream": "stream", "practice": "praktyka" }
+    "cause": {
+      "action": "akcja tygodnia",
+      "stream": "stream",
+      "practice": "praktyka",
+      "network": "networking",
+      "event": "wydarzenie",
+      "sponsor": "sponsor",
+      "wager": "zakład",
+      "side-business": "biznes poboczny",
+      "migration": "przeprowadzka",
+      "decay": "drama przygasa"
+    },
+    "strike": "Kontrola regulaminu: rzut {{roll}}, próg {{threshold}} — {{result}}",
+    "strikeHit": "ostrzeżenie",
+    "strikeMiss": "bez ostrzeżenia",
+    "banned": "Platforma {{platform}} zbanowała kanał na stałe.",
+    "migration": "Przeprowadzka {{from}} → {{to}}: {{before}} → {{after}} obserwujących ({{retention}}).",
+    "followersMigration": "Obserwujący po przeprowadzce: {{value}}",
+    "pitchRoll": "Oferta dla sponsorów",
+    "events": "Wydarzenia na streamie",
+    "shortStream": "Krótszy stream po kryzysie albo przy lżejszym planie"
   },
   "batch": {
-    "launch": "Auto: 13 tygodni",
-    "confirmTitle": "Streamować automatycznie 13 tygodni?",
-    "confirmBody": "Grę poprowadzi strategia „Zbalansowana”. Każdy tydzień zapisuje się osobno, a gra zatrzyma się przed decyzją, która należy do ciebie.",
-    "confirm": "Streamuj 13 tygodni",
+    "launch": "Auto: kilka tygodni",
+    "confirmTitle": "Streamować automatycznie?",
+    "confirmBody": "Grę poprowadzi twoja strategia. Każdy tydzień zapisuje się osobno, a gra zatrzyma się przed decyzją, która należy do ciebie.",
     "cancel": "Anuluj",
-    "running": "Streamujesz 13 tygodni…",
+    "running": "Automat streamuje…",
     "title": "Wynik automatycznych tygodni",
     "weeksCommitted": "Rozegrane tygodnie: {{value}}",
     "stop": {
-      "completed": "Wszystkie 13 tygodni rozegrane.",
+      "completed": "Wszystkie tygodnie rozegrane.",
       "pausedForDecision": "Gra czeka na twoją decyzję.",
       "careerEnded": "Kariera zakończyła się w trakcie.",
       "interrupted": "Kariera zmieniła się w innej karcie — automat się zatrzymał."
@@ -272,7 +342,17 @@
     "week": "Tydzień {{week}}",
     "plan": "{{action}} · {{category}}",
     "choice": "{{event}}: {{choice}}",
-    "next": "Dalej"
+    "next": "Dalej",
+    "offers": "Oferty sponsorów",
+    "confirm_one": "Streamuj {{count}} tydzień",
+    "confirm_few": "Streamuj {{count}} tygodnie",
+    "confirm_many": "Streamuj {{count}} tygodni",
+    "confirm_other": "Streamuj {{count}} tygodnia",
+    "length": "Ile tygodni",
+    "weeks_one": "{{count}} tydzień",
+    "weeks_few": "{{count}} tygodnie",
+    "weeks_many": "{{count}} tygodni",
+    "weeks_other": "{{count}} tygodnia"
   },
   "reason": {
     "forced-rest": "Brak energii albo pełne wypalenie — tylko odpoczynek.",
@@ -281,6 +361,7 @@
     "rest-high-burnout": "Wypalenie {{burnout}} powyżej {{limit}} — odpoczynek.",
     "upgrade-equipment": "{{slot}} za {{pricePln}} przy kasie {{cashPln}} — ulepszenie.",
     "train-scheduled": "Co {{everyWeeks}} tygodnie trening.",
+    "network-scheduled": "Co {{everyWeeks}} tygodnie networking.",
     "manage-community-drama": "Drama {{drama}} powyżej {{limit}} — ogarnianie społeczności.",
     "no-action-default": "Nic pilnego — zwykły stream.",
     "fallback-rest": "„{{preferred}}” niedostępne — odpoczynek.",
@@ -290,6 +371,242 @@
     "only-gambles": "Same ryzykowne opcje — szansa {{probability}}.",
     "unknown": "Decyzja automatu.",
     "category": "Kategoria {{category}}: {{rule}}.",
-    "rule": { "bonus": "mocna strona", "least-bored": "najmniej nudna", "rotation": "rotacja" }
+    "rule": {
+      "bonus": "mocna strona",
+      "least-bored": "najmniej nudna",
+      "rotation": "rotacja",
+      "fixed": "stała specjalizacja",
+      "sponsor-safe": "bez hazardu przy umowie sponsora"
+    },
+    "sponsor-due": "Zlecenie sponsora {{templateId}} w tym tygodniu.",
+    "offer-accepted": "Oferta {{templateId}} pasuje — przyjęta.",
+    "offer-declined": "Oferta {{templateId}} odrzucona: {{reason}}.",
+    "ban-move": "Ban — przeprowadzka na {{platform}} (zostaje do {{retention}}).",
+    "wager-scheduled": "Zakład {{tier}} przy streamie hazardowym.",
+    "side-business-scheduled": "Co {{everyWeeks}} tygodnie biznes poboczny.",
+    "pitch-scheduled": "Co {{everyWeeks}} tygodnie oferta dla sponsorów.",
+    "migration-scheduled": "Przeprowadzka na {{platform}}.",
+    "routine-step": "Plan strategii: tydzień {{step}} z {{of}} — {{action}}.",
+    "fallback-safe": "„{{preferred}}” niedostępne ({{disabledReason}}) — bezpieczny wybór.",
+    "strategy-wager": "Zakład {{tier}} według strategii.",
+    "strategy-side-business": "Biznes poboczny według strategii.",
+    "strategy-upgrade": "{{slot}} za {{pricePln}} — zostaje rezerwa {{reservePln}}."
+  },
+  "platform": {
+    "czatnia": "Czatnia",
+    "pulsLive": "PulsLive",
+    "nurt": "Nurt",
+    "title": "Platforma",
+    "current": "Streamujesz na: {{platform}}",
+    "since": "Od tygodnia {{week}}",
+    "strikes": "Ostrzeżenia",
+    "strike": "{{platform}}: ostrzeżenie do tygodnia {{week}}",
+    "noStrikes": "Brak aktywnych ostrzeżeń",
+    "banned": "Zbanowane platformy",
+    "target": "Dokąd się przenosisz",
+    "factors": "Zasięg ×{{reach}}, suby ×{{subYield}}, reklamy ×{{adYield}}, ryzyko regulaminu ×{{policyRisk}}"
+  },
+  "wager": {
+    "title": "Zakład w wirtualnych złotówkach",
+    "none": "Bez zakładu",
+    "low": "Niski",
+    "medium": "Średni",
+    "high": "Wysoki",
+    "terms": "Stawka {{stake}}, szansa {{chance}}, wygrana {{payout}}, przegrana {{loss}}",
+    "virtual": "Tylko wirtualne złotówki z gry — żadnych prawdziwych pieniędzy, wpłat ani wypłat.",
+    "won": "Zakład wygrany: {{net}} (rzut {{roll}} ≤ {{threshold}})",
+    "lost": "Zakład przegrany: {{net}} (rzut {{roll}}, próg {{threshold}})"
+  },
+  "offer": {
+    "title": "Sponsorzy",
+    "offers": "Oferty",
+    "contracts": "Umowy",
+    "accept": "Przyjmij",
+    "decline": "Odrzuć",
+    "kind": {
+      "oneOff": "Jednorazowa akcja",
+      "contract": "Umowa"
+    },
+    "payment": "Płatność: {{amount}}",
+    "term": "Na {{weeks}} tyg., zlecenie co {{every}} tyg.",
+    "category": "Wymagana kategoria: {{category}}",
+    "platforms": "Tylko na: {{platforms}}",
+    "prerequisites": "Warunki: {{list}}",
+    "minFollowers": "min. {{value}} obserwujących",
+    "minCredibility": "wiarygodność od {{value}}",
+    "maxDrama": "drama do {{value}}",
+    "minDrama": "drama od {{value}}",
+    "incompatible": "Kłóci się z: {{list}}",
+    "incompatibility": {
+      "gambling": "hazard na streamie",
+      "adult-business": "biznes poboczny 18+"
+    },
+    "breach": "Za złamanie umowy: {{cash}} i wiarygodność {{credibility}}",
+    "expires": "Oferta ważna do tygodnia {{week}}",
+    "nextDue": "Najbliższe zlecenie: tydzień {{week}}",
+    "dueNow": "w tym tygodniu",
+    "missed": "Opuszczone zlecenia: {{count}}",
+    "blocked": {
+      "contract-limit": "Masz już dwie umowy",
+      "same-sponsor": "Masz już umowę z tą marką",
+      "prerequisite-followers": "Za mało obserwujących",
+      "prerequisite-credibility": "Za niska wiarygodność",
+      "prerequisite-drama": "Drama poza wymaganym zakresem",
+      "prerequisite-platform": "Ta marka nie współpracuje z twoją platformą",
+      "prerequisite-adult-business": "Marka nie współpracuje z biznesem pobocznym 18+",
+      "unknown": "Nie można teraz przyjąć"
+    }
+  },
+  "risk": {
+    "title": "Ryzyko tego planu",
+    "policy": "Ryzyko ostrzeżenia od platformy: {{chance}} (ekspozycja {{exposure}})",
+    "announce": "Pierwszy krok: ogłosisz przeprowadzkę na {{platform}} — przeniesiesz się przy następnym użyciu w ciągu 4 tygodni.",
+    "move": "Przeprowadzka na {{platform}}: zostanie {{min}}–{{max}} obserwujących ({{retentionMin}}–{{retentionMax}}).",
+    "missedInstallment": "{{templateId}}: opuszczone zlecenie — kara {{penalty}}, wiarygodność {{credibility}}",
+    "breach": "{{templateId}}: złamanie umowy — kara {{penalty}}, wiarygodność {{credibility}}",
+    "terminates": "umowa się skończy"
+  },
+  "strategy": {
+    "title": "Strategia",
+    "categoryPlan": "Kategoria",
+    "plan": {
+      "strongest": "Mocna strona (zmiana, gdy się nudzi)",
+      "focus": "Jedna kategoria",
+      "rotate": "Rotacja co tydzień"
+    },
+    "focus": "Wybrana kategoria",
+    "chooseFocus": "Wybierz kategorię",
+    "routine": "Plan wolnych tygodni",
+    "step": "Tydzień {{step}} cyklu",
+    "addStep": "Dodaj tydzień",
+    "removeStep": "Usuń tydzień",
+    "restBelowEnergy": "Odpoczynek, gdy energia spadnie poniżej",
+    "restAboveBurnout": "Odpoczynek, gdy wypalenie przekroczy",
+    "reserve": "Rezerwa kasy (zł), której automat nie wyda",
+    "risk": "Ryzyko",
+    "riskLevel": {
+      "safe": "Ostrożnie",
+      "balanced": "Zbalansowanie",
+      "bold": "Odważnie"
+    },
+    "upgrades": "Kupuj lepszy sprzęt, gdy stać",
+    "acceptOffers": "Przyjmuj pasujące oferty sponsorów",
+    "wager": "Zakład na streamach hazardowych (wirtualne złotówki)",
+    "sideBusiness": "Pracuj nad biznesem pobocznym 18+ co 4 tygodnie",
+    "error": {
+      "focus-missing": "Wybierz kategorię dla strategii jednej kategorii.",
+      "routine-length": "Plan musi mieć od 1 do 8 tygodni.",
+      "energy-range": "Próg energii: od 0 do 80.",
+      "burnout-range": "Próg wypalenia: od 50 do 100.",
+      "reserve-range": "Rezerwa: od 0 do 1 000 000 zł."
+    }
+  },
+  "ending": {
+    "narrativeTitle": "Twoja kariera",
+    "narrative": "{{weeks}} tygodni na wizji, najczęściej w kategorii {{category}}. Kończysz na platformie {{platform}} jako {{reputation}}.",
+    "reputation": {
+      "trusted": "twórca godny zaufania",
+      "controversial": "postać kontrowersyjna",
+      "steady": "stała część sceny"
+    },
+    "banned": "Bany po drodze: {{platforms}}.",
+    "highlights": "Najważniejsze chwile: {{list}}.",
+    "achievements": "Osiągnięcia",
+    "points_one": "{{count}} pkt",
+    "points_few": "{{count}} pkt",
+    "points_many": "{{count}} pkt",
+    "points_other": "{{count}} pkt",
+    "m1": {
+      "followers-1k": "1000 obserwujących",
+      "followers-10k": "10 000 obserwujących",
+      "followers-100k": "100 000 obserwujących",
+      "career-completed": "Cała kariera"
+    },
+    "score": {
+      "title": "Wynik końcowy",
+      "component": "Składnik",
+      "share": "Wartość",
+      "points": "Punkty",
+      "followers": "Obserwujący (45%)",
+      "wealth": "Majątek (45%)",
+      "achievements": "Osiągnięcia (10%)",
+      "base": "Wynik bazowy",
+      "difficulty": "Mnożnik trudności",
+      "background": "Mnożnik pochodzenia",
+      "final": "Wynik"
+    }
+  },
+  "retire": {
+    "action": "Zakończ karierę",
+    "title": "Zakończyć karierę teraz?",
+    "body": "Kariera skończy się wcześniejszą emeryturą. Tego nie da się cofnąć.",
+    "confirm": "Tak, kończę",
+    "cancel": "Wracam do streamowania"
+  },
+  "categoryHint": {
+    "justChatting": "rozmowy, donejty i hojny czat",
+    "fps": "zasięg i reklamy, ale mniej subów",
+    "moba": "lojalna widownia, trochę dramy",
+    "chess": "spokojnie, wiarygodnie i wiernie",
+    "gambling": "duże wahania, dużo dramy, ryzyko regulaminu"
+  },
+  "dashboard": {
+    "title": "Twoja kariera",
+    "week": "Tydzień {{week}} z 1040 · {{age}} lat",
+    "obligations": "W tym tygodniu: {{list}}",
+    "noObligations": "Brak zleceń sponsorów w tym tygodniu",
+    "nextMilestone": "Do {{target}} obserwujących brakuje {{missing}}",
+    "history": "Historia kariery"
+  },
+  "history": {
+    "title": "Historia kariery",
+    "back": "Wróć do kariery",
+    "loading": "Wczytuję historię…",
+    "loadFailed": "Nie udało się wczytać historii.",
+    "weekFailed": "Nie udało się wczytać raportu tygodnia.",
+    "years": "Podsumowania lat",
+    "year": "Rok {{year}}",
+    "yearSummary": "{{weeks}} tygodni, obserwujący {{followers}}, kasa {{cash}}",
+    "topCategory": "Najczęściej: {{category}}",
+    "filters": "Filtry",
+    "fromWeek": "Od tygodnia",
+    "toWeek": "Do tygodnia",
+    "kind": "Rodzaj zdarzenia",
+    "allKinds": "Wszystkie",
+    "search": "Szukaj",
+    "count_one": "{{count}} tydzień",
+    "count_few": "{{count}} tygodnie",
+    "count_many": "{{count}} tygodni",
+    "count_other": "{{count}} tygodnia",
+    "weeks": "Tygodnie",
+    "row": "widzowie {{viewers}}, obserwujący {{followers}}, kasa {{cash}}",
+    "automatic": "automat",
+    "show": "Pokaż raport",
+    "hide": "Ukryj raport",
+    "tag": {
+      "viral": "viral",
+      "decision": "decyzja",
+      "strike": "ostrzeżenie",
+      "ban": "ban",
+      "migration": "przeprowadzka",
+      "wager": "zakład",
+      "sponsorPaid": "sponsor zapłacił",
+      "sponsorPenalty": "kara od sponsora",
+      "shortStream": "krótszy stream",
+      "ending": "koniec kariery"
+    },
+    "incident": "{{tag}}: {{count}}"
+  },
+  "diploma": {
+    "download": "Pobierz dyplom (PDF)",
+    "failed": "Nie udało się przygotować dyplomu.",
+    "title": "Dyplom streamera",
+    "subtitle": "{{background}} · poziom: {{difficulty}}",
+    "weeks": "Tygodnie na wizji: {{weeks}}",
+    "final": "Na koniec: {{followers}} obserwujących i {{cash}}",
+    "score": "Wynik: {{score}} (obserwujący {{followers}}, majątek {{wealth}}, osiągnięcia {{achievements}})",
+    "achievements": "Osiągnięcia: {{list}}",
+    "noAchievements": "Bez osiągnięć — następnym razem!",
+    "footer": "Polski Streamer Simulator · fikcyjna kariera · {{date}}"
   }
 }

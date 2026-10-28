@@ -14,6 +14,9 @@ public static class ErrorCodes
     public const string NoPendingWeek = "no-pending-week";
     public const string WeekInProgress = "week-in-progress";
     public const string CommandIdReused = "command-id-reused";
+    public const string DecisionPending = "decision-pending";
+    public const string NoPendingDecision = "no-pending-decision";
+    public const string WeekNotFound = "week-not-found";
     public const string Internal = "internal-error";
 }
 

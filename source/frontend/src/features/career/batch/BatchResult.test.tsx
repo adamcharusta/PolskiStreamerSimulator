@@ -9,7 +9,7 @@ import { BatchResult } from './BatchResult';
 
 describe('batch result', () => {
   it.each([
-    [BatchStopReason.completed, 'Wszystkie 13 tygodni rozegrane.'],
+    [BatchStopReason.completed, 'Wszystkie tygodnie rozegrane.'],
     [BatchStopReason.pausedForDecision, 'Gra czeka na twoją decyzję.'],
     [BatchStopReason.careerEnded, 'Kariera zakończyła się w trakcie.'],
     [BatchStopReason.interrupted, 'Kariera zmieniła się w innej karcie — automat się zatrzymał.'],
@@ -39,7 +39,7 @@ describe('batch result', () => {
       'Energia 20 poniżej 30 — odpoczynek. Kategoria FPS: mocna strona.',
     );
     expect(weeks[0]).toHaveTextContent(
-      'Rajd na czat: Przywitaj gości i odpal dla nich szybkie show — Sukces.',
+      'Rajd na czat: Przywitaj gości i odpal dla nich szybkie show — Sukces — Rzut 37 przy progu 58 Szansa 60% (próg 50%) — ryzyk-fizyk.',
     );
     expect(weeks[0]).toHaveTextContent('Szansa 60% (próg 50%) — ryzyk-fizyk.');
     await userEvent.click(screen.getByRole('button', { name: 'Dalej' }));

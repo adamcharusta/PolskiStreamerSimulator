@@ -5,6 +5,8 @@ import viteConfig from './vite.config';
 export default mergeConfig(
   viteConfig,
   defineConfig({
+    // The M3 content test reads the shared content/m3 files that sit outside the frontend root.
+    server: { fs: { allow: ['../..'] } },
     test: {
       environment: 'jsdom',
       setupFiles: ['./test/setup.ts'],

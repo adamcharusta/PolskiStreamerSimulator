@@ -15,6 +15,7 @@ import { CommandNotice } from './CommandNotice';
 import { EndedView } from './stage/EndedView';
 import { LiveEvent } from './stage/LiveEvent';
 import { PlanWeek } from './stage/PlanWeek';
+import { RetireButton } from './stage/RetireButton';
 import { RollResult } from './stage/RollResult';
 import { SettleWeek } from './stage/SettleWeek';
 import { WeekReport } from './stage/WeekReport';
@@ -68,11 +69,11 @@ export function Stage({
 function StageView({ career, secret, revealed, onReveal, onClose }: StageViewProps) {
   const { t } = useTranslation();
   if (revealed?.kind === 'roll') {
-    return <RollResult roll={revealed.roll} onNext={onClose} />;
+    return <RollResult roll={revealed.roll} onNext={onClose} pronouns={career.pronouns} />;
   }
 
   if (revealed?.kind === 'report') {
-    return <WeekReport report={revealed.report} onNext={onClose} />;
+    return <WeekReport report={revealed.report} onNext={onClose} pronouns={career.pronouns} />;
   }
 
   if (revealed?.kind === 'batch') {
@@ -90,10 +91,12 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
               onReveal({ kind: 'batch', outcome }, t(`batch.stop.${outcome.stopReason}`));
             }}
           />
+          <RetireButton career={career} secret={secret} />
         </PlanWeek>
       );
     }
-    case NextStepKind.resolveEvent: {
+    case NextStepKind.resolveEvent:
+    case NextStepKind.resolveDecision: {
       return (
         <LiveEvent
           key={career.version}

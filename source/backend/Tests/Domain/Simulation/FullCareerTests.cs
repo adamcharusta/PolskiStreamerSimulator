@@ -79,7 +79,7 @@ public class FullCareerTests
     {
         var r = CareerRunner.Run(TestWorld.Engine, TestWorld.Content with { Digest = "other" }, TestCareers.Dorm(3), BuiltInPolicies.Balanced);
         var violation = Assert.Single(r.InvariantViolations);
-        Assert.StartsWith("week 1 legal-plans: ContentMismatch", violation, StringComparison.Ordinal);
+        Assert.StartsWith("week 1 present decision: ContentMismatch", violation, StringComparison.Ordinal);
     }
 
     [Fact]

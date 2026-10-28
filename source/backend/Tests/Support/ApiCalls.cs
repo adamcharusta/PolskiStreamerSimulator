@@ -31,28 +31,37 @@ public static class ApiCalls
         return await response.Content.ReadFromJsonAsync<JsonElement>(ct);
     }
 
-    /// <summary>Plays one manual week: the first enabled plan, the first choice of every event, then settlement.</summary>
+    /// <summary>
+    /// Plays one manual week: answers every queued decision, then the first enabled plan, the first available choice of
+    /// every event and settlement.
+    /// </summary>
     public static async Task<JsonElement> PlayWeekAsync(this HttpClient client, Guid id, string secret, JsonElement career, CancellationToken ct)
     {
-        var plan = career.GetProperty("next").GetProperty("plans").EnumerateArray()
+        var planning = career;
+        while (planning.GetProperty("next").GetProperty("kind").GetString() == "resolveDecision")
+        {
+            var answered = await client.ActAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = planning.GetProperty("version").GetInt64(), type = "resolveDecision", choiceId = FirstAvailable(planning) }, ct);
+            planning = answered.GetProperty("career");
+        }
+
+        var plan = planning.GetProperty("next").GetProperty("plans").EnumerateArray()
             .First(p => p.GetProperty("disabledReason").ValueKind == JsonValueKind.Null)
             .GetProperty("plan");
-        var outcome = await client.ActAsync(id, secret, new
+        var started = await client.ActAsync(id, secret, new
         {
             commandId = Guid.NewGuid(),
-            expectedVersion = career.GetProperty("version").GetInt64(),
+            expectedVersion = planning.GetProperty("version").GetInt64(),
             type = "startWeek",
             mainAction = plan.GetProperty("mainAction").GetString(),
             category = plan.GetProperty("category").GetString(),
             trainTarget = Text(plan, "trainTarget"),
             upgradeSlot = Text(plan, "upgradeSlot"),
         }, ct);
-        var view = outcome.GetProperty("career");
+        var view = started.GetProperty("career");
         while (view.GetProperty("next").GetProperty("kind").GetString() == "resolveEvent")
         {
-            var choiceId = view.GetProperty("next").GetProperty("event").GetProperty("choices")[0].GetProperty("choiceId").GetString();
-            outcome = await client.ActAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = view.GetProperty("version").GetInt64(), type = "resolveEvent", choiceId }, ct);
-            view = outcome.GetProperty("career");
+            var resolved = await client.ActAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = view.GetProperty("version").GetInt64(), type = "resolveEvent", choiceId = FirstAvailable(view) }, ct);
+            view = resolved.GetProperty("career");
         }
 
         return await client.ActAsync(id, secret, new { commandId = Guid.NewGuid(), expectedVersion = view.GetProperty("version").GetInt64(), type = "settleWeek" }, ct);
@@ -60,6 +69,11 @@ public static class ApiCalls
 
     public static async Task<string?> CodeAsync(this HttpResponseMessage response, CancellationToken ct)
         => (await response.Content.ReadFromJsonAsync<JsonElement>(ct)).GetProperty("code").GetString();
+
+    private static string? FirstAvailable(JsonElement career)
+        => career.GetProperty("next").GetProperty("event").GetProperty("choices").EnumerateArray()
+            .First(c => c.GetProperty("unavailableReason").ValueKind == JsonValueKind.Null)
+            .GetProperty("choiceId").GetString();
 
     private static string? Text(JsonElement element, string name)
         => element.GetProperty(name).ValueKind == JsonValueKind.Null ? null : element.GetProperty(name).GetString();

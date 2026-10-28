@@ -28,12 +28,13 @@ public static class ReportWriter
         var careers = r.Careers;
         var completed = careers.Count(c => c.Ending == EndingReason.Completed);
         var md = new StringBuilder();
-        md.AppendLine("# M1 batch simulation report");
+        var m3 = IsM3(r);
+        md.AppendLine(Invariant($"# {(m3 ? "M3" : "M1")} batch simulation report"));
         md.AppendLine();
         md.AppendLine("## Deterministic results");
         md.AppendLine();
         md.AppendLine(Invariant($"- Careers: {careers.Count:N0}; master seed {o.Seed}; policies: {string.Join(", ", o.Policies)}."));
-        md.AppendLine(Invariant($"- Ruleset `{M1Ruleset.RulesetId}`; content {r.ContentVersion} (`{r.ContentDigest}`)."));
+        md.AppendLine(Invariant($"- Ruleset `{r.RulesetId}`; content {r.ContentVersion} (`{r.ContentDigest}`)."));
         md.AppendLine(Invariant($"- Completion rate: {Share(completed, careers.Count)} ({completed:N0} of {careers.Count:N0})."));
         md.AppendLine();
 
@@ -57,6 +58,24 @@ public static class ReportWriter
         AppendGroups(md, "By policy", "Policy", BatchStatistics.By(careers, c => c.Policy));
         AppendGroups(md, "By background", "Background", BatchStatistics.By(careers, c => c.Background.ToString()));
         AppendGroups(md, "By difficulty", "Difficulty", BatchStatistics.By(careers, c => c.Difficulty.ToString()));
+        if (m3)
+        {
+            AppendPaths(md, BatchStatistics.Paths(careers));
+            AppendPace(md, BatchStatistics.Pace(careers));
+            AppendCriteria(md, "Criteria", BatchStatistics.M3Criteria(careers));
+        }
+
+        if (IsM3B(r))
+        {
+            AppendEconomy(md, BatchStatistics.Economy(careers));
+            AppendCriteria(md, "M3-B criteria", BatchStatistics.M3BCriteria(careers));
+        }
+
+        if (r.AchievementIds.Count > 0)
+        {
+            AppendAchievements(md, r);
+            AppendCriteria(md, "M3-C criteria", BatchStatistics.M3CCriteria(careers, r.AchievementIds, r.AchievementPointsCap));
+        }
 
         var byScore = careers.OrderByDescending(c => c.Score).ThenBy(c => c.Index).ToArray();
         AppendCareers(md, $"Top {ExtremeCount} careers by score", byScore.Take(ExtremeCount));
@@ -102,12 +121,20 @@ public static class ReportWriter
                 CareerCount = o.Careers,
                 o.Seed,
                 o.Policies,
-                M1Ruleset.RulesetId,
+                r.RulesetId,
                 r.ContentVersion,
                 r.ContentDigest,
                 ByPolicy = BatchStatistics.By(r.Careers, c => c.Policy),
                 ByBackground = BatchStatistics.By(r.Careers, c => c.Background.ToString()),
                 ByDifficulty = BatchStatistics.By(r.Careers, c => c.Difficulty.ToString()),
+                BySpecialist = IsM3(r) ? BatchStatistics.Paths(r.Careers) : null,
+                DecisionsAndVirals = IsM3(r) ? BatchStatistics.Pace(r.Careers) : null,
+                Criteria = IsM3(r) ? BatchStatistics.M3Criteria(r.Careers) : null,
+                EconomyAndRisk = IsM3B(r) ? BatchStatistics.Economy(r.Careers) : null,
+                M3BCriteria = IsM3B(r) ? BatchStatistics.M3BCriteria(r.Careers) : null,
+                Achievements = r.AchievementIds.Count > 0 ? BatchStatistics.AchievementShares(r.Careers, r.AchievementIds) : null,
+                StrategyPolicies = r.AchievementIds.Count > 0 ? BatchStatistics.Strategies(r.Careers) : null,
+                M3CCriteria = r.AchievementIds.Count > 0 ? BatchStatistics.M3CCriteria(r.Careers, r.AchievementIds, r.AchievementPointsCap) : null,
                 r.Careers,
             },
             performance = new
@@ -133,6 +160,95 @@ public static class ReportWriter
         foreach (var g in groups)
         {
             md.AppendLine(Invariant($"| {g.Group} | {g.Careers:N0} | {g.Completed:N0} | {g.Insolvent:N0} | {Format(g.Followers)} | {Format(g.Cash)} | {Format(g.Score)} |"));
+        }
+
+        md.AppendLine();
+    }
+
+    private static bool IsM3(BatchResult r) => M3Ruleset.IsM3(r.RulesetId);
+
+    private static bool IsM3B(BatchResult r) => r.RulesetId == M3Ruleset.SystemsV2;
+
+    private static void AppendAchievements(StringBuilder md, BatchResult r)
+    {
+        md.AppendLine("### Achievements and strategies");
+        md.AppendLine();
+        var points = BatchStatistics.Of(r.Careers.Select(c => (long)c.AchievementPoints));
+        md.AppendLine(Invariant($"Achievement points per career p5 / p50 / p95 / max: {points.P5} / {points.P50} / {points.P95} / {points.Max} (the score counts at most {r.AchievementPointsCap})."));
+        md.AppendLine();
+        md.AppendLine("| Achievement | Careers | Share |");
+        md.AppendLine("| --- | ---: | ---: |");
+        foreach (var a in BatchStatistics.AchievementShares(r.Careers, r.AchievementIds))
+        {
+            md.AppendLine(Invariant($"| {a.Id} | {a.Careers:N0} | {BatchStatistics.Percent(a.Share)} |"));
+        }
+
+        md.AppendLine();
+        md.AppendLine("| Strategy | Careers | Insolvency | Median cash PLN | Median drama | Median achievement points |");
+        md.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: |");
+        foreach (var s in BatchStatistics.Strategies(r.Careers))
+        {
+            md.AppendLine(Invariant($"| {s.Group} | {s.Careers:N0} | {BatchStatistics.Percent(s.InsolvencyRate)} | {s.MedianCash:N0} | {s.MedianDrama:F1} | {s.MedianPoints} |"));
+        }
+
+        md.AppendLine();
+    }
+
+    private static void AppendEconomy(StringBuilder md, IReadOnlyList<EconomySummary> economy)
+    {
+        md.AppendLine("### Economy and risk");
+        md.AppendLine();
+        md.AppendLine("Medians by the nearest-rank method. Sponsor share is sponsor income over all income; breach rate is sponsor penalties over paid installments plus penalties; banned counts careers that lost at least one platform; ban endings are `GlobalBan` and `AllPlatformsBanned`.");
+        md.AppendLine();
+        md.AppendLine("| Policy | Careers | Insolvency | Median cash PLN | Median score | Sponsor share | Installments | Breach rate | Strikes | Banned | Ban endings | Migrations |");
+        md.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
+        foreach (var e in economy)
+        {
+            md.AppendLine(Invariant($"| {e.Group} | {e.Careers:N0} | {BatchStatistics.Percent(e.InsolvencyRate)} | {e.MedianCash:N0} | {e.MedianScore:N0} | {BatchStatistics.Percent(e.SponsorShare)} | {e.Installments:N0} | {BatchStatistics.Percent(e.BreachRate)} | {e.Strikes:N0} | {e.CareersBanned:N0} | {e.BanEndings:N0} | {e.Migrations:N0} |"));
+        }
+
+        md.AppendLine();
+    }
+
+    private static void AppendPaths(StringBuilder md, IReadOnlyList<PathSummary> paths)
+    {
+        md.AppendLine("### By category specialist");
+        md.AppendLine();
+        md.AppendLine("Medians by the nearest-rank method; viewer CV is the coefficient of variation of a career's weekly live viewers; leading income is the most common largest income source. The Rotator is the reference for viable specialization.");
+        md.AppendLine();
+        md.AppendLine("| Policy | Careers | Completion | Median followers | Median cash PLN | Median drama | Median credibility | Median viewer CV | Leading income |");
+        md.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |");
+        foreach (var p in paths)
+        {
+            md.AppendLine(Invariant($"| {p.Group} | {p.Careers:N0} | {BatchStatistics.Percent(p.CompletionRate)} | {p.MedianFollowers:N0} | {p.MedianCash:N0} | {p.MedianDrama:F1} | {p.MedianCredibility:F1} | {p.MedianViewerCv:F3} | {p.LeadingIncome} |"));
+        }
+
+        md.AppendLine();
+    }
+
+    private static void AppendPace(StringBuilder md, IReadOnlyList<EventPaceSummary> pace)
+    {
+        md.AppendLine("### Decisions and virals");
+        md.AppendLine();
+        md.AppendLine("| Policy | Careers | Mandatory decisions | Decisions per 13 weeks | Viral weeks | Virals per career |");
+        md.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: |");
+        foreach (var p in pace)
+        {
+            md.AppendLine(Invariant($"| {p.Group} | {p.Careers:N0} | {p.Decisions:N0} | {p.DecisionsPer13Weeks:F2} | {p.ViralWeeks:N0} | {p.ViralsPerCareer:F2} |"));
+        }
+
+        md.AppendLine();
+    }
+
+    private static void AppendCriteria(StringBuilder md, string title, IReadOnlyList<Criterion> criteria)
+    {
+        md.AppendLine($"### {title}");
+        md.AppendLine();
+        md.AppendLine("| Criterion | Result | Evidence |");
+        md.AppendLine("| --- | --- | --- |");
+        foreach (var c in criteria)
+        {
+            md.AppendLine(Invariant($"| {c.Name} | {c.Result} | {c.Evidence} |"));
         }
 
         md.AppendLine();

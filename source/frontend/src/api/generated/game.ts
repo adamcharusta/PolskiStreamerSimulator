@@ -32,7 +32,9 @@ import type {
   CareerView,
   CreateCareerRequest,
   CreatedCareer,
-  ProblemDetails
+  HistoryView,
+  ProblemDetails,
+  WeekReportView
 } from './game.schemas';
 
 import { apiRequest } from '../http';
@@ -300,6 +302,199 @@ export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetCareerQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary getHistory
+ */
+export const getHistory = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<HistoryView>(
+      {url: `/v1/careers/${id}/history`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetHistoryQueryKey = (id: string,) => {
+    return [
+    `/v1/careers/${id}/history`
+    ] as const;
+    }
+
+
+export const getGetHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetHistoryQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHistory>>> = ({ signal }) => getHistory(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHistory>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getHistory>>>
+export type GetHistoryQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHistory>>,
+          TError,
+          Awaited<ReturnType<typeof getHistory>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary getHistory
+ */
+
+export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistory>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetHistoryQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary getHistoryWeek
+ */
+export const getHistoryWeek = (
+    id: string,
+    week: number,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<WeekReportView>(
+      {url: `/v1/careers/${id}/history/${week}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetHistoryWeekQueryKey = (id: string,
+    week: number,) => {
+    return [
+    `/v1/careers/${id}/history/${week}`
+    ] as const;
+    }
+
+
+export const getGetHistoryWeekQueryOptions = <TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(id: string,
+    week: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryWeek>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetHistoryWeekQueryKey(id,week);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHistoryWeek>>> = ({ signal }) => getHistoryWeek(id,week, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined && week !== null && week !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHistoryWeek>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetHistoryWeekQueryResult = NonNullable<Awaited<ReturnType<typeof getHistoryWeek>>>
+export type GetHistoryWeekQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(
+ id: string,
+    week: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryWeek>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHistoryWeek>>,
+          TError,
+          Awaited<ReturnType<typeof getHistoryWeek>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(
+ id: string,
+    week: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryWeek>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getHistoryWeek>>,
+          TError,
+          Awaited<ReturnType<typeof getHistoryWeek>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(
+ id: string,
+    week: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryWeek>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary getHistoryWeek
+ */
+
+export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(
+ id: string,
+    week: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryWeek>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetHistoryWeekQueryOptions(id,week,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
