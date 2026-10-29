@@ -125,7 +125,7 @@ public sealed class SaveSlotTests
 
         Assert.Equal(1, restored.Version);
         Assert.Equal(ErrorCodes.StaleVersion, stale.Error.Code);
-        Assert.True((await kit.PlayManualWeekAsync(restored)).LastSettledWeek == 1);
+        Assert.Equal(1, (await kit.PlayManualWeekAsync(restored)).LastSettledWeek);
     }
 
     [Fact]

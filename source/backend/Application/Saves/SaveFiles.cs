@@ -26,10 +26,10 @@ public sealed record ExportCareer(Guid CareerId, string? Secret)
 /// <summary>A save file to turn into a new unranked career.</summary>
 public sealed record ImportCareer(JsonElement Save)
 {
-    // The file is player data of any size; the log line names only the message.
+    // The file is player data of any size; the log line names only its JSON kind.
     private bool PrintMembers(StringBuilder builder)
     {
-        builder.Append("Save = ***");
+        builder.Append($"Save = {Save.ValueKind}");
         return true;
     }
 }
