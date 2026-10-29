@@ -134,7 +134,8 @@ function Slots({ career, secret }: { readonly career: CareerView; readonly secre
             <h2 className="panel-title">{t('saves.slot', { slot: slot.slot })}</h2>
             <SlotSummary slot={slot} />
             {confirming?.slot === slot.slot ? (
-              <div className="grid gap-2" role="group" aria-label={t('saves.confirmLabel')}>
+              <fieldset className="grid gap-2">
+                <legend className="sr-only">{t('saves.confirmLabel')}</legend>
                 <p className="bad">
                   {t(confirming.kind === 'save' ? 'saves.confirmSave' : 'saves.confirmRestore', {
                     slot: slot.slot,
@@ -152,7 +153,7 @@ function Slots({ career, secret }: { readonly career: CareerView; readonly secre
                     {t('saves.cancel')}
                   </Button>
                 </div>
-              </div>
+              </fieldset>
             ) : (
               <div className="flex flex-wrap gap-2">
                 <Button

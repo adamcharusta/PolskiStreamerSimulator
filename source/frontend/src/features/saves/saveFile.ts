@@ -5,8 +5,9 @@ export function saveFileName(nickname: string, week: number): string {
     .replaceAll(/\p{M}/gu, '')
     .replaceAll(/[łŁ]/gu, 'l')
     .toLowerCase()
-    .replaceAll(/[^a-z0-9]+/gu, '-')
-    .replaceAll(/(^-+)|(-+$)/gu, '');
+    .split(/[^a-z0-9]/u)
+    .filter((part) => part !== '')
+    .join('-');
   return `kariera-${slug === '' ? 'zapis' : slug}-tydzien-${String(week)}.json`;
 }
 
