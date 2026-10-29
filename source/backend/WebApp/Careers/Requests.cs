@@ -6,7 +6,7 @@ using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.WebApp.Careers;
 
-/// <summary><see cref="CreationId"/> is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A <see cref="Ranked"/> career plays for the open season (TD-122).</summary>
+/// <summary><see cref="CreationId"/> is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122).</summary>
 public sealed record CreateCareerRequest(
     string Nickname,
     Background Background,

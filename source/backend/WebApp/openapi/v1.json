@@ -1879,7 +1879,7 @@
             "default": false
           }
         },
-        "description": "Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A bool CreateCareerRequest.Ranked career plays for the open season (TD-122)."
+        "description": "Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122)."
       },
       "CreatedCareer": {
         "required": [

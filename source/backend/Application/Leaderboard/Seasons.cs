@@ -33,7 +33,8 @@ public interface ISeasonStore
 {
     /// <summary>
     /// Returns the open season for this content; if the open season has other content it is closed at
-    /// <paramref name="now"/> and the next one opened, in one transaction. Safe to call concurrently.
+    /// <paramref name="now"/> and the next one opened, in one transaction. Safe to call concurrently: every caller
+    /// returns the same season.
     /// </summary>
     Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken);
 

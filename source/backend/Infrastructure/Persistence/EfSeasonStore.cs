@@ -12,18 +12,27 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
     {
         for (var attempt = 1; ; attempt++)
         {
-            if (await CurrentAsync(cancellationToken) is { } open && open.Pins(rulesetId, contentDigest))
+            var open = await CurrentAsync(cancellationToken);
+            if (open is not null && open.Pins(rulesetId, contentDigest))
             {
                 return open;
             }
 
             try
             {
-                await RollOverAsync(rulesetId, contentDigest, now, cancellationToken);
+                if (await RollOverAsync(open, rulesetId, contentDigest, now, cancellationToken) is { } opened)
+                {
+                    return opened;
+                }
             }
-            catch (DbUpdateException error) when (attempt < RolloverAttempts && SqlErrors.IsDuplicateKey(error))
+            catch (DbUpdateException error) when (SqlErrors.IsDuplicateKey(error))
             {
                 // Another instance opened a season first; read it on the next attempt.
+            }
+
+            if (attempt == RolloverAttempts)
+            {
+                throw new InvalidOperationException($"The open season did not settle after {RolloverAttempts} attempts.");
             }
         }
     }
@@ -44,15 +53,28 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    /// <summary>Closes the open season, if any, and opens the next one in one transaction.</summary>
-    private async Task RollOverAsync(string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken)
+    /// <summary>
+    /// Closes <paramref name="seen"/>, the open season this instance read, and opens the next one in one transaction.
+    /// Closing only that season keeps a slower instance from closing the season a faster one has just opened.
+    /// </summary>
+    /// <returns>The new season, or <c>null</c> when another instance closed <paramref name="seen"/> first.</returns>
+    private async Task<Season?> RollOverAsync(Season? seen, string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        await db.Seasons.Where(s => s.ClosedAt == null).ExecuteUpdateAsync(u => u.SetProperty(s => s.ClosedAt, now), cancellationToken);
-        db.Seasons.Add(new SeasonRow { RulesetId = rulesetId, ContentDigest = contentDigest, OpenedAt = now });
+        if (seen is not null
+            && await db.Seasons
+                .Where(s => s.Id == seen.Number && s.ClosedAt == null)
+                .ExecuteUpdateAsync(u => u.SetProperty(s => s.ClosedAt, now), cancellationToken) == 0)
+        {
+            return null;
+        }
+
+        var row = new SeasonRow { RulesetId = rulesetId, ContentDigest = contentDigest, OpenedAt = now };
+        db.Seasons.Add(row);
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        return new Season(row.Id, rulesetId, contentDigest, now, null);
     }
 
     private async Task<List<Season>> QueryAsync(System.Linq.Expressions.Expression<Func<SeasonRow, bool>> filter, CancellationToken cancellationToken)
