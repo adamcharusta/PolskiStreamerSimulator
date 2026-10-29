@@ -30,13 +30,22 @@ public static class InfrastructureServices
         services.AddSingleton<EfModerationStore>();
         services.AddSingleton<IModerationStore>(provider => provider.GetRequiredService<EfModerationStore>());
         services.AddSingleton<IAuditTrail>(provider => provider.GetRequiredService<EfModerationStore>());
-        services.AddSingleton<ICurrentContent, DirectoryCurrentContent>();
+        services.AddSingleton<DirectoryCurrentContent>();
+        services.AddSingleton<PublishedContent>();
+        services.AddSingleton<ICurrentContent>(provider => provider.GetRequiredService<PublishedContent>());
+        services.AddSingleton<EfContentAdminStore>();
+        services.AddSingleton<IContentPublications>(provider => provider.GetRequiredService<EfContentAdminStore>());
+        services.AddSingleton<IContentDrafts>(provider => provider.GetRequiredService<EfContentAdminStore>());
+        services.AddSingleton<IContentCompiler, JsonContentCompiler>();
+        services.AddSingleton<PublishedContentLoader>();
+        services.AddOptions<ContentRefreshOptions>().Bind(configuration.GetSection(ContentRefreshOptions.Section));
         services.AddSingleton<ISecretHasher, Sha256SecretHasher>();
         services.AddOptions<RetentionOptions>().Bind(configuration.GetSection(RetentionOptions.Section));
         services.AddHostedService<DatabaseInitializer>();
 
         // After the initializer, which migrates the schema the sweep deletes from.
         services.AddHostedService<RetentionSweeper>();
+        services.AddHostedService<PublishedContentRefresher>();
         return services;
     }
 }

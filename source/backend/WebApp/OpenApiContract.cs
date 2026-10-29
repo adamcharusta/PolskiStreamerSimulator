@@ -45,12 +45,25 @@ public static class OpenApiContract
         ["restoreEntry"] = ("Restore a hidden leaderboard entry with a reason", false),
         ["extendSeason"] = ("Move a closed season's submission deadline later", false),
         ["listAudit"] = ("List the newest owner audit records", false),
+        ["getContentAdmin"] = ("Read the newest content publication and the draft with its check", false),
+        ["createContentDraft"] = ("Create the content draft from a publication", false),
+        ["discardContentDraft"] = ("Discard the content draft", false),
+        ["putDraftEvent"] = ("Replace or add one event of the draft", false),
+        ["removeDraftEvent"] = ("Remove one event from the draft", false),
+        ["putDraftBalance"] = ("Replace the balance document of the draft", false),
+        ["simulateContentDraft"] = ("Simulate careers on the draft and on the current content", false),
+        ["publishContent"] = ("Publish the draft for new careers", false),
+        ["listContentPublications"] = ("List the content publications", false),
+        ["revertContentPublication"] = ("Publish an earlier content publication again", false),
+        ["exportContentPublication"] = ("Export both files of a content publication", false),
     };
 
     /// <summary>Operations that need the owner cookie (and, for a POST, the anti-forgery header).</summary>
     private static readonly HashSet<string> OwnerOperations = new(StringComparer.Ordinal)
     {
         "getOwnerSession", "ownerLogout", "listModeratedEntries", "hideEntry", "restoreEntry", "extendSeason", "listAudit",
+        "getContentAdmin", "createContentDraft", "discardContentDraft", "putDraftEvent", "removeDraftEvent", "putDraftBalance",
+        "simulateContentDraft", "publishContent", "listContentPublications", "revertContentPublication", "exportContentPublication",
     };
 
     public static void Configure(OpenApiOptions options)

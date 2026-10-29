@@ -8,6 +8,7 @@ using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Application.Leaderboard;
 using PolskiStreamerSimulator.Application.Moderation;
+using PolskiStreamerSimulator.Infrastructure.Content;
 
 namespace PolskiStreamerSimulator.Tests.Support;
 
@@ -55,7 +56,12 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IContentStore>(new InMemoryContentStore(content));
 
             // The database initializer is off, so the season it would open at startup is opened here.
-            Seasons.EnsureCurrentAsync(content.RulesetId, content.Digest, DateTimeOffset.UtcNow, CancellationToken.None).GetAwaiter().GetResult();
+            var mechanics = new TestCurrentContent(contentDirectory).MechanicsHash;
+            Seasons.EnsureCurrentAsync(content.RulesetId, content.Digest, mechanics, DateTimeOffset.UtcNow, CancellationToken.None).GetAwaiter().GetResult();
+
+            // Without the initializer nothing is published; new careers pin the repository content directly.
+            services.RemoveAll<ICurrentContent>();
+            services.AddSingleton<ICurrentContent>(provider => provider.GetRequiredService<DirectoryCurrentContent>());
             services.RemoveAll<ISeasonStore>();
             services.AddSingleton<ISeasonStore>(Seasons);
             services.RemoveAll<ILeaderboardStore>();

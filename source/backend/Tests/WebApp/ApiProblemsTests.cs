@@ -45,6 +45,14 @@ public sealed class ApiProblemsTests
         { ErrorCodes.OwnerLoginFailed, 401 },
         { ErrorCodes.OwnerLockedOut, 423 },
         { ErrorCodes.AntiforgeryFailed, 400 },
+        { ErrorCodes.DraftNotFound, 404 },
+        { ErrorCodes.DraftExists, 409 },
+        { ErrorCodes.DraftStale, 409 },
+        { ErrorCodes.EventNotFound, 404 },
+        { ErrorCodes.ContentInvalid, 422 },
+        { ErrorCodes.ContentUnchanged, 409 },
+        { ErrorCodes.SimulationFailed, 422 },
+        { ErrorCodes.PublicationNotFound, 404 },
         { ErrorCodes.Internal, 500 },
     };
 

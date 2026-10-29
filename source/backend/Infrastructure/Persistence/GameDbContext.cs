@@ -19,6 +19,10 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
 
     public DbSet<AuditRecordRow> AuditRecords => Set<AuditRecordRow>();
 
+    public DbSet<ContentPublicationRow> ContentPublications => Set<ContentPublicationRow>();
+
+    public DbSet<ContentDraftRow> ContentDrafts => Set<ContentDraftRow>();
+
     public DbSet<CareerRow> Careers => Set<CareerRow>();
 
     public DbSet<CareerSecretRow> CareerSecrets => Set<CareerSecretRow>();
@@ -44,6 +48,35 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
         builder.Entity<IdentityUserLogin<string>>().ToTable("user_logins", OwnerSchema);
         builder.Entity<IdentityUserToken<string>>().ToTable("user_tokens", OwnerSchema);
         builder.Entity<DataProtectionKey>().ToTable("data_protection_keys", OwnerSchema);
+
+        builder.Entity<ContentPublicationRow>(e =>
+        {
+            e.ToTable("content_publications");
+            e.HasKey(x => x.Number);
+            e.Property(x => x.Number).HasColumnName("number").UseIdentityColumn();
+            e.Property(x => x.Digest).HasColumnName("digest").HasMaxLength(64).IsFixedLength().IsUnicode(false);
+            e.Property(x => x.MechanicsHash).HasColumnName("mechanics_hash").HasMaxLength(64).IsFixedLength().IsUnicode(false);
+            e.Property(x => x.Kind).HasColumnName("kind").HasMaxLength(16).IsUnicode(false);
+            e.Property(x => x.SourceNumber).HasColumnName("source_number");
+            e.Property(x => x.Actor).HasColumnName("actor").HasMaxLength(256);
+            e.Property(x => x.Reason).HasColumnName("reason").HasMaxLength(500);
+            e.Property(x => x.PublishedAt).HasColumnName("published_at");
+            e.HasIndex(x => new { x.Digest, x.Kind }).HasDatabaseName("ix_content_publications_digest");
+            e.HasOne<ContentSnapshotRow>().WithMany().HasForeignKey(x => x.Digest).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<ContentDraftRow>(e =>
+        {
+            e.ToTable("content_drafts", t => t.HasCheckConstraint("ck_content_drafts_single", "[id] = 1"));
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+            e.Property(x => x.BalanceJson).HasColumnName("balance_json");
+            e.Property(x => x.EventsJson).HasColumnName("events_json");
+            e.Property(x => x.BaseNumber).HasColumnName("base_number");
+            e.Property(x => x.Revision).HasColumnName("revision");
+            e.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+            e.Property(x => x.UpdatedBy).HasColumnName("updated_by").HasMaxLength(256);
+        });
 
         builder.Entity<AuditRecordRow>(e =>
         {
@@ -100,6 +133,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.Property(x => x.Id).HasColumnName("id").UseIdentityColumn();
             e.Property(x => x.RulesetId).HasColumnName("ruleset_id").HasMaxLength(64).IsUnicode(false);
             e.Property(x => x.ContentDigest).HasColumnName("content_digest").HasMaxLength(64).IsFixedLength().IsUnicode(false);
+            e.Property(x => x.MechanicsHash).HasColumnName("mechanics_hash").HasMaxLength(64).IsFixedLength().IsUnicode(false);
             e.Property(x => x.OpenedAt).HasColumnName("opened_at");
             e.Property(x => x.ClosedAt).HasColumnName("closed_at");
 

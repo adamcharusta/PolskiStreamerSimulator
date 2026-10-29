@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 namespace PolskiStreamerSimulator.Tests.Support;
 
 /// <summary>The API on a real SQL Server database; startup migrates it and stores the current content.</summary>
-public sealed class SqlApiFactory(string connectionString) : WebApplicationFactory<Program>
+/// <remarks>The repository content is <c>content/m1</c> unless <paramref name="contentDirectory"/> names another.</remarks>
+public sealed class SqlApiFactory(string connectionString, string? contentDirectory = null) : WebApplicationFactory<Program>
 {
     static SqlApiFactory() => JasperFxEnvironment.AutoStartHost = true;
 
@@ -16,7 +17,7 @@ public sealed class SqlApiFactory(string connectionString) : WebApplicationFacto
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Game", connectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
-        builder.UseSetting("Content:Directory", TestPaths.ContentM1);
+        builder.UseSetting("Content:Directory", contentDirectory ?? TestPaths.ContentM1);
         // Test classes create far more careers per minute than a player; RateLimitApiTests lowers the limits.
         builder.UseSetting("RateLimits:CreatePermits", "100000");
         builder.UseSetting("RateLimits:RecoverPermits", "100000");

@@ -1401,6 +1401,884 @@
         ]
       }
     },
+    "/v1/admin/content": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read the newest content publication and the draft with its check",
+        "operationId": "getContentAdmin",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentAdminView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/draft": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Create the content draft from a publication",
+        "operationId": "createContentDraft",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDraftRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDraftView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Discard the content draft",
+        "operationId": "discardContentDraft",
+        "parameters": [
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/draft/events/{id}": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Replace or add one event of the draft",
+        "operationId": "putDraftEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftEventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDraftView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Remove one event from the draft",
+        "operationId": "removeDraftEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDraftView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/draft/balance": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Replace the balance document of the draft",
+        "operationId": "putDraftBalance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftBalanceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentDraftView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/draft/simulation": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Simulate careers on the draft and on the current content",
+        "operationId": "simulateContentDraft",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/publish": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Publish the draft for new careers",
+        "operationId": "publishContent",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishContentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentPublicationView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/publications": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List the content publications",
+        "operationId": "listContentPublications",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContentPublicationView"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/publications/{number}/revert": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Publish an earlier content publication again",
+        "operationId": "revertContentPublication",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentPublicationView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/content/publications/{number}/export": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Export both files of a content publication",
+        "operationId": "exportContentPublication",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContentExportView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
     "/v1/admin/login": {
       "post": {
         "tags": [
@@ -2938,6 +3816,195 @@
         },
         "description": "A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so."
       },
+      "ContentAdminView": {
+        "required": [
+          "current",
+          "draft"
+        ],
+        "type": "object",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/ContentPublicationView"
+          },
+          "draft": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ContentDraftView"
+              }
+            ]
+          }
+        },
+        "description": "The newest publication and the owner's draft, if any."
+      },
+      "ContentChange": {
+        "enum": [
+          "added",
+          "changed",
+          "removed"
+        ],
+        "type": "string"
+      },
+      "ContentDiffView": {
+        "required": [
+          "items",
+          "values",
+          "mechanical",
+          "unchanged"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemDiffView"
+            }
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ValueDiffView"
+            }
+          },
+          "mechanical": {
+            "type": "boolean"
+          },
+          "unchanged": {
+            "type": "boolean"
+          }
+        },
+        "description": "What a draft changes: items, values, and whether it changes mechanics (a new season), only texts, or nothing."
+      },
+      "ContentDraftView": {
+        "required": [
+          "baseNumber",
+          "revision",
+          "updatedAt",
+          "updatedBy",
+          "behindCurrent",
+          "balance",
+          "events",
+          "problems",
+          "diff"
+        ],
+        "type": "object",
+        "properties": {
+          "baseNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "behindCurrent": {
+            "type": "boolean"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DraftEventView"
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "diff": {
+            "$ref": "#/components/schemas/ContentDiffView"
+          }
+        },
+        "description": "The draft with its check: problems that block publication and the diff against the newest publication."
+      },
+      "ContentExportView": {
+        "required": [
+          "number",
+          "digest",
+          "mechanicsHash",
+          "balanceJson",
+          "eventsJson"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "mechanicsHash": {
+            "type": "string"
+          },
+          "balanceJson": {
+            "type": "string"
+          },
+          "eventsJson": {
+            "type": "string"
+          }
+        },
+        "description": "Both files of a publication as their exact stored text, so their SHA-256 reproduces the digest."
+      },
+      "ContentPublicationView": {
+        "required": [
+          "number",
+          "digest",
+          "mechanicsHash",
+          "kind",
+          "sourceNumber",
+          "actor",
+          "reason",
+          "publishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "digest": {
+            "type": "string"
+          },
+          "mechanicsHash": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PublicationKind"
+          },
+          "sourceNumber": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A publication: its number, digest, mechanics fingerprint, kind, the publication it copies, who published it, why and when."
+      },
       "ContractView": {
         "required": [
           "contractId",
@@ -3074,6 +4141,19 @@
         },
         "description": "The new career; string CreatedCareer.Secret and string CreatedCareer.RecoveryKey are returned only here and never stored."
       },
+      "CreateDraftRequest": {
+        "type": "object",
+        "properties": {
+          "fromPublication": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Creates the draft from the newest publication, or from int? CreateDraftRequest.FromPublication."
+      },
       "Difficulty": {
         "enum": [
           "easy",
@@ -3096,6 +4176,78 @@
             "format": "double"
           }
         }
+      },
+      "DraftBalanceRequest": {
+        "required": [
+          "revision",
+          "balance"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        },
+        "description": "The whole balance document at the revision the owner read."
+      },
+      "DraftEventRequest": {
+        "required": [
+          "revision",
+          "event"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "event": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        },
+        "description": "An event to put into the draft at the revision the owner read; its `id` equals the path."
+      },
+      "DraftEventView": {
+        "required": [
+          "id",
+          "version",
+          "phase",
+          "title",
+          "event"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "version": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "phase": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "event": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        },
+        "description": "An event of the draft: its ID, version, phase and title for the list, and the whole event as JSON."
       },
       "EndingReason": {
         "enum": [
@@ -3332,6 +4484,46 @@
           }
         },
         "description": "A new recovery key, shown once; the previous key no longer opens the career."
+      },
+      "ItemDiffView": {
+        "required": [
+          "section",
+          "id",
+          "change",
+          "mechanical",
+          "versionBefore",
+          "versionAfter"
+        ],
+        "type": "object",
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "change": {
+            "$ref": "#/components/schemas/ContentChange"
+          },
+          "mechanical": {
+            "type": "boolean"
+          },
+          "versionBefore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "versionAfter": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "An event or sponsor template that differs from the newest publication; mechanical unless only its texts or version changed."
       },
       "JsonElement": { },
       "LeaderboardRowView": {
@@ -4068,6 +5260,32 @@
         "type": "string",
         "description": "Grammatical form only; no rule may read it."
       },
+      "PublicationKind": {
+        "enum": [
+          "release",
+          "publish",
+          "revert"
+        ],
+        "type": "string",
+        "description": "Kind of a publication: the repository content, a draft, or a copy of an earlier publication."
+      },
+      "PublishContentRequest": {
+        "required": [
+          "revision",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "description": "Publishes the draft at the revision the owner checked, for a reason kept in the audit record."
+      },
       "PublishedEntryView": {
         "required": [
           "nickname",
@@ -4569,6 +5787,73 @@
         },
         "description": "The text-only side business: when it opened, its quality and the income it pays at the next settlement."
       },
+      "SimulationRunView": {
+        "required": [
+          "digest",
+          "careers",
+          "endings",
+          "score",
+          "weeks",
+          "violations",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "digest": {
+            "type": "string"
+          },
+          "careers": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endings": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "score": {
+            "$ref": "#/components/schemas/SpreadView"
+          },
+          "weeks": {
+            "$ref": "#/components/schemas/SpreadView"
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "One simulated batch: how many careers, their endings, score and length spread, and every broken invariant or error."
+      },
+      "SimulationView": {
+        "required": [
+          "draft",
+          "current",
+          "passed"
+        ],
+        "type": "object",
+        "properties": {
+          "draft": {
+            "$ref": "#/components/schemas/SimulationRunView"
+          },
+          "current": {
+            "$ref": "#/components/schemas/SimulationRunView"
+          },
+          "passed": {
+            "type": "boolean"
+          }
+        },
+        "description": "The draft and the current content replayed on the same seeds, policies, backgrounds and difficulties."
+      },
       "SponsorConsequenceView": {
         "required": [
           "contractId",
@@ -4646,6 +5931,29 @@
             "format": "double"
           }
         }
+      },
+      "SpreadView": {
+        "required": [
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "type": "object",
+        "properties": {
+          "p10": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "p50": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "p90": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "description": "Percentiles 10, 50 and 90 of one measure over the simulated careers."
       },
       "StrategyInput": {
         "required": [
@@ -4778,6 +6086,36 @@
           }
         },
         "description": "An active policy strike on a platform and the last settled week in which it still counts."
+      },
+      "ValueDiffView": {
+        "required": [
+          "path",
+          "before",
+          "after",
+          "mechanical"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "before": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "after": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "mechanical": {
+            "type": "boolean"
+          }
+        },
+        "description": "A balance or events-file value that differs, by JSON path, with both values as JSON text."
       },
       "ViralView": {
         "required": [

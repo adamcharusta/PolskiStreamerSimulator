@@ -58,12 +58,17 @@ public sealed class InMemorySeasonStore(InMemoryAuditTrail? audit = null) : ISea
         }
     }
 
-    public Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken)
+    public Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, string mechanicsHash, DateTimeOffset now, CancellationToken cancellationToken)
     {
         lock (gate)
         {
             var open = seasons.FindIndex(s => s.ClosedAt is null);
-            if (open >= 0 && seasons[open].Pins(rulesetId, contentDigest))
+            if (open >= 0 && seasons[open] is { MechanicsHash: null } legacy && legacy.RulesetId == rulesetId && legacy.ContentDigest == contentDigest)
+            {
+                seasons[open] = legacy with { MechanicsHash = mechanicsHash };
+            }
+
+            if (open >= 0 && seasons[open].Pins(rulesetId, mechanicsHash))
             {
                 return Task.FromResult(WithExtension(seasons[open]));
             }
@@ -73,7 +78,7 @@ public sealed class InMemorySeasonStore(InMemoryAuditTrail? audit = null) : ISea
                 seasons[open] = seasons[open] with { ClosedAt = now };
             }
 
-            var next = new Season(seasons.Count + 1, rulesetId, contentDigest, now, null);
+            var next = new Season(seasons.Count + 1, rulesetId, contentDigest, now, null, null, mechanicsHash);
             seasons.Add(next);
             return Task.FromResult(next);
         }

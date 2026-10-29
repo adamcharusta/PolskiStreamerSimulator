@@ -191,7 +191,7 @@ public sealed class AdminApiTests(SqlServerFixture sql)
         var audit = await client.GetFromJsonAsync<JsonElement>("/v1/admin/audit", Ct);
         Assert.Equal(
             ["leaderboard.restore", "leaderboard.hide"],
-            audit.EnumerateArray().Select(a => a.GetProperty("action").GetString()));
+            audit.EnumerateArray().Select(a => a.GetProperty("action").GetString()).Take(2));
         Assert.Equal("wlasciciel", audit[0].GetProperty("actor").GetString());
     }
 

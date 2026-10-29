@@ -75,7 +75,7 @@ public sealed class CreateCareerHandler(
         {
             // During a rolling deployment the open season can belong to the other content version.
             var current = await seasons.CurrentAsync(cancellationToken);
-            if (current is null || !current.Pins(snapshot.RulesetId, snapshot.Digest))
+            if (current is null || !current.Pins(snapshot.RulesetId, content.MechanicsHash))
             {
                 return AppResult<CreatedCareer>.Fail(ErrorCodes.SeasonUnavailable);
             }

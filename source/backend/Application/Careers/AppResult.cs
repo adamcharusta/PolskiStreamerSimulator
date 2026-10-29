@@ -40,6 +40,14 @@ public static class ErrorCodes
     public const string OwnerLoginFailed = "owner-login-failed";
     public const string OwnerLockedOut = "owner-locked-out";
     public const string AntiforgeryFailed = "antiforgery-failed";
+    public const string DraftNotFound = "draft-not-found";
+    public const string DraftExists = "draft-exists";
+    public const string DraftStale = "draft-stale";
+    public const string EventNotFound = "event-not-found";
+    public const string ContentInvalid = "content-invalid";
+    public const string ContentUnchanged = "content-unchanged";
+    public const string SimulationFailed = "simulation-failed";
+    public const string PublicationNotFound = "publication-not-found";
     public const string Internal = "internal-error";
 }
 

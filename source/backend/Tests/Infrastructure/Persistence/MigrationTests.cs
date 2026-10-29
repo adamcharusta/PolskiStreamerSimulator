@@ -62,5 +62,9 @@ public sealed class MigrationTests(SqlServerFixture sql)
         // M4-D: no owner is seeded and no change is audited.
         Assert.Equal(0, await db.Users.CountAsync(ct));
         Assert.Equal(0, await db.AuditRecords.CountAsync(ct));
+
+        // M4-E: nothing is published before startup, and the season fingerprint starts empty.
+        Assert.Equal(0, await db.ContentPublications.CountAsync(ct));
+        Assert.Equal(0, await db.ContentDrafts.CountAsync(ct));
     }
 }

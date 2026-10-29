@@ -39,7 +39,7 @@ public sealed class EfLeaderboardStoreTests(SqlServerFixture sql) : LeaderboardS
         var factory = await ContentReadyAsync();
         var seasons = new EfSeasonStore(factory);
         var entries = new EfLeaderboardStore(factory);
-        await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
+        await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
         var careerId = Guid.NewGuid();
 
         var added = await Task.WhenAll(Enumerable.Range(0, 4).Select(i => entries.AddAsync(LeaderboardRulesTests.Entry(careerId, 100 + i, 1, At), Ct)));

@@ -21,7 +21,7 @@ public sealed class EfModerationStoreTests(SqlServerFixture sql)
     {
         var factory = await sql.MigratedDatabaseAsync(Ct);
         await new EfContentStore(factory, TimeProvider.System).EnsureStoredAsync(new TestCurrentContent(TestPaths.ContentM1).Files, Ct);
-        await new EfSeasonStore(factory).EnsureCurrentAsync("m1", TestContent.Of(TestPaths.ContentM1).Digest, At, Ct);
+        await new EfSeasonStore(factory).EnsureCurrentAsync("m1", TestContent.Of(TestPaths.ContentM1).Digest, TestContent.Of(TestPaths.ContentM1).Digest, At, Ct);
         var entry = LeaderboardRulesTests.Entry(Guid.NewGuid(), 100, 1, At);
         await new EfLeaderboardStore(factory).AddAsync(entry, Ct);
         return (factory, new EfModerationStore(factory), entry.Id);
@@ -75,7 +75,7 @@ public sealed class EfModerationStoreTests(SqlServerFixture sql)
         var factory = await sql.MigratedDatabaseAsync(Ct);
         await new EfContentStore(factory, TimeProvider.System).EnsureStoredAsync(new TestCurrentContent(TestPaths.ContentM1).Files, Ct);
         var seasons = new EfSeasonStore(factory);
-        await seasons.EnsureCurrentAsync("m1", TestContent.Of(TestPaths.ContentM1).Digest, At, Ct);
+        await seasons.EnsureCurrentAsync("m1", TestContent.Of(TestPaths.ContentM1).Digest, TestContent.Of(TestPaths.ContentM1).Digest, At, Ct);
 
         await seasons.AddExtensionAsync(1, At.AddDays(200), new AuditEntry("command", AuditActions.Extend, "1", "Awaria", "{}", "{}", At), Ct);
 

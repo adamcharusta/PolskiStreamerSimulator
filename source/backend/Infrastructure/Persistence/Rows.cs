@@ -46,10 +46,51 @@ public sealed class SeasonRow
 
     public string ContentDigest { get; set; } = "";
 
+    /// <summary>The mechanics fingerprint careers of the season share (M4-E); null for a season opened before it.</summary>
+    public string? MechanicsHash { get; set; }
+
     public DateTimeOffset OpenedAt { get; set; }
 
     /// <summary>Null while the season is open; one season at most is open.</summary>
     public DateTimeOffset? ClosedAt { get; set; }
+}
+
+/// <summary>Row of <c>game.content_publications</c>: a content version new careers pinned from its time on (M4-E).</summary>
+public sealed class ContentPublicationRow
+{
+    public int Number { get; set; }
+
+    public string Digest { get; set; } = "";
+
+    public string MechanicsHash { get; set; } = "";
+
+    public string Kind { get; set; } = "";
+
+    public int? SourceNumber { get; set; }
+
+    public string Actor { get; set; } = "";
+
+    public string Reason { get; set; } = "";
+
+    public DateTimeOffset PublishedAt { get; set; }
+}
+
+/// <summary>Row of <c>game.content_drafts</c>: the owner's single draft (M4-E).</summary>
+public sealed class ContentDraftRow
+{
+    public int Id { get; set; }
+
+    public string BalanceJson { get; set; } = "";
+
+    public string EventsJson { get; set; } = "";
+
+    public int BaseNumber { get; set; }
+
+    public int Revision { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    public string UpdatedBy { get; set; } = "";
 }
 
 /// <summary>Row of <c>game.audit_records</c>: one owner change, written in the transaction of the change (M4-D).</summary>
