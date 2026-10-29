@@ -51,7 +51,7 @@ Success means (#28, #30, REQ-19):
 
 ## 4. Sessions and CSRF
 
-- **Cookies.** Identity's application cookie is named `pss.owner`, with `HttpOnly`, `SameSite=Strict` and `Secure` (outside Development). It expires after 8 hours idle and 24 hours at most. Between the password and the code, Identity's own two-factor cookie holds the half-finished sign-in.
+- **Cookies.** Identity's application cookie is named `pss.owner`, with `HttpOnly`, `SameSite=Strict` and `Secure` (outside Development). A sign-in lasts 8 hours from the code step and is not extended by use. Between the password and the code, Identity's own two-factor cookie holds the half-finished sign-in.
 - **No redirects.** A missing or partial sign-in answers `401 owner-unauthorized` as Problem Details. Cookie authentication never redirects.
 - **Anti-forgery.** ASP.NET Core anti-forgery with the header `X-CSRF-TOKEN`:
   - `GET /v1/admin/session` and both sign-in steps return `csrfToken`, which is bound to the signed-in user.
@@ -98,7 +98,7 @@ All endpoints are under `/v1/admin`, with no cache, and excluded from public rat
 
 1. Identity tables in schema `owner` of the same database. Data-protection keys go in `owner.data_protection_keys`.
 2. The owner is created and reset only by `owner-create`, which prints a generated password, TOTP key and 10 hashed single-use recovery codes.
-3. Cookie: `SameSite=Strict`, 8 hours idle and 24 hours absolute. Lockout: 5 failures for 15 minutes. Sign-in rate limit: 10 per 10 minutes.
+3. Cookie: `SameSite=Strict`, 8 hours from sign-in, not sliding. Lockout: 5 failures for 15 minutes. Sign-in rate limit: 10 per 10 minutes.
 4. Anti-forgery header on every authenticated admin `POST`.
 5. A hide (also used to revoke) and a restore always need a reason. Each change writes a transactional audit record, and a change that does nothing writes none.
 6. Season extension from the command or the form writes the same audit record.

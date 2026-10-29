@@ -33,6 +33,13 @@ public static class ErrorCodes
     public const string ImportNewer = "import-newer";
     public const string ImportUnsupported = "import-unsupported";
     public const string PayloadTooLarge = "payload-too-large";
+    public const string EntryNotFound = "entry-not-found";
+    public const string EntryHidden = "entry-hidden";
+    public const string EntryVisible = "entry-visible";
+    public const string OwnerUnauthorized = "owner-unauthorized";
+    public const string OwnerLoginFailed = "owner-login-failed";
+    public const string OwnerLockedOut = "owner-locked-out";
+    public const string AntiforgeryFailed = "antiforgery-failed";
     public const string Internal = "internal-error";
 }
 

@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Application.Leaderboard;
+using PolskiStreamerSimulator.Application.Moderation;
 
 namespace PolskiStreamerSimulator.Tests.Support;
 
@@ -14,6 +15,8 @@ namespace PolskiStreamerSimulator.Tests.Support;
 public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly string contentDirectory;
+    private InMemorySeasonStore? seasons;
+    private InMemoryLeaderboardStore? entries;
 
     // Program ends with RunJasperFxCommands; the test host must still start.
     static ApiFactory() => JasperFxEnvironment.AutoStartHost = true;
@@ -27,9 +30,11 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     public InMemoryCareerStore Store { get; } = new();
 
-    public InMemorySeasonStore Seasons { get; } = new();
+    public InMemoryAuditTrail Audit { get; } = new();
 
-    public InMemoryLeaderboardStore Entries { get; } = new();
+    public InMemorySeasonStore Seasons => seasons ??= new InMemorySeasonStore(Audit);
+
+    public InMemoryLeaderboardStore Entries => entries ??= new InMemoryLeaderboardStore(Audit);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -40,6 +45,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         // Test classes create far more careers per minute than a player; RateLimitApiTests lowers the limits.
         builder.UseSetting("RateLimits:CreatePermits", "100000");
         builder.UseSetting("RateLimits:RecoverPermits", "100000");
+        builder.UseSetting("RateLimits:OwnerSignInPermits", "100000");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<ICareerStore>();
@@ -54,6 +60,10 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ISeasonStore>(Seasons);
             services.RemoveAll<ILeaderboardStore>();
             services.AddSingleton<ILeaderboardStore>(Entries);
+            services.RemoveAll<IModerationStore>();
+            services.AddSingleton<IModerationStore>(Entries);
+            services.RemoveAll<IAuditTrail>();
+            services.AddSingleton<IAuditTrail>(Audit);
             services.AddSingleton<ISaveSlotStore>(new InMemorySaveSlotStore(Store));
         });
     }

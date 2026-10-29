@@ -58,5 +58,9 @@ public sealed class MigrationTests(SqlServerFixture sql)
 
         // M4-C: careers stored before it have no slots.
         Assert.Equal(0, await db.SaveSlots.CountAsync(ct));
+
+        // M4-D: no owner is seeded and no change is audited.
+        Assert.Equal(0, await db.Users.CountAsync(ct));
+        Assert.Equal(0, await db.AuditRecords.CountAsync(ct));
     }
 }

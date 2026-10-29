@@ -9,6 +9,8 @@ public sealed class SqlApiFactory(string connectionString) : WebApplicationFacto
 {
     static SqlApiFactory() => JasperFxEnvironment.AutoStartHost = true;
 
+    public string ConnectionString => connectionString;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -18,5 +20,6 @@ public sealed class SqlApiFactory(string connectionString) : WebApplicationFacto
         // Test classes create far more careers per minute than a player; RateLimitApiTests lowers the limits.
         builder.UseSetting("RateLimits:CreatePermits", "100000");
         builder.UseSetting("RateLimits:RecoverPermits", "100000");
+        builder.UseSetting("RateLimits:OwnerSignInPermits", "100000");
     }
 }

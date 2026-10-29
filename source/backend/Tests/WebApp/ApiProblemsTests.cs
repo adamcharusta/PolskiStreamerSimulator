@@ -38,6 +38,13 @@ public sealed class ApiProblemsTests
         { ErrorCodes.ImportNewer, 422 },
         { ErrorCodes.ImportUnsupported, 422 },
         { ErrorCodes.PayloadTooLarge, 413 },
+        { ErrorCodes.EntryNotFound, 404 },
+        { ErrorCodes.EntryHidden, 409 },
+        { ErrorCodes.EntryVisible, 409 },
+        { ErrorCodes.OwnerUnauthorized, 401 },
+        { ErrorCodes.OwnerLoginFailed, 401 },
+        { ErrorCodes.OwnerLockedOut, 423 },
+        { ErrorCodes.AntiforgeryFailed, 400 },
         { ErrorCodes.Internal, 500 },
     };
 
