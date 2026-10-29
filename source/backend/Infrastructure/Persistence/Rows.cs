@@ -52,6 +52,20 @@ public sealed class SeasonRow
     public DateTimeOffset? ClosedAt { get; set; }
 }
 
+/// <summary>Row of <c>game.unranked_save_slots</c>: one manual slot of an unranked career (M4-C).</summary>
+public sealed class SaveSlotRow
+{
+    public Guid CareerId { get; set; }
+
+    public int Slot { get; set; }
+
+    public string StateJson { get; set; } = "";
+
+    public int LogSequence { get; set; }
+
+    public DateTimeOffset SavedAt { get; set; }
+}
+
 /// <summary>Row of <c>game.season_extensions</c>: one announced deadline extension, kept as its own audit record.</summary>
 public sealed class SeasonExtensionRow
 {
@@ -140,6 +154,9 @@ public sealed class CareerActionRow
     public string ResponseJson { get; set; } = "";
 
     public string? ReportJson { get; set; }
+
+    /// <summary>On a restore, the log sequence its slot was saved at (M4-C).</summary>
+    public int? RestoredFromSequence { get; set; }
 
     public long StateVersionAfter { get; set; }
 

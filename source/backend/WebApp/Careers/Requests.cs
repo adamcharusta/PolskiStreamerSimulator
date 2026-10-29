@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentValidation;
 using FluentValidation.Results;
 using PolskiStreamerSimulator.Application.Careers;
@@ -117,6 +118,43 @@ public sealed class BatchRequestValidator : AbstractValidator<BatchRequest>
     }
 
     protected override bool PreValidate(ValidationContext<BatchRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary>The state version the player is looking at; a stale one is rejected (spec M4-C §3).</summary>
+public sealed record SaveToSlotRequest(long ExpectedVersion);
+
+public sealed class SaveToSlotRequestValidator : AbstractValidator<SaveToSlotRequest>
+{
+    public SaveToSlotRequestValidator() => RuleFor(r => r.ExpectedVersion).GreaterThanOrEqualTo(0);
+
+    protected override bool PreValidate(ValidationContext<SaveToSlotRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary><see cref="CommandId"/> makes the restore safe to repeat, like a command (spec M4-C §3).</summary>
+public sealed record RestoreSlotRequest(Guid CommandId, long ExpectedVersion);
+
+public sealed class RestoreSlotRequestValidator : AbstractValidator<RestoreSlotRequest>
+{
+    public RestoreSlotRequestValidator()
+    {
+        RuleFor(r => r.CommandId).NotEqual(Guid.Empty);
+        RuleFor(r => r.ExpectedVersion).GreaterThanOrEqualTo(0);
+    }
+
+    protected override bool PreValidate(ValidationContext<RestoreSlotRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary>The exported save file as it was downloaded (spec M4-C §5).</summary>
+public sealed record ImportCareerRequest(JsonElement? Save);
+
+public sealed class ImportCareerRequestValidator : AbstractValidator<ImportCareerRequest>
+{
+    public ImportCareerRequestValidator() => RuleFor(r => r.Save).NotNull();
+
+    protected override bool PreValidate(ValidationContext<ImportCareerRequest> context, ValidationResult result)
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 

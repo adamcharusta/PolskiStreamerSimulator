@@ -56,12 +56,15 @@ public enum ActionKind
     ResolveDecision,
     RespondOffer,
     Retire,
+
+    /// <summary>An unranked slot replaced the state; the line of play continues from <see cref="StoredAction.RestoredFrom"/> (M4-C).</summary>
+    Restore,
 }
 
-/// <summary>A log entry to append; the store assigns its sequence.</summary>
-public sealed record NewAction(Guid CommandId, int Step, ActionKind Kind, string RequestJson, string ResponseJson, string? ReportJson);
+/// <summary>A log entry to append; the store assigns its sequence. A restore carries the sequence its slot was saved at.</summary>
+public sealed record NewAction(Guid CommandId, int Step, ActionKind Kind, string RequestJson, string ResponseJson, string? ReportJson, int? RestoredFrom = null);
 
-/// <summary>A logged command step.</summary>
+/// <summary>A logged command step; <see cref="RestoredFrom"/> is set only on a <see cref="ActionKind.Restore"/> entry.</summary>
 public sealed record StoredAction(
     int Sequence,
     Guid CommandId,
@@ -72,7 +75,8 @@ public sealed record StoredAction(
     string? ReportJson,
     long StateVersionAfter,
     string StateHashAfter,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    int? RestoredFrom = null);
 
 /// <summary>Result of <see cref="ICareerStore.AppendAsync"/>.</summary>
 public enum AppendOutcome

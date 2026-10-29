@@ -29,6 +29,11 @@ public static class OpenApiContract
         ["publishResult"] = ("Publish the server-computed result of an ended ranked career under a nickname", true),
         ["getLeaderboard"] = ("Read the top entries of a season", false),
         ["listSeasons"] = ("List the seasons and their submission deadlines", false),
+        ["listSaveSlots"] = ("List the three manual slots of an unranked career", true),
+        ["saveToSlot"] = ("Save the current state of an unranked career into a slot", true),
+        ["restoreSlot"] = ("Restore an unranked career to the state saved in a slot", true),
+        ["exportCareer"] = ("Export an unranked career as a save file", true),
+        ["importCareer"] = ("Create a new unranked career from a save file", false),
     };
 
     public static void Configure(OpenApiOptions options)

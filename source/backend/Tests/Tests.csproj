@@ -20,6 +20,7 @@
   <ItemGroup>
     <None Update="Domain/Rulesets/m1-golden-hashes.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Domain/Rulesets/m3-golden-hashes.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="Application/Saves/schema-1.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

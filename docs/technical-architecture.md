@@ -44,7 +44,7 @@ The online model removes the earlier offline retry/anti-cheat limitation: player
 | `PUT /v1/careers/{id}/saves/{slot}` | Save to an unranked slot | **M4-C:** body `{ expectedVersion }`; overwrites the slot; `404 slot-not-found`, `409 stale-version`, `409 career-ranked`. |
 | `POST /v1/careers/{id}/saves/{slot}/restore` | Restore an unranked slot | **M4-C:** body `{ commandId, expectedVersion }`; version `current + 1`, logged as `Restore`; `409 slot-empty`. |
 | `GET /v1/careers/{id}/export` | Download an unranked save file | **M4-C:** JSON schema 1 without history; ranked careers `409 career-ranked`. |
-| `POST /v1/careers/import` | New unranked career from a save file | **M4-C:** 256 KiB limit; `422 import-invalid`, `import-newer`, `import-unsupported`; answers like creation. |
+| `POST /v1/careers/import` | New unranked career from a save file | **M4-C:** 64 KiB limit and the creation rate limit; `422 import-invalid`, `import-newer`, `import-unsupported`; answers like creation. |
 | `POST /v1/careers/recover` | Recover access from exported key | Rate-limited; rotates browser credential after proof. **M4-A:** body `{ recoveryKey }`; returns the career ID, a new secret and the career view; the old secret stops working; every failure is `404 recovery-failed`. |
 | `POST /v1/careers/{id}/recovery-key` | Issue or rotate the career's recovery key (M4-A) | Bearer secret; returns the new key once; the old key stops working; state and expiry unchanged. |
 | `GET /v1/careers/{id}/leaderboard-entry` | Read publication status | **M4-B (TD-122):** `unranked`, `notEnded`, `open`, `closed` or `published` with the season deadline and, once published, the entry and its rank. |

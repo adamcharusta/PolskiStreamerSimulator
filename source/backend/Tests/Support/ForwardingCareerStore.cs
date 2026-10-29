@@ -31,6 +31,9 @@ public abstract class ForwardingCareerStore(ICareerStore inner) : ICareerStore
     public Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
         => inner.FindLatestReportAsync(careerId, cancellationToken);
 
+    public Task<StoredAction?> FindReportOnLineAsync(Guid careerId, int atOrBefore, CancellationToken cancellationToken)
+        => inner.FindReportOnLineAsync(careerId, atOrBefore, cancellationToken);
+
     public virtual Task<AppendOutcome> AppendAsync(
         Guid careerId, long expectedVersion, CareerState newState, NewAction action, DateTimeOffset at, CancellationToken cancellationToken)
         => inner.AppendAsync(careerId, expectedVersion, newState, action, at, cancellationToken);

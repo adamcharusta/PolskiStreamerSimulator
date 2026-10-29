@@ -21,13 +21,13 @@ Spec: [M4-C design](../specs/2026-10-29-m4c-unranked-saves-design.md) (TD-123, #
    - `ImportCareer` runs the §5 validation order and creates a new unranked career. When an imported state has ended, `CreateAsync` stores the ending date.
    - New error codes: `slot-not-found`, `slot-empty`, `career-ranked`, `import-invalid`, `import-newer`, `import-unsupported`.
 5. **WebApp.**
-   - The five endpoints. Import is rate-limited with the creation policy and has a 256 KiB body limit.
+   - The five endpoints. Import is rate-limited with the creation policy and has a 64 KiB body limit.
    - Request validators, the `ApiProblems` statuses, OpenAPI summaries and security, then `openapi/v1.json` regenerated.
 6. **Tests.**
-   - Unit tests per handler path, plus the schema-1 fixture `Tests/Fixtures/saves/schema-1.json`.
+   - Unit tests per handler path, plus the schema-1 fixture `Tests/Application/Saves/schema-1.json`.
    - API tests: round trip, ranked `409`, oversized body `413`, and a rejected import that leaves the career count unchanged.
    - A migration test.
-   - A size test for a full 1,040-week state.
+   - A size test for an M3 career played to week 1,040.
 7. Regenerate the frontend client, open the PR and get Sonar to 0.
 
 ## PR 2 — Screens

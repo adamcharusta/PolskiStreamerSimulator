@@ -21,7 +21,7 @@ Success means (#26, REQ-16):
 
 - `Application`: slot list, save and restore; export and import of a versioned save file; history and latest-report reads that follow restores.
 - `Infrastructure`: a `game.unranked_save_slots` table, a `restored_from_sequence` column and a `Restore` kind on `career_actions`, and an EF Core migration.
-- `WebApp`: the endpoints in §6, a 256 KiB body limit on import, and a regenerated OpenAPI document.
+- `WebApp`: the endpoints in §6, a 64 KiB body limit on import, and a regenerated OpenAPI document.
 - Frontend: a `/kariera/{id}/zapisy` screen with the three slots and export, and an `/importuj` screen that reads a file and hands over the new career's recovery key. Both get Polish copy.
 
 **Out of scope**
@@ -66,7 +66,7 @@ The export file is UTF-8 JSON named `kariera-<nick>-tydzien-<n>.json`:
 - An import that passes every check creates a new career: a new ID, secret and recovery key, no season (unranked forever), and the imported state with its version kept. It answers like career creation (`201`, `CreatedCareer`).
 - Validation finishes before anything is stored, so a rejected import cannot change any existing career or slot.
 - Exporting is a read and leaves retention unchanged. An export of an ended career imports as an ended unranked career.
-- A body over 256 KiB answers `413`. A canonical state from a full 1,040-week career stays under that limit, and a test checks it.
+- A body over 64 KiB answers `413 payload-too-large`. A file from an M3 career played to week 1,040 is about 2.2 KB, and a test keeps it under a quarter of the limit.
 
 ## 6. API
 
@@ -75,8 +75,8 @@ The export file is UTF-8 JSON named `kariera-<nick>-tydzien-<n>.json`:
 | `GET /v1/careers/{id}/saves` | List the three slots | Each slot is either `{ slot, empty: true }` or `{ slot, savedAt, week, lastSettledWeek, status, cashPln, followers }`. Ranked careers get `409 career-ranked`. |
 | `PUT /v1/careers/{id}/saves/{slot}` | Save to a slot | Body `{ expectedVersion }`; returns the slot list. Errors: `404 slot-not-found` (slot outside 1–3), `409 stale-version`, `409 career-ranked`. |
 | `POST /v1/careers/{id}/saves/{slot}/restore` | Restore a slot | Body `{ commandId, expectedVersion }`; returns an action outcome (career view, no roll or report), like a command. Errors: `409 slot-empty`, `409 stale-version`, `409 career-ranked`, `422 command-id-reused`. |
-| `GET /v1/careers/{id}/export` | Download the save file | Returns `Content-Disposition: attachment`. Ranked careers get `409 career-ranked`. |
-| `POST /v1/careers/import` | New career from a file | Unauthenticated, like creation. Body limit 256 KiB. |
+| `GET /v1/careers/{id}/export` | Download the save file | Returns the file as JSON; the client names and saves it, since the request needs the bearer header. Ranked careers get `409 career-ranked`. |
+| `POST /v1/careers/import` | New career from a file | Unauthenticated, like creation, and rate-limited with it. Body limit 64 KiB. |
 
 These five endpoints replace the planned `POST /v1/careers/{id}/saves` row in the architecture table.
 
