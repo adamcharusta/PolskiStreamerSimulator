@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Application.Careers;
+using PolskiStreamerSimulator.Domain.Careers;
 
 namespace PolskiStreamerSimulator.Tests.Application.Careers;
 
@@ -14,8 +15,23 @@ public sealed class SecretRedactionTests
 
         Assert.DoesNotContain(Secret, new GetCareer(Guid.NewGuid(), Secret).ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(Secret, new SubmitAction(Guid.NewGuid(), Secret, Guid.NewGuid(), input).ToString(), StringComparison.Ordinal);
-        Assert.DoesNotContain(Secret, new CreatedCareer(Guid.NewGuid(), Secret, null!).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, new CreatedCareer(Guid.NewGuid(), Secret, Secret, null!).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, new RecoverCareer(Secret).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, new RecoveredCareer(Guid.NewGuid(), Secret, null!).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, new IssueRecoveryKey(Guid.NewGuid(), Secret).ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, new IssuedRecoveryKey(Guid.NewGuid(), Secret).ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain(Secret, new RunBatch(Guid.NewGuid(), Secret, Guid.NewGuid(), new BatchInput(0, 13)).ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_creation_never_prints_its_creation_id()
+    {
+        var creationId = Guid.NewGuid();
+
+        var printed = new CreateCareer("Streamer", Background.DormRoomNewcomer, Difficulty.Normal, PronounSet.Woman, creationId).ToString();
+
+        Assert.DoesNotContain(creationId.ToString(), printed, StringComparison.Ordinal);
+        Assert.Contains("Streamer", printed, StringComparison.Ordinal);
     }
 
     [Fact]

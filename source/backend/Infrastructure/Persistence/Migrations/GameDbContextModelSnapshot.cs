@@ -105,6 +105,14 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("ended_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("expires_at");
+
                     b.Property<DateTimeOffset>("LastActionAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("last_action_at");
@@ -155,6 +163,9 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ContentDigest");
 
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_careers_expires_at");
+
                     b.ToTable("careers", "game");
                 });
 
@@ -168,6 +179,28 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("created_at");
 
+                    b.Property<byte[]>("CreationHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("creation_hash")
+                        .IsFixedLength();
+
+                    b.Property<byte[]>("CreationRequestHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("creation_request_hash")
+                        .IsFixedLength();
+
+                    b.Property<byte[]>("RecoveryHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("recovery_hash")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset?>("RotatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("rotated_at");
+
                     b.Property<byte[]>("SecretHash")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -176,6 +209,11 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .IsFixedLength();
 
                     b.HasKey("CareerId");
+
+                    b.HasIndex("CreationHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_career_secrets_creation")
+                        .HasFilter("[creation_hash] IS NOT NULL");
 
                     b.ToTable("career_secrets", "game");
                 });

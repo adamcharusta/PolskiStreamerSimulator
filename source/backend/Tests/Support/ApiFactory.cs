@@ -32,6 +32,9 @@ public class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:Game", "Server=unused;Database=unused");
         builder.UseSetting("Database:InitializeOnStartup", "false");
         builder.UseSetting("Content:Directory", contentDirectory);
+        // Test classes create far more careers per minute than a player; RateLimitApiTests lowers the limits.
+        builder.UseSetting("RateLimits:CreatePermits", "100000");
+        builder.UseSetting("RateLimits:RecoverPermits", "100000");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<ICareerStore>();

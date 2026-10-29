@@ -27,6 +27,6 @@ public sealed class GetCareerHandler(CareerAccess access, ICareerStore store, IC
         var career = opened.Value;
         var content = await contents.RequireAsync(career.State.ContentDigest, cancellationToken);
         var lastReport = await store.LastReportAsync(career.Id, cancellationToken);
-        return AppResult<CareerView>.Ok(views.Build(career.Id, career.Nickname, career.State, content, lastReport));
+        return AppResult<CareerView>.Ok(views.Build(career, content, lastReport));
     }
 }

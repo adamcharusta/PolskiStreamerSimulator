@@ -17,6 +17,10 @@ public static class ErrorCodes
     public const string DecisionPending = "decision-pending";
     public const string NoPendingDecision = "no-pending-decision";
     public const string WeekNotFound = "week-not-found";
+    public const string RecoveryFailed = "recovery-failed";
+    public const string CreationIdReused = "creation-id-reused";
+    public const string CreationClosed = "creation-closed";
+    public const string RateLimited = "rate-limited";
     public const string Internal = "internal-error";
 }
 

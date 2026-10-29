@@ -22,6 +22,10 @@ public sealed class ApiProblemsTests
         { ErrorCodes.NoPendingWeek, 422 },
         { ErrorCodes.WeekInProgress, 422 },
         { ErrorCodes.CommandIdReused, 422 },
+        { ErrorCodes.RecoveryFailed, 404 },
+        { ErrorCodes.CreationIdReused, 422 },
+        { ErrorCodes.CreationClosed, 409 },
+        { ErrorCodes.RateLimited, 429 },
         { ErrorCodes.Internal, 500 },
     };
 

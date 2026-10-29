@@ -548,6 +548,8 @@ export interface CareerView {
   achievements: AchievementView[];
   score: null | ScoreView;
   summary: null | EndingSummaryView;
+  /** @nullable */
+  expiresAt?: string | null;
 }
 
 export interface ActionOutcome {
@@ -724,19 +726,25 @@ export interface CareerOptionsView {
   pronouns: PronounSet[];
 }
 
+/**
+ * Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121).
+ */
 export interface CreateCareerRequest {
   nickname: string;
   background: Background;
   difficulty: Difficulty;
   pronouns: PronounSet;
+  /** @nullable */
+  creationId?: string | null;
 }
 
 /**
- * The new career; string CreatedCareer.Secret is returned only here and never stored.
+ * The new career; string CreatedCareer.Secret and string CreatedCareer.RecoveryKey are returned only here and never stored.
  */
 export interface CreatedCareer {
   careerId: string;
   secret: string;
+  recoveryKey: string;
   career: CareerView;
 }
 
@@ -761,6 +769,14 @@ export interface HistoryView {
 }
 
 /**
+ * A new recovery key, shown once; the previous key no longer opens the career.
+ */
+export interface IssuedRecoveryKey {
+  careerId: string;
+  recoveryKey: string;
+}
+
+/**
  * Field errors of validation-failed, keyed by camelCase field name.
  */
 export type ProblemDetailsErrors = {[key: string]: string[]};
@@ -780,5 +796,18 @@ export interface ProblemDetails {
   code: string;
   /** Field errors of validation-failed, keyed by camelCase field name. */
   errors?: ProblemDetailsErrors;
+}
+
+export interface RecoverCareerRequest {
+  recoveryKey: string;
+}
+
+/**
+ * The recovered career and its new browser secret; the previous secret no longer opens it.
+ */
+export interface RecoveredCareer {
+  careerId: string;
+  secret: string;
+  career: CareerView;
 }
 

@@ -23,6 +23,10 @@ public static class ApiProblems
         [ErrorCodes.NoPendingWeek] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.WeekInProgress] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.CommandIdReused] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.RecoveryFailed] = StatusCodes.Status404NotFound,
+        [ErrorCodes.CreationIdReused] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.CreationClosed] = StatusCodes.Status409Conflict,
+        [ErrorCodes.RateLimited] = StatusCodes.Status429TooManyRequests,
     };
 
     public static ProblemHttpResult From(AppError error)

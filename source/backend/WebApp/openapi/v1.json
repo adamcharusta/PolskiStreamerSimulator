@@ -10,7 +10,7 @@
         "tags": [
           "careers"
         ],
-        "summary": "Create a career and receive its secret once",
+        "summary": "Create a career and receive its secret and recovery key once",
         "operationId": "createCareer",
         "requestBody": {
           "content": {
@@ -25,6 +25,36 @@
         "responses": {
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -54,6 +84,154 @@
             }
           }
         }
+      }
+    },
+    "/v1/careers/recover": {
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Open a career with its recovery key and receive a new secret",
+        "operationId": "recoverCareer",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverCareerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveredCareer"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/careers/{id}/recovery-key": {
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Issue a new recovery key; the previous one stops working",
+        "operationId": "issueRecoveryKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedRecoveryKey"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
       }
     },
     "/v1/career-options": {
@@ -159,7 +337,7 @@
         "tags": [
           "careers"
         ],
-        "summary": "getHistory",
+        "summary": "List the settled weeks of a career",
         "operationId": "getHistory",
         "parameters": [
           {
@@ -213,7 +391,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
       }
     },
     "/v1/careers/{id}/history/{week}": {
@@ -221,7 +404,7 @@
         "tags": [
           "careers"
         ],
-        "summary": "getHistoryWeek",
+        "summary": "Read the stored report of one week",
         "operationId": "getHistoryWeek",
         "parameters": [
           {
@@ -284,7 +467,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
       }
     },
     "/v1/careers/{id}/actions": {
@@ -399,7 +587,7 @@
         "tags": [
           "careers"
         ],
-        "summary": "Play up to 13 weeks automatically",
+        "summary": "Play 4, 13 or 52 weeks automatically",
         "operationId": "runBatch",
         "parameters": [
           {
@@ -1183,6 +1371,13 @@
                 "$ref": "#/components/schemas/EndingSummaryView"
               }
             ]
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         },
         "description": "A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step."
@@ -1405,13 +1600,22 @@
           },
           "pronouns": {
             "$ref": "#/components/schemas/PronounSet"
+          },
+          "creationId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
-        }
+        },
+        "description": "Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121)."
       },
       "CreatedCareer": {
         "required": [
           "careerId",
           "secret",
+          "recoveryKey",
           "career"
         ],
         "type": "object",
@@ -1423,11 +1627,14 @@
           "secret": {
             "type": "string"
           },
+          "recoveryKey": {
+            "type": "string"
+          },
           "career": {
             "$ref": "#/components/schemas/CareerView"
           }
         },
-        "description": "The new career; string CreatedCareer.Secret is returned only here and never stored."
+        "description": "The new career; string CreatedCareer.Secret and string CreatedCareer.RecoveryKey are returned only here and never stored."
       },
       "Difficulty": {
         "enum": [
@@ -1601,6 +1808,23 @@
           }
         },
         "description": "Every settled week of a career, in week order (M3-D)."
+      },
+      "IssuedRecoveryKey": {
+        "required": [
+          "careerId",
+          "recoveryKey"
+        ],
+        "type": "object",
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recoveryKey": {
+            "type": "string"
+          }
+        },
+        "description": "A new recovery key, shown once; the previous key no longer opens the career."
       },
       "MainAction": {
         "enum": [
@@ -2115,6 +2339,38 @@
             }
           }
         }
+      },
+      "RecoverCareerRequest": {
+        "required": [
+          "recoveryKey"
+        ],
+        "type": "object",
+        "properties": {
+          "recoveryKey": {
+            "type": "string"
+          }
+        }
+      },
+      "RecoveredCareer": {
+        "required": [
+          "careerId",
+          "secret",
+          "career"
+        ],
+        "type": "object",
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "career": {
+            "$ref": "#/components/schemas/CareerView"
+          }
+        },
+        "description": "The recovered career and its new browser secret; the previous secret no longer opens it."
       },
       "ReportLineView": {
         "required": [
@@ -2828,7 +3084,7 @@
   "tags": [
     {
       "name": "careers",
-      "description": "Anonymous careers: creation, reading, steps and batches."
+      "description": "Anonymous careers: creation, recovery, reading, steps and batches."
     }
   ]
 }
