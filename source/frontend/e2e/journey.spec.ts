@@ -1,3 +1,7 @@
+import { execFileSync } from 'node:child_process';
+import { createHmac } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
@@ -348,4 +352,123 @@ test('an unranked career restores a slot, then its export imports as a new caree
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
   await expect(desk).toContainText('Zapis E2E');
   await expect(desk).toContainText(fill(pl.career.week, { week: 1 }));
+});
+
+/** RFC 6238 code for a Base32 key, as an authenticator app shows it. */
+function totp(base32: string, at = Date.now()): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  for (const char of base32.replaceAll('=', '').toUpperCase()) {
+    bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
+  }
+
+  const key = Buffer.from(bits.match(/.{8}/gu)?.map((byte) => Number.parseInt(byte, 2)) ?? []);
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(at / 30_000)));
+  const hash = createHmac('sha1', key).update(counter).digest();
+  const offset = (hash.at(-1) ?? 0) & 0x0f;
+  return String((hash.readUInt32BE(offset) & 0x7f_ff_ff_ff) % 1_000_000).padStart(6, '0');
+}
+
+/** Runs `owner-create` inside the API container, resetting the owner when an earlier run created it. */
+function ownerCredentials(): { username: string; password: string; key: string } {
+  const repository = fileURLToPath(new URL('../../..', import.meta.url));
+  const run = (...args: string[]) =>
+    execFileSync(
+      'docker',
+      [
+        'compose',
+        'exec',
+        '-T',
+        'api',
+        'dotnet',
+        'PolskiStreamerSimulator.WebApp.dll',
+        'owner-create',
+        ...args,
+      ],
+      { cwd: repository, encoding: 'utf8' },
+    );
+  let output: string;
+  try {
+    output = run('--username', 'e2e-owner');
+  } catch {
+    output = run('--reset');
+  }
+
+  const field = (name: string) =>
+    output
+      .split(/\r?\n/u)
+      .find((line) => line.startsWith(`${name}: `))
+      ?.slice(name.length + 2)
+      .trim() ?? '';
+  return { username: field('Owner'), password: field('Password'), key: field('Authenticator key') };
+}
+
+test('the owner signs in with an authenticator code and hides a published entry', async ({
+  page,
+  request,
+}) => {
+  const created = await request.post('/v1/careers', {
+    data: {
+      nickname: 'Moderacja E2E',
+      background: 'dormRoomNewcomer',
+      difficulty: 'normal',
+      pronouns: 'woman',
+      ranked: true,
+    },
+  });
+  const career = (await created.json()) as {
+    careerId: string;
+    secret: string;
+    career: { version: number };
+  };
+  const auth = { Authorization: `Bearer ${career.secret}` };
+  await request.post(`/v1/careers/${career.careerId}/actions`, {
+    headers: auth,
+    data: {
+      commandId: crypto.randomUUID(),
+      expectedVersion: career.career.version,
+      type: 'retire',
+    },
+  });
+  const published = await request.post(`/v1/careers/${career.careerId}/leaderboard-entry`, {
+    headers: auth,
+    data: { nickname: 'MOD' },
+  });
+  expect(published.ok()).toBe(true);
+  const owner = ownerCredentials();
+
+  await page.goto('/admin');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByLabel(pl.admin.signIn.username).fill(owner.username);
+  await page.getByLabel(pl.admin.signIn.password).fill(owner.password);
+  await expectAccessible(page, 'owner sign-in');
+  await page.getByRole('button', { name: pl.admin.signIn.next }).click();
+  await page.getByLabel(pl.admin.signIn.code).fill(totp(owner.key));
+  await page.getByRole('button', { name: pl.admin.signIn.submit }).click();
+  await expect(
+    page.getByText(fill(pl.admin.signedInAs, { username: owner.username })),
+  ).toBeVisible();
+
+  const list = page.getByRole('list', { name: pl.admin.moderation.list });
+  await list
+    .getByRole('button', { name: fill(pl.admin.moderation.hide, { nickname: 'MOD' }) })
+    .first()
+    .click();
+  await list.getByLabel(pl.admin.moderation.reason).fill('Test moderacji E2E');
+  await list
+    .getByRole('button', { name: fill(pl.admin.moderation.confirmHide, { nickname: 'MOD' }) })
+    .click();
+  await expect(
+    list.getByText(fill(pl.admin.moderation.hidden, { reason: 'Test moderacji E2E' })).first(),
+  ).toBeVisible();
+  await expect(page.getByRole('region', { name: pl.admin.audit.title })).toContainText(
+    'Test moderacji E2E',
+  );
+  await expectAccessible(page, 'owner panel');
+
+  await page.goto('/ranking');
+  await expect(page.getByRole('heading', { name: pl.leaderboard.title, level: 1 })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: 'MOD' })).toHaveCount(0);
 });
