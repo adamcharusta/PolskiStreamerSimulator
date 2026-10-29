@@ -16,11 +16,15 @@ public static class OpenApiContract
 
     private static readonly Dictionary<string, (string Summary, bool Secured)> Operations = new(StringComparer.Ordinal)
     {
-        ["createCareer"] = ("Create a career and receive its secret once", false),
+        ["createCareer"] = ("Create a career and receive its secret and recovery key once", false),
+        ["recoverCareer"] = ("Open a career with its recovery key and receive a new secret", false),
+        ["issueRecoveryKey"] = ("Issue a new recovery key; the previous one stops working", true),
         ["getCareerOptions"] = ("List the starting profiles and difficulties", false),
         ["getCareer"] = ("Read a career and its next step", true),
         ["submitAction"] = ("Settle one manual step", true),
-        ["runBatch"] = ("Play up to 13 weeks automatically", true),
+        ["runBatch"] = ("Play 4, 13 or 52 weeks automatically", true),
+        ["getHistory"] = ("List the settled weeks of a career", true),
+        ["getHistoryWeek"] = ("Read the stored report of one week", true),
     };
 
     public static void Configure(OpenApiOptions options)
@@ -28,7 +32,7 @@ public static class OpenApiContract
         options.AddDocumentTransformer((document, _, _) =>
         {
             document.Info = new OpenApiInfo { Title = "Polski Streamer Simulator API", Version = "v1" };
-            document.Tags = new HashSet<OpenApiTag> { new() { Name = Tag, Description = "Anonymous careers: creation, reading, steps and batches." } };
+            document.Tags = new HashSet<OpenApiTag> { new() { Name = Tag, Description = "Anonymous careers: creation, recovery, reading, steps and batches." } };
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
             document.Components.SecuritySchemes[SecurityScheme] = new OpenApiSecurityScheme

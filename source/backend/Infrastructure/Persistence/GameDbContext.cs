@@ -44,6 +44,9 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             e.Property(x => x.StateHash).HasColumnName("state_hash").HasMaxLength(64).IsFixedLength().IsUnicode(false);
             e.Property(x => x.CreatedAt).HasColumnName("created_at");
             e.Property(x => x.LastActionAt).HasColumnName("last_action_at");
+            e.Property(x => x.EndedAt).HasColumnName("ended_at");
+            e.Property(x => x.ExpiresAt).HasColumnName("expires_at");
+            e.HasIndex(x => x.ExpiresAt).HasDatabaseName("ix_careers_expires_at");
             e.HasOne<ContentSnapshotRow>().WithMany().HasForeignKey(x => x.ContentDigest).OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -53,7 +56,12 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             e.HasKey(x => x.CareerId);
             e.Property(x => x.CareerId).HasColumnName("career_id");
             e.Property(x => x.SecretHash).HasColumnName("secret_hash").HasMaxLength(32).IsFixedLength();
+            e.Property(x => x.RecoveryHash).HasColumnName("recovery_hash").HasMaxLength(32).IsFixedLength();
+            e.Property(x => x.CreationHash).HasColumnName("creation_hash").HasMaxLength(32).IsFixedLength();
+            e.Property(x => x.CreationRequestHash).HasColumnName("creation_request_hash").HasMaxLength(32).IsFixedLength();
             e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.RotatedAt).HasColumnName("rotated_at");
+            e.HasIndex(x => x.CreationHash).IsUnique().HasFilter("[creation_hash] IS NOT NULL").HasDatabaseName("ux_career_secrets_creation");
             e.HasOne<CareerRow>().WithOne().HasForeignKey<CareerSecretRow>(x => x.CareerId).OnDelete(DeleteBehavior.Cascade);
         });
 

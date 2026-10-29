@@ -33,7 +33,10 @@ import type {
   CreateCareerRequest,
   CreatedCareer,
   HistoryView,
+  IssuedRecoveryKey,
   ProblemDetails,
+  RecoverCareerRequest,
+  RecoveredCareer,
   WeekReportView
 } from './game.schemas';
 
@@ -61,7 +64,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * @summary Create a career and receive its secret once
+ * @summary Create a career and receive its secret and recovery key once
  */
 export const createCareer = (
     createCareerRequest: CreateCareerRequest,
@@ -115,7 +118,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateCareerMutationVariables = {data: CreateCareerRequest}
 
     /**
- * @summary Create a career and receive its secret once
+ * @summary Create a career and receive its secret and recovery key once
  */
 export const useCreateCareer = <TError = ErrorType<ProblemDetails>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCareer>>, TError,CreateCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
@@ -126,6 +129,140 @@ export const useCreateCareer = <TError = ErrorType<ProblemDetails>,
         TContext
       > => {
       return useMutation(getCreateCareerMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Open a career with its recovery key and receive a new secret
+ */
+export const recoverCareer = (
+    recoverCareerRequest: RecoverCareerRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<RecoveredCareer>(
+      {url: `/v1/careers/recover`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: recoverCareerRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRecoverCareerMutationKey = () => ['recoverCareer'] as const;
+
+export const getRecoverCareerMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverCareer>>, TError,RecoverCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof recoverCareer>>, TError,RecoverCareerMutationVariables, TContext> => {
+
+const mutationKey = getRecoverCareerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverCareer>>, RecoverCareerMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recoverCareer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecoverCareerMutationResult = NonNullable<Awaited<ReturnType<typeof recoverCareer>>>
+    export type RecoverCareerMutationBody = RecoverCareerRequest
+    export type RecoverCareerMutationError = ErrorType<ProblemDetails>
+    export type RecoverCareerMutationVariables = {data: RecoverCareerRequest}
+
+    /**
+ * @summary Open a career with its recovery key and receive a new secret
+ */
+export const useRecoverCareer = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverCareer>>, TError,RecoverCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recoverCareer>>,
+        TError,
+        RecoverCareerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecoverCareerMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Issue a new recovery key; the previous one stops working
+ */
+export const issueRecoveryKey = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<IssuedRecoveryKey>(
+      {url: `/v1/careers/${id}/recovery-key`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getIssueRecoveryKeyMutationKey = () => ['issueRecoveryKey'] as const;
+
+export const getIssueRecoveryKeyMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueRecoveryKey>>, TError,IssueRecoveryKeyMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof issueRecoveryKey>>, TError,IssueRecoveryKeyMutationVariables, TContext> => {
+
+const mutationKey = getIssueRecoveryKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof issueRecoveryKey>>, IssueRecoveryKeyMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  issueRecoveryKey(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IssueRecoveryKeyMutationResult = NonNullable<Awaited<ReturnType<typeof issueRecoveryKey>>>
+
+    export type IssueRecoveryKeyMutationError = ErrorType<ProblemDetails>
+    export type IssueRecoveryKeyMutationVariables = {id: string}
+
+    /**
+ * @summary Issue a new recovery key; the previous one stops working
+ */
+export const useIssueRecoveryKey = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueRecoveryKey>>, TError,IssueRecoveryKeyMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof issueRecoveryKey>>,
+        TError,
+        IssueRecoveryKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIssueRecoveryKeyMutationOptions(options), queryClient);
     }
 
 /**
@@ -315,7 +452,7 @@ export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TErr
 
 
 /**
- * @summary getHistory
+ * @summary List the settled weeks of a career
  */
 export const getHistory = (
     id: string,
@@ -386,7 +523,7 @@ export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TE
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary getHistory
+ * @summary List the settled weeks of a career
  */
 
 export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(
@@ -408,7 +545,7 @@ export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TE
 
 
 /**
- * @summary getHistoryWeek
+ * @summary Read the stored report of one week
  */
 export const getHistoryWeek = (
     id: string,
@@ -485,7 +622,7 @@ export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWe
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary getHistoryWeek
+ * @summary Read the stored report of one week
  */
 
 export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(
@@ -577,7 +714,7 @@ export const useSubmitAction = <TError = ErrorType<ProblemDetails>,
     }
 
 /**
- * @summary Play up to 13 weeks automatically
+ * @summary Play 4, 13 or 52 weeks automatically
  */
 export const runBatch = (
     id: string,
@@ -632,7 +769,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RunBatchMutationVariables = {id: string;data: BatchRequest}
 
     /**
- * @summary Play up to 13 weeks automatically
+ * @summary Play 4, 13 or 52 weeks automatically
  */
 export const useRunBatch = <TError = ErrorType<ProblemDetails>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runBatch>>, TError,RunBatchMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}

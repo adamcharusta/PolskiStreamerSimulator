@@ -64,9 +64,15 @@ public sealed class AppTestKit
     /// <summary>Later careers pin the content in <paramref name="directory"/>; existing careers keep theirs.</summary>
     public void SwitchCurrentContent(string directory) => Current.Switch(directory);
 
-    public CreateCareerHandler CreateHandler() => new(Careers, Current, Secrets, Views, Time);
+    public CreateCareerHandler CreateHandler() => new(Careers, Current, ContentStore, Secrets, Views, Time);
 
     public GetCareerHandler GetHandler() => new(Access, Careers, ContentStore, Views);
+
+    public RecoverCareerHandler RecoverHandler() => new(Careers, ContentStore, Secrets, Views, Time);
+
+    public IssueRecoveryKeyHandler IssueKeyHandler() => new(Access, Careers, Secrets, Time);
+
+    public RetentionSweep Sweep() => new(Careers, Time);
 
     public SubmitActionHandler SubmitHandler(ICareerStore? store = null)
     {
@@ -91,6 +97,9 @@ public sealed class AppTestKit
         secrets[created.CareerId] = created.Secret;
         return created;
     }
+
+    /// <summary>Later calls of this kit use <paramref name="secret"/> for the career, as a browser after a recovery would.</summary>
+    public void UseSecret(Guid careerId, string secret) => secrets[careerId] = secret;
 
     public Task<AppResult<ActionOutcome>> SubmitAsync(Guid careerId, Guid commandId, ActionInput input)
         => SubmitHandler().Handle(new SubmitAction(careerId, secrets[careerId], commandId, input), Ct);

@@ -6,7 +6,8 @@ using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.WebApp.Careers;
 
-public sealed record CreateCareerRequest(string Nickname, Background Background, Difficulty Difficulty, PronounSet Pronouns);
+/// <summary><see cref="CreationId"/> is a fresh random UUID per creation; repeating it repeats the creation (TD-121).</summary>
+public sealed record CreateCareerRequest(string Nickname, Background Background, Difficulty Difficulty, PronounSet Pronouns, Guid? CreationId = null);
 
 public sealed class CreateCareerRequestValidator : AbstractValidator<CreateCareerRequest>
 {
@@ -16,9 +17,20 @@ public sealed class CreateCareerRequestValidator : AbstractValidator<CreateCaree
         RuleFor(r => r.Background).IsInEnum();
         RuleFor(r => r.Difficulty).IsInEnum();
         RuleFor(r => r.Pronouns).IsInEnum();
+        RuleFor(r => r.CreationId).NotEqual(Guid.Empty);
     }
 
     protected override bool PreValidate(ValidationContext<CreateCareerRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+public sealed record RecoverCareerRequest(string RecoveryKey);
+
+public sealed class RecoverCareerRequestValidator : AbstractValidator<RecoverCareerRequest>
+{
+    public RecoverCareerRequestValidator() => RuleFor(r => r.RecoveryKey).NotEmpty().MaximumLength(200);
+
+    protected override bool PreValidate(ValidationContext<RecoverCareerRequest> context, ValidationResult result)
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 

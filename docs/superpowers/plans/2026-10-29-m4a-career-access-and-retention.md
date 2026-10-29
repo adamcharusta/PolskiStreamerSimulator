@@ -35,7 +35,7 @@
 
 ### Task 1: Store port and contract tests
 - `NewCareer` gains `RecoveryHash`, `CreationHash?`, `CreationRequestHash?`, `ExpiresAt`; `StoredCareer` gains `EndedAt?`, `ExpiresAt`.
-- `ICareerStore`: `CreateAsync` returns `CreateOutcome { Created, DuplicateCreation }`; `FindCredentialsAsync(careerId)` → `CareerCredentials(SecretHash, RecoveryHash?, CreationRequestHash?)` replaces `FindSecretHashAsync`; `FindByCreationAsync(creationHash)` → career ID; `ReplaceCredentialsAsync(careerId, secretHash?, recoveryHash?)`; `DeleteExpiredAsync(now, limit)` → deleted count.
+- `ICareerStore`: `CreateAsync` returns `CreateOutcome { Created, DuplicateCreation }`; `FindCredentialsAsync(careerId)` → `CareerCredentials(SecretHash, RecoveryHash?, CreationRequestHash?)` next to `FindSecretHashAsync`, which every bearer request keeps using; `FindByCreationAsync(creationHash)` → career ID; `ReplaceCredentialsAsync(careerId, secretHash?, recoveryHash?)`; `DeleteExpiredAsync(now, limit)` → deleted count.
 - `AppendAsync`: an ended state sets `ended_at = at`, `expires_at = at + 12 months`; otherwise `expires_at = at + 6 months` (`CareerRetention`).
 - `CareerStoreContract` cases for each member, run on `InMemoryCareerStore` and `EfCareerStore`.
 

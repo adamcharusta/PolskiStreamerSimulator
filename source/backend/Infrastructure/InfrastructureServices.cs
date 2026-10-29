@@ -24,7 +24,11 @@ public static class InfrastructureServices
         services.AddSingleton<IContentStore, EfContentStore>();
         services.AddSingleton<ICurrentContent, DirectoryCurrentContent>();
         services.AddSingleton<ISecretHasher, Sha256SecretHasher>();
+        services.AddOptions<RetentionOptions>().Bind(configuration.GetSection(RetentionOptions.Section));
         services.AddHostedService<DatabaseInitializer>();
+
+        // After the initializer, which migrates the schema the sweep deletes from.
+        services.AddHostedService<RetentionSweeper>();
         return services;
     }
 }

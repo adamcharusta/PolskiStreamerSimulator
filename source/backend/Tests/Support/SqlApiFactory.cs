@@ -15,5 +15,8 @@ public sealed class SqlApiFactory(string connectionString) : WebApplicationFacto
         builder.UseSetting("ConnectionStrings:Game", connectionString);
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Content:Directory", TestPaths.ContentM1);
+        // Test classes create far more careers per minute than a player; RateLimitApiTests lowers the limits.
+        builder.UseSetting("RateLimits:CreatePermits", "100000");
+        builder.UseSetting("RateLimits:RecoverPermits", "100000");
     }
 }

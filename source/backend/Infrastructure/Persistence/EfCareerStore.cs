@@ -9,7 +9,7 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence;
 /// <summary>SQL Server <see cref="ICareerStore"/>: a state snapshot per career and an append-only command log.</summary>
 public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : ICareerStore
 {
-    public async Task CreateAsync(NewCareer career, CancellationToken cancellationToken)
+    public async Task<CreateOutcome> CreateAsync(NewCareer career, CancellationToken cancellationToken)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         db.Careers.Add(new CareerRow
@@ -25,9 +25,26 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
             StateHash = StateHash.Of(career.State),
             CreatedAt = career.CreatedAt,
             LastActionAt = career.CreatedAt,
+            ExpiresAt = CareerRetention.ExpiresAt(career.State, career.CreatedAt),
         });
-        db.CareerSecrets.Add(new CareerSecretRow { CareerId = career.Id, SecretHash = career.SecretHash, CreatedAt = career.CreatedAt });
-        await db.SaveChangesAsync(cancellationToken);
+        db.CareerSecrets.Add(new CareerSecretRow
+        {
+            CareerId = career.Id,
+            SecretHash = career.SecretHash,
+            RecoveryHash = career.RecoveryHash,
+            CreationHash = career.Creation?.CreationHash,
+            CreationRequestHash = career.Creation?.RequestHash,
+            CreatedAt = career.CreatedAt,
+        });
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            return CreateOutcome.Created;
+        }
+        catch (DbUpdateException error) when (career.Creation is not null && SqlErrors.IsDuplicateKey(error))
+        {
+            return CreateOutcome.DuplicateCreation;
+        }
     }
 
     public async Task<StoredCareer?> FindAsync(Guid careerId, CancellationToken cancellationToken)
@@ -36,7 +53,14 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
         var row = await db.Careers.AsNoTracking().SingleOrDefaultAsync(c => c.Id == careerId, cancellationToken);
         return row is null
             ? null
-            : new StoredCareer(row.Id, row.Nickname, CanonicalJson.Deserialize(Encoding.UTF8.GetBytes(row.StateJson)), row.CreatedAt, row.LastActionAt);
+            : new StoredCareer(
+                row.Id,
+                row.Nickname,
+                CanonicalJson.Deserialize(Encoding.UTF8.GetBytes(row.StateJson)),
+                row.CreatedAt,
+                row.LastActionAt,
+                row.ExpiresAt,
+                row.EndedAt);
     }
 
     public async Task<byte[]?> FindSecretHashAsync(Guid careerId, CancellationToken cancellationToken)
@@ -46,6 +70,57 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
             .Where(s => s.CareerId == careerId)
             .Select(s => s.SecretHash)
             .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<CareerCredentials?> FindCredentialsAsync(Guid careerId, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        return await db.CareerSecrets.AsNoTracking()
+            .Where(s => s.CareerId == careerId)
+            .Select(s => new CareerCredentials(s.SecretHash, s.RecoveryHash, s.CreationRequestHash))
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<Guid?> FindByCreationAsync(byte[] creationHash, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        return await db.CareerSecrets.AsNoTracking()
+            .Where(s => s.CreationHash == creationHash)
+            .Select(s => (Guid?)s.CareerId)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<bool> ReplaceCredentialsAsync(
+        Guid careerId,
+        byte[]? secretHash,
+        byte[]? recoveryHash,
+        long? whileVersion,
+        DateTimeOffset at,
+        CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        var updated = await db.CareerSecrets
+            .Where(s => s.CareerId == careerId
+                && (whileVersion == null || db.Careers.Any(c => c.Id == careerId && c.StateVersion == whileVersion)))
+            .ExecuteUpdateAsync(
+                set => set
+                    .SetProperty(s => s.SecretHash, s => secretHash ?? s.SecretHash)
+                    .SetProperty(s => s.RecoveryHash, s => recoveryHash ?? s.RecoveryHash)
+                    .SetProperty(s => s.RotatedAt, at),
+                cancellationToken);
+        return updated == 1;
+    }
+
+    public async Task<int> DeleteExpiredAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+
+        // The foreign keys cascade to career_secrets and career_actions in the same statement.
+        return await db.Careers
+            .Where(c => c.ExpiresAt <= now)
+            .OrderBy(c => c.ExpiresAt)
+            .Take(limit)
+            .ExecuteDeleteAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<StoredAction>> FindCommandAsync(Guid careerId, Guid commandId, CancellationToken cancellationToken)
@@ -90,6 +165,7 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         var json = JsonOf(newState);
         var hash = StateHash.Of(newState);
+        DateTimeOffset? endedAt = newState.Status == CareerStatus.Ended ? at : null;
 
         // The version condition both detects a concurrent advance and locks the row until commit.
         var updated = await db.Careers
@@ -100,7 +176,9 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
                     .SetProperty(c => c.StateJson, json)
                     .SetProperty(c => c.StateHash, hash)
                     .SetProperty(c => c.Status, newState.Status)
-                    .SetProperty(c => c.LastActionAt, at),
+                    .SetProperty(c => c.LastActionAt, at)
+                    .SetProperty(c => c.ExpiresAt, CareerRetention.ExpiresAt(newState, at))
+                    .SetProperty(c => c.EndedAt, c => endedAt ?? c.EndedAt),
                 cancellationToken);
         if (updated == 0)
         {

@@ -14,6 +14,7 @@ public static class ApplicationServices
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<CareerViewBuilder>();
         services.AddSingleton<CareerAccess>();
+        services.AddSingleton<RetentionSweep>();
         return services;
     }
 }

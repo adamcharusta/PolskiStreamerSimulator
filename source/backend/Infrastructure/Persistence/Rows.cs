@@ -27,16 +27,32 @@ public sealed class CareerRow
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset LastActionAt { get; set; }
+
+    public DateTimeOffset? EndedAt { get; set; }
+
+    /// <summary>When the retention sweep deletes the career (<c>CareerRetention</c>).</summary>
+    public DateTimeOffset ExpiresAt { get; set; }
 }
 
-/// <summary>Row of <c>game.career_secrets</c>; holds only the SHA-256 of the access secret.</summary>
+/// <summary>
+/// Row of <c>game.career_secrets</c>; holds only SHA-256 hashes of the access secret, the recovery key and the
+/// creation ID with its request. Careers created before M4-A have no recovery or creation hash.
+/// </summary>
 public sealed class CareerSecretRow
 {
     public Guid CareerId { get; set; }
 
     public byte[] SecretHash { get; set; } = [];
 
+    public byte[]? RecoveryHash { get; set; }
+
+    public byte[]? CreationHash { get; set; }
+
+    public byte[]? CreationRequestHash { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset? RotatedAt { get; set; }
 }
 
 /// <summary>Row of the append-only <c>game.career_actions</c> log.</summary>

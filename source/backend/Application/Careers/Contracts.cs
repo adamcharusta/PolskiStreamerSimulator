@@ -43,7 +43,8 @@ public sealed record CareerView(
     SideBusinessView? SideBusiness,
     IReadOnlyList<AchievementView> Achievements,
     ScoreView? Score,
-    EndingSummaryView? Summary);
+    EndingSummaryView? Summary,
+    DateTimeOffset? ExpiresAt = null);
 
 /// <summary>An achievement of the career's content with its Polish ICU name and description, its points and whether it is earned (earned first).</summary>
 public sealed record AchievementView(string Id, string? Name, string? Description, int Points, bool Earned);
