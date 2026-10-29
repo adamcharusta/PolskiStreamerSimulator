@@ -54,6 +54,9 @@ function CareerNotFound({ careerId }: { readonly careerId: string }) {
         >
           {t('career.forget')}
         </Button>
+        <Link className="btn btn-secondary" to="/odzyskaj">
+          {t('home.recover')}
+        </Link>
         <Link className="btn btn-secondary" to="/">
           {t('career.backHome')}
         </Link>

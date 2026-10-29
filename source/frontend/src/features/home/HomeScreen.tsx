@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { knownCareers } from '@/careers/knownCareers';
 import { Panel } from '@/components/ui/Panel';
+import { PendingCreationPanel } from '@/features/create-career/PendingCreationPanel';
 import { date } from '@/format';
 
 export function HomeScreen() {
@@ -11,6 +12,7 @@ export function HomeScreen() {
   return (
     <div className="grid gap-3">
       <h1 className="heading text-3xl">{t('app.title')}</h1>
+      <PendingCreationPanel />
       <Panel title={t('home.careers')}>
         {careers.length === 0 ? (
           <p>{t('home.empty')}</p>
@@ -39,6 +41,11 @@ export function HomeScreen() {
           <span className="new-label" aria-hidden="true">
             {t('decor.new')}
           </span>
+        </p>
+        <p className="my-3">
+          <Link className="btn btn-secondary" to="/odzyskaj">
+            {t('home.recover')}
+          </Link>
         </p>
         <p className="muted">{t('home.accessNotice')}</p>
       </Panel>

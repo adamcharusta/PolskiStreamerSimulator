@@ -39,6 +39,10 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expectAccessible(page, 'character creation');
   await page.getByRole('button', { name: pl.create.submit }).click();
 
+  await expect(page.getByRole('status', { name: pl.recovery.keyTitle })).toContainText('pss1.');
+  await expectAccessible(page, 'recovery key');
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
+
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
   await expectAccessible(page, 'week plan');
   await page.setViewportSize({ width: 320, height: 720 });
@@ -238,4 +242,31 @@ test('a 4-week batch under a custom strategy, then early retirement shows the sc
   await page.getByRole('button', { name: pl.diploma.download }).click();
   const file = await download;
   expect(file.suggestedFilename()).toBe('dyplom-Strategia E2E.pdf');
+});
+
+test('a career recovered with its key in a browser that lost its data continues where it was', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Odzysk E2E');
+  await page.getByRole('button', { name: pl.create.submit }).click();
+  const key = (await page.getByRole('status', { name: pl.recovery.keyTitle }).textContent()) ?? '';
+  expect(key).toMatch(/^pss1\./u);
+  const careerPath = new URL(page.url()).pathname.replace(/\/klucz$/u, '');
+
+  await page.evaluate(() => {
+    localStorage.clear();
+  });
+  await page.goto('/odzyskaj');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByLabel(pl.recover.keyLabel).fill(key);
+  await expectAccessible(page, 'recovery');
+  await page.getByRole('button', { name: pl.recover.submit }).click();
+
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe(careerPath);
 });

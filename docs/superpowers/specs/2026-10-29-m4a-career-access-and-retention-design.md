@@ -1,7 +1,7 @@
 # M4-A Career Access and Retention — Design
 
 Date: 2026-10-29
-Status: **Agent proposal.** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29, answering whether to skip the questions). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; API in PR 1 ([#94](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/94)), screens in PR 2 (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29, answering whether to skip the questions). Every rule, field and wording below is an agent proposal for owner review.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project A, delivering [#25](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/25) and [#64](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/64) (TD-121).
 
 ## 0. M4 decomposition

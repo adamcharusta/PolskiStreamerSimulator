@@ -21,7 +21,11 @@ describe('home', () => {
     expect(
       await screen.findByText('W tej przeglądarce nie masz jeszcze żadnej kariery.'),
     ).toBeInTheDocument();
-    expect(screen.getByText(/tylko w tej przeglądarce/u)).toBeInTheDocument();
+    expect(screen.getByText(/klucz odzyskiwania przywraca/u)).toHaveTextContent('6 miesiącach');
+    expect(screen.getByRole('link', { name: 'Odzyskaj karierę kluczem' })).toHaveAttribute(
+      'href',
+      '/odzyskaj',
+    );
     expect(screen.getByRole('link', { name: 'Nowa kariera' })).toHaveAttribute(
       'href',
       '/nowa-kariera',

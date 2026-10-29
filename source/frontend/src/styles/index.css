@@ -195,6 +195,18 @@ body {
   border-style: inset;
 }
 
+/* A recovery key wraps anywhere and reads in a fixed-width font, so no character hides at a line end. */
+.key-box {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  border: 2px dashed var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field-bg);
+  font-family: ui-monospace, monospace;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
 /* Numbers in a statistics table keep a gap from the next column in every font. */
 .stat-table th,
 .stat-table td {
