@@ -6,11 +6,8 @@ namespace PolskiStreamerSimulator.Application.Careers;
 
 public sealed record RecoverCareer(string? RecoveryKey)
 {
-    private bool PrintMembers(StringBuilder builder)
-    {
-        builder.Append("RecoveryKey = ***");
-        return true;
-    }
+    // The key is the only member, so the whole text is fixed; it must never reach a log.
+    public override string ToString() => "RecoverCareer { RecoveryKey = *** }";
 }
 
 /// <summary>The recovered career and its new browser secret; the previous secret no longer opens it.</summary>
