@@ -1,7 +1,7 @@
 # M4-D Owner Account and Moderation — Design
 
 Date: 2026-10-29
-Status: **Agent proposal; API in PR 1 ([#102](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/102)), `/admin` screens in PR 2 ([#103](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/103)) (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-C merged). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; API in PR 1 ([#102](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/102)), `/admin` screens in PR 2 ([#103](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/103)) (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-C merged). Every rule, field and wording below was an agent proposal; the owner approved them on 2026-10-29 ("twoje propozycje są ok"), including the command-only account management and revoking by hiding with a reason. The owner asked for the account procedure in the README.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project D, delivering [#28](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/28) and [#30](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/30) (TD-124). The M4 decomposition is in the [M4-A design §0](2026-10-29-m4a-career-access-and-retention-design.md).
 
 ## 1. Intent
