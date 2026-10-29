@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Application.Careers;
+using PolskiStreamerSimulator.Application.Moderation;
 
 namespace PolskiStreamerSimulator.Application.Leaderboard;
 
@@ -9,9 +10,9 @@ public sealed class ExtendSeasonHandler(ISeasonStore seasons, TimeProvider time)
 {
     public async Task<AppResult<SeasonView>> Handle(ExtendSeason command, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(command.Reason) || string.IsNullOrWhiteSpace(command.Actor))
+        if (AuditActions.Reason(command.Reason) is not { } reason || string.IsNullOrWhiteSpace(command.Actor))
         {
-            return AppResult<SeasonView>.Fail(ErrorCodes.ValidationFailed, "reason and actor are required");
+            return AppResult<SeasonView>.Fail(ErrorCodes.ValidationFailed, $"a reason of 1-{AuditActions.MaxReasonLength} characters and an actor are required");
         }
 
         var season = await seasons.FindAsync(command.Season, cancellationToken);
@@ -25,7 +26,15 @@ public sealed class ExtendSeasonHandler(ISeasonStore seasons, TimeProvider time)
             return AppResult<SeasonView>.Fail(ErrorCodes.ValidationFailed, "only a closed season can be extended, and only to a later deadline");
         }
 
-        await seasons.AddExtensionAsync(season.Number, command.Until, command.Reason.Trim(), command.Actor, time.GetUtcNow(), cancellationToken);
+        var audit = new AuditEntry(
+            command.Actor,
+            AuditActions.Extend,
+            season.Number.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            reason,
+            AuditActions.Json(new { deadline }),
+            AuditActions.Json(new { deadline = command.Until }),
+            time.GetUtcNow());
+        await seasons.AddExtensionAsync(season.Number, command.Until, audit, cancellationToken);
         return AppResult<SeasonView>.Ok(SeasonViews.Of(season with { ExtendedUntil = command.Until }));
     }
 }

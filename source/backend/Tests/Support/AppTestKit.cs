@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Application.Leaderboard;
+using PolskiStreamerSimulator.Application.Moderation;
 using PolskiStreamerSimulator.Application.Saves;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
@@ -21,6 +22,8 @@ public sealed class AppTestKit
     public static readonly DateTimeOffset Start = new(2026, 10, 14, 12, 0, 0, TimeSpan.Zero);
 
     private readonly ConcurrentDictionary<Guid, string> secrets = new();
+    private InMemorySeasonStore? seasonStore;
+    private InMemoryLeaderboardStore? entryStore;
 
     public AppTestKit(WeekEngine? engine = null)
         : this(engine ?? TestWorld.Engine, TestPaths.ContentM1, null, null)
@@ -57,9 +60,12 @@ public sealed class AppTestKit
     /// <summary>The content store the handlers use: <see cref="Contents"/> unless another one was given.</summary>
     public IContentStore ContentStore { get; }
 
-    public InMemorySeasonStore SeasonStore { get; } = new();
+    /// <summary>The audit trail of the in-memory season and leaderboard stores.</summary>
+    public InMemoryAuditTrail AuditStore { get; } = new();
 
-    public InMemoryLeaderboardStore EntryStore { get; } = new();
+    public InMemorySeasonStore SeasonStore => seasonStore ??= new InMemorySeasonStore(AuditStore);
+
+    public InMemoryLeaderboardStore EntryStore => entryStore ??= new InMemoryLeaderboardStore(AuditStore);
 
     /// <summary>The season store the handlers use: <see cref="SeasonStore"/> unless another one was given.</summary>
     public ISeasonStore Seasons { get; }
@@ -110,6 +116,12 @@ public sealed class AppTestKit
     public ListSeasonsHandler SeasonsHandler() => new(Seasons);
 
     public ExtendSeasonHandler ExtendHandler() => new(Seasons, Time);
+
+    public ListModeratedEntriesHandler ModeratedHandler() => new(Seasons, EntryStore);
+
+    public ModerateEntryHandler ModerateHandler() => new(EntryStore, Entries, Time);
+
+    public ListAuditHandler AuditHandler() => new(AuditStore);
 
     public GetCareerHandler GetHandler() => new(Access, Careers, ContentStore, Views);
 

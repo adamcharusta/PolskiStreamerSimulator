@@ -13,6 +13,8 @@ public static class OpenApiContract
     public const string SecurityScheme = "careerSecret";
 
     private const string Tag = "careers";
+    private const string AdminTag = "admin";
+    private const string OwnerScheme = "owner";
 
     private static readonly Dictionary<string, (string Summary, bool Secured)> Operations = new(StringComparer.Ordinal)
     {
@@ -34,6 +36,21 @@ public static class OpenApiContract
         ["restoreSlot"] = ("Restore an unranked career to the state saved in a slot", true),
         ["exportCareer"] = ("Export an unranked career as a save file", true),
         ["importCareer"] = ("Create a new unranked career from a save file", false),
+        ["ownerLogin"] = ("Owner sign-in, step 1: the password", false),
+        ["ownerLoginCode"] = ("Owner sign-in, step 2: an authenticator or recovery code", false),
+        ["getOwnerSession"] = ("Read the signed-in owner and a new anti-forgery token", false),
+        ["ownerLogout"] = ("Sign the owner out", false),
+        ["listModeratedEntries"] = ("List every entry of a season, hidden ones included", false),
+        ["hideEntry"] = ("Hide or revoke a leaderboard entry with a reason", false),
+        ["restoreEntry"] = ("Restore a hidden leaderboard entry with a reason", false),
+        ["extendSeason"] = ("Move a closed season's submission deadline later", false),
+        ["listAudit"] = ("List the newest owner audit records", false),
+    };
+
+    /// <summary>Operations that need the owner cookie (and, for a POST, the anti-forgery header).</summary>
+    private static readonly HashSet<string> OwnerOperations = new(StringComparer.Ordinal)
+    {
+        "getOwnerSession", "ownerLogout", "listModeratedEntries", "hideEntry", "restoreEntry", "extendSeason", "listAudit",
     };
 
     public static void Configure(OpenApiOptions options)
@@ -41,7 +58,11 @@ public static class OpenApiContract
         options.AddDocumentTransformer((document, _, _) =>
         {
             document.Info = new OpenApiInfo { Title = "Polski Streamer Simulator API", Version = "v1" };
-            document.Tags = new HashSet<OpenApiTag> { new() { Name = Tag, Description = "Anonymous careers: creation, recovery, reading, steps and batches." } };
+            document.Tags = new HashSet<OpenApiTag>
+            {
+                new() { Name = Tag, Description = "Anonymous careers: creation, recovery, reading, steps and batches." },
+                new() { Name = AdminTag, Description = "The owner's sign-in, leaderboard moderation, season deadlines and audit trail." },
+            };
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
             document.Components.SecuritySchemes[SecurityScheme] = new OpenApiSecurityScheme
@@ -49,6 +70,13 @@ public static class OpenApiContract
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
                 Description = "The career secret returned once by createCareer, sent as Authorization: Bearer <secret>.",
+            };
+            document.Components.SecuritySchemes[OwnerScheme] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Cookie,
+                Name = "pss.owner",
+                Description = "The owner's sign-in cookie; a POST also sends the X-CSRF-TOKEN header from getOwnerSession.",
             };
             return Task.CompletedTask;
         });
@@ -59,10 +87,12 @@ public static class OpenApiContract
             var (summary, secured) = Operations.TryGetValue(id, out var known) ? known : (id, false);
             operation.Summary = summary;
             operation.Description = null;
-            operation.Tags = new HashSet<OpenApiTagReference> { new(Tag, context.Document) };
-            if (secured)
+            var owner = OwnerOperations.Contains(id);
+            operation.Tags = new HashSet<OpenApiTagReference> { new(id.StartsWith("owner", StringComparison.Ordinal) || owner ? AdminTag : Tag, context.Document) };
+            if (secured || owner)
             {
-                operation.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(SecurityScheme, context.Document)] = [] }];
+                var scheme = owner ? OwnerScheme : SecurityScheme;
+                operation.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(scheme, context.Document)] = [] }];
             }
 
             operation.Responses ??= [];

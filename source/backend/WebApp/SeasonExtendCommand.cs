@@ -1,6 +1,7 @@
 using System.Globalization;
 using JasperFx.CommandLine;
 using PolskiStreamerSimulator.Application.Leaderboard;
+using PolskiStreamerSimulator.Application.Moderation;
 
 namespace PolskiStreamerSimulator.WebApp;
 
@@ -18,7 +19,7 @@ public sealed class SeasonExtendInput : NetCoreInput
 
 /// <summary>
 /// <c>season-extend</c>: announces a later submission deadline for every career of a closed season, for example after
-/// a ranking outage (spec M4-B §4). M4-D's admin form writes the same audit record.
+/// a ranking outage (spec M4-B §4). The admin form writes the same audit record (spec M4-D §5).
 /// </summary>
 [Description("Moves a closed season's submission deadline later for every career in it.", Name = "season-extend")]
 public sealed class SeasonExtendCommand : JasperFxAsyncCommand<SeasonExtendInput>
@@ -33,7 +34,7 @@ public sealed class SeasonExtendCommand : JasperFxAsyncCommand<SeasonExtendInput
 
         using var host = input.BuildHost();
         var handler = ActivatorUtilities.CreateInstance<ExtendSeasonHandler>(host.Services);
-        var result = await handler.Handle(new ExtendSeason(input.SeasonFlag, until, input.ReasonFlag, "command"), CancellationToken.None);
+        var result = await handler.Handle(new ExtendSeason(input.SeasonFlag, until, input.ReasonFlag, AuditActions.CommandActor), CancellationToken.None);
         if (!result.IsSuccess)
         {
             await Console.Error.WriteLineAsync($"Season not extended: {result.Error.Code} {result.Error.Detail}");

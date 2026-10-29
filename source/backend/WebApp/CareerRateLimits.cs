@@ -6,7 +6,7 @@ using PolskiStreamerSimulator.Application.Careers;
 
 namespace PolskiStreamerSimulator.WebApp;
 
-/// <summary>Limits of the career access endpoints: requests per window and client address (spec M4-A §7).</summary>
+/// <summary>Limits of the career access and owner sign-in endpoints: requests per window and client address (spec M4-A §7, M4-D §3).</summary>
 public sealed class RateLimitOptions
 {
     public const string Section = "RateLimits";
@@ -14,6 +14,8 @@ public sealed class RateLimitOptions
     public int CreatePermits { get; set; } = 20;
 
     public int RecoverPermits { get; set; } = 10;
+
+    public int OwnerSignInPermits { get; set; } = 10;
 
     public TimeSpan Window { get; set; } = TimeSpan.FromMinutes(10);
 }
@@ -23,6 +25,7 @@ public static class CareerRateLimits
 {
     public const string Create = "career-create";
     public const string Recover = "career-recover";
+    public const string OwnerSignIn = "owner-sign-in";
 
     public static IServiceCollection AddCareerRateLimits(this IServiceCollection services, IConfiguration configuration)
     {
@@ -33,6 +36,7 @@ public static class CareerRateLimits
             limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             limiter.AddPolicy(Create, context => PerAddress(context, limits.Value.CreatePermits, limits.Value.Window));
             limiter.AddPolicy(Recover, context => PerAddress(context, limits.Value.RecoverPermits, limits.Value.Window));
+            limiter.AddPolicy(OwnerSignIn, context => PerAddress(context, limits.Value.OwnerSignInPermits, limits.Value.Window));
             limiter.OnRejected = (context, cancellationToken) => RejectAsync(context.HttpContext, cancellationToken);
         });
         return services;

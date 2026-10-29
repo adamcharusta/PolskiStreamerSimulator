@@ -52,6 +52,26 @@ public sealed class SeasonRow
     public DateTimeOffset? ClosedAt { get; set; }
 }
 
+/// <summary>Row of <c>game.audit_records</c>: one owner change, written in the transaction of the change (M4-D).</summary>
+public sealed class AuditRecordRow
+{
+    public long Id { get; set; }
+
+    public DateTimeOffset At { get; set; }
+
+    public string Actor { get; set; } = "";
+
+    public string Action { get; set; } = "";
+
+    public string Target { get; set; } = "";
+
+    public string Reason { get; set; } = "";
+
+    public string? OldJson { get; set; }
+
+    public string? NewJson { get; set; }
+}
+
 /// <summary>Row of <c>game.unranked_save_slots</c>: one manual slot of an unranked career (M4-C).</summary>
 public sealed class SaveSlotRow
 {
@@ -113,6 +133,9 @@ public sealed class LeaderboardEntryRow
     public DateTimeOffset SubmittedAt { get; set; }
 
     public DateTimeOffset? HiddenAt { get; set; }
+
+    /// <summary>Why the owner hid the entry (M4-D).</summary>
+    public string? HiddenReason { get; set; }
 }
 
 /// <summary>

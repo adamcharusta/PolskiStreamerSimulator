@@ -1,3 +1,5 @@
+using PolskiStreamerSimulator.Application.Moderation;
+
 namespace PolskiStreamerSimulator.Application.Leaderboard;
 
 /// <summary>
@@ -57,5 +59,6 @@ public interface ISeasonStore
     Task<IReadOnlyList<Season>> ListAsync(CancellationToken cancellationToken);
 
     /// <summary>Stores an extension as its own audit record.</summary>
-    Task AddExtensionAsync(int number, DateTimeOffset deadline, string reason, string actor, DateTimeOffset at, CancellationToken cancellationToken);
+    /// <summary>Stores the later deadline with its audit record in one transaction (spec M4-D §5).</summary>
+    Task AddExtensionAsync(int number, DateTimeOffset deadline, AuditEntry audit, CancellationToken cancellationToken);
 }

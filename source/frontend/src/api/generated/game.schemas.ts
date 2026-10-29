@@ -594,6 +594,22 @@ export interface ActionRequest {
   accept?: boolean | null;
 }
 
+/**
+ * An audit record: who changed what and why, with the values before and after as JSON text.
+ */
+export interface AuditRecordView {
+  id: number;
+  at: string;
+  actor: string;
+  action: string;
+  target: string;
+  reason: string;
+  /** @nullable */
+  oldJson: string | null;
+  /** @nullable */
+  newJson: string | null;
+}
+
 export type ReasonViewArgs = {[key: string]: string};
 
 export interface ReasonView {
@@ -863,6 +879,78 @@ export interface LeaderboardView {
 }
 
 /**
+ * An entry as the owner sees it: the public fields, its receipt, whether and why it is hidden, and its public rank while visible.
+ */
+export interface ModeratedEntryView {
+  entryId: string;
+  careerId: string;
+  /** @nullable */
+  rank: number | null;
+  nickname: string;
+  score: number;
+  weeksPlayed: number;
+  difficulty: Difficulty;
+  ending: EndingReason;
+  submittedAt: string;
+  rulesetId: string;
+  finalStateVersion: number;
+  finalStateHash: string;
+  /** @nullable */
+  hiddenAt: string | null;
+  /** @nullable */
+  hiddenReason: string | null;
+}
+
+/**
+ * A season with every one of its entries.
+ */
+export interface ModeratedSeasonView {
+  season: SeasonView;
+  entries: ModeratedEntryView[];
+}
+
+/**
+ * Why the owner hides or restores an entry; kept in the audit record.
+ */
+export interface ModerationRequest {
+  reason: string;
+}
+
+/**
+ * Either the authenticator app's six-digit code or one unused recovery code.
+ */
+export interface OwnerCodeRequest {
+  /** @nullable */
+  code?: string | null;
+  /** @nullable */
+  recoveryCode?: string | null;
+}
+
+/**
+ * The owner's user name and password, the first sign-in step.
+ */
+export interface OwnerLoginRequest {
+  username: string;
+  password: string;
+}
+
+/**
+ * The next sign-in step after a correct password: always the second factor.
+ */
+export interface OwnerLoginStep {
+  next: string;
+}
+
+/**
+ * The signed-in owner, the anti-forgery token for admin writes, and how many recovery codes are left.
+ */
+export interface OwnerSessionView {
+  username: string;
+  csrfToken: string;
+  recoveryCodesLeft: number;
+}
+
+/**
  * Field errors of validation-failed, keyed by camelCase field name.
  */
 export type ProblemDetailsErrors = {[key: string]: string[]};
@@ -956,8 +1044,24 @@ export interface SaveToSlotRequest {
   expectedVersion: number;
 }
 
+/**
+ * The later deadline of a closed season and why it moves.
+ */
+export interface SeasonExtensionRequest {
+  until: string;
+  reason: string;
+}
+
 export type GetLeaderboardParams = {
 season?: number;
+limit?: number;
+};
+
+export type ListModeratedEntriesParams = {
+season?: number;
+};
+
+export type ListAuditParams = {
 limit?: number;
 };
 

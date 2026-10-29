@@ -5,7 +5,7 @@ namespace PolskiStreamerSimulator.Application.Leaderboard;
 
 /// <summary>
 /// A published result: the public fields and the receipt to audit it (final state version and hash). It keeps the
-/// career ID without a reference, so it outlives the career (spec M4-B §6).
+/// career ID without a reference, so it outlives the career (spec M4-B §6). The owner hides it with a reason (M4-D §5).
 /// </summary>
 public sealed record LeaderboardEntry(
     Guid Id,
@@ -20,7 +20,8 @@ public sealed record LeaderboardEntry(
     long FinalStateVersion,
     string FinalStateHash,
     DateTimeOffset SubmittedAt,
-    DateTimeOffset? HiddenAt = null);
+    DateTimeOffset? HiddenAt = null,
+    string? HiddenReason = null);
 
 /// <summary>
 /// Leaderboard order: higher score, then fewer weeks, then earlier publication, then career ID (spec M4-B §7). Career

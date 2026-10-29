@@ -1,4 +1,5 @@
 using PolskiStreamerSimulator.Application.Leaderboard;
+using PolskiStreamerSimulator.Application.Moderation;
 using PolskiStreamerSimulator.Tests.Application.Leaderboard;
 using PolskiStreamerSimulator.Tests.Support;
 
@@ -17,6 +18,9 @@ public abstract class LeaderboardStoreContract
     protected static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     protected abstract Task<(ISeasonStore Seasons, ILeaderboardStore Entries)> CreateStoresAsync();
+
+    protected static AuditEntry Audit(string reason, DateTimeOffset at)
+        => new("test", AuditActions.Extend, "1", reason, null, null, at);
 
     [Fact]
     public async Task The_first_start_opens_season_one_and_a_restart_keeps_it()
@@ -64,8 +68,8 @@ public abstract class LeaderboardStoreContract
         await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
         await seasons.EnsureCurrentAsync("m3", M3, At.AddDays(1), Ct);
 
-        await seasons.AddExtensionAsync(1, At.AddDays(120), "Outage", "test", At.AddDays(80), Ct);
-        await seasons.AddExtensionAsync(1, At.AddDays(150), "Longer outage", "test", At.AddDays(110), Ct);
+        await seasons.AddExtensionAsync(1, At.AddDays(120), Audit("Outage", At.AddDays(80)), Ct);
+        await seasons.AddExtensionAsync(1, At.AddDays(150), Audit("Longer outage", At.AddDays(110)), Ct);
 
         Assert.Equal(At.AddDays(150), (await seasons.FindAsync(1, Ct))!.SubmissionDeadline);
         Assert.Null((await seasons.FindAsync(2, Ct))!.ExtendedUntil);

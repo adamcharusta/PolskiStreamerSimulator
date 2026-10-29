@@ -31,6 +31,7 @@ public sealed class EfLeaderboardStore(IDbContextFactory<GameDbContext> contexts
             FinalStateHash = entry.FinalStateHash,
             SubmittedAt = entry.SubmittedAt,
             HiddenAt = entry.HiddenAt,
+            HiddenReason = entry.HiddenReason,
         });
         try
         {
@@ -75,7 +76,7 @@ public sealed class EfLeaderboardStore(IDbContextFactory<GameDbContext> contexts
         return [.. rows.Select(Entry)];
     }
 
-    private static LeaderboardEntry Entry(LeaderboardEntryRow r) => new(
+    internal static LeaderboardEntry Entry(LeaderboardEntryRow r) => new(
         r.Id,
         r.SeasonId,
         r.CareerId,
@@ -88,5 +89,6 @@ public sealed class EfLeaderboardStore(IDbContextFactory<GameDbContext> contexts
         r.FinalStateVersion,
         r.FinalStateHash,
         r.SubmittedAt,
-        r.HiddenAt);
+        r.HiddenAt,
+        r.HiddenReason);
 }

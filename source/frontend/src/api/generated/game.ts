@@ -26,6 +26,7 @@ import type {
 import type {
   ActionOutcome,
   ActionRequest,
+  AuditRecordView,
   BatchOutcome,
   BatchRequest,
   CareerOptionsView,
@@ -38,6 +39,15 @@ import type {
   ImportCareerRequest,
   IssuedRecoveryKey,
   LeaderboardView,
+  ListAuditParams,
+  ListModeratedEntriesParams,
+  ModeratedEntryView,
+  ModeratedSeasonView,
+  ModerationRequest,
+  OwnerCodeRequest,
+  OwnerLoginRequest,
+  OwnerLoginStep,
+  OwnerSessionView,
   ProblemDetails,
   PublishResultRequest,
   RecoverCareerRequest,
@@ -46,6 +56,7 @@ import type {
   SaveFile,
   SaveSlotsView,
   SaveToSlotRequest,
+  SeasonExtensionRequest,
   SeasonView,
   WeekReportView
 } from './game.schemas';
@@ -1534,4 +1545,694 @@ export const useRunBatch = <TError = ErrorType<ProblemDetails>,
       > => {
       return useMutation(getRunBatchMutationOptions(options), queryClient);
     }
+
+/**
+ * @summary Owner sign-in, step 1: the password
+ */
+export const ownerLogin = (
+    ownerLoginRequest: OwnerLoginRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<OwnerLoginStep>(
+      {url: `/v1/admin/login`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: ownerLoginRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getOwnerLoginMutationKey = () => ['ownerLogin'] as const;
+
+export const getOwnerLoginMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogin>>, TError,OwnerLoginMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof ownerLogin>>, TError,OwnerLoginMutationVariables, TContext> => {
+
+const mutationKey = getOwnerLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ownerLogin>>, OwnerLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  ownerLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OwnerLoginMutationResult = NonNullable<Awaited<ReturnType<typeof ownerLogin>>>
+    export type OwnerLoginMutationBody = OwnerLoginRequest
+    export type OwnerLoginMutationError = ErrorType<ProblemDetails>
+    export type OwnerLoginMutationVariables = {data: OwnerLoginRequest}
+
+    /**
+ * @summary Owner sign-in, step 1: the password
+ */
+export const useOwnerLogin = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogin>>, TError,OwnerLoginMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ownerLogin>>,
+        TError,
+        OwnerLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOwnerLoginMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Owner sign-in, step 2: an authenticator or recovery code
+ */
+export const ownerLoginCode = (
+    ownerCodeRequest: OwnerCodeRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<OwnerSessionView>(
+      {url: `/v1/admin/login/code`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: ownerCodeRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getOwnerLoginCodeMutationKey = () => ['ownerLoginCode'] as const;
+
+export const getOwnerLoginCodeMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLoginCode>>, TError,OwnerLoginCodeMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof ownerLoginCode>>, TError,OwnerLoginCodeMutationVariables, TContext> => {
+
+const mutationKey = getOwnerLoginCodeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ownerLoginCode>>, OwnerLoginCodeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  ownerLoginCode(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OwnerLoginCodeMutationResult = NonNullable<Awaited<ReturnType<typeof ownerLoginCode>>>
+    export type OwnerLoginCodeMutationBody = OwnerCodeRequest
+    export type OwnerLoginCodeMutationError = ErrorType<ProblemDetails>
+    export type OwnerLoginCodeMutationVariables = {data: OwnerCodeRequest}
+
+    /**
+ * @summary Owner sign-in, step 2: an authenticator or recovery code
+ */
+export const useOwnerLoginCode = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLoginCode>>, TError,OwnerLoginCodeMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ownerLoginCode>>,
+        TError,
+        OwnerLoginCodeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOwnerLoginCodeMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Read the signed-in owner and a new anti-forgery token
+ */
+export const getOwnerSession = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<OwnerSessionView>(
+      {url: `/v1/admin/session`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOwnerSessionQueryKey = () => {
+    return [
+    `/v1/admin/session`
+    ] as const;
+    }
+
+
+export const getGetOwnerSessionQueryOptions = <TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOwnerSessionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOwnerSession>>> = ({ signal }) => getOwnerSession(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOwnerSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getOwnerSession>>>
+export type GetOwnerSessionQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerSession>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerSession>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerSession>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerSession>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read the signed-in owner and a new anti-forgery token
+ */
+
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOwnerSessionQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Sign the owner out
+ */
+export const ownerLogout = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<void>(
+      {url: `/v1/admin/logout`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getOwnerLogoutMutationKey = () => ['ownerLogout'] as const;
+
+export const getOwnerLogoutMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogout>>, TError,void, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof ownerLogout>>, TError,void, TContext> => {
+
+const mutationKey = getOwnerLogoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ownerLogout>>, void> = () => {
+
+
+          return  ownerLogout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OwnerLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof ownerLogout>>>
+
+    export type OwnerLogoutMutationError = ErrorType<ProblemDetails>
+
+
+    /**
+ * @summary Sign the owner out
+ */
+export const useOwnerLogout = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogout>>, TError,void, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ownerLogout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getOwnerLogoutMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary List every entry of a season, hidden ones included
+ */
+export const listModeratedEntries = (
+    params?: ListModeratedEntriesParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ModeratedSeasonView>(
+      {url: `/v1/admin/leaderboard`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListModeratedEntriesQueryKey = (params?: ListModeratedEntriesParams,) => {
+    return [
+    `/v1/admin/leaderboard`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListModeratedEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListModeratedEntriesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listModeratedEntries>>> = ({ signal }) => listModeratedEntries(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListModeratedEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof listModeratedEntries>>>
+export type ListModeratedEntriesQueryError = ErrorType<ProblemDetails>
+
+
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params: undefined |  ListModeratedEntriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listModeratedEntries>>,
+          TError,
+          Awaited<ReturnType<typeof listModeratedEntries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listModeratedEntries>>,
+          TError,
+          Awaited<ReturnType<typeof listModeratedEntries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List every entry of a season, hidden ones included
+ */
+
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListModeratedEntriesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Hide or revoke a leaderboard entry with a reason
+ */
+export const hideEntry = (
+    entryId: string,
+    moderationRequest: ModerationRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ModeratedEntryView>(
+      {url: `/v1/admin/leaderboard/${entryId}/hide`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: moderationRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getHideEntryMutationKey = () => ['hideEntry'] as const;
+
+export const getHideEntryMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof hideEntry>>, TError,HideEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof hideEntry>>, TError,HideEntryMutationVariables, TContext> => {
+
+const mutationKey = getHideEntryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof hideEntry>>, HideEntryMutationVariables> = (props) => {
+          const {entryId,data} = props ?? {};
+
+          return  hideEntry(entryId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HideEntryMutationResult = NonNullable<Awaited<ReturnType<typeof hideEntry>>>
+    export type HideEntryMutationBody = ModerationRequest
+    export type HideEntryMutationError = ErrorType<ProblemDetails>
+    export type HideEntryMutationVariables = {entryId: string;data: ModerationRequest}
+
+    /**
+ * @summary Hide or revoke a leaderboard entry with a reason
+ */
+export const useHideEntry = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof hideEntry>>, TError,HideEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof hideEntry>>,
+        TError,
+        HideEntryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHideEntryMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Restore a hidden leaderboard entry with a reason
+ */
+export const restoreEntry = (
+    entryId: string,
+    moderationRequest: ModerationRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ModeratedEntryView>(
+      {url: `/v1/admin/leaderboard/${entryId}/restore`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: moderationRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRestoreEntryMutationKey = () => ['restoreEntry'] as const;
+
+export const getRestoreEntryMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreEntry>>, TError,RestoreEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreEntry>>, TError,RestoreEntryMutationVariables, TContext> => {
+
+const mutationKey = getRestoreEntryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreEntry>>, RestoreEntryMutationVariables> = (props) => {
+          const {entryId,data} = props ?? {};
+
+          return  restoreEntry(entryId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreEntryMutationResult = NonNullable<Awaited<ReturnType<typeof restoreEntry>>>
+    export type RestoreEntryMutationBody = ModerationRequest
+    export type RestoreEntryMutationError = ErrorType<ProblemDetails>
+    export type RestoreEntryMutationVariables = {entryId: string;data: ModerationRequest}
+
+    /**
+ * @summary Restore a hidden leaderboard entry with a reason
+ */
+export const useRestoreEntry = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreEntry>>, TError,RestoreEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreEntry>>,
+        TError,
+        RestoreEntryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRestoreEntryMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Move a closed season's submission deadline later
+ */
+export const extendSeason = (
+    number: number,
+    seasonExtensionRequest: SeasonExtensionRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SeasonView>(
+      {url: `/v1/admin/seasons/${number}/extension`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: seasonExtensionRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getExtendSeasonMutationKey = () => ['extendSeason'] as const;
+
+export const getExtendSeasonMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof extendSeason>>, TError,ExtendSeasonMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof extendSeason>>, TError,ExtendSeasonMutationVariables, TContext> => {
+
+const mutationKey = getExtendSeasonMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof extendSeason>>, ExtendSeasonMutationVariables> = (props) => {
+          const {number,data} = props ?? {};
+
+          return  extendSeason(number,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExtendSeasonMutationResult = NonNullable<Awaited<ReturnType<typeof extendSeason>>>
+    export type ExtendSeasonMutationBody = SeasonExtensionRequest
+    export type ExtendSeasonMutationError = ErrorType<ProblemDetails>
+    export type ExtendSeasonMutationVariables = {number: number;data: SeasonExtensionRequest}
+
+    /**
+ * @summary Move a closed season's submission deadline later
+ */
+export const useExtendSeason = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof extendSeason>>, TError,ExtendSeasonMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof extendSeason>>,
+        TError,
+        ExtendSeasonMutationVariables,
+        TContext
+      > => {
+      return useMutation(getExtendSeasonMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary List the newest owner audit records
+ */
+export const listAudit = (
+    params?: ListAuditParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<AuditRecordView[]>(
+      {url: `/v1/admin/audit`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListAuditQueryKey = (params?: ListAuditParams,) => {
+    return [
+    `/v1/admin/audit`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAuditQueryOptions = <TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAuditQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAudit>>> = ({ signal }) => listAudit(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAuditQueryResult = NonNullable<Awaited<ReturnType<typeof listAudit>>>
+export type ListAuditQueryError = ErrorType<ProblemDetails>
+
+
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params: undefined |  ListAuditParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAudit>>,
+          TError,
+          Awaited<ReturnType<typeof listAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAudit>>,
+          TError,
+          Awaited<ReturnType<typeof listAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the newest owner audit records
+ */
+
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAuditQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

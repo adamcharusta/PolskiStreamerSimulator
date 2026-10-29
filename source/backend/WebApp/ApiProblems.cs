@@ -39,6 +39,13 @@ public static class ApiProblems
         [ErrorCodes.ImportNewer] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.ImportUnsupported] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.PayloadTooLarge] = StatusCodes.Status413PayloadTooLarge,
+        [ErrorCodes.EntryNotFound] = StatusCodes.Status404NotFound,
+        [ErrorCodes.EntryHidden] = StatusCodes.Status409Conflict,
+        [ErrorCodes.EntryVisible] = StatusCodes.Status409Conflict,
+        [ErrorCodes.OwnerUnauthorized] = StatusCodes.Status401Unauthorized,
+        [ErrorCodes.OwnerLoginFailed] = StatusCodes.Status401Unauthorized,
+        [ErrorCodes.OwnerLockedOut] = StatusCodes.Status423Locked,
+        [ErrorCodes.AntiforgeryFailed] = StatusCodes.Status400BadRequest,
     };
 
     public static ProblemHttpResult From(AppError error)

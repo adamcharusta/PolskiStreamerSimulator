@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PolskiStreamerSimulator.Application.Leaderboard;
+using PolskiStreamerSimulator.Application.Moderation;
 
 namespace PolskiStreamerSimulator.Infrastructure.Persistence;
 
@@ -43,10 +44,13 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
     public async Task<IReadOnlyList<Season>> ListAsync(CancellationToken cancellationToken)
         => [.. (await QueryAsync(_ => true, cancellationToken)).OrderByDescending(s => s.Number)];
 
-    public async Task AddExtensionAsync(int number, DateTimeOffset deadline, string reason, string actor, DateTimeOffset at, CancellationToken cancellationToken)
+    public async Task AddExtensionAsync(int number, DateTimeOffset deadline, AuditEntry audit, CancellationToken cancellationToken)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
-        db.SeasonExtensions.Add(new SeasonExtensionRow { SeasonId = number, Deadline = deadline, Reason = reason, Actor = actor, CreatedAt = at });
+
+        // One SaveChanges is one transaction: the extension and its audit record are stored together.
+        db.SeasonExtensions.Add(new SeasonExtensionRow { SeasonId = number, Deadline = deadline, Reason = audit.Reason, Actor = audit.Actor, CreatedAt = audit.At });
+        db.AuditRecords.Add(EfModerationStore.Row(audit));
         await db.SaveChangesAsync(cancellationToken);
     }
 

@@ -1400,6 +1400,669 @@
           }
         ]
       }
+    },
+    "/v1/admin/login": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Owner sign-in, step 1: the password",
+        "operationId": "ownerLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Locked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerLoginStep"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/login/code": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Owner sign-in, step 2: an authenticator or recovery code",
+        "operationId": "ownerLoginCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OwnerCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Locked",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerSessionView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/admin/session": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read the signed-in owner and a new anti-forgery token",
+        "operationId": "getOwnerSession",
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerSessionView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/logout": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Sign the owner out",
+        "operationId": "ownerLogout",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/leaderboard": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List every entry of a season, hidden ones included",
+        "operationId": "listModeratedEntries",
+        "parameters": [
+          {
+            "name": "season",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModeratedSeasonView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/leaderboard/{entryId}/hide": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Hide or revoke a leaderboard entry with a reason",
+        "operationId": "hideEntry",
+        "parameters": [
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModeratedEntryView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/leaderboard/{entryId}/restore": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Restore a hidden leaderboard entry with a reason",
+        "operationId": "restoreEntry",
+        "parameters": [
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModerationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModeratedEntryView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/seasons/{number}/extension": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Move a closed season's submission deadline later",
+        "operationId": "extendSeason",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeasonExtensionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeasonView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/admin/audit": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List the newest owner audit records",
+        "operationId": "listAudit",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditRecordView"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "owner": [ ]
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1582,6 +2245,54 @@
           "retire"
         ],
         "type": "string"
+      },
+      "AuditRecordView": {
+        "required": [
+          "id",
+          "at",
+          "actor",
+          "action",
+          "target",
+          "reason",
+          "oldJson",
+          "newJson"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "oldJson": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "newJson": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An audit record: who changed what and why, with the values before and after as JSON text."
       },
       "AutoChoiceView": {
         "required": [
@@ -2772,6 +3483,118 @@
         },
         "description": "A completed platform move with the retention and the followers before and after."
       },
+      "ModeratedEntryView": {
+        "required": [
+          "entryId",
+          "careerId",
+          "rank",
+          "nickname",
+          "score",
+          "weeksPlayed",
+          "difficulty",
+          "ending",
+          "submittedAt",
+          "rulesetId",
+          "finalStateVersion",
+          "finalStateHash",
+          "hiddenAt",
+          "hiddenReason"
+        ],
+        "type": "object",
+        "properties": {
+          "entryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "careerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rank": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "weeksPlayed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "ending": {
+            "$ref": "#/components/schemas/EndingReason"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rulesetId": {
+            "type": "string"
+          },
+          "finalStateVersion": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "finalStateHash": {
+            "type": "string"
+          },
+          "hiddenAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "hiddenReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "An entry as the owner sees it: the public fields, its receipt, whether and why it is hidden, and its public rank while visible."
+      },
+      "ModeratedSeasonView": {
+        "required": [
+          "season",
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "season": {
+            "$ref": "#/components/schemas/SeasonView"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModeratedEntryView"
+            }
+          }
+        },
+        "description": "A season with every one of its entries."
+      },
+      "ModerationRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "description": "Why the owner hides or restores an entry; kept in the audit record."
+      },
       "ModifierView": {
         "required": [
           "labelKey",
@@ -2928,6 +3751,73 @@
           }
         },
         "description": "A sponsor offer with every term shown before acceptance and why it cannot be accepted now, if so."
+      },
+      "OwnerCodeRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recoveryCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Either the authenticator app's six-digit code or one unused recovery code."
+      },
+      "OwnerLoginRequest": {
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "description": "The owner's user name and password, the first sign-in step."
+      },
+      "OwnerLoginStep": {
+        "required": [
+          "next"
+        ],
+        "type": "object",
+        "properties": {
+          "next": {
+            "type": "string"
+          }
+        },
+        "description": "The next sign-in step after a correct password: always the second factor."
+      },
+      "OwnerSessionView": {
+        "required": [
+          "username",
+          "csrfToken",
+          "recoveryCodesLeft"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "csrfToken": {
+            "type": "string"
+          },
+          "recoveryCodesLeft": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "The signed-in owner, the anti-forgery token for admin writes, and how many recovery codes are left."
       },
       "PlanOptionView": {
         "required": [
@@ -3597,6 +4487,23 @@
         },
         "description": "The final score: the normalised components, their points, the base score, both multipliers and the total."
       },
+      "SeasonExtensionRequest": {
+        "required": [
+          "until",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "description": "The later deadline of a closed season and why it moves."
+      },
       "SeasonView": {
         "required": [
           "number",
@@ -4167,6 +5074,12 @@
         "type": "http",
         "description": "The career secret returned once by createCareer, sent as Authorization: Bearer <secret>.",
         "scheme": "bearer"
+      },
+      "owner": {
+        "type": "apiKey",
+        "description": "The owner's sign-in cookie; a POST also sends the X-CSRF-TOKEN header from getOwnerSession.",
+        "name": "pss.owner",
+        "in": "cookie"
       }
     }
   },
@@ -4174,6 +5087,10 @@
     {
       "name": "careers",
       "description": "Anonymous careers: creation, recovery, reading, steps and batches."
+    },
+    {
+      "name": "admin",
+      "description": "The owner's sign-in, leaderboard moderation, season deadlines and audit trail."
     }
   ]
 }
