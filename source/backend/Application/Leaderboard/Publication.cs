@@ -63,9 +63,12 @@ public sealed class LeaderboardPublication(ISeasonStore seasons, ILeaderboardSto
             return new EntryStatusView(EntryStatus.Unranked, null, null, null);
         }
 
-        var status = career.State.Status != CareerStatus.Ended || career.State.FinalScore is null
-            ? EntryStatus.NotEnded
-            : season.AcceptsAt(time.GetUtcNow()) ? EntryStatus.Open : EntryStatus.Closed;
+        if (career.State.Status != CareerStatus.Ended || career.State.FinalScore is null)
+        {
+            return new EntryStatusView(EntryStatus.NotEnded, season.Number, season.SubmissionDeadline, null);
+        }
+
+        var status = season.AcceptsAt(time.GetUtcNow()) ? EntryStatus.Open : EntryStatus.Closed;
         return new EntryStatusView(status, season.Number, season.SubmissionDeadline, null);
     }
 

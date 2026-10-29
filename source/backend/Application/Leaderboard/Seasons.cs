@@ -16,9 +16,19 @@ public sealed record Season(
     public static readonly TimeSpan SubmissionWindow = TimeSpan.FromDays(90);
 
     /// <summary>The last moment a result is accepted; <c>null</c> while the season is open.</summary>
-    public DateTimeOffset? SubmissionDeadline => ClosedAt is { } closed
-        ? ExtendedUntil is { } extended && extended > closed + SubmissionWindow ? extended : closed + SubmissionWindow
-        : null;
+    public DateTimeOffset? SubmissionDeadline
+    {
+        get
+        {
+            if (ClosedAt is not { } closed)
+            {
+                return null;
+            }
+
+            var standard = closed + SubmissionWindow;
+            return ExtendedUntil > standard ? ExtendedUntil : standard;
+        }
+    }
 
     /// <summary>Whether a result published at <paramref name="now"/> is accepted; the same moment for every career.</summary>
     public bool AcceptsAt(DateTimeOffset now) => SubmissionDeadline is not { } deadline || now <= deadline;

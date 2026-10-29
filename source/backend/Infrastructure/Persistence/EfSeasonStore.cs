@@ -10,7 +10,7 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
 
     public async Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken)
     {
-        for (var attempt = 1; ; attempt++)
+        for (var attempt = 1; attempt <= RolloverAttempts; attempt++)
         {
             var open = await CurrentAsync(cancellationToken);
             if (open is not null && open.Pins(rulesetId, contentDigest))
@@ -29,12 +29,9 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
             {
                 // Another instance opened a season first; read it on the next attempt.
             }
-
-            if (attempt == RolloverAttempts)
-            {
-                throw new InvalidOperationException($"The open season did not settle after {RolloverAttempts} attempts.");
-            }
         }
+
+        throw new InvalidOperationException($"The open season did not settle after {RolloverAttempts} attempts.");
     }
 
     public async Task<Season?> CurrentAsync(CancellationToken cancellationToken)
