@@ -5,7 +5,7 @@ import type { CareerView, EndingSummaryView, ScoreView } from '@/api/generated/g
 import { StepHeading } from '@/components/ui/StepHeading';
 import { formatContent } from '@/content/icu';
 import { DiplomaButton } from '@/features/diploma/DiplomaButton';
-import { count, multiplier, percent } from '@/format';
+import { count, date, multiplier, percent } from '@/format';
 
 /** The ending: the narrative from the summary, the score breakdown with both multipliers, and the achievements. */
 export function EndedView({ career }: { readonly career: CareerView }) {
@@ -18,6 +18,9 @@ export function EndedView({ career }: { readonly career: CareerView }) {
       {career.score !== null && <ScoreTable score={career.score} />}
       <Achievements career={career} />
       {career.score !== null && <DiplomaButton career={career} score={career.score} />}
+      {career.expiresAt != null && (
+        <p className="muted">{t('ending.expires', { date: date(career.expiresAt) })}</p>
+      )}
       <p>
         <Link className="btn btn-secondary" to="/">
           {t('career.backHome')}

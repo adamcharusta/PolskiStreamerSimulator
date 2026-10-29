@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import type { CareerView } from '@/api/generated/game.schemas';
-import { count } from '@/format';
+import { count, date } from '@/format';
 
 import { ageAt, nextMilestone } from './dashboard';
 
@@ -32,9 +32,15 @@ export function DashboardCard({ career }: { readonly career: CareerView }) {
           })}
         </p>
       )}
-      <p className="m-0">
+      {career.expiresAt != null && (
+        <p className="m-0 muted">{t('dashboard.expires', { date: date(career.expiresAt) })}</p>
+      )}
+      <p className="m-0 flex flex-wrap gap-3">
         <Link to="/kariera/$careerId/historia" params={{ careerId: career.careerId }}>
           {t('dashboard.history')}
+        </Link>
+        <Link to="/kariera/$careerId/klucz" params={{ careerId: career.careerId }}>
+          {t('dashboard.key')}
         </Link>
       </p>
     </section>

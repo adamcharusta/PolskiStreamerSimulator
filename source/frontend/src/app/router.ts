@@ -9,6 +9,8 @@ import { CareerScreen } from '@/features/career/CareerScreen';
 import { CreateCareerScreen } from '@/features/create-career/CreateCareerScreen';
 import { HistoryScreen } from '@/features/history/HistoryScreen';
 import { HomeScreen } from '@/features/home/HomeScreen';
+import { RecoverScreen } from '@/features/recovery/RecoverScreen';
+import { RecoveryKeyScreen } from '@/features/recovery/RecoveryKeyScreen';
 
 import { RootLayout } from './RootLayout';
 import { NotFound, RouteError } from './RouteFallbacks';
@@ -36,9 +38,31 @@ const historyRoute = createRoute({
   component: HistoryScreen,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, createCareerRoute, careerRoute, historyRoute]);
+const keyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/kariera/$careerId/klucz',
+  component: RecoveryKeyScreen,
+});
 
-/** One game route per career (its stage follows the server's next step, not the URL, TD-98) and its history (M3-D). */
+const recoverRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/odzyskaj',
+  component: RecoverScreen,
+});
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  createCareerRoute,
+  careerRoute,
+  historyRoute,
+  keyRoute,
+  recoverRoute,
+]);
+
+/**
+ * One game route per career (its stage follows the server's next step, not the URL, TD-98), its history (M3-D), its
+ * recovery key and the recovery route (M4-A).
+ */
 export function createAppRouter(history?: RouterHistory) {
   return createRouter({
     routeTree,

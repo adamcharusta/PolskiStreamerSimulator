@@ -4,11 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { CreateCareerRequest } from '@/api/generated/game.schemas';
 import { knownCareers } from '@/careers/knownCareers';
+import { pendingCreation } from '@/careers/pendingCreation';
 
 import { problem } from '../../../test/api';
 import { careerOptions, careerView } from '../../../test/fixtures';
 import { renderApp, TEST_CAREER_ID } from '../../../test/render';
 import { server } from '../../../test/server';
+
+const KEY = 'pss1.0199e3a0000070008000000000000001.abcdefghijklmnopqrstuvwxyzABCDEFGHIJ0123-_6';
 
 function serveOptions() {
   server.use(http.get('/v1/career-options', () => HttpResponse.json(careerOptions())));
@@ -59,7 +62,7 @@ describe('character creation', () => {
     }
   });
 
-  it('does not repeat a career creation request after a lost connection', async () => {
+  it('repeats a creation after a lost connection with the same creation ID and keeps it pending', async () => {
     serveOptions();
     const bodies = captureCreation(() => HttpResponse.error());
     const { user } = renderApp('/nowa-kariera');
@@ -68,7 +71,44 @@ describe('character creation', () => {
     await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Nie udało się założyć kariery.');
-    expect(bodies).toHaveLength(1);
+    expect(bodies).toHaveLength(3);
+    expect(new Set(bodies.map((body) => body.creationId)).size).toBe(1);
+    expect(pendingCreation()?.creationId).toBe(bodies[0]?.creationId);
+  });
+
+  it('shows the recovery key when the browser cannot store a created career', async () => {
+    serveOptions();
+    captureCreation(() =>
+      HttpResponse.json(
+        {
+          careerId: TEST_CAREER_ID,
+          secret: 'fresh-secret',
+          recoveryKey: KEY,
+          career: careerView(),
+        },
+        { status: 201 },
+      ),
+    );
+    const { user } = renderApp('/nowa-kariera');
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+    // Only the career list is refused: the pending creation is written before the request.
+    const setItem = Storage.prototype.setItem.bind(localStorage);
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key, value) => {
+      if (key === 'pss.careers.v1') {
+        throw new DOMException('Quota exceeded', 'QuotaExceededError');
+      }
+      setItem(key, value);
+    });
+    try {
+      await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
+
+      expect(await screen.findByText(/nie zapisała dostępu/u)).toBeInTheDocument();
+      expect(screen.getByRole('status', { name: 'Klucz odzyskiwania' })).toHaveTextContent(KEY);
+      expect(screen.getByRole('link', { name: 'Odzyskaj karierę kluczem' })).toBeInTheDocument();
+      expect(pendingCreation()).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('shows each background with its starting numbers from the API', async () => {
@@ -99,7 +139,12 @@ describe('character creation', () => {
     serveOptions();
     const bodies = captureCreation(() =>
       HttpResponse.json(
-        { careerId: TEST_CAREER_ID, secret: 'fresh-secret', career: careerView() },
+        {
+          careerId: TEST_CAREER_ID,
+          secret: 'fresh-secret',
+          recoveryKey: KEY,
+          career: careerView(),
+        },
         { status: 201 },
       ),
     );
@@ -111,7 +156,7 @@ describe('character creation', () => {
     fireEvent.click(submit);
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe(`/kariera/${TEST_CAREER_ID}`);
+      expect(router.state.location.pathname).toBe(`/kariera/${TEST_CAREER_ID}/klucz`);
     });
     expect(bodies).toHaveLength(1);
   });
@@ -146,13 +191,14 @@ describe('character creation', () => {
     expect(bodies).toEqual([]);
   });
 
-  it('sends the chosen profile, remembers the career and opens it', async () => {
+  it('sends the chosen profile, remembers the career and opens its recovery key', async () => {
     serveOptions();
     const bodies = captureCreation(() =>
       HttpResponse.json(
         {
           careerId: TEST_CAREER_ID,
           secret: 'fresh-secret',
+          recoveryKey: KEY,
           career: careerView({ nickname: 'Zażółć 1' }),
         },
         { status: 201 },
@@ -170,7 +216,7 @@ describe('character creation', () => {
     await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe(`/kariera/${TEST_CAREER_ID}`);
+      expect(router.state.location.pathname).toBe(`/kariera/${TEST_CAREER_ID}/klucz`);
     });
     expect(bodies).toEqual([
       {
@@ -178,13 +224,28 @@ describe('character creation', () => {
         background: 'localMemeCreator',
         difficulty: 'easy',
         pronouns: 'nonbinary',
+        creationId: expect.stringMatching(/^[0-9a-f-]{36}$/u) as string,
       },
     ]);
     expect(knownCareers()[0]).toMatchObject({
       careerId: TEST_CAREER_ID,
       nickname: 'Zażółć 1',
       secret: 'fresh-secret',
+      recoveryKey: KEY,
     });
+    expect(pendingCreation()).toBeNull();
+    expect(await screen.findByRole('status', { name: 'Klucz odzyskiwania' })).toHaveTextContent(
+      KEY,
+    );
+  });
+
+  it('states the retention rule and the recovery key before the career starts', async () => {
+    serveOptions();
+    renderApp('/nowa-kariera');
+
+    expect(await screen.findByText(/dostaniesz klucz odzyskiwania/u)).toHaveTextContent(
+      '6 miesiącach',
+    );
   });
 
   it('shows the server field error on the nickname', async () => {

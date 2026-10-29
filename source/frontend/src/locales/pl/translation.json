@@ -47,7 +47,12 @@
     "continue": "Kontynuuj",
     "continueNamed": "Kontynuuj karierę {{nickname}}",
     "new": "Nowa kariera",
-    "accessNotice": "Dostęp do kariery jest zapisany tylko w tej przeglądarce. Wyczyszczenie danych strony odbiera dostęp. Klucze odzyskiwania pojawią się w kolejnej wersji."
+    "accessNotice": "Dostęp do kariery jest zapisany w tej przeglądarce, a klucz odzyskiwania przywraca ją na innym urządzeniu. Nieukończona kariera wygasa po 6 miesiącach bez rozegranego tygodnia, ukończona — 12 miesięcy po zakończeniu.",
+    "recover": "Odzyskaj karierę kluczem",
+    "pendingTitle": "Kończę zakładanie kariery {{nickname}}…",
+    "pendingFailed": "Nie udało się dokończyć zakładania kariery {{nickname}}.",
+    "pendingRetry": "Spróbuj ponownie",
+    "pendingClosed": "Nie da się już dokończyć zakładania kariery {{nickname}}. Jeśli masz jej klucz odzyskiwania, odzyskaj ją."
   },
   "create": {
     "title": "Nowa kariera",
@@ -69,8 +74,10 @@
     "errors": {
       "nickname": "Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .",
       "generic": "Nie udało się założyć kariery. Spróbuj ponownie.",
-      "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
-    }
+      "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie.",
+      "unsaved": "Kariera powstała, ale ta przeglądarka nie zapisała dostępu. Zapisz teraz klucz odzyskiwania — to jedyna droga powrotu — i użyj go na stronie „Odzyskaj karierę” w przeglądarce z włączoną pamięcią strony."
+    },
+    "retention": "Po założeniu dostaniesz klucz odzyskiwania. Kariera wygasa po 6 miesiącach bez rozegranego tygodnia, a ukończona jest dostępna jeszcze 12 miesięcy."
   },
   "background": {
     "dormRoomNewcomer": "Świeżak z akademika",
@@ -140,7 +147,7 @@
     "saving": "Zapisuję…",
     "offline": "Brak połączenia",
     "notFound": "Nie znaleziono kariery",
-    "notFoundBody": "Ta przeglądarka nie ma dostępu do tej kariery albo kariera nie istnieje.",
+    "notFoundBody": "Ta przeglądarka nie ma dostępu do tej kariery, kariera wygasła albo nie istnieje. Jeśli masz klucz odzyskiwania, możesz ją odzyskać.",
     "forget": "Usuń z listy",
     "backHome": "Wróć na start",
     "loadFailed": "Nie udało się wczytać kariery.",
@@ -534,7 +541,8 @@
       "difficulty": "Mnożnik trudności",
       "background": "Mnożnik pochodzenia",
       "final": "Wynik"
-    }
+    },
+    "expires": "Historia i dyplom są dostępne do {{date}}."
   },
   "retire": {
     "action": "Zakończ karierę",
@@ -556,7 +564,9 @@
     "obligations": "W tym tygodniu: {{list}}",
     "noObligations": "Brak zleceń sponsorów w tym tygodniu",
     "nextMilestone": "Do {{target}} obserwujących brakuje {{missing}}",
-    "history": "Historia kariery"
+    "history": "Historia kariery",
+    "expires": "Kariera wygaśnie {{date}}, jeśli do tego czasu nie rozegrasz tygodnia.",
+    "key": "Klucz odzyskiwania"
   },
   "history": {
     "title": "Historia kariery",
@@ -608,5 +618,38 @@
     "achievements": "Osiągnięcia: {{list}}",
     "noAchievements": "Bez osiągnięć — następnym razem!",
     "footer": "Polski Streamer Simulator · fikcyjna kariera · {{date}}"
+  },
+  "recovery": {
+    "keyTitle": "Klucz odzyskiwania",
+    "keyIntro": "Ten klucz przywraca karierę {{nickname}} na innym urządzeniu albo po wyczyszczeniu danych przeglądarki. Zapisz go poza przeglądarką.",
+    "keyWarning": "Nie ma kont ani haseł: zgubionego klucza razem z danymi przeglądarki nie da się odzyskać. Nie pokazuj klucza nikomu — kto go ma, przejmuje karierę.",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano klucz.",
+    "failed": "Nie udało się skopiować. Zaznacz klucz i skopiuj go ręcznie.",
+    "download": "Pobierz plik",
+    "fileIntro": "Polski Streamer Simulator — klucz odzyskiwania kariery {{nickname}}",
+    "fileHow": "Wklej go na stronie „Odzyskaj karierę”, aby wrócić do tej kariery.",
+    "saved": "Zapisałem klucz — graj",
+    "backToCareer": "Wróć do kariery",
+    "missing": "Ta kariera nie ma jeszcze klucza odzyskiwania.",
+    "issue": "Utwórz klucz odzyskiwania",
+    "rotate": "Wygeneruj nowy klucz",
+    "rotateHint": "Nowy klucz unieważnia poprzedni.",
+    "issueFailed": "Nie udało się utworzyć klucza. Spróbuj ponownie.",
+    "keyNotStored": "Ta przeglądarka nie zapisała klucza. Zapisz go teraz, bo później go tu nie zobaczysz.",
+    "unknownCareer": "Ta przeglądarka nie zna tej kariery."
+  },
+  "recover": {
+    "title": "Odzyskaj karierę",
+    "intro": "Wklej klucz odzyskiwania albo wczytaj plik z kluczem. Kariera otworzy się w tej przeglądarce, a przeglądarka, która miała ją wcześniej, straci do niej dostęp.",
+    "keyLabel": "Klucz odzyskiwania",
+    "fileLabel": "Plik z kluczem",
+    "fileNoKey": "W tym pliku nie ma klucza odzyskiwania.",
+    "invalid": "To nie wygląda na klucz odzyskiwania. Klucz zaczyna się od „pss1.”.",
+    "submit": "Odzyskaj",
+    "failed": "Nie znaleziono kariery dla tego klucza. Mogła wygasnąć albo klucz jest niepełny.",
+    "rateLimited": "Za dużo prób. Spróbuj za kilka minut.",
+    "generic": "Nie udało się odzyskać kariery. Spróbuj ponownie.",
+    "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
   }
 }
