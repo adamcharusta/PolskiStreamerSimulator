@@ -5,7 +5,6 @@ using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Application.Leaderboard;
 using PolskiStreamerSimulator.Application.Moderation;
 using PolskiStreamerSimulator.Domain.Content;
-using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.Application.Content;
 
@@ -86,7 +85,6 @@ public sealed class ContentWorkspace(
     IContentPublications publications,
     IContentStore contents,
     IContentCompiler compiler,
-    WeekEngine engine,
     ContentSimulation simulation,
     PublishedContent current,
     ISeasonStore seasons,
@@ -107,7 +105,7 @@ public sealed class ContentWorkspace(
         {
             (snapshot, var found) = compiler.Compile(files);
             problems.AddRange(found);
-            if (snapshot is not null && !engine.Supports(snapshot.RulesetId))
+            if (snapshot is not null && !simulation.Supports(snapshot.RulesetId))
             {
                 problems.Add($"ruleset-not-registered:{snapshot.RulesetId}");
             }
@@ -284,7 +282,7 @@ public sealed class PutDraftEventHandler(ContentWorkspace workspace, IContentDra
             return AppResult<ContentDraftView>.Fail(ErrorCodes.ValidationFailed, "the event must be an object whose id equals the path");
         }
 
-        return await DraftEdits.SaveAsync(workspace, drafts, command.Revision, command.Actor, ContentAuditActions.DraftEvent, command.Id, draft =>
+        return await DraftEdits.SaveAsync(workspace, drafts, new DraftEdit(command.Revision, command.Actor, ContentAuditActions.DraftEvent, command.Id), draft =>
         {
             var before = DraftDocuments.Event(draft.EventsJson, command.Id);
             return (draft.BalanceJson, DraftDocuments.PutEvent(draft.EventsJson, command.Id, command.Event), before, command.Event.GetRawText());
@@ -295,7 +293,7 @@ public sealed class PutDraftEventHandler(ContentWorkspace workspace, IContentDra
 public sealed class RemoveDraftEventHandler(ContentWorkspace workspace, IContentDrafts drafts)
 {
     public async Task<AppResult<ContentDraftView>> Handle(RemoveDraftEvent command, CancellationToken cancellationToken)
-        => await DraftEdits.SaveAsync(workspace, drafts, command.Revision, command.Actor, ContentAuditActions.DraftEventRemove, command.Id, draft =>
+        => await DraftEdits.SaveAsync(workspace, drafts, new DraftEdit(command.Revision, command.Actor, ContentAuditActions.DraftEventRemove, command.Id), draft =>
         {
             var before = DraftDocuments.Event(draft.EventsJson, command.Id);
             var events = DraftDocuments.RemoveEvent(draft.EventsJson, command.Id);
@@ -312,7 +310,7 @@ public sealed class PutDraftBalanceHandler(ContentWorkspace workspace, IContentD
             return AppResult<ContentDraftView>.Fail(ErrorCodes.ValidationFailed, "the balance must be a JSON object");
         }
 
-        return await DraftEdits.SaveAsync(workspace, drafts, command.Revision, command.Actor, ContentAuditActions.DraftBalance, "balance", draft =>
+        return await DraftEdits.SaveAsync(workspace, drafts, new DraftEdit(command.Revision, command.Actor, ContentAuditActions.DraftBalance, "balance"), draft =>
         {
             var balance = DraftDocuments.Write(System.Text.Json.Nodes.JsonNode.Parse(command.Balance.GetRawText())!);
             return (balance, draft.EventsJson, draft.BalanceJson, balance);
@@ -320,16 +318,16 @@ public sealed class PutDraftBalanceHandler(ContentWorkspace workspace, IContentD
     }
 }
 
+/// <summary>Who edits what in the draft, at which revision, recorded as which audit action.</summary>
+internal sealed record DraftEdit(int Revision, string Actor, string Action, string Target);
+
 /// <summary>One audited edit of the draft at the revision the owner read.</summary>
 internal static class DraftEdits
 {
     public static async Task<AppResult<ContentDraftView>> SaveAsync(
         ContentWorkspace workspace,
         IContentDrafts drafts,
-        int revision,
-        string actor,
-        string action,
-        string target,
+        DraftEdit change,
         Func<ContentDraft, (string Balance, string Events, string? Before, string? After)?> edit,
         CancellationToken cancellationToken)
     {
@@ -339,7 +337,7 @@ internal static class DraftEdits
             return AppResult<ContentDraftView>.Fail(ErrorCodes.DraftNotFound);
         }
 
-        if (draft.Revision != revision)
+        if (draft.Revision != change.Revision)
         {
             return AppResult<ContentDraftView>.Fail(ErrorCodes.DraftStale, $"current-{draft.Revision}");
         }
@@ -359,7 +357,7 @@ internal static class DraftEdits
             return AppResult<ContentDraftView>.Fail(ErrorCodes.EventNotFound);
         }
 
-        var saved = await drafts.SaveAsync(revision, next.Balance, next.Events, workspace.Audit(actor, action, target, next.Before, next.After), cancellationToken);
+        var saved = await drafts.SaveAsync(change.Revision, next.Balance, next.Events, workspace.Audit(change.Actor, change.Action, change.Target, next.Before, next.After), cancellationToken);
         return saved is null
             ? AppResult<ContentDraftView>.Fail(ErrorCodes.DraftStale)
             : AppResult<ContentDraftView>.Ok(await workspace.ViewAsync(saved, cancellationToken));

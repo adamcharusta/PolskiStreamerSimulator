@@ -23,7 +23,7 @@ public sealed class ContentAdministrationTests
     public ContentAdministrationTests()
     {
         store = new InMemoryContentAdminStore(kit.AuditStore);
-        workspace = new ContentWorkspace(store, kit.ContentStore, new JsonContentCompiler(), kit.Engine, new ContentSimulation(kit.Engine), published, kit.Seasons, kit.Time);
+        workspace = new ContentWorkspace(store, kit.ContentStore, new JsonContentCompiler(), new ContentSimulation(kit.Engine), published, kit.Seasons, kit.Time);
     }
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

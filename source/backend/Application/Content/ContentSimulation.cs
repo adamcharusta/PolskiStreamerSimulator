@@ -30,6 +30,9 @@ public sealed class ContentSimulation(WeekEngine engine)
     public const int Careers = 40;
     public const ulong Seed = 42;
 
+    /// <summary>Whether content of <paramref name="rulesetId"/> can be played and simulated here.</summary>
+    public bool Supports(string rulesetId) => engine.Supports(rulesetId);
+
     public SimulationRunView Run(ContentSnapshot content)
     {
         var policies = content.RulesetId switch
