@@ -23,6 +23,7 @@ public static class InfrastructureServices
         services.AddOptions<DatabaseOptions>().Bind(configuration.GetSection(DatabaseOptions.Section));
         services.AddSingleton<ICareerStore, EfCareerStore>();
         services.AddSingleton<IContentStore, EfContentStore>();
+        services.AddSingleton<ISaveSlotStore, EfSaveSlotStore>();
         services.AddSingleton<ISeasonStore, EfSeasonStore>();
         services.AddSingleton<ILeaderboardStore, EfLeaderboardStore>();
         services.AddSingleton<ICurrentContent, DirectoryCurrentContent>();

@@ -15,6 +15,8 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
 
     public DbSet<ContentSnapshotRow> ContentSnapshots => Set<ContentSnapshotRow>();
 
+    public DbSet<SaveSlotRow> SaveSlots => Set<SaveSlotRow>();
+
     public DbSet<SeasonRow> Seasons => Set<SeasonRow>();
 
     public DbSet<SeasonExtensionRow> SeasonExtensions => Set<SeasonExtensionRow>();
@@ -71,6 +73,18 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             // One open season: a concurrent rollover loses here and reads the winner.
             e.HasIndex(x => x.ClosedAt).IsUnique().HasFilter("[closed_at] IS NULL").HasDatabaseName("ux_seasons_open");
             e.HasOne<ContentSnapshotRow>().WithMany().HasForeignKey(x => x.ContentDigest).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SaveSlotRow>(e =>
+        {
+            e.ToTable("unranked_save_slots", t => t.HasCheckConstraint("ck_unranked_save_slots_slot", "[slot] BETWEEN 1 AND 3"));
+            e.HasKey(x => new { x.CareerId, x.Slot });
+            e.Property(x => x.CareerId).HasColumnName("career_id");
+            e.Property(x => x.Slot).HasColumnName("slot").ValueGeneratedNever();
+            e.Property(x => x.StateJson).HasColumnName("state_json");
+            e.Property(x => x.LogSequence).HasColumnName("log_sequence");
+            e.Property(x => x.SavedAt).HasColumnName("saved_at");
+            e.HasOne<CareerRow>().WithMany().HasForeignKey(x => x.CareerId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SeasonExtensionRow>(e =>
@@ -141,6 +155,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : DbC
             e.Property(x => x.RequestJson).HasColumnName("request_json");
             e.Property(x => x.ResponseJson).HasColumnName("response_json");
             e.Property(x => x.ReportJson).HasColumnName("report_json");
+            e.Property(x => x.RestoredFromSequence).HasColumnName("restored_from_sequence");
             e.Property(x => x.StateVersionAfter).HasColumnName("state_version_after");
             e.Property(x => x.StateHashAfter).HasColumnName("state_hash_after").HasMaxLength(64).IsFixedLength().IsUnicode(false);
             e.Property(x => x.CreatedAt).HasColumnName("created_at");

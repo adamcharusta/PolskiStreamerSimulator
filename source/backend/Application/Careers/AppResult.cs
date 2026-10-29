@@ -26,6 +26,13 @@ public static class ErrorCodes
     public const string SubmissionClosed = "submission-closed";
     public const string SeasonNotFound = "season-not-found";
     public const string SeasonUnavailable = "season-unavailable";
+    public const string CareerRanked = "career-ranked";
+    public const string SlotNotFound = "slot-not-found";
+    public const string SlotEmpty = "slot-empty";
+    public const string ImportInvalid = "import-invalid";
+    public const string ImportNewer = "import-newer";
+    public const string ImportUnsupported = "import-unsupported";
+    public const string PayloadTooLarge = "payload-too-large";
     public const string Internal = "internal-error";
 }
 

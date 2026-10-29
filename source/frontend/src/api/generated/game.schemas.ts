@@ -810,6 +810,15 @@ export interface HistoryView {
   weeks: WeekSummaryView[];
 }
 
+export interface JsonElement {}
+
+/**
+ * The exported save file as it was downloaded (spec M4-C §5).
+ */
+export interface ImportCareerRequest {
+  save: null | JsonElement;
+}
+
 /**
  * A new recovery key, shown once; the previous key no longer opens the career.
  */
@@ -893,6 +902,58 @@ export interface RecoveredCareer {
   careerId: string;
   secret: string;
   career: CareerView;
+}
+
+/**
+ * Guid RestoreSlotRequest.CommandId makes the restore safe to repeat, like a command (spec M4-C §3).
+ */
+export interface RestoreSlotRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+/**
+ * An exported unranked career: the canonical state without history; unsigned, validated on import (spec M4-C §5).
+ */
+export interface SaveFile {
+  format: string;
+  schema: number;
+  exportedAt: string;
+  nickname: string;
+  state: JsonElement;
+}
+
+/**
+ * One manual slot: empty, or the week, cash and followers of the saved state and when it was saved.
+ */
+export interface SaveSlotView {
+  slot: number;
+  empty: boolean;
+  /** @nullable */
+  savedAt: string | null;
+  /** @nullable */
+  week: number | null;
+  /** @nullable */
+  lastSettledWeek: number | null;
+  status: null | CareerStatus;
+  /** @nullable */
+  cashPln: number | null;
+  /** @nullable */
+  followers: number | null;
+}
+
+/**
+ * The three manual slots of an unranked career, in slot order.
+ */
+export interface SaveSlotsView {
+  slots: SaveSlotView[];
+}
+
+/**
+ * The state version the player is looking at; a stale one is rejected (spec M4-C §3).
+ */
+export interface SaveToSlotRequest {
+  expectedVersion: number;
 }
 
 export type GetLeaderboardParams = {

@@ -23,7 +23,15 @@ public sealed class InMemoryCareerStore : ICareerStore
                 return Task.FromResult(CreateOutcome.DuplicateCreation);
             }
 
-            careers.Add(career.Id, new StoredCareer(career.Id, career.Nickname, career.State, career.CreatedAt, career.CreatedAt, CareerRetention.ExpiresAt(career.State, career.CreatedAt), Season: career.Season));
+            careers.Add(career.Id, new StoredCareer(
+                career.Id,
+                career.Nickname,
+                career.State,
+                career.CreatedAt,
+                career.CreatedAt,
+                CareerRetention.ExpiresAt(career.State, career.CreatedAt),
+                career.State.Status == CareerStatus.Ended ? career.CreatedAt : null,
+                career.Season));
             secrets.Add(career.Id, new CareerCredentials(career.SecretHash, career.RecoveryHash, career.Creation?.RequestHash));
             if (creation is not null)
             {
@@ -124,16 +132,19 @@ public sealed class InMemoryCareerStore : ICareerStore
     {
         lock (gate)
         {
-            IReadOnlyList<StoredAction> reports = logs.TryGetValue(careerId, out var log) ? [.. log.Where(a => a.ReportJson is not null)] : [];
+            IReadOnlyList<StoredAction> reports = logs.TryGetValue(careerId, out var log) ? [.. CareerLine.Of(log).Where(a => a.ReportJson is not null)] : [];
             return Task.FromResult(reports);
         }
     }
 
     public Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
+        => FindReportOnLineAsync(careerId, int.MaxValue, cancellationToken);
+
+    public Task<StoredAction?> FindReportOnLineAsync(Guid careerId, int atOrBefore, CancellationToken cancellationToken)
     {
         lock (gate)
         {
-            return Task.FromResult(logs.TryGetValue(careerId, out var log) ? log.LastOrDefault(a => a.ReportJson is not null) : null);
+            return Task.FromResult(logs.TryGetValue(careerId, out var log) ? CareerLine.Of(log, atOrBefore).LastOrDefault(a => a.ReportJson is not null) : null);
         }
     }
 
@@ -169,7 +180,8 @@ public sealed class InMemoryCareerStore : ICareerStore
                 action.ReportJson,
                 newState.StateVersion,
                 StateHash.Of(newState),
-                at));
+                at,
+                action.RestoredFrom));
             careers[careerId] = career with
             {
                 State = newState,
@@ -199,6 +211,24 @@ public sealed class InMemoryCareerStore : ICareerStore
             {
                 return careers.Count;
             }
+        }
+    }
+
+    /// <summary>Whether the career is still stored.</summary>
+    public bool Contains(Guid careerId)
+    {
+        lock (gate)
+        {
+            return careers.ContainsKey(careerId);
+        }
+    }
+
+    /// <summary>The sequence of the newest entry that left the career at <paramref name="version"/>, or 0.</summary>
+    public int SequenceOf(Guid careerId, long version)
+    {
+        lock (gate)
+        {
+            return logs.TryGetValue(careerId, out var log) ? log.Where(a => a.StateVersionAfter == version).Select(a => a.Sequence).DefaultIfEmpty(0).Max() : 0;
         }
     }
 

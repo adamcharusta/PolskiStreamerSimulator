@@ -32,6 +32,13 @@ public static class ApiProblems
         [ErrorCodes.SubmissionClosed] = StatusCodes.Status409Conflict,
         [ErrorCodes.SeasonNotFound] = StatusCodes.Status404NotFound,
         [ErrorCodes.SeasonUnavailable] = StatusCodes.Status503ServiceUnavailable,
+        [ErrorCodes.CareerRanked] = StatusCodes.Status409Conflict,
+        [ErrorCodes.SlotNotFound] = StatusCodes.Status404NotFound,
+        [ErrorCodes.SlotEmpty] = StatusCodes.Status409Conflict,
+        [ErrorCodes.ImportInvalid] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.ImportNewer] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.ImportUnsupported] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.PayloadTooLarge] = StatusCodes.Status413PayloadTooLarge,
     };
 
     public static ProblemHttpResult From(AppError error)

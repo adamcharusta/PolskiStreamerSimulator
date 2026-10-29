@@ -54,6 +54,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<ISeasonStore>(Seasons);
             services.RemoveAll<ILeaderboardStore>();
             services.AddSingleton<ILeaderboardStore>(Entries);
+            services.AddSingleton<ISaveSlotStore>(new InMemorySaveSlotStore(Store));
         });
     }
 }

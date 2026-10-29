@@ -35,12 +35,17 @@ import type {
   EntryStatusView,
   GetLeaderboardParams,
   HistoryView,
+  ImportCareerRequest,
   IssuedRecoveryKey,
   LeaderboardView,
   ProblemDetails,
   PublishResultRequest,
   RecoverCareerRequest,
   RecoveredCareer,
+  RestoreSlotRequest,
+  SaveFile,
+  SaveSlotsView,
+  SaveToSlotRequest,
   SeasonView,
   WeekReportView
 } from './game.schemas';
@@ -67,6 +72,400 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+/**
+ * @summary List the three manual slots of an unranked career
+ */
+export const listSaveSlots = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SaveSlotsView>(
+      {url: `/v1/careers/${id}/saves`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListSaveSlotsQueryKey = (id: string,) => {
+    return [
+    `/v1/careers/${id}/saves`
+    ] as const;
+    }
+
+
+export const getListSaveSlotsQueryOptions = <TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSaveSlotsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSaveSlots>>> = ({ signal }) => listSaveSlots(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSaveSlotsQueryResult = NonNullable<Awaited<ReturnType<typeof listSaveSlots>>>
+export type ListSaveSlotsQueryError = ErrorType<ProblemDetails>
+
+
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSaveSlots>>,
+          TError,
+          Awaited<ReturnType<typeof listSaveSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSaveSlots>>,
+          TError,
+          Awaited<ReturnType<typeof listSaveSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the three manual slots of an unranked career
+ */
+
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSaveSlotsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Save the current state of an unranked career into a slot
+ */
+export const saveToSlot = (
+    id: string,
+    slot: number,
+    saveToSlotRequest: SaveToSlotRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SaveSlotsView>(
+      {url: `/v1/careers/${id}/saves/${slot}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: saveToSlotRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSaveToSlotMutationKey = () => ['saveToSlot'] as const;
+
+export const getSaveToSlotMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveToSlot>>, TError,SaveToSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveToSlot>>, TError,SaveToSlotMutationVariables, TContext> => {
+
+const mutationKey = getSaveToSlotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveToSlot>>, SaveToSlotMutationVariables> = (props) => {
+          const {id,slot,data} = props ?? {};
+
+          return  saveToSlot(id,slot,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveToSlotMutationResult = NonNullable<Awaited<ReturnType<typeof saveToSlot>>>
+    export type SaveToSlotMutationBody = SaveToSlotRequest
+    export type SaveToSlotMutationError = ErrorType<ProblemDetails>
+    export type SaveToSlotMutationVariables = {id: string;slot: number;data: SaveToSlotRequest}
+
+    /**
+ * @summary Save the current state of an unranked career into a slot
+ */
+export const useSaveToSlot = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveToSlot>>, TError,SaveToSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof saveToSlot>>,
+        TError,
+        SaveToSlotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveToSlotMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Restore an unranked career to the state saved in a slot
+ */
+export const restoreSlot = (
+    id: string,
+    slot: number,
+    restoreSlotRequest: RestoreSlotRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ActionOutcome>(
+      {url: `/v1/careers/${id}/saves/${slot}/restore`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: restoreSlotRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRestoreSlotMutationKey = () => ['restoreSlot'] as const;
+
+export const getRestoreSlotMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreSlot>>, TError,RestoreSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreSlot>>, TError,RestoreSlotMutationVariables, TContext> => {
+
+const mutationKey = getRestoreSlotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreSlot>>, RestoreSlotMutationVariables> = (props) => {
+          const {id,slot,data} = props ?? {};
+
+          return  restoreSlot(id,slot,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreSlotMutationResult = NonNullable<Awaited<ReturnType<typeof restoreSlot>>>
+    export type RestoreSlotMutationBody = RestoreSlotRequest
+    export type RestoreSlotMutationError = ErrorType<ProblemDetails>
+    export type RestoreSlotMutationVariables = {id: string;slot: number;data: RestoreSlotRequest}
+
+    /**
+ * @summary Restore an unranked career to the state saved in a slot
+ */
+export const useRestoreSlot = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreSlot>>, TError,RestoreSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreSlot>>,
+        TError,
+        RestoreSlotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRestoreSlotMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Export an unranked career as a save file
+ */
+export const exportCareer = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SaveFile>(
+      {url: `/v1/careers/${id}/export`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getExportCareerQueryKey = (id: string,) => {
+    return [
+    `/v1/careers/${id}/export`
+    ] as const;
+    }
+
+
+export const getExportCareerQueryOptions = <TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportCareerQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportCareer>>> = ({ signal }) => exportCareer(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportCareerQueryResult = NonNullable<Awaited<ReturnType<typeof exportCareer>>>
+export type ExportCareerQueryError = ErrorType<ProblemDetails>
+
+
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCareer>>,
+          TError,
+          Awaited<ReturnType<typeof exportCareer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCareer>>,
+          TError,
+          Awaited<ReturnType<typeof exportCareer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export an unranked career as a save file
+ */
+
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportCareerQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Create a new unranked career from a save file
+ */
+export const importCareer = (
+    importCareerRequest: ImportCareerRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<CreatedCareer>(
+      {url: `/v1/careers/import`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: importCareerRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getImportCareerMutationKey = () => ['importCareer'] as const;
+
+export const getImportCareerMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importCareer>>, TError,ImportCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof importCareer>>, TError,ImportCareerMutationVariables, TContext> => {
+
+const mutationKey = getImportCareerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importCareer>>, ImportCareerMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  importCareer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportCareerMutationResult = NonNullable<Awaited<ReturnType<typeof importCareer>>>
+    export type ImportCareerMutationBody = ImportCareerRequest
+    export type ImportCareerMutationError = ErrorType<ProblemDetails>
+    export type ImportCareerMutationVariables = {data: ImportCareerRequest}
+
+    /**
+ * @summary Create a new unranked career from a save file
+ */
+export const useImportCareer = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importCareer>>, TError,ImportCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importCareer>>,
+        TError,
+        ImportCareerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportCareerMutationOptions(options), queryClient);
+    }
 
 /**
  * @summary Read whether and until when a career can publish its result

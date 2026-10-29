@@ -35,6 +35,7 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseRateLimiter();
+app.UseRequestSizeLimits();
 app.MapGet("/health", () => "ok").ExcludeFromDescription();
 if (app.Environment.IsDevelopment())
 {

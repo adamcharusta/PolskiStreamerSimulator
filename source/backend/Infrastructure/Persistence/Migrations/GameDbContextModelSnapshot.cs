@@ -62,6 +62,10 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("response_json");
 
+                    b.Property<int?>("RestoredFromSequence")
+                        .HasColumnType("int")
+                        .HasColumnName("restored_from_sequence");
+
                     b.Property<string>("StateHashAfter")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -335,6 +339,37 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                     b.ToTable("leaderboard_entries", "game");
                 });
 
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SaveSlotRow", b =>
+                {
+                    b.Property<Guid>("CareerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("career_id");
+
+                    b.Property<int>("Slot")
+                        .HasColumnType("int")
+                        .HasColumnName("slot");
+
+                    b.Property<int>("LogSequence")
+                        .HasColumnType("int")
+                        .HasColumnName("log_sequence");
+
+                    b.Property<DateTimeOffset>("SavedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("saved_at");
+
+                    b.Property<string>("StateJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("state_json");
+
+                    b.HasKey("CareerId", "Slot");
+
+                    b.ToTable("unranked_save_slots", "game", t =>
+                        {
+                            t.HasCheckConstraint("ck_unranked_save_slots_slot", "[slot] BETWEEN 1 AND 3");
+                        });
+                });
+
             modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonExtensionRow", b =>
                 {
                     b.Property<long>("Id")
@@ -458,6 +493,15 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .WithMany()
                         .HasForeignKey("SeasonId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SaveSlotRow", b =>
+                {
+                    b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.CareerRow", null)
+                        .WithMany()
+                        .HasForeignKey("CareerId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

@@ -36,16 +36,20 @@ public interface ICareerStore
     /// <summary>Every logged step of one command, ordered by step; empty when the command was never stored.</summary>
     Task<IReadOnlyList<StoredAction>> FindCommandAsync(Guid careerId, Guid commandId, CancellationToken cancellationToken);
 
-    /// <summary>Every logged entry that carries a week report, in log order (M3-D history).</summary>
+    /// <summary>Every logged entry on the current line of play that carries a week report, in log order (M3-D history, M4-C <see cref="CareerLine"/>).</summary>
     Task<IReadOnlyList<StoredAction>> ListReportsAsync(Guid careerId, CancellationToken cancellationToken);
 
-    /// <summary>The newest logged entry that carries a week report, or <c>null</c>.</summary>
+    /// <summary>The newest entry on the current line of play that carries a week report, or <c>null</c>.</summary>
     Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken);
+
+    /// <summary>The newest report on the line of play that ends at <paramref name="atOrBefore"/>, or <c>null</c>.</summary>
+    Task<StoredAction?> FindReportOnLineAsync(Guid careerId, int atOrBefore, CancellationToken cancellationToken);
 
     /// <summary>
     /// In one transaction, replaces the state and appends <paramref name="action"/> when the stored version equals
     /// <paramref name="expectedVersion"/>; otherwise changes nothing. Sets the last action to <paramref name="at"/> and
-    /// the expiry date by <see cref="CareerRetention"/> (and the ending date when the new state has ended).
+    /// the expiry date by <see cref="CareerRetention"/> (and the ending date when the new state has ended; a
+    /// <see cref="ActionKind.Restore"/> also clears it when the restored state has not).
     /// </summary>
     Task<AppendOutcome> AppendAsync(
         Guid careerId,

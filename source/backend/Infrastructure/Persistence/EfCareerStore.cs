@@ -27,6 +27,9 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
             CreatedAt = career.CreatedAt,
             LastActionAt = career.CreatedAt,
             ExpiresAt = CareerRetention.ExpiresAt(career.State, career.CreatedAt),
+
+            // Only an imported save can start ended (M4-C).
+            EndedAt = career.State.Status == CareerStatus.Ended ? career.CreatedAt : null,
         });
         db.CareerSecrets.Add(new CareerSecretRow
         {
@@ -139,20 +142,33 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         var rows = await db.CareerActions.AsNoTracking()
-            .Where(a => a.CareerId == careerId && a.ReportJson != null)
+            .Where(a => a.CareerId == careerId && (a.ReportJson != null || a.Kind == ActionKind.Restore))
             .OrderBy(a => a.Sequence)
             .ToListAsync(cancellationToken);
-        return [.. rows.Select(ToStored)];
+        return CareerLine.Of(rows.Select(ToStored));
     }
 
-    public async Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
+    public Task<StoredAction?> FindLatestReportAsync(Guid careerId, CancellationToken cancellationToken)
+        => FindReportOnLineAsync(careerId, int.MaxValue, cancellationToken);
+
+    public async Task<StoredAction?> FindReportOnLineAsync(Guid careerId, int atOrBefore, CancellationToken cancellationToken)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
-        var row = await db.CareerActions.AsNoTracking()
-            .Where(a => a.CareerId == careerId && a.ReportJson != null)
-            .OrderByDescending(a => a.Sequence)
-            .FirstOrDefaultAsync(cancellationToken);
-        return row is null ? null : ToStored(row);
+        var end = atOrBefore;
+        while (true)
+        {
+            // One query per restore crossed: a restore moves the end of the line to its slot's sequence.
+            var row = await db.CareerActions.AsNoTracking()
+                .Where(a => a.CareerId == careerId && a.Sequence <= end && (a.ReportJson != null || a.Kind == ActionKind.Restore))
+                .OrderByDescending(a => a.Sequence)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (row?.Kind != ActionKind.Restore)
+            {
+                return row is null ? null : ToStored(row);
+            }
+
+            end = row.RestoredFromSequence ?? 0;
+        }
     }
 
     public async Task<AppendOutcome> AppendAsync(
@@ -169,6 +185,9 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
         var hash = StateHash.Of(newState);
         DateTimeOffset? endedAt = newState.Status == CareerStatus.Ended ? at : null;
 
+        // A restore sets the ending date from the restored state; any other step only adds one (M4-C).
+        var restore = action.Kind == ActionKind.Restore;
+
         // The version condition both detects a concurrent advance and locks the row until commit.
         var updated = await db.Careers
             .Where(c => c.Id == careerId && c.StateVersion == expectedVersion)
@@ -180,7 +199,7 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
                     .SetProperty(c => c.Status, newState.Status)
                     .SetProperty(c => c.LastActionAt, at)
                     .SetProperty(c => c.ExpiresAt, CareerRetention.ExpiresAt(newState, at))
-                    .SetProperty(c => c.EndedAt, c => endedAt ?? c.EndedAt),
+                    .SetProperty(c => c.EndedAt, c => restore ? endedAt : endedAt ?? c.EndedAt),
                 cancellationToken);
         if (updated == 0)
         {
@@ -198,6 +217,7 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
             RequestJson = action.RequestJson,
             ResponseJson = action.ResponseJson,
             ReportJson = action.ReportJson,
+            RestoredFromSequence = action.RestoredFrom,
             StateVersionAfter = newState.StateVersion,
             StateHashAfter = hash,
             CreatedAt = at,
@@ -218,5 +238,5 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
     private static string JsonOf(CareerState state) => Encoding.UTF8.GetString(CanonicalJson.Serialize(state));
 
     private static StoredAction ToStored(CareerActionRow row)
-        => new(row.Sequence, row.CommandId, row.Step, row.Kind, row.RequestJson, row.ResponseJson, row.ReportJson, row.StateVersionAfter, row.StateHashAfter, row.CreatedAt);
+        => new(row.Sequence, row.CommandId, row.Step, row.Kind, row.RequestJson, row.ResponseJson, row.ReportJson, row.StateVersionAfter, row.StateHashAfter, row.CreatedAt, row.RestoredFromSequence);
 }

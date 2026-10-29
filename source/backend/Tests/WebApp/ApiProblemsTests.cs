@@ -31,6 +31,13 @@ public sealed class ApiProblemsTests
         { ErrorCodes.SubmissionClosed, 409 },
         { ErrorCodes.SeasonNotFound, 404 },
         { ErrorCodes.SeasonUnavailable, 503 },
+        { ErrorCodes.CareerRanked, 409 },
+        { ErrorCodes.SlotNotFound, 404 },
+        { ErrorCodes.SlotEmpty, 409 },
+        { ErrorCodes.ImportInvalid, 422 },
+        { ErrorCodes.ImportNewer, 422 },
+        { ErrorCodes.ImportUnsupported, 422 },
+        { ErrorCodes.PayloadTooLarge, 413 },
         { ErrorCodes.Internal, 500 },
     };
 

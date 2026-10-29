@@ -3,6 +3,7 @@ using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Application.Leaderboard;
+using PolskiStreamerSimulator.Application.Saves;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Simulation;
@@ -32,7 +33,8 @@ public sealed class AppTestKit
         ICareerStore? careers,
         IContentStore? contents,
         ISeasonStore? seasons = null,
-        ILeaderboardStore? entries = null)
+        ILeaderboardStore? entries = null,
+        ISaveSlotStore? slots = null)
     {
         Engine = engine;
         Current = new TestCurrentContent(contentDirectory);
@@ -40,6 +42,7 @@ public sealed class AppTestKit
         ContentStore = contents ?? Contents;
         Seasons = seasons ?? SeasonStore;
         Entries = entries ?? EntryStore;
+        Slots = slots ?? new InMemorySaveSlotStore(Store);
     }
 
     public WeekEngine Engine { get; }
@@ -64,6 +67,9 @@ public sealed class AppTestKit
     /// <summary>The leaderboard store the handlers use: <see cref="EntryStore"/> unless another one was given.</summary>
     public ILeaderboardStore Entries { get; }
 
+    /// <summary>The slot store the handlers use: in memory over <see cref="Store"/> unless another one was given.</summary>
+    public ISaveSlotStore Slots { get; }
+
     public FixedTimeProvider Time { get; } = new(Start);
 
     public Sha256SecretHasher Secrets { get; } = new();
@@ -84,6 +90,10 @@ public sealed class AppTestKit
     public static AppTestKit On(ICareerStore careers, IContentStore contents, ISeasonStore seasons, ILeaderboardStore entries, string directory)
         => new(M3Play.Engine, directory, careers, contents, seasons, entries);
 
+    /// <summary>A kit with both rulesets over the given career, content and slot stores.</summary>
+    public static AppTestKit On(ICareerStore careers, IContentStore contents, ISaveSlotStore slots, string directory)
+        => new(M3Play.Engine, directory, careers, contents, slots: slots);
+
     /// <summary>Later careers pin the content in <paramref name="directory"/>; existing careers keep theirs.</summary>
     public void SwitchCurrentContent(string directory) => Current.Switch(directory);
 
@@ -102,6 +112,16 @@ public sealed class AppTestKit
     public ExtendSeasonHandler ExtendHandler() => new(Seasons, Time);
 
     public GetCareerHandler GetHandler() => new(Access, Careers, ContentStore, Views);
+
+    public ListSaveSlotsHandler SlotsHandler() => new(Access, Slots);
+
+    public SaveToSlotHandler SaveHandler() => new(Access, Slots, Time);
+
+    public RestoreSlotHandler RestoreHandler() => new(Access, Careers, Slots, ContentStore, Views, Time);
+
+    public ExportCareerHandler ExportHandler() => new(Access, Time);
+
+    public ImportCareerHandler ImportHandler() => new(Careers, ContentStore, Engine, Secrets, Views, Time);
 
     public RecoverCareerHandler RecoverHandler() => new(Careers, ContentStore, Secrets, Views, Time);
 
@@ -150,6 +170,33 @@ public sealed class AppTestKit
     public async Task<EntryStatusView> EntryStatusAsync(Guid careerId)
         => (await EntryStatusHandler().Handle(new GetEntryStatus(careerId, secrets[careerId]), Ct)).Value;
 
+    public async Task<HistoryView> HistoryAsync(Guid careerId)
+        => (await HistoryHandler().Handle(new GetHistory(careerId, secrets[careerId]), Ct)).Value;
+
+    public Task<AppResult<SaveSlotsView>> SlotsAsync(Guid careerId)
+        => SlotsHandler().Handle(new ListSaveSlots(careerId, secrets[careerId]), Ct);
+
+    public Task<AppResult<SaveSlotsView>> SaveSlotAsync(Guid careerId, int slot, long expectedVersion)
+        => SaveHandler().Handle(new SaveToSlot(careerId, secrets[careerId], slot, expectedVersion), Ct);
+
+    public Task<AppResult<ActionOutcome>> RestoreAsync(Guid careerId, int slot, long expectedVersion, Guid? commandId = null)
+        => RestoreHandler().Handle(new RestoreSlot(careerId, secrets[careerId], slot, commandId ?? Guid.NewGuid(), expectedVersion), Ct);
+
+    public Task<AppResult<SaveFile>> ExportAsync(Guid careerId)
+        => ExportHandler().Handle(new ExportCareer(careerId, secrets[careerId]), Ct);
+
+    /// <summary>Imports <paramref name="save"/>; a created career's secret is kept for later calls.</summary>
+    public async Task<AppResult<CreatedCareer>> ImportAsync(System.Text.Json.JsonElement save)
+    {
+        var imported = await ImportHandler().Handle(new ImportCareer(save), Ct);
+        if (imported.IsSuccess)
+        {
+            secrets[imported.Value.CareerId] = imported.Value.Secret;
+        }
+
+        return imported;
+    }
+
     /// <summary>Later calls of this kit use <paramref name="secret"/> for the career, as a browser after a recovery would.</summary>
     public void UseSecret(Guid careerId, string secret) => secrets[careerId] = secret;
 
@@ -165,10 +212,10 @@ public sealed class AppTestKit
     public Task<CareerView> PlayManualWeekAsync(CreatedCareer career) => PlayManualWeekAsync(career.Career);
 
     /// <summary>
-    /// Answers every queued decision, rests in Fps, resolves every event and settles; each choice is the first one
-    /// the career can take.
+    /// Answers every queued decision, takes <paramref name="action"/> (rest by default) in Fps, resolves every event and
+    /// settles; each choice is the first one the career can take.
     /// </summary>
-    public async Task<CareerView> PlayManualWeekAsync(CareerView career)
+    public async Task<CareerView> PlayManualWeekAsync(CareerView career, MainAction action = MainAction.Rest)
     {
         var view = career;
         while (view.Next.Kind == NextStepKind.ResolveDecision)
@@ -176,7 +223,7 @@ public sealed class AppTestKit
             view = await StepAsync(view, ActionType.ResolveDecision, FirstAvailable(view));
         }
 
-        view = (await SubmitAsync(view.CareerId, Guid.NewGuid(), new ActionInput(view.Version, ActionType.StartWeek, MainAction.Rest, Category.Fps, null, null, null))).Value.Career;
+        view = (await SubmitAsync(view.CareerId, Guid.NewGuid(), new ActionInput(view.Version, ActionType.StartWeek, action, Category.Fps, null, null, null))).Value.Career;
         while (view.Next.Kind == NextStepKind.ResolveEvent)
         {
             view = await StepAsync(view, ActionType.ResolveEvent, FirstAvailable(view));

@@ -55,5 +55,8 @@ public sealed class MigrationTests(SqlServerFixture sql)
         Assert.All(careers, c => Assert.False(c.Ranked));
         Assert.All(careers, c => Assert.Null(c.SeasonId));
         Assert.Equal(0, await db.Seasons.CountAsync(ct));
+
+        // M4-C: careers stored before it have no slots.
+        Assert.Equal(0, await db.SaveSlots.CountAsync(ct));
     }
 }

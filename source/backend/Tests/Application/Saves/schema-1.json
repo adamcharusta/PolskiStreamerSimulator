@@ -1,0 +1,83 @@
+{
+  "format": "polski-streamer-simulator-save",
+  "schema": 1,
+  "exportedAt": "2026-10-14T12:00:00+00:00",
+  "nickname": "Fixture",
+  "state": {
+    "RulesetId": "m1-prototype.1",
+    "ContentDigest": "37e4f6d0a7a4c4a175b0383613b8fe5dfc5393bca08c94dca76c126b054c4bb2",
+    "StateVersion": 4,
+    "Background": "DormRoomNewcomer",
+    "Difficulty": "Normal",
+    "Pronouns": "Woman",
+    "Week": 2,
+    "LastSettledWeek": 1,
+    "Rng": {
+      "State": 12833392138100437142,
+      "Increment": 13005396917011789751
+    },
+    "CashPln": 1892,
+    "Followers": 4,
+    "LastLiveViewers": 78,
+    "Drama": 3000000,
+    "Credibility": 50000000,
+    "Energy": 87000000,
+    "Burnout": 3000000,
+    "Skill": [
+      10000000,
+      18820000,
+      10000000,
+      10000000,
+      10000000
+    ],
+    "Boredom": [
+      0,
+      4000000,
+      0,
+      0,
+      0
+    ],
+    "InactiveWeeks": [
+      1,
+      0,
+      1,
+      1,
+      1
+    ],
+    "Equipment": {
+      "Microphone": 0,
+      "Camera": 0,
+      "Computer": 0,
+      "Connection": 0
+    },
+    "EventCooldowns": {},
+    "Achievements": [],
+    "Metrics": {
+      "Streams": 1,
+      "TotalLiveViews": 78,
+      "IncomeBySource": {
+        "income:ads": 4,
+        "income:donations": 12,
+        "income:subscriptions": 16
+      },
+      "CostsBySource": {
+        "cost:equipment-upkeep": 40,
+        "cost:living": 100
+      },
+      "WeeksPerCategory": [
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      "EventsResolved": 2,
+      "Criticals": 0,
+      "PeakFollowersMilestone": 0
+    },
+    "Status": "Active",
+    "Ending": null,
+    "FinalScore": null,
+    "Pending": null
+  }
+}
