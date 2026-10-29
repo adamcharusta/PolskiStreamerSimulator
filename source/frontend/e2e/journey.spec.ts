@@ -244,6 +244,16 @@ test('a 4-week batch under a custom strategy, then early retirement shows the sc
   await page.getByRole('button', { name: pl.diploma.download }).click();
   const file = await download;
   expect(file.suggestedFilename()).toBe('dyplom-Strategia E2E.pdf');
+
+  // The career was ranked (the default): its server-computed score goes to the season table.
+  const ranking = page.getByRole('region', { name: pl.leaderboard.panel.title });
+  await ranking.getByLabel(pl.leaderboard.panel.nickname).fill('e2e');
+  await ranking.getByRole('button', { name: pl.leaderboard.panel.submit }).click();
+  await expect(ranking.getByText(/^E2E — .* miejsce w sezonie \d+\.$/u)).toBeVisible();
+  await ranking.getByRole('link', { name: pl.leaderboard.panel.show }).click();
+  await expect(page.getByRole('heading', { name: pl.leaderboard.title, level: 1 })).toBeVisible();
+  await expect(page.getByRole('rowheader', { name: 'E2E' }).first()).toBeVisible();
+  await expectAccessible(page, 'leaderboard');
 });
 
 test('a career recovered with its key in a browser that lost its data continues where it was', async ({

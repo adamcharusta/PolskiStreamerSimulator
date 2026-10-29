@@ -210,6 +210,8 @@ describe('character creation', () => {
     await user.click(screen.getByRole('radio', { name: /Lokalny memiarz/u }));
     await user.click(screen.getByRole('radio', { name: /Łatwy/u }));
     await user.click(screen.getByRole('radio', { name: 'forma neutralna' }));
+    expect(screen.getByRole('radio', { name: /^Rankingowa/u })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: /^Bez rankingu/u }));
     expect(screen.getByRole('region', { name: 'Podsumowanie' })).toHaveTextContent(
       'Lokalny memiarz',
     );
@@ -224,6 +226,7 @@ describe('character creation', () => {
         background: 'localMemeCreator',
         difficulty: 'easy',
         pronouns: 'nonbinary',
+        ranked: false,
         creationId: expect.stringMatching(/^[0-9a-f-]{36}$/u) as string,
       },
     ]);
@@ -274,5 +277,18 @@ describe('character creation', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Nie udało się założyć kariery. Spróbuj ponownie.',
     );
+  });
+
+  it('sends a ranked career by default and explains an unavailable season', async () => {
+    serveOptions();
+    const bodies = captureCreation(() => problem(503, 'season-unavailable'));
+    const { user } = renderApp('/nowa-kariera');
+
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+    expect(screen.getByRole('region', { name: 'Podsumowanie' })).toHaveTextContent('Rankingowa');
+    await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ranking jest chwilowo niedostępny');
+    expect(bodies[0]?.ranked).toBe(true);
   });
 });

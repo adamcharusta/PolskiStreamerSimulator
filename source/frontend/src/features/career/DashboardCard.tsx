@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { CareerView } from '@/api/generated/game.schemas';
 import { count, date } from '@/format';
 
+import { CareerMode } from './CareerMode';
 import { ageAt, nextMilestone } from './dashboard';
 
 /** Where the career stands (content §3.4): week, age, platform, obligations due, next milestone and the history link. */
@@ -18,6 +19,9 @@ export function DashboardCard({ career }: { readonly career: CareerView }) {
       <p className="m-0">
         {t('dashboard.week', { week: career.week, age: ageAt(career.week) })} ·{' '}
         {t(`platform.${career.platform}`)}
+      </p>
+      <p className="m-0 muted">
+        <CareerMode career={career} />
       </p>
       <p className="m-0">
         {due.length === 0
