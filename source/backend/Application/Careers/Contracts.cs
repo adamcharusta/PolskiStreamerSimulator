@@ -18,7 +18,7 @@ public enum NextStepKind
 
 // Summaries of contract records stay on one line: the OpenAPI document copies them, and line breaks differ by OS.
 
-/// <summary>A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.</summary>
+/// <summary>A career as the client sees it at one version (and the ruleset and, if ranked, season it plays for life); also the stored response of each step.</summary>
 public sealed record CareerView(
     Guid CareerId,
     string Nickname,
@@ -44,7 +44,9 @@ public sealed record CareerView(
     IReadOnlyList<AchievementView> Achievements,
     ScoreView? Score,
     EndingSummaryView? Summary,
-    DateTimeOffset? ExpiresAt = null);
+    DateTimeOffset? ExpiresAt = null,
+    bool Ranked = false,
+    int? Season = null);
 
 /// <summary>An achievement of the career's content with its Polish ICU name and description, its points and whether it is earned (earned first).</summary>
 public sealed record AchievementView(string Id, string? Name, string? Description, int Points, bool Earned);

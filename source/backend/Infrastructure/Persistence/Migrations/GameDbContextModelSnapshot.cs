@@ -134,6 +134,10 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(64)")
                         .HasColumnName("ruleset_id");
 
+                    b.Property<int?>("SeasonId")
+                        .HasColumnType("int")
+                        .HasColumnName("season_id");
+
                     b.Property<string>("StateHash")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -165,6 +169,8 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ExpiresAt")
                         .HasDatabaseName("ix_careers_expires_at");
+
+                    b.HasIndex("SeasonId");
 
                     b.ToTable("careers", "game");
                 });
@@ -246,6 +252,174 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                     b.ToTable("content_snapshots", "game");
                 });
 
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.LeaderboardEntryRow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CareerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("career_id");
+
+                    b.Property<string>("Difficulty")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(16)")
+                        .HasColumnName("difficulty");
+
+                    b.Property<string>("Ending")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(32)")
+                        .HasColumnName("ending");
+
+                    b.Property<string>("FinalStateHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("final_state_hash")
+                        .IsFixedLength();
+
+                    b.Property<long>("FinalStateVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("final_state_version");
+
+                    b.Property<DateTimeOffset?>("HiddenAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("hidden_at");
+
+                    b.Property<string>("Nickname")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)")
+                        .HasColumnName("nickname");
+
+                    b.Property<string>("RulesetId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("ruleset_id");
+
+                    b.Property<long>("Score")
+                        .HasColumnType("bigint")
+                        .HasColumnName("score");
+
+                    b.Property<int>("SeasonId")
+                        .HasColumnType("int")
+                        .HasColumnName("season_id");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<int>("WeeksPlayed")
+                        .HasColumnType("int")
+                        .HasColumnName("weeks_played");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareerId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_leaderboard_entries_career");
+
+                    b.HasIndex("SeasonId", "Score", "WeeksPlayed", "SubmittedAt", "CareerId")
+                        .IsDescending(false, true, false, false, false)
+                        .HasDatabaseName("ix_leaderboard_entries_order")
+                        .HasFilter("[hidden_at] IS NULL");
+
+                    b.ToTable("leaderboard_entries", "game");
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonExtensionRow", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("actor");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("Deadline")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("deadline");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<int>("SeasonId")
+                        .HasColumnType("int")
+                        .HasColumnName("season_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeasonId")
+                        .HasDatabaseName("ix_season_extensions_season");
+
+                    b.ToTable("season_extensions", "game");
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("closed_at");
+
+                    b.Property<string>("ContentDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("content_digest")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("OpenedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("opened_at");
+
+                    b.Property<string>("RulesetId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("ruleset_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClosedAt")
+                        .IsUnique()
+                        .HasDatabaseName("ux_seasons_open")
+                        .HasFilter("[closed_at] IS NULL");
+
+                    b.HasIndex("ContentDigest");
+
+                    b.ToTable("seasons", "game");
+                });
+
             modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.CareerActionRow", b =>
                 {
                     b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.CareerRow", null)
@@ -262,6 +436,11 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ContentDigest")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonRow", null)
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.CareerSecretRow", b =>
@@ -270,6 +449,33 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .WithOne()
                         .HasForeignKey("PolskiStreamerSimulator.Infrastructure.Persistence.CareerSecretRow", "CareerId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.LeaderboardEntryRow", b =>
+                {
+                    b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonRow", null)
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonExtensionRow", b =>
+                {
+                    b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonRow", null)
+                        .WithMany()
+                        .HasForeignKey("SeasonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.SeasonRow", b =>
+                {
+                    b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.ContentSnapshotRow", null)
+                        .WithMany()
+                        .HasForeignKey("ContentDigest")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

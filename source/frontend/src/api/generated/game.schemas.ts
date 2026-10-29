@@ -521,7 +521,7 @@ export interface EndingSummaryView {
 }
 
 /**
- * A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.
+ * A career as the client sees it at one version (and the ruleset and, if ranked, season it plays for life); also the stored response of each step.
  */
 export interface CareerView {
   careerId: string;
@@ -550,6 +550,9 @@ export interface CareerView {
   summary: null | EndingSummaryView;
   /** @nullable */
   expiresAt?: string | null;
+  ranked?: boolean;
+  /** @nullable */
+  season?: number | null;
 }
 
 export interface ActionOutcome {
@@ -727,7 +730,7 @@ export interface CareerOptionsView {
 }
 
 /**
- * Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121).
+ * Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122).
  */
 export interface CreateCareerRequest {
   nickname: string;
@@ -736,6 +739,7 @@ export interface CreateCareerRequest {
   pronouns: PronounSet;
   /** @nullable */
   creationId?: string | null;
+  ranked?: boolean;
 }
 
 /**
@@ -746,6 +750,44 @@ export interface CreatedCareer {
   secret: string;
   recoveryKey: string;
   career: CareerView;
+}
+
+/**
+ * What the ending screen can offer for a career's result.
+ */
+export type EntryStatus = typeof EntryStatus[keyof typeof EntryStatus];
+
+
+export const EntryStatus = {
+  unranked: 'unranked',
+  notEnded: 'notEnded',
+  open: 'open',
+  closed: 'closed',
+  published: 'published',
+} as const;
+
+/**
+ * A career's own published entry; the rank is null while the owner hides the entry.
+ */
+export interface PublishedEntryView {
+  nickname: string;
+  score: number;
+  weeksPlayed: number;
+  submittedAt: string;
+  /** @nullable */
+  rank: number | null;
+}
+
+/**
+ * Whether and until when a career can publish its result, and the published entry with its season rank.
+ */
+export interface EntryStatusView {
+  status: EntryStatus;
+  /** @nullable */
+  season: number | null;
+  /** @nullable */
+  submissionDeadline: string | null;
+  entry: null | PublishedEntryView;
 }
 
 /**
@@ -777,6 +819,41 @@ export interface IssuedRecoveryKey {
 }
 
 /**
+ * A public leaderboard row: only the fields every visitor may see.
+ */
+export interface LeaderboardRowView {
+  rank: number;
+  nickname: string;
+  score: number;
+  weeksPlayed: number;
+  difficulty: Difficulty;
+  ending: EndingReason;
+  submittedAt: string;
+}
+
+/**
+ * A season with its dates; the deadline is null while it is open, and extended once the owner announced a later one.
+ */
+export interface SeasonView {
+  number: number;
+  openedAt: string;
+  /** @nullable */
+  closedAt: string | null;
+  /** @nullable */
+  submissionDeadline: string | null;
+  extended: boolean;
+  current: boolean;
+}
+
+/**
+ * A season's top entries in leaderboard order.
+ */
+export interface LeaderboardView {
+  season: SeasonView;
+  entries: LeaderboardRowView[];
+}
+
+/**
  * Field errors of validation-failed, keyed by camelCase field name.
  */
 export type ProblemDetailsErrors = {[key: string]: string[]};
@@ -798,6 +875,13 @@ export interface ProblemDetails {
   errors?: ProblemDetailsErrors;
 }
 
+/**
+ * Only the nickname: the server publishes the score it computed, and any other field is ignored.
+ */
+export interface PublishResultRequest {
+  nickname: string;
+}
+
 export interface RecoverCareerRequest {
   recoveryKey: string;
 }
@@ -810,4 +894,9 @@ export interface RecoveredCareer {
   secret: string;
   career: CareerView;
 }
+
+export type GetLeaderboardParams = {
+season?: number;
+limit?: number;
+};
 

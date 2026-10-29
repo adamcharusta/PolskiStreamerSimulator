@@ -6,8 +6,14 @@ using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.WebApp.Careers;
 
-/// <summary><see cref="CreationId"/> is a fresh random UUID per creation; repeating it repeats the creation (TD-121).</summary>
-public sealed record CreateCareerRequest(string Nickname, Background Background, Difficulty Difficulty, PronounSet Pronouns, Guid? CreationId = null);
+/// <summary><see cref="CreationId"/> is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122).</summary>
+public sealed record CreateCareerRequest(
+    string Nickname,
+    Background Background,
+    Difficulty Difficulty,
+    PronounSet Pronouns,
+    Guid? CreationId = null,
+    bool Ranked = false);
 
 public sealed class CreateCareerRequestValidator : AbstractValidator<CreateCareerRequest>
 {
@@ -31,6 +37,18 @@ public sealed class RecoverCareerRequestValidator : AbstractValidator<RecoverCar
     public RecoverCareerRequestValidator() => RuleFor(r => r.RecoveryKey).NotEmpty().MaximumLength(200);
 
     protected override bool PreValidate(ValidationContext<RecoverCareerRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary>Only the nickname: the server publishes the score it computed, and any other field is ignored.</summary>
+public sealed record PublishResultRequest(string Nickname);
+
+public sealed class PublishResultRequestValidator : AbstractValidator<PublishResultRequest>
+{
+    // The handler applies the nickname rule after the eligibility checks, so a repeat returns the entry it already has.
+    public PublishResultRequestValidator() => RuleFor(r => r.Nickname).NotNull().MaximumLength(50);
+
+    protected override bool PreValidate(ValidationContext<PublishResultRequest> context, ValidationResult result)
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 

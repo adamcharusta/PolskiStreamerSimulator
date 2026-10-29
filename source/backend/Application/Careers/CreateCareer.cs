@@ -2,17 +2,27 @@ using System.Security.Cryptography;
 using System.Text;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
+using PolskiStreamerSimulator.Application.Leaderboard;
 using PolskiStreamerSimulator.Domain.Careers;
 
 namespace PolskiStreamerSimulator.Application.Careers;
 
-/// <summary>A new career; <see cref="CreationId"/> makes the request safe to repeat (spec M4-A §4).</summary>
-public sealed record CreateCareer(string Nickname, Background Background, Difficulty Difficulty, PronounSet Pronouns, Guid? CreationId = null)
+/// <summary>
+/// A new career; <see cref="CreationId"/> makes the request safe to repeat (spec M4-A §4), and a <see cref="Ranked"/>
+/// career pins the open season (spec M4-B §3).
+/// </summary>
+public sealed record CreateCareer(
+    string Nickname,
+    Background Background,
+    Difficulty Difficulty,
+    PronounSet Pronouns,
+    Guid? CreationId = null,
+    bool Ranked = false)
 {
     // The creation ID can rotate the new career's credentials for a day; it must never reach a log.
     private bool PrintMembers(StringBuilder builder)
     {
-        builder.Append($"Nickname = {Nickname}, Background = {Background}, Difficulty = {Difficulty}, Pronouns = {Pronouns}, CreationId = ***");
+        builder.Append($"Nickname = {Nickname}, Background = {Background}, Difficulty = {Difficulty}, Pronouns = {Pronouns}, CreationId = ***, Ranked = {Ranked}");
         return true;
     }
 }
@@ -32,6 +42,7 @@ public sealed class CreateCareerHandler(
     ICareerStore store,
     ICurrentContent content,
     IContentStore contents,
+    ISeasonStore seasons,
     ISecretHasher secrets,
     CareerViewBuilder views,
     TimeProvider time)
@@ -59,6 +70,19 @@ public sealed class CreateCareerHandler(
         }
 
         var snapshot = content.Snapshot;
+        int? season = null;
+        if (command.Ranked)
+        {
+            // During a rolling deployment the open season can belong to the other content version.
+            var current = await seasons.CurrentAsync(cancellationToken);
+            if (current is null || !current.Pins(snapshot.RulesetId, snapshot.Digest))
+            {
+                return AppResult<CreatedCareer>.Fail(ErrorCodes.SeasonUnavailable);
+            }
+
+            season = current.Number;
+        }
+
         var seed = BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(sizeof(ulong)));
         var state = CareerFactory.Create(snapshot, command.Background, command.Difficulty, command.Pronouns, seed);
         var now = time.GetUtcNow();
@@ -66,7 +90,7 @@ public sealed class CreateCareerHandler(
         var secret = secrets.NewSecret();
         var recoveryKey = RecoveryKeys.Format(id, secrets.NewSecret());
         var outcome = await store.CreateAsync(
-            new NewCareer(id, nickname, state, secrets.Hash(secret), secrets.Hash(recoveryKey), creation, now),
+            new NewCareer(id, nickname, state, secrets.Hash(secret), secrets.Hash(recoveryKey), creation, now, season),
             cancellationToken);
         if (outcome == CreateOutcome.DuplicateCreation)
         {
@@ -76,7 +100,7 @@ public sealed class CreateCareerHandler(
             return await RepeatAsync(winner, creation, cancellationToken);
         }
 
-        var view = views.Build(id, nickname, state, snapshot, null, CareerRetention.ExpiresAt(state, now));
+        var view = views.Build(id, nickname, state, snapshot, null, CareerRetention.ExpiresAt(state, now), season);
         return AppResult<CreatedCareer>.Ok(new CreatedCareer(id, secret, recoveryKey, view));
     }
 
@@ -116,5 +140,6 @@ public sealed class CreateCareerHandler(
     private CreationHashes Hashes(Guid creationId, string nickname, CreateCareer command)
         => new(
             secrets.Hash(creationId.ToString("D")),
-            secrets.Hash($"{nickname}\n{command.Background}\n{command.Difficulty}\n{command.Pronouns}"));
+            // Unranked requests keep the M4-A form, so a creation retried across the M4-B deployment still matches.
+            secrets.Hash($"{nickname}\n{command.Background}\n{command.Difficulty}\n{command.Pronouns}{(command.Ranked ? "\nranked" : "")}"));
 }

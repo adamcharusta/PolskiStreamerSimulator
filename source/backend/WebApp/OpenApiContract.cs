@@ -25,6 +25,10 @@ public static class OpenApiContract
         ["runBatch"] = ("Play 4, 13 or 52 weeks automatically", true),
         ["getHistory"] = ("List the settled weeks of a career", true),
         ["getHistoryWeek"] = ("Read the stored report of one week", true),
+        ["getLeaderboardEntry"] = ("Read whether and until when a career can publish its result", true),
+        ["publishResult"] = ("Publish the server-computed result of an ended ranked career under a nickname", true),
+        ["getLeaderboard"] = ("Read the top entries of a season", false),
+        ["listSeasons"] = ("List the seasons and their submission deadlines", false),
     };
 
     public static void Configure(OpenApiOptions options)

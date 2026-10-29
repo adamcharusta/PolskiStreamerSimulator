@@ -32,6 +32,73 @@ public sealed class CareerRow
 
     /// <summary>When the retention sweep deletes the career (<c>CareerRetention</c>).</summary>
     public DateTimeOffset ExpiresAt { get; set; }
+
+    /// <summary>The season a ranked career plays for; null for an unranked career.</summary>
+    public int? SeasonId { get; set; }
+}
+
+/// <summary>Row of <c>game.seasons</c>; <see cref="Id"/> is the public season number.</summary>
+public sealed class SeasonRow
+{
+    public int Id { get; set; }
+
+    public string RulesetId { get; set; } = "";
+
+    public string ContentDigest { get; set; } = "";
+
+    public DateTimeOffset OpenedAt { get; set; }
+
+    /// <summary>Null while the season is open; one season at most is open.</summary>
+    public DateTimeOffset? ClosedAt { get; set; }
+}
+
+/// <summary>Row of <c>game.season_extensions</c>: one announced deadline extension, kept as its own audit record.</summary>
+public sealed class SeasonExtensionRow
+{
+    public long Id { get; set; }
+
+    public int SeasonId { get; set; }
+
+    public DateTimeOffset Deadline { get; set; }
+
+    public string Reason { get; set; } = "";
+
+    public string Actor { get; set; } = "";
+
+    public DateTimeOffset CreatedAt { get; set; }
+}
+
+/// <summary>
+/// Row of <c>game.leaderboard_entries</c>. <see cref="CareerId"/> is unique and deliberately not a foreign key, so
+/// the entry outlives the career's retention.
+/// </summary>
+public sealed class LeaderboardEntryRow
+{
+    public Guid Id { get; set; }
+
+    public int SeasonId { get; set; }
+
+    public Guid CareerId { get; set; }
+
+    public string Nickname { get; set; } = "";
+
+    public long Score { get; set; }
+
+    public int WeeksPlayed { get; set; }
+
+    public Difficulty Difficulty { get; set; }
+
+    public EndingReason Ending { get; set; }
+
+    public string RulesetId { get; set; } = "";
+
+    public long FinalStateVersion { get; set; }
+
+    public string FinalStateHash { get; set; } = "";
+
+    public DateTimeOffset SubmittedAt { get; set; }
+
+    public DateTimeOffset? HiddenAt { get; set; }
 }
 
 /// <summary>

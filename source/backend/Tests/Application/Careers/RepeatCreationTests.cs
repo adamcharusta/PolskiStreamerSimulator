@@ -112,7 +112,7 @@ public sealed class RepeatCreationTests
         var creationId = Guid.NewGuid();
         var store = new CreationRaceStore(kit.Store);
         await kit.ContentStore.EnsureStoredAsync(kit.Current.Files, Ct);
-        var handler = new CreateCareerHandler(store, kit.Current, kit.ContentStore, kit.Secrets, kit.Views, kit.Time);
+        var handler = new CreateCareerHandler(store, kit.Current, kit.ContentStore, kit.Seasons, kit.Secrets, kit.Views, kit.Time);
         store.Race = () => handler.Handle(Request(creationId), Ct);
 
         var loser = (await handler.Handle(Request(creationId), Ct)).Value;

@@ -27,6 +27,11 @@ public static class ApiProblems
         [ErrorCodes.CreationIdReused] = StatusCodes.Status422UnprocessableEntity,
         [ErrorCodes.CreationClosed] = StatusCodes.Status409Conflict,
         [ErrorCodes.RateLimited] = StatusCodes.Status429TooManyRequests,
+        [ErrorCodes.CareerUnranked] = StatusCodes.Status409Conflict,
+        [ErrorCodes.CareerNotEnded] = StatusCodes.Status409Conflict,
+        [ErrorCodes.SubmissionClosed] = StatusCodes.Status409Conflict,
+        [ErrorCodes.SeasonNotFound] = StatusCodes.Status404NotFound,
+        [ErrorCodes.SeasonUnavailable] = StatusCodes.Status503ServiceUnavailable,
     };
 
     public static ProblemHttpResult From(AppError error)
