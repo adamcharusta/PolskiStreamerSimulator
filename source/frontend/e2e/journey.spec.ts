@@ -145,6 +145,7 @@ test('an Industry Insider accepts the lead sponsor offer and plays the deal week
   await page.getByLabel(pl.create.nickname).fill('Sponsor E2E');
   await page.getByRole('radio', { name: pl.background.industryInsider }).check();
   await page.getByRole('button', { name: pl.create.submit }).click();
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
 
   const offers = page.getByRole('region', { name: pl.offer.title });
   await expect(offers).toBeVisible();
@@ -195,6 +196,7 @@ test('a 4-week batch under a custom strategy, then early retirement shows the sc
   await page.getByRole('link', { name: pl.home.new }).click();
   await page.getByLabel(pl.create.nickname).fill('Strategia E2E');
   await page.getByRole('button', { name: pl.create.submit }).click();
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
 
   await page.getByRole('button', { name: pl.batch.launch }).click();
