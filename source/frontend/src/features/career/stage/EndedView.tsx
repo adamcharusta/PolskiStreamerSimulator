@@ -2,22 +2,31 @@ import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import type { CareerView, EndingSummaryView, ScoreView } from '@/api/generated/game.schemas';
+import { knownCareer } from '@/careers/knownCareers';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { formatContent } from '@/content/icu';
 import { DiplomaButton } from '@/features/diploma/DiplomaButton';
+import { LeaderboardPanel } from '@/features/leaderboard/LeaderboardPanel';
 import { count, date, multiplier, percent } from '@/format';
+
+import { CareerMode } from '../CareerMode';
 
 /** The ending: the narrative from the summary, the score breakdown with both multipliers, and the achievements. */
 export function EndedView({ career }: { readonly career: CareerView }) {
   const { t } = useTranslation();
+  const known = knownCareer(career.careerId);
   return (
     <div className="grid gap-3">
       <StepHeading>{t('career.endedTitle')}</StepHeading>
       {career.ending !== null && <p>{t(`career.ending.${career.ending}`)}</p>}
+      <p className="muted">
+        <CareerMode career={career} />
+      </p>
       {career.summary !== null && <Narrative career={career} summary={career.summary} />}
       {career.score !== null && <ScoreTable score={career.score} />}
       <Achievements career={career} />
       {career.score !== null && <DiplomaButton career={career} score={career.score} />}
+      {known !== null && <LeaderboardPanel career={career} secret={known.secret} />}
       {career.expiresAt != null && (
         <p className="muted">{t('ending.expires', { date: date(career.expiresAt) })}</p>
       )}

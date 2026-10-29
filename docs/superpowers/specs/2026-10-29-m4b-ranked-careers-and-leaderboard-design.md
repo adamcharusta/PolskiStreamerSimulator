@@ -1,7 +1,7 @@
 # M4-B Ranked Careers and Leaderboard — Design
 
 Date: 2026-10-29
-Status: **Agent proposal; API in PR 1, screens in PR 2 (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "pomergowane, kontynuj" after M4-A merged). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; API in PR 1 ([#96](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/96)), screens in PR 2 (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "pomergowane, kontynuj" after M4-A merged). Every rule, field and wording below is an agent proposal for owner review.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project B, delivering [#27](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/27) and the ranked eligibility moved there from [#23](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/23) (TD-122). The M4 decomposition is in the [M4-A design §0](2026-10-29-m4a-career-access-and-retention-design.md).
 
 ## 1. Intent

@@ -10,6 +10,8 @@ export const createCareerSchema = z.object({
   background: z.enum(Background),
   difficulty: z.enum(Difficulty),
   pronouns: z.enum(PronounSet),
+  // A radio pair on the form; the request carries the boolean (TD-122).
+  ranked: z.enum(['ranked', 'unranked']).transform((mode) => mode === 'ranked'),
 });
 
 export type CreateCareerForm = z.input<typeof createCareerSchema>;

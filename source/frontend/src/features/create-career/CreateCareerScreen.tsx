@@ -65,6 +65,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
       background: 'dormRoomNewcomer',
       difficulty: 'normal',
       pronouns: 'woman',
+      ranked: 'ranked',
     },
   });
   const start = (request: CreateCareerRequest) => {
@@ -92,6 +93,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
   const background = watched.background ?? 'dormRoomNewcomer';
   const difficulty = watched.difficulty ?? 'normal';
   const pronouns = watched.pronouns ?? 'woman';
+  const ranked = (watched.ranked ?? 'ranked') === 'ranked';
   const nicknameError = form.formState.errors.nickname?.message;
 
   if (unsaved !== null) {
@@ -177,11 +179,26 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
         ))}
       </fieldset>
 
+      <fieldset className="choices panel">
+        <legend className="panel-title">{t('create.mode')}</legend>
+        <label className="choice">
+          <input type="radio" value="ranked" {...form.register('ranked')} />
+          <span className="font-bold">{t('create.ranked')}</span>
+          <span>{t('create.rankedHint')}</span>
+        </label>
+        <label className="choice">
+          <input type="radio" value="unranked" {...form.register('ranked')} />
+          <span className="font-bold">{t('create.unranked')}</span>
+          <span>{t('create.unrankedHint')}</span>
+        </label>
+      </fieldset>
+
       <Panel title={t('create.summary')}>
         <p className="muted">{t('create.retention')}</p>
         <p>
           {nickname.trim() || '—'} · {t(`background.${background}`)} ·{' '}
-          {t(`difficulty.${difficulty}`)} · {t(`pronouns.${pronouns}`)}
+          {t(`difficulty.${difficulty}`)} · {t(`pronouns.${pronouns}`)} ·{' '}
+          {t(ranked ? 'create.ranked' : 'create.unranked')}
         </p>
         {storageError && (
           <p role="alert" className="bad">
@@ -190,7 +207,11 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
         )}
         {!storageError && creation.error !== null && !rejectsNickname(creation.error) && (
           <p role="alert" className="bad">
-            {t('create.errors.generic')}
+            {t(
+              creation.error.code === 'season-unavailable'
+                ? 'create.errors.season'
+                : 'create.errors.generic',
+            )}
           </p>
         )}
         <Button type="submit" variant="primary" pending={creation.isPending}>

@@ -42,9 +42,12 @@ export function HomeScreen() {
             {t('decor.new')}
           </span>
         </p>
-        <p className="my-3">
+        <p className="my-3 flex flex-wrap gap-2">
           <Link className="btn btn-secondary" to="/odzyskaj">
             {t('home.recover')}
+          </Link>
+          <Link className="btn btn-secondary" to="/ranking">
+            {t('home.leaderboard')}
           </Link>
         </p>
         <p className="muted">{t('home.accessNotice')}</p>

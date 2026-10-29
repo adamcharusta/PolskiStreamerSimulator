@@ -52,7 +52,8 @@
     "pendingTitle": "Kończę zakładanie kariery {{nickname}}…",
     "pendingFailed": "Nie udało się dokończyć zakładania kariery {{nickname}}.",
     "pendingRetry": "Spróbuj ponownie",
-    "pendingClosed": "Nie da się już dokończyć zakładania kariery {{nickname}}. Jeśli masz jej klucz odzyskiwania, odzyskaj ją."
+    "pendingClosed": "Nie da się już dokończyć zakładania kariery {{nickname}}. Jeśli masz jej klucz odzyskiwania, odzyskaj ją.",
+    "leaderboard": "Ranking"
   },
   "create": {
     "title": "Nowa kariera",
@@ -75,9 +76,15 @@
       "nickname": "Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .",
       "generic": "Nie udało się założyć kariery. Spróbuj ponownie.",
       "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie.",
-      "unsaved": "Kariera powstała, ale ta przeglądarka nie zapisała dostępu. Zapisz teraz klucz odzyskiwania — to jedyna droga powrotu — i użyj go na stronie „Odzyskaj karierę” w przeglądarce z włączoną pamięcią strony."
+      "unsaved": "Kariera powstała, ale ta przeglądarka nie zapisała dostępu. Zapisz teraz klucz odzyskiwania — to jedyna droga powrotu — i użyj go na stronie „Odzyskaj karierę” w przeglądarce z włączoną pamięcią strony.",
+      "season": "Ranking jest chwilowo niedostępny. Spróbuj za chwilę albo załóż karierę bez rankingu."
     },
-    "retention": "Po założeniu dostaniesz klucz odzyskiwania. Kariera wygasa po 6 miesiącach bez rozegranego tygodnia, a ukończona jest dostępna jeszcze 12 miesięcy."
+    "retention": "Po założeniu dostaniesz klucz odzyskiwania. Kariera wygasa po 6 miesiącach bez rozegranego tygodnia, a ukończona jest dostępna jeszcze 12 miesięcy.",
+    "mode": "Tryb kariery",
+    "ranked": "Rankingowa",
+    "rankedHint": "Wynik trafi do rankingu sezonu. Bez ręcznych zapisów i importu.",
+    "unranked": "Bez rankingu",
+    "unrankedHint": "Grasz dla siebie; wynik nie trafia do rankingu."
   },
   "background": {
     "dormRoomNewcomer": "Świeżak z akademika",
@@ -566,7 +573,9 @@
     "nextMilestone": "Do {{target}} obserwujących brakuje {{missing}}",
     "history": "Historia kariery",
     "expires": "Kariera wygaśnie {{date}}, jeśli do tego czasu nie rozegrasz tygodnia.",
-    "key": "Klucz odzyskiwania"
+    "key": "Klucz odzyskiwania",
+    "ranked": "Rankingowa · Sezon {{season}}",
+    "unranked": "Bez rankingu"
   },
   "history": {
     "title": "Historia kariery",
@@ -651,5 +660,52 @@
     "rateLimited": "Za dużo prób. Spróbuj za kilka minut.",
     "generic": "Nie udało się odzyskać kariery. Spróbuj ponownie.",
     "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "season": "Sezon",
+    "seasonOption": "Sezon {{season}}",
+    "seasonCurrent": "Sezon {{season}} (trwa)",
+    "open": "Sezon trwa. Każda ukończona kariera rankingowa może dodać swój wynik.",
+    "closed": "Sezon zamknięty. Wyniki przyjmujemy do {{date}}.",
+    "closedFinal": "Sezon zamknięty. Termin przyjmowania wyników minął {{date}}.",
+    "extended": "Termin przedłużony dla wszystkich.",
+    "caption": "Top 100 — sezon {{season}}",
+    "empty": "W tym sezonie nikt jeszcze nie opublikował wyniku.",
+    "loading": "Wczytuję ranking…",
+    "failed": "Nie udało się wczytać rankingu.",
+    "notFound": "Nie ma takiego sezonu.",
+    "column": {
+      "rank": "Miejsce",
+      "nickname": "Nick",
+      "score": "Wynik",
+      "weeks": "Tygodnie",
+      "difficulty": "Poziom",
+      "ending": "Zakończenie"
+    },
+    "ending": {
+      "completed": "Ukończona",
+      "insolvency": "Bankructwo",
+      "earlyRetirement": "Emerytura",
+      "globalBan": "Globalny ban",
+      "allPlatformsBanned": "Bany wszędzie"
+    },
+    "panel": {
+      "title": "Ranking",
+      "loading": "Sprawdzam ranking…",
+      "failed": "Nie udało się sprawdzić rankingu.",
+      "unranked": "Ta kariera jest bez rankingu, więc jej wynik nie trafia do tabeli.",
+      "intro": "Dodaj wynik {{score}} pkt do tabeli sezonu {{season}}. Nicku nie zmienisz po publikacji.",
+      "deadline": "Wyniki z tego sezonu przyjmujemy do {{date}}.",
+      "nickname": "Nick w rankingu",
+      "nicknameHint": "1–5 znaków: litery A–Z, polskie litery albo cyfry.",
+      "invalid": "Nick musi mieć 1–5 znaków: litery A–Z, polskie litery albo cyfry.",
+      "submit": "Publikuję wynik",
+      "publishFailed": "Nie udało się opublikować wyniku. Spróbuj ponownie.",
+      "closed": "Termin publikacji wyników z sezonu {{season}} minął {{date}}.",
+      "published": "{{nickname}} — {{score}} pkt, {{rank}}. miejsce w sezonie {{season}}.",
+      "publishedHidden": "{{nickname}} — {{score}} pkt. Wpis jest ukryty.",
+      "show": "Zobacz ranking sezonu"
+    }
   }
 }

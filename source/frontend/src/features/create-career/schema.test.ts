@@ -7,6 +7,16 @@ const form = (nickname: string) => ({
   background: 'dormRoomNewcomer',
   difficulty: 'normal',
   pronouns: 'woman',
+  ranked: 'ranked',
+});
+
+describe('the career mode (TD-122)', () => {
+  it('sends a boolean', () => {
+    expect(createCareerSchema.parse(form('Streamer')).ranked).toBe(true);
+    expect(createCareerSchema.parse({ ...form('Streamer'), ranked: 'unranked' }).ranked).toBe(
+      false,
+    );
+  });
 });
 
 describe('the nickname rule mirrors the server (TD-92)', () => {
