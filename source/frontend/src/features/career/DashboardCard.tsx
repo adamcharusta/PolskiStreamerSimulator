@@ -7,7 +7,10 @@ import { count, date } from '@/format';
 import { CareerMode } from './CareerMode';
 import { ageAt, nextMilestone } from './dashboard';
 
-/** Where the career stands (content §3.4): week, age, platform, obligations due, next milestone and the history link. */
+/**
+ * Where the career stands (content §3.4): week, age, platform, obligations due, next milestone, and the links to the
+ * history, the recovery key and, for an unranked career, its manual saves (M4-C).
+ */
 export function DashboardCard({ career }: { readonly career: CareerView }) {
   const { t } = useTranslation();
   const due = career.contracts.filter((deal) => deal.dueThisWeek);
@@ -46,6 +49,11 @@ export function DashboardCard({ career }: { readonly career: CareerView }) {
         <Link to="/kariera/$careerId/klucz" params={{ careerId: career.careerId }}>
           {t('dashboard.key')}
         </Link>
+        {!career.ranked && (
+          <Link to="/kariera/$careerId/zapisy" params={{ careerId: career.careerId }}>
+            {t('dashboard.saves')}
+          </Link>
+        )}
       </p>
     </section>
   );

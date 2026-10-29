@@ -282,3 +282,70 @@ test('a career recovered with its key in a browser that lost its data continues 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
   expect(new URL(page.url()).pathname).toBe(careerPath);
 });
+
+/** Plays the manual week from the plan to its report, choosing the first option of every event. */
+async function playRestWeek(page: Page): Promise<void> {
+  await page.getByRole('radio', { name: pl.action.rest }).check();
+  await page.getByRole('button', { name: pl.plan.start }).click();
+  const choose = page.getByRole('button', { name: pl.event.choose });
+  const settle = page.getByRole('button', { name: pl.settle.action });
+  for (;;) {
+    await expect(choose.or(settle)).toBeVisible();
+    if (await settle.isVisible()) {
+      break;
+    }
+
+    await page.getByRole('group', { name: pl.event.choices }).getByRole('radio').first().check();
+    await choose.click();
+    await page.getByRole('button', { name: pl.roll.next }).click();
+  }
+
+  await settle.click();
+  await page.getByRole('button', { name: pl.report.next }).click();
+}
+
+test('an unranked career restores a slot, then its export imports as a new career', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Zapis E2E');
+  await page.getByRole('radio', { name: new RegExp(`^${pl.create.unranked}`, 'u') }).check();
+  await page.getByRole('button', { name: pl.create.submit }).click();
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
+  const desk = page.getByRole('region', { name: pl.career.summaryLabel });
+  await expect(desk).toContainText(fill(pl.career.week, { week: 1 }));
+
+  await page.getByRole('link', { name: pl.dashboard.saves }).click();
+  await page.getByRole('button', { name: fill(pl.saves.saveHere, { slot: 1 }) }).click();
+  await expect(page.getByText(fill(pl.saves.saved, { slot: 1 }))).toBeVisible();
+  await expectAccessible(page, 'saves');
+  await page.getByRole('link', { name: pl.saves.back }).click();
+
+  await playRestWeek(page);
+  await expect(desk).toContainText(fill(pl.career.week, { week: 2 }));
+
+  await page.getByRole('link', { name: pl.dashboard.saves }).click();
+  await page.getByRole('button', { name: fill(pl.saves.restore, { slot: 1 }) }).click();
+  await page.getByRole('button', { name: pl.saves.load }).click();
+  await expect(page.getByText(fill(pl.saves.restored, { slot: 1, week: 1 }))).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: pl.saves.export }).click();
+  const downloaded = await download;
+  const file = await downloaded.path();
+  await page.getByRole('link', { name: pl.saves.back }).click();
+  await expect(desk).toContainText(fill(pl.career.week, { week: 1 }));
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+
+  await page.goto('/importuj');
+  await page.getByLabel(pl.import.fileLabel).setInputFiles(file);
+  await expectAccessible(page, 'import');
+  await page.getByRole('button', { name: pl.import.submit }).click();
+  await expect(page.getByRole('status', { name: pl.recovery.keyTitle })).toContainText('pss1.');
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
+  await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
+  await expect(desk).toContainText('Zapis E2E');
+  await expect(desk).toContainText(fill(pl.career.week, { week: 1 }));
+});
