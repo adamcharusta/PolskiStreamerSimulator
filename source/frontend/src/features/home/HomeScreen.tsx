@@ -49,6 +49,9 @@ export function HomeScreen() {
           <Link className="btn btn-secondary" to="/ranking">
             {t('home.leaderboard')}
           </Link>
+          <Link className="btn btn-secondary" to="/importuj">
+            {t('home.import')}
+          </Link>
         </p>
         <p className="muted">{t('home.accessNotice')}</p>
       </Panel>

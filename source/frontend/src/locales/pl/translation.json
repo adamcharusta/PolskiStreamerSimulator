@@ -53,7 +53,8 @@
     "pendingFailed": "Nie udało się dokończyć zakładania kariery {{nickname}}.",
     "pendingRetry": "Spróbuj ponownie",
     "pendingClosed": "Nie da się już dokończyć zakładania kariery {{nickname}}. Jeśli masz jej klucz odzyskiwania, odzyskaj ją.",
-    "leaderboard": "Ranking"
+    "leaderboard": "Ranking",
+    "import": "Importuj zapis"
   },
   "create": {
     "title": "Nowa kariera",
@@ -575,7 +576,8 @@
     "expires": "Kariera wygaśnie {{date}}, jeśli do tego czasu nie rozegrasz tygodnia.",
     "key": "Klucz odzyskiwania",
     "ranked": "Rankingowa · Sezon {{season}}",
-    "unranked": "Bez rankingu"
+    "unranked": "Bez rankingu",
+    "saves": "Zapisy"
   },
   "history": {
     "title": "Historia kariery",
@@ -706,6 +708,55 @@
       "published": "{{nickname}} — {{score}} pkt, {{rank}}. miejsce w sezonie {{season}}.",
       "publishedHidden": "{{nickname}} — {{score}} pkt. Wpis jest ukryty.",
       "show": "Zobacz ranking sezonu"
+    }
+  },
+  "saves": {
+    "title": "Zapisy ręczne",
+    "back": "Wróć do kariery",
+    "loading": "Wczytuję zapisy…",
+    "loadFailed": "Nie udało się wczytać zapisów tej kariery.",
+    "ranked": "Kariera rankingowa nie ma zapisów ręcznych ani eksportu: jej wynik liczy się tylko wtedy, gdy nie da się cofnąć ruchów.",
+    "intro": "Masz trzy niezależne sloty. Zapis zachowuje dokładny stan kariery, a wczytanie wraca do niego — razem z historią tamtej rozgrywki.",
+    "slotsLabel": "Sloty zapisu",
+    "slot": "Slot {{slot}}",
+    "empty": "Pusty",
+    "week": "Tydzień",
+    "savedAt": "Zapisano",
+    "endedSlot": "Zapis z zakończonej kariery.",
+    "saveHere": "Zapisz w slocie {{slot}}",
+    "restore": "Wczytaj slot {{slot}}",
+    "confirmLabel": "Potwierdzenie",
+    "confirmSave": "Slot {{slot}} ma już zapis. Nadpisać go bieżącym stanem?",
+    "confirmRestore": "Wczytać slot {{slot}}? Postęp, którego nie masz w żadnym slocie, przepadnie.",
+    "overwrite": "Tak, nadpisz",
+    "load": "Tak, wczytaj",
+    "cancel": "Anuluj",
+    "saved": "Zapisano w slocie {{slot}}.",
+    "restored": "Wczytano slot {{slot}}. Kariera wraca do tygodnia {{week}}.",
+    "stale": "Kariera zmieniła się w innej karcie. Odśwież stronę i spróbuj ponownie.",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "restoreFailed": "Nie udało się wczytać zapisu. Spróbuj ponownie.",
+    "exportTitle": "Eksport",
+    "exportIntro": "Pobierz plik z bieżącym stanem kariery. Zaimportowany plik tworzy nową karierę bez rankingu; historia tygodni nie przechodzi do pliku.",
+    "export": "Eksportuj zapis",
+    "exportFailed": "Nie udało się pobrać pliku zapisu."
+  },
+  "import": {
+    "title": "Import zapisu",
+    "intro": "Wybierz plik wyeksportowany z kariery bez rankingu. Powstanie z niego nowa kariera bez rankingu z własnym kluczem odzyskiwania; żadna istniejąca kariera się nie zmieni.",
+    "fileLabel": "Plik zapisu (.json)",
+    "submit": "Importuj",
+    "notStored": "Kariera powstała, ale ta przeglądarka nie zapisała dostępu do niej. Zachowaj klucz odzyskiwania — tylko nim ją otworzysz.",
+    "errors": {
+      "noFile": "Najpierw wybierz plik zapisu.",
+      "notJson": "To nie jest plik zapisu tej gry.",
+      "storage": "Ta przeglądarka nie może zapisać dostępu do kariery, więc import się nie uda. Sprawdź ustawienia prywatności.",
+      "import-invalid": "Plik jest uszkodzony albo zmieniony i nie da się z niego odtworzyć kariery.",
+      "import-newer": "Ten zapis pochodzi z nowszej wersji gry. Spróbuj ponownie, gdy serwer zostanie zaktualizowany.",
+      "import-unsupported": "Ten zapis używa zasad albo treści, których ten serwer nie ma.",
+      "payload-too-large": "Plik jest za duży, by był zapisem tej gry.",
+      "rate-limited": "Za dużo prób w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.",
+      "generic": "Nie udało się zaimportować zapisu. Spróbuj ponownie."
     }
   }
 }

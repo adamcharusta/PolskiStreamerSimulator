@@ -12,6 +12,8 @@ import { HomeScreen } from '@/features/home/HomeScreen';
 import { LeaderboardScreen } from '@/features/leaderboard/LeaderboardScreen';
 import { RecoverScreen } from '@/features/recovery/RecoverScreen';
 import { RecoveryKeyScreen } from '@/features/recovery/RecoveryKeyScreen';
+import { ImportScreen } from '@/features/saves/ImportScreen';
+import { SavesScreen } from '@/features/saves/SavesScreen';
 
 import { RootLayout } from './RootLayout';
 import { NotFound, RouteError } from './RouteFallbacks';
@@ -45,6 +47,18 @@ const keyRoute = createRoute({
   component: RecoveryKeyScreen,
 });
 
+const savesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/kariera/$careerId/zapisy',
+  component: SavesScreen,
+});
+
+const importRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/importuj',
+  component: ImportScreen,
+});
+
 const recoverRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/odzyskaj',
@@ -70,13 +84,15 @@ const routeTree = rootRoute.addChildren([
   careerRoute,
   historyRoute,
   keyRoute,
+  savesRoute,
   recoverRoute,
+  importRoute,
   leaderboardRoute,
 ]);
 
 /**
  * One game route per career (its stage follows the server's next step, not the URL, TD-98), its history (M3-D), its
- * recovery key and the recovery route (M4-A), and the season tables (M4-B).
+ * recovery key and the recovery route (M4-A), the season tables (M4-B), and the unranked slots and import (M4-C).
  */
 export function createAppRouter(history?: RouterHistory) {
   return createRouter({

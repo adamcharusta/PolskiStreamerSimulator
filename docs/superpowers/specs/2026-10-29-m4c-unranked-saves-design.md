@@ -1,7 +1,7 @@
 # M4-C Unranked Saves — Design
 
 Date: 2026-10-29
-Status: **Agent proposal; API in PR 1, screens in PR 2 (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-B merged). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; API in PR 1 ([#100](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/100)), screens in PR 2 ([#101](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/101)) (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-B merged). Every rule, field and wording below is an agent proposal for owner review.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project C, delivering [#26](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/26) (TD-123). The M4 decomposition is in the [M4-A design §0](2026-10-29-m4a-career-access-and-retention-design.md).
 
 ## 1. Intent
@@ -82,7 +82,7 @@ These five endpoints replace the planned `POST /v1/careers/{id}/saves` row in th
 
 ## 7. Screens (PR 2)
 
-- **`/kariera/{id}/zapisy`** (link „Zapisy” in the top bar of an unranked career):
+- **`/kariera/{id}/zapisy`** (link „Zapisy” on the dashboard of an unranked career, beside the history and key links):
   - Three slot cards, each showing „Pusty” or the week, cash, followers and save time.
   - „Zapisz tutaj” asks for confirmation before overwriting a filled slot.
   - „Wczytaj” always asks for confirmation and warns that progress not stored in a slot will be lost.
