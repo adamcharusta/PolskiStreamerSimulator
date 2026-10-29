@@ -17,11 +17,11 @@ public sealed class OwnerUserStore(GameDbContext context, IdentityErrorDescriber
     private const string InternalLoginProvider = "[AspNetUserStore]";
     private const string RecoveryCodeTokenName = "RecoveryCodes";
 
-    public override Task ReplaceCodesAsync(IdentityUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken = default)
+    public override Task ReplaceCodesAsync(IdentityUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
         => base.ReplaceCodesAsync(user, recoveryCodes.Select(Hash), cancellationToken);
 
     // The base implementation would pass the remaining (already hashed) codes back through ReplaceCodesAsync.
-    public override async Task<bool> RedeemCodeAsync(IdentityUser user, string code, CancellationToken cancellationToken = default)
+    public override async Task<bool> RedeemCodeAsync(IdentityUser user, string code, CancellationToken cancellationToken)
     {
         var hash = Hash(code);
         var stored = (await GetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "").Split(';');

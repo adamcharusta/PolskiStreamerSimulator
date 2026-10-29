@@ -35,17 +35,17 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
 
     public DbSet<LeaderboardEntryRow> LeaderboardEntries => Set<LeaderboardEntryRow>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(modelBuilder);
-        modelBuilder.HasDefaultSchema(Schema);
-        modelBuilder.Entity<IdentityUser>().ToTable("users", OwnerSchema);
-        modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("user_claims", OwnerSchema);
-        modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("user_logins", OwnerSchema);
-        modelBuilder.Entity<IdentityUserToken<string>>().ToTable("user_tokens", OwnerSchema);
-        modelBuilder.Entity<DataProtectionKey>().ToTable("data_protection_keys", OwnerSchema);
+        base.OnModelCreating(builder);
+        builder.HasDefaultSchema(Schema);
+        builder.Entity<IdentityUser>().ToTable("users", OwnerSchema);
+        builder.Entity<IdentityUserClaim<string>>().ToTable("user_claims", OwnerSchema);
+        builder.Entity<IdentityUserLogin<string>>().ToTable("user_logins", OwnerSchema);
+        builder.Entity<IdentityUserToken<string>>().ToTable("user_tokens", OwnerSchema);
+        builder.Entity<DataProtectionKey>().ToTable("data_protection_keys", OwnerSchema);
 
-        modelBuilder.Entity<AuditRecordRow>(e =>
+        builder.Entity<AuditRecordRow>(e =>
         {
             e.ToTable("audit_records");
             e.HasKey(x => x.Id);
@@ -60,7 +60,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasIndex(x => x.At).HasDatabaseName("ix_audit_records_at");
         });
 
-        modelBuilder.Entity<ContentSnapshotRow>(e =>
+        builder.Entity<ContentSnapshotRow>(e =>
         {
             e.ToTable("content_snapshots");
             e.HasKey(x => x.Digest);
@@ -70,7 +70,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.Property(x => x.CreatedAt).HasColumnName("created_at");
         });
 
-        modelBuilder.Entity<CareerRow>(e =>
+        builder.Entity<CareerRow>(e =>
         {
             e.ToTable("careers");
             e.HasKey(x => x.Id);
@@ -93,7 +93,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasOne<SeasonRow>().WithMany().HasForeignKey(x => x.SeasonId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<SeasonRow>(e =>
+        builder.Entity<SeasonRow>(e =>
         {
             e.ToTable("seasons");
             e.HasKey(x => x.Id);
@@ -108,7 +108,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasOne<ContentSnapshotRow>().WithMany().HasForeignKey(x => x.ContentDigest).OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<SaveSlotRow>(e =>
+        builder.Entity<SaveSlotRow>(e =>
         {
             e.ToTable("unranked_save_slots", t => t.HasCheckConstraint("ck_unranked_save_slots_slot", "[slot] BETWEEN 1 AND 3"));
             e.HasKey(x => new { x.CareerId, x.Slot });
@@ -120,7 +120,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasOne<CareerRow>().WithMany().HasForeignKey(x => x.CareerId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<SeasonExtensionRow>(e =>
+        builder.Entity<SeasonExtensionRow>(e =>
         {
             e.ToTable("season_extensions");
             e.HasKey(x => x.Id);
@@ -134,7 +134,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasOne<SeasonRow>().WithMany().HasForeignKey(x => x.SeasonId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<LeaderboardEntryRow>(e =>
+        builder.Entity<LeaderboardEntryRow>(e =>
         {
             e.ToTable("leaderboard_entries");
             e.HasKey(x => x.Id);
@@ -162,7 +162,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasOne<SeasonRow>().WithMany().HasForeignKey(x => x.SeasonId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<CareerSecretRow>(e =>
+        builder.Entity<CareerSecretRow>(e =>
         {
             e.ToTable("career_secrets");
             e.HasKey(x => x.CareerId);
@@ -177,7 +177,7 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.HasOne<CareerRow>().WithOne().HasForeignKey<CareerSecretRow>(x => x.CareerId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<CareerActionRow>(e =>
+        builder.Entity<CareerActionRow>(e =>
         {
             e.ToTable("career_actions");
             e.HasKey(x => new { x.CareerId, x.Sequence });

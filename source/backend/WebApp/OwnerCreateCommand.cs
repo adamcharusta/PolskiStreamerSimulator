@@ -27,7 +27,7 @@ public sealed class OwnerCreateCommand : JasperFxAsyncCommand<OwnerCreateInput>
 {
     public const int RecoveryCodeCount = 10;
     private const string Issuer = "Polski Streamer Simulator";
-    private const string PasswordAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+    private const string GeneratedAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
     public override async Task<bool> Execute(OwnerCreateInput input)
     {
@@ -107,5 +107,5 @@ public sealed class OwnerCreateCommand : JasperFxAsyncCommand<OwnerCreateInput>
         return new OwnerCredentials(user.UserName!, password, key, uri, codes);
     }
 
-    private static string NewPassword() => RandomNumberGenerator.GetString(PasswordAlphabet, 24);
+    private static string NewPassword() => RandomNumberGenerator.GetString(GeneratedAlphabet, 24);
 }
