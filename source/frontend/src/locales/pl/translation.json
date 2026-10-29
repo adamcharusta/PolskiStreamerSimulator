@@ -758,5 +758,76 @@
       "rate-limited": "Za dużo prób w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.",
       "generic": "Nie udało się zaimportować zapisu. Spróbuj ponownie."
     }
+  },
+  "admin": {
+    "title": "Panel właściciela",
+    "loading": "Wczytuję…",
+    "failed": "Nie udało się wczytać danych. Odśwież stronę.",
+    "account": "Konto",
+    "signedInAs": "Zalogowano jako {{username}}.",
+    "logout": "Wyloguj",
+    "fewCodes_one": "Został Ci {{count}} kod zapasowy. Wygeneruj nowe poleceniem owner-create --reset.",
+    "fewCodes_few": "Zostały Ci {{count}} kody zapasowe. Wygeneruj nowe poleceniem owner-create --reset.",
+    "fewCodes_many": "Zostało Ci {{count}} kodów zapasowych. Wygeneruj nowe poleceniem owner-create --reset.",
+    "fewCodes_other": "Zostało Ci {{count}} kodów zapasowych. Wygeneruj nowe poleceniem owner-create --reset.",
+    "signIn": {
+      "title": "Logowanie",
+      "username": "Nazwa użytkownika",
+      "password": "Hasło",
+      "next": "Dalej",
+      "codeIntro": "Wpisz sześciocyfrowy kod z aplikacji uwierzytelniającej.",
+      "recoveryIntro": "Wpisz jeden z kodów zapasowych. Każdy działa tylko raz.",
+      "code": "Kod z aplikacji",
+      "recoveryCode": "Kod zapasowy",
+      "useRecovery": "Użyj kodu zapasowego",
+      "useCode": "Użyj kodu z aplikacji",
+      "submit": "Zaloguj",
+      "errors": {
+        "failed": "Nieprawidłowe dane logowania.",
+        "locked": "Konto jest zablokowane na 15 minut po kilku nieudanych próbach.",
+        "rateLimited": "Za dużo prób w krótkim czasie. Odczekaj chwilę.",
+        "generic": "Nie udało się zalogować. Spróbuj ponownie."
+      }
+    },
+    "moderation": {
+      "title": "Ranking",
+      "list": "Wpisy sezonu",
+      "empty": "W tym sezonie nie ma jeszcze wpisów.",
+      "summary": "{{score}} pkt, {{weeks}} tyg., opublikowano {{at}}.",
+      "rank": "Miejsce {{rank}}.",
+      "hidden": "Ukryty: {{reason}}",
+      "receipt": "Zasady {{ruleset}}, stan v{{version}}, skrót {{hash}}…",
+      "hide": "Ukryj {{nickname}}",
+      "restore": "Przywróć {{nickname}}",
+      "reason": "Powód",
+      "reasonRequired": "Podaj powód — trafi do dziennika zmian.",
+      "confirmHide": "Ukryj wpis {{nickname}}",
+      "confirmRestore": "Przywróć wpis {{nickname}}",
+      "failed": "Nie udało się zmienić wpisu. Odśwież stronę i spróbuj ponownie."
+    },
+    "extension": {
+      "title": "Termin sezonu",
+      "none": "Żaden sezon nie jest jeszcze zamknięty.",
+      "option": "Sezon {{season}} (termin {{date}})",
+      "until": "Nowy termin",
+      "submit": "Przedłuż termin",
+      "incomplete": "Wybierz sezon, nowy termin i podaj powód.",
+      "done": "Sezon {{season}} przyjmuje wyniki do {{date}}.",
+      "failed": "Nie udało się przedłużyć terminu. Nowy termin musi być późniejszy niż obecny."
+    },
+    "audit": {
+      "title": "Dziennik zmian",
+      "empty": "Nie ma jeszcze żadnych zmian.",
+      "line": "{{target}} — {{actor}}, {{at}}: {{reason}}",
+      "action": {
+        "leaderboard": {
+          "hide": "Ukrycie wpisu",
+          "restore": "Przywrócenie wpisu"
+        },
+        "season": {
+          "extend": "Przedłużenie terminu"
+        }
+      }
+    }
   }
 }

@@ -60,6 +60,29 @@ docker compose up             # SQL Server, the API on :8080 and Vite on :5173
 
 `docker compose down -v` resets the local database. See [local Docker Compose](docs/development-and-delivery.md#local-docker-compose) for rebuilding the API and running the browser journey.
 
+## Owner account and `/admin`
+
+The owner panel at `/admin` is never linked from the game. It has exactly one account, which only a command run next to the API creates; there is no registration page ([M4-D design](docs/superpowers/specs/2026-10-29-m4d-owner-account-and-moderation-design.md), TD-124). Run it once after the database is migrated:
+
+```sh
+# local Docker Compose stack
+docker compose exec api dotnet PolskiStreamerSimulator.WebApp.dll owner-create --username <name>
+# from source/backend against the database in ConnectionStrings__Game
+dotnet run --project WebApp -- owner-create --username <name>
+```
+
+The command prints, once, a generated password, the authenticator key with its `otpauth://` URI, and ten recovery codes. Add the key to an authenticator app and keep the password and codes offline; the server stores only hashes of the codes, and each code signs in once. A second `owner-create` is refused.
+
+Sign-in at `/admin` takes the password, then the six-digit code from the app or, behind „Użyj kodu zapasowego”, one recovery code. Five failed attempts lock the account for 15 minutes, and a sign-in lasts 8 hours. Passwords and second factors cannot be changed in the browser: after a lost phone, lost codes or a leaked password, run
+
+```sh
+docker compose exec api dotnet PolskiStreamerSimulator.WebApp.dll owner-create --reset
+```
+
+which prints a new password, authenticator key and recovery codes, unlocks the account and signs out every session.
+
+In the panel the owner hides an entry (also the way to revoke an invalid result) and restores it, each with a required reason; a hidden entry keeps its score and returns to its rank when restored. Hiding, restoring and season deadline extensions (also `season-extend` on the command line) are kept in the panel's „Dziennik zmian” audit trail.
+
 ## Build and test
 
 Requires the .NET 10 SDK (pinned by `source/backend/global.json`). Run every `dotnet` command from `source/backend`:

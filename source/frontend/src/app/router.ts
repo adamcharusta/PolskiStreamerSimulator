@@ -2,6 +2,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   type RouterHistory,
 } from '@tanstack/react-router';
 
@@ -78,6 +79,13 @@ const leaderboardRoute = createRoute({
   component: LeaderboardScreen,
 });
 
+// The owner's panel is loaded only when visited; players never download it (spec M4-D §7).
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  component: lazyRouteComponent(() => import('@/features/admin/AdminScreen'), 'AdminScreen'),
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   createCareerRoute,
@@ -88,11 +96,13 @@ const routeTree = rootRoute.addChildren([
   recoverRoute,
   importRoute,
   leaderboardRoute,
+  adminRoute,
 ]);
 
 /**
  * One game route per career (its stage follows the server's next step, not the URL, TD-98), its history (M3-D), its
- * recovery key and the recovery route (M4-A), the season tables (M4-B), and the unranked slots and import (M4-C).
+ * recovery key and the recovery route (M4-A), the season tables (M4-B), the unranked slots and import (M4-C), and the
+ * owner's lazy-loaded panel (M4-D).
  */
 export function createAppRouter(history?: RouterHistory) {
   return createRouter({
