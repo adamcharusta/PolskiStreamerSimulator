@@ -55,7 +55,7 @@ export function KeyBox({
           {t('recovery.download')}
         </Button>
       </div>
-      {copied !== 'idle' && <p role="status">{t(`recovery.${copied}`)}</p>}
+      {copied !== 'idle' && <output className="block">{t(`recovery.${copied}`)}</output>}
     </div>
   );
 }
