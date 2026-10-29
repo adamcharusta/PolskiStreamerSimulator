@@ -97,7 +97,7 @@ public sealed class SubmitActionHandler(
         var (next, roll, report) = step.Value;
         var lastReport = report ?? await store.LastReportAsync(career.Id, cancellationToken);
         var now = time.GetUtcNow();
-        var outcome = new ActionOutcome(views.Build(career.Id, career.Nickname, next, content, lastReport, CareerRetention.ExpiresAt(next, now)), roll, report);
+        var outcome = new ActionOutcome(views.Build(career.Id, career.Nickname, next, content, lastReport, CareerRetention.ExpiresAt(next, now), career.Season), roll, report);
         var entry = new NewAction(
             command.CommandId,
             0,

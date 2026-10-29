@@ -50,5 +50,10 @@ public sealed class MigrationTests(SqlServerFixture sql)
         Assert.Equal(new DateTimeOffset(2026, 8, 31, 10, 0, 0, TimeSpan.Zero).AddMonths(6), active.ExpiresAt);
         Assert.Equal(new DateTimeOffset(2026, 3, 15, 10, 0, 0, TimeSpan.Zero), ended.EndedAt);
         Assert.Equal(new DateTimeOffset(2027, 3, 15, 10, 0, 0, TimeSpan.Zero), ended.ExpiresAt);
+
+        // M4-B: careers stored before it stay unranked and belong to no season.
+        Assert.All(careers, c => Assert.False(c.Ranked));
+        Assert.All(careers, c => Assert.Null(c.SeasonId));
+        Assert.Equal(0, await db.Seasons.CountAsync(ct));
     }
 }

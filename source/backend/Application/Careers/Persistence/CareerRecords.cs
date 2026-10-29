@@ -2,7 +2,10 @@ using PolskiStreamerSimulator.Domain.Careers;
 
 namespace PolskiStreamerSimulator.Application.Careers.Persistence;
 
-/// <summary>A career as stored: its current state, display metadata and the date the retention sweep deletes it.</summary>
+/// <summary>
+/// A career as stored: its current state, display metadata, the date the retention sweep deletes it and, for a ranked
+/// career, its season.
+/// </summary>
 public sealed record StoredCareer(
     Guid Id,
     string Nickname,
@@ -10,11 +13,13 @@ public sealed record StoredCareer(
     DateTimeOffset CreatedAt,
     DateTimeOffset LastActionAt,
     DateTimeOffset ExpiresAt,
-    DateTimeOffset? EndedAt = null);
+    DateTimeOffset? EndedAt = null,
+    int? Season = null);
 
 /// <summary>
 /// A career to create with the hashes of its access material; the raw secret, recovery key and creation ID are never
-/// stored. <see cref="Creation"/> is null for a client that sent no creation ID.
+/// stored. <see cref="Creation"/> is null for a client that sent no creation ID; <see cref="Season"/> is null for an
+/// unranked career.
 /// </summary>
 public sealed record NewCareer(
     Guid Id,
@@ -23,7 +28,8 @@ public sealed record NewCareer(
     byte[] SecretHash,
     byte[] RecoveryHash,
     CreationHashes? Creation,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    int? Season = null);
 
 /// <summary>SHA-256 of the client's creation ID and of its canonical request (spec M4-A §4).</summary>
 public sealed record CreationHashes(byte[] CreationHash, byte[] RequestHash);

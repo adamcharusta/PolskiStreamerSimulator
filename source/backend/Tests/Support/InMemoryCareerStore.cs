@@ -23,7 +23,7 @@ public sealed class InMemoryCareerStore : ICareerStore
                 return Task.FromResult(CreateOutcome.DuplicateCreation);
             }
 
-            careers.Add(career.Id, new StoredCareer(career.Id, career.Nickname, career.State, career.CreatedAt, career.CreatedAt, CareerRetention.ExpiresAt(career.State, career.CreatedAt)));
+            careers.Add(career.Id, new StoredCareer(career.Id, career.Nickname, career.State, career.CreatedAt, career.CreatedAt, CareerRetention.ExpiresAt(career.State, career.CreatedAt), Season: career.Season));
             secrets.Add(career.Id, new CareerCredentials(career.SecretHash, career.RecoveryHash, career.Creation?.RequestHash));
             if (creation is not null)
             {

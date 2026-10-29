@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using PolskiStreamerSimulator.Application.Careers;
+using PolskiStreamerSimulator.Application.Leaderboard;
 using PolskiStreamerSimulator.Domain.Rulesets;
 using PolskiStreamerSimulator.Domain.Simulation;
 
@@ -15,6 +16,7 @@ public static class ApplicationServices
         services.AddSingleton<CareerViewBuilder>();
         services.AddSingleton<CareerAccess>();
         services.AddSingleton<RetentionSweep>();
+        services.AddSingleton<LeaderboardPublication>();
         return services;
     }
 }

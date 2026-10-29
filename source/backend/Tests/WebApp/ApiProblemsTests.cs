@@ -26,6 +26,11 @@ public sealed class ApiProblemsTests
         { ErrorCodes.CreationIdReused, 422 },
         { ErrorCodes.CreationClosed, 409 },
         { ErrorCodes.RateLimited, 429 },
+        { ErrorCodes.CareerUnranked, 409 },
+        { ErrorCodes.CareerNotEnded, 409 },
+        { ErrorCodes.SubmissionClosed, 409 },
+        { ErrorCodes.SeasonNotFound, 404 },
+        { ErrorCodes.SeasonUnavailable, 503 },
         { ErrorCodes.Internal, 500 },
     };
 

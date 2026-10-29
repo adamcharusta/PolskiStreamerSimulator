@@ -5,6 +5,261 @@
     "version": "v1"
   },
   "paths": {
+    "/v1/careers/{id}/leaderboard-entry": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Read whether and until when a career can publish its result",
+        "operationId": "getLeaderboardEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryStatusView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Publish the server-computed result of an ended ranked career under a nickname",
+        "operationId": "publishResult",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishResultRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntryStatusView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "careerSecret": [ ]
+          }
+        ]
+      }
+    },
+    "/v1/leaderboard": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Read the top entries of a season",
+        "operationId": "getLeaderboard",
+        "parameters": [
+          {
+            "name": "season",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderboardView"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/seasons": {
+      "get": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "List the seasons and their submission deadlines",
+        "operationId": "listSeasons",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SeasonView"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/careers": {
       "post": {
         "tags": [
@@ -1378,9 +1633,20 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "ranked": {
+            "type": "boolean",
+            "default": false
+          },
+          "season": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
           }
         },
-        "description": "A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step."
+        "description": "A career as the client sees it at one version (and the ruleset and, if ranked, season it plays for life); also the stored response of each step."
       },
       "Category": {
         "enum": [
@@ -1607,9 +1873,13 @@
               "string"
             ],
             "format": "uuid"
+          },
+          "ranked": {
+            "type": "boolean",
+            "default": false
           }
         },
-        "description": "Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121)."
+        "description": "Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A bool CreateCareerRequest.Ranked career plays for the open season (TD-122)."
       },
       "CreatedCareer": {
         "required": [
@@ -1716,6 +1986,56 @@
           }
         },
         "description": "What the ending narrative is built from: reason, weeks, dominant category, reputation, platforms, peak follower milestone and earned achievements."
+      },
+      "EntryStatus": {
+        "enum": [
+          "unranked",
+          "notEnded",
+          "open",
+          "closed",
+          "published"
+        ],
+        "type": "string",
+        "description": "What the ending screen can offer for a career's result."
+      },
+      "EntryStatusView": {
+        "required": [
+          "status",
+          "season",
+          "submissionDeadline",
+          "entry"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/EntryStatus"
+          },
+          "season": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "submissionDeadline": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "entry": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PublishedEntryView"
+              }
+            ]
+          }
+        },
+        "description": "Whether and until when a career can publish its result, and the published entry with its season rank."
       },
       "EquipmentSlot": {
         "enum": [
@@ -1825,6 +2145,65 @@
           }
         },
         "description": "A new recovery key, shown once; the previous key no longer opens the career."
+      },
+      "LeaderboardRowView": {
+        "required": [
+          "rank",
+          "nickname",
+          "score",
+          "weeksPlayed",
+          "difficulty",
+          "ending",
+          "submittedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "weeksPlayed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "difficulty": {
+            "$ref": "#/components/schemas/Difficulty"
+          },
+          "ending": {
+            "$ref": "#/components/schemas/EndingReason"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A public leaderboard row: only the fields every visitor may see."
+      },
+      "LeaderboardView": {
+        "required": [
+          "season",
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "season": {
+            "$ref": "#/components/schemas/SeasonView"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardRowView"
+            }
+          }
+        },
+        "description": "A season's top entries in leaderboard order."
       },
       "MainAction": {
         "enum": [
@@ -2322,6 +2701,53 @@
         "type": "string",
         "description": "Grammatical form only; no rule may read it."
       },
+      "PublishedEntryView": {
+        "required": [
+          "nickname",
+          "score",
+          "weeksPlayed",
+          "submittedAt",
+          "rank"
+        ],
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "type": "string"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "weeksPlayed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rank": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "A career's own published entry; the rank is null while the owner hides the entry."
+      },
+      "PublishResultRequest": {
+        "required": [
+          "nickname"
+        ],
+        "type": "object",
+        "properties": {
+          "nickname": {
+            "type": "string"
+          }
+        },
+        "description": "Only the nickname: the server publishes the score it computed, and any other field is ignored."
+      },
       "ReasonView": {
         "required": [
           "code",
@@ -2549,6 +2975,48 @@
           }
         },
         "description": "The final score: the normalised components, their points, the base score, both multipliers and the total."
+      },
+      "SeasonView": {
+        "required": [
+          "number",
+          "openedAt",
+          "closedAt",
+          "submissionDeadline",
+          "extended",
+          "current"
+        ],
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "submissionDeadline": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "extended": {
+            "type": "boolean"
+          },
+          "current": {
+            "type": "boolean"
+          }
+        },
+        "description": "A season with its dates; the deadline is null while it is open, and extended once the owner announced a later one."
       },
       "SideBusinessView": {
         "required": [

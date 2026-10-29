@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
+using PolskiStreamerSimulator.Application.Leaderboard;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Simulation;
@@ -25,12 +26,20 @@ public sealed class AppTestKit
     {
     }
 
-    private AppTestKit(WeekEngine engine, string contentDirectory, ICareerStore? careers, IContentStore? contents)
+    private AppTestKit(
+        WeekEngine engine,
+        string contentDirectory,
+        ICareerStore? careers,
+        IContentStore? contents,
+        ISeasonStore? seasons = null,
+        ILeaderboardStore? entries = null)
     {
         Engine = engine;
         Current = new TestCurrentContent(contentDirectory);
         Careers = careers ?? Store;
         ContentStore = contents ?? Contents;
+        Seasons = seasons ?? SeasonStore;
+        Entries = entries ?? EntryStore;
     }
 
     public WeekEngine Engine { get; }
@@ -44,6 +53,16 @@ public sealed class AppTestKit
 
     /// <summary>The content store the handlers use: <see cref="Contents"/> unless another one was given.</summary>
     public IContentStore ContentStore { get; }
+
+    public InMemorySeasonStore SeasonStore { get; } = new();
+
+    public InMemoryLeaderboardStore EntryStore { get; } = new();
+
+    /// <summary>The season store the handlers use: <see cref="SeasonStore"/> unless another one was given.</summary>
+    public ISeasonStore Seasons { get; }
+
+    /// <summary>The leaderboard store the handlers use: <see cref="EntryStore"/> unless another one was given.</summary>
+    public ILeaderboardStore Entries { get; }
 
     public FixedTimeProvider Time { get; } = new(Start);
 
@@ -61,10 +80,26 @@ public sealed class AppTestKit
     /// <summary>A kit with both rulesets over the given stores, for example the SQL Server ones.</summary>
     public static AppTestKit On(ICareerStore careers, IContentStore contents, string directory) => new(M3Play.Engine, directory, careers, contents);
 
+    /// <summary>A kit with both rulesets over the given career, content, season and leaderboard stores.</summary>
+    public static AppTestKit On(ICareerStore careers, IContentStore contents, ISeasonStore seasons, ILeaderboardStore entries, string directory)
+        => new(M3Play.Engine, directory, careers, contents, seasons, entries);
+
     /// <summary>Later careers pin the content in <paramref name="directory"/>; existing careers keep theirs.</summary>
     public void SwitchCurrentContent(string directory) => Current.Switch(directory);
 
-    public CreateCareerHandler CreateHandler() => new(Careers, Current, ContentStore, Secrets, Views, Time);
+    public CreateCareerHandler CreateHandler() => new(Careers, Current, ContentStore, Seasons, Secrets, Views, Time);
+
+    public LeaderboardPublication Publication => new(Seasons, Entries, Time);
+
+    public PublishResultHandler PublishHandler() => new(Access, Publication, Entries, Time);
+
+    public GetEntryStatusHandler EntryStatusHandler() => new(Access, Publication);
+
+    public GetLeaderboardHandler LeaderboardHandler() => new(Seasons, Entries);
+
+    public ListSeasonsHandler SeasonsHandler() => new(Seasons);
+
+    public ExtendSeasonHandler ExtendHandler() => new(Seasons, Time);
 
     public GetCareerHandler GetHandler() => new(Access, Careers, ContentStore, Views);
 
@@ -90,13 +125,30 @@ public sealed class AppTestKit
         return new RunBatchHandler(new CareerAccess(s, Secrets), s, ContentStore, Engine, Views, Time);
     }
 
-    public async Task<CreatedCareer> NewCareerAsync(string nickname = "Streamer", Background background = Background.DormRoomNewcomer)
+    public async Task<CreatedCareer> NewCareerAsync(string nickname = "Streamer", Background background = Background.DormRoomNewcomer, bool ranked = false)
     {
-        await ContentStore.EnsureStoredAsync(Current.Files, Ct);
-        var created = (await CreateHandler().Handle(new CreateCareer(nickname, background, Difficulty.Normal, PronounSet.Woman), Ct)).Value;
+        await StartAsync();
+        var created = (await CreateHandler().Handle(new CreateCareer(nickname, background, Difficulty.Normal, PronounSet.Woman, Ranked: ranked), Ct)).Value;
         secrets[created.CareerId] = created.Secret;
         return created;
     }
+
+    /// <summary>What the API does at startup: stores the current content and makes the open season match it.</summary>
+    public async Task StartAsync()
+    {
+        await ContentStore.EnsureStoredAsync(Current.Files, Ct);
+        await Seasons.EnsureCurrentAsync(Current.Snapshot.RulesetId, Current.Snapshot.Digest, Time.GetUtcNow(), Ct);
+    }
+
+    /// <summary>Retires the career at once; a retired career has a final score and can publish it.</summary>
+    public async Task<CareerView> RetireAsync(CareerView career)
+        => (await SubmitAsync(career.CareerId, Guid.NewGuid(), new ActionInput(career.Version, ActionType.Retire, null, null, null, null, null))).Value.Career;
+
+    public Task<AppResult<EntryStatusView>> PublishAsync(Guid careerId, string? nickname)
+        => PublishHandler().Handle(new PublishResult(careerId, secrets[careerId], nickname), Ct);
+
+    public async Task<EntryStatusView> EntryStatusAsync(Guid careerId)
+        => (await EntryStatusHandler().Handle(new GetEntryStatus(careerId, secrets[careerId]), Ct)).Value;
 
     /// <summary>Later calls of this kit use <paramref name="secret"/> for the career, as a browser after a recovery would.</summary>
     public void UseSecret(Guid careerId, string secret) => secrets[careerId] = secret;

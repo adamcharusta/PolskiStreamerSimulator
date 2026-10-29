@@ -18,7 +18,8 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
             Nickname = career.Nickname,
             RulesetId = career.State.RulesetId,
             ContentDigest = career.State.ContentDigest,
-            Ranked = false,
+            Ranked = career.Season is not null,
+            SeasonId = career.Season,
             Status = career.State.Status,
             StateVersion = career.State.StateVersion,
             StateJson = JsonOf(career.State),
@@ -60,7 +61,8 @@ public sealed class EfCareerStore(IDbContextFactory<GameDbContext> contexts) : I
                 row.CreatedAt,
                 row.LastActionAt,
                 row.ExpiresAt,
-                row.EndedAt);
+                row.EndedAt,
+                row.SeasonId);
     }
 
     public async Task<byte[]?> FindSecretHashAsync(Guid careerId, CancellationToken cancellationToken)

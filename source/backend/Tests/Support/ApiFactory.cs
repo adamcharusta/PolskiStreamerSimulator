@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
+using PolskiStreamerSimulator.Application.Leaderboard;
 
 namespace PolskiStreamerSimulator.Tests.Support;
 
@@ -26,6 +27,10 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     public InMemoryCareerStore Store { get; } = new();
 
+    public InMemorySeasonStore Seasons { get; } = new();
+
+    public InMemoryLeaderboardStore Entries { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -40,7 +45,15 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<ICareerStore>();
             services.AddSingleton<ICareerStore>(Store);
             services.RemoveAll<IContentStore>();
-            services.AddSingleton<IContentStore>(new InMemoryContentStore(TestContent.Of(contentDirectory)));
+            var content = TestContent.Of(contentDirectory);
+            services.AddSingleton<IContentStore>(new InMemoryContentStore(content));
+
+            // The database initializer is off, so the season it would open at startup is opened here.
+            Seasons.EnsureCurrentAsync(content.RulesetId, content.Digest, DateTimeOffset.UtcNow, CancellationToken.None).GetAwaiter().GetResult();
+            services.RemoveAll<ISeasonStore>();
+            services.AddSingleton<ISeasonStore>(Seasons);
+            services.RemoveAll<ILeaderboardStore>();
+            services.AddSingleton<ILeaderboardStore>(Entries);
         });
     }
 }

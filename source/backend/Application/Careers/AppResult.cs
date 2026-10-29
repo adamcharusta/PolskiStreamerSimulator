@@ -21,6 +21,11 @@ public static class ErrorCodes
     public const string CreationIdReused = "creation-id-reused";
     public const string CreationClosed = "creation-closed";
     public const string RateLimited = "rate-limited";
+    public const string CareerUnranked = "career-unranked";
+    public const string CareerNotEnded = "career-not-ended";
+    public const string SubmissionClosed = "submission-closed";
+    public const string SeasonNotFound = "season-not-found";
+    public const string SeasonUnavailable = "season-unavailable";
     public const string Internal = "internal-error";
 }
 

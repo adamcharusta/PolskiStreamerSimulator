@@ -53,7 +53,7 @@ On startup, after migrations and content storage, the server ensures the open se
 
 ## 5. Leaderboard nickname
 
-The rule: Unicode NFC, trimmed, uppercased with the invariant culture, then one to five characters from `A–Z`, `ĄĆĘŁŃÓŚŹŻ` and `0–9`. No spaces or symbols, so the name renders safely as text and looks like an arcade tag. A rejected name is `422 validation-failed` with the rule; the player corrects it and the ended career is untouched. Offensive names are handled by owner moderation in M4-D, not by a word list.
+The rule: Unicode NFC, trimmed, uppercased with the invariant culture, then one to five characters from `A–Z`, `ĄĆĘŁŃÓŚŹŻ` and `0–9`. No spaces or symbols, so the name renders safely as text and looks like an arcade tag. A rejected name is `400 validation-failed` with the rule; the player corrects it and the ended career is untouched. Offensive names are handled by owner moderation in M4-D, not by a word list.
 
 ## 6. Publication
 
@@ -61,7 +61,7 @@ The rule: Unicode NFC, trimmed, uppercased with the invariant culture, then one 
 
 1. The usual career access check (`404 career-not-found`).
 2. If an entry for the career exists, return it unchanged (`200`), whatever nickname this request carries. The name is frozen at first publication.
-3. Otherwise require, in order: a ranked career (`409 career-unranked`); an ended career with a final score (`409 career-not-ended`); a season still accepting (`409 submission-closed`); a valid nickname (`422 validation-failed`).
+3. Otherwise require, in order: a ranked career (`409 career-unranked`); an ended career with a final score (`409 career-not-ended`); a season still accepting (`409 submission-closed`); a valid nickname (`400 validation-failed`, checked after eligibility so a repeat always returns the stored entry).
 4. Store the entry and return it.
 
 An entry copies the public fields and the receipt needed to audit it later: `id` (UUIDv7), `season_id`, `career_id`, `nickname`, `score` (the `Domain` final score), `weeks_played` (the ending summary's weeks), `difficulty`, `ending`, `ruleset_id`, `final_state_version`, `final_state_hash`, `submitted_at`, and `hidden_at` (always null until M4-D). `career_id` has a unique index and **no foreign key**, so the retention sweep deletes the career and leaves the entry. A concurrent duplicate publication loses on the unique index and returns the stored entry.
