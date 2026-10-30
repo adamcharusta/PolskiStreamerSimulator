@@ -85,7 +85,9 @@ public sealed class AdminContentApiTests(SqlServerFixture sql)
         var visitor = api.CreateClient();
         var owner = await SignInAsync(api);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/v1/admin/content", Ct)).StatusCode);
+        var anonymous = await visitor.GetAsync("/v1/admin/content", Ct);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        Assert.True((await owner.Client.GetAsync("/v1/admin/content", Ct)).Headers.CacheControl!.NoStore);
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.PostAsJsonAsync("/v1/admin/content/draft", new { }, Ct)).StatusCode);
         var put = await owner.Client.PutAsJsonAsync("/v1/admin/content/draft/balance", new { revision = 1, balance = new { } }, Ct);
         var delete = await owner.Client.DeleteAsync("/v1/admin/content/draft?revision=1", Ct);

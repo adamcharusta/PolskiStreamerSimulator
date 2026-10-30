@@ -14,6 +14,7 @@ import { isApiError } from '@/api/http';
 import { Button } from '@/components/ui/Button';
 
 import { AuditSection } from './AuditSection';
+import { ContentSection } from './content/ContentSection';
 import { csrf } from './csrf';
 import { ExtensionSection } from './ExtensionSection';
 import { ModerationSection } from './ModerationSection';
@@ -197,6 +198,7 @@ function Panel({ session }: { readonly session: OwnerSessionView }) {
       </section>
       <ModerationSection session={session} />
       <ExtensionSection session={session} />
+      <ContentSection session={session} />
       <AuditSection />
     </>
   );

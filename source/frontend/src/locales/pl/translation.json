@@ -826,7 +826,101 @@
         },
         "season": {
           "extend": "Przedłużenie terminu"
+        },
+        "content": {
+          "publish": "Publikacja treści",
+          "revert": "Przywrócenie treści",
+          "release": "Wydanie treści",
+          "draft": {
+            "create": "Utworzenie szkicu",
+            "discard": "Odrzucenie szkicu",
+            "event": "Zmiana wydarzenia",
+            "event-remove": "Usunięcie wydarzenia",
+            "balance": "Zmiana stałych"
+          }
         }
+      }
+    },
+    "content": {
+      "title": "Treść",
+      "failed": "Nie udało się zapisać zmiany. Odśwież stronę i spróbuj ponownie.",
+      "stale": "Szkic zmienił się w innej karcie. Odśwież stronę.",
+      "publishFailed": "Nie udało się opublikować. Sprawdź problemy i symulację.",
+      "current": "Nowe kariery grają na publikacji #{{number}} ({{kind}}, {{date}}, skrót {{digest}}…).",
+      "kind": {
+        "release": "wydanie",
+        "publish": "publikacja",
+        "revert": "przywrócenie"
+      },
+      "create": "Utwórz szkic",
+      "draft": "Szkic z publikacji #{{base}}, wersja {{revision}}, ostatnio zmienił {{by}} ({{date}}).",
+      "behind": "Od utworzenia szkicu opublikowano nowszą treść. Publikacja szkicu ją zastąpi.",
+      "discard": "Odrzuć szkic",
+      "check": "Sprawdzenie",
+      "problems": "Problemy",
+      "noProblems": "Brak problemów.",
+      "unchanged": "Szkic niczego nie zmienia.",
+      "newSeason": "Zmiana mechaniki: publikacja otworzy nowy sezon rankingu.",
+      "sameSeason": "Tylko teksty: sezon rankingu się nie zmieni.",
+      "diff": "Zmiany",
+      "change": {
+        "added": "Nowe:",
+        "changed": "Zmienione:",
+        "removed": "Usunięte:"
+      },
+      "mechanical": "mechanika",
+      "textOnly": "tekst",
+      "publishTitle": "Publikacja",
+      "publish": "Opublikuj",
+      "published": "Opublikowano jako #{{number}}. Nowe kariery grają już na tej treści.",
+      "events": {
+        "title": "Wydarzenia",
+        "filter": "Szukaj wydarzenia",
+        "add": "Nowe wydarzenie",
+        "list": "Wydarzenia szkicu",
+        "json": "Wydarzenie {{id}} (JSON)",
+        "preview": "Podgląd",
+        "form": {
+          "woman": "Kobieta",
+          "man": "Mężczyzna",
+          "nonbinary": "Forma neutralna"
+        },
+        "save": "Zapisz wydarzenie",
+        "remove": "Usuń ze szkicu",
+        "notJson": "To nie jest poprawny JSON.",
+        "noId": "Wydarzenie musi mieć pole id."
+      },
+      "balance": {
+        "title": "Stałe balansu",
+        "filter": "Szukaj stałej",
+        "save_one": "Zapisz {{count}} zmianę",
+        "save_few": "Zapisz {{count}} zmiany",
+        "save_many": "Zapisz {{count}} zmian",
+        "save_other": "Zapisz {{count}} zmian",
+        "notNumber": "Każda stała musi być liczbą."
+      },
+      "simulation": {
+        "title": "Symulacja",
+        "run": "Symuluj 40 karier",
+        "failed": "Symulacja się nie udała.",
+        "passed": "Żadna symulowana kariera nie złamała reguł.",
+        "broken": "Symulacja wykryła błędy — publikacja zostanie odrzucona.",
+        "measure": "Miara",
+        "draft": "Szkic",
+        "current": "Obecna treść",
+        "score": "Wynik (p10 / p50 / p90)",
+        "weeks": "Tygodnie (p10 / p50 / p90)",
+        "endings": "Zakończenia",
+        "violations": "Błędy"
+      },
+      "history": {
+        "title": "Historia publikacji",
+        "line": "— {{actor}}, {{date}}: {{reason}} (skrót {{digest}}…)",
+        "current": "obecna",
+        "revert": "Przywróć #{{number}}",
+        "confirmRevert": "Opublikuj ponownie #{{number}}",
+        "export": "Eksportuj #{{number}}",
+        "same": "Ta treść jest już obecna."
       }
     }
   }
