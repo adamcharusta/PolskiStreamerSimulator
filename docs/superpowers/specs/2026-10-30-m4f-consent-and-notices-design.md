@@ -1,7 +1,7 @@
 # M4-F Consent and Notices — Design
 
 Date: 2026-10-30
-Status: **Agent proposal; one PR (2026-10-30).** The home screen's `/v1/seasons` read is a notice: it fails silently. The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-E merged). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; one PR ([#108](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/108)) (2026-10-30).** The home screen's `/v1/seasons` read is a notice: it fails silently. The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-E merged). Every rule, field and wording below is an agent proposal for owner review.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project F, delivering [#31](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/31) (TD-126). The M4 decomposition is in the [M4-A design §0](2026-10-29-m4a-career-access-and-retention-design.md).
 
 ## 1. Intent
