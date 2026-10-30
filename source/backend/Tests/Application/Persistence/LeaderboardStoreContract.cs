@@ -27,10 +27,10 @@ public abstract class LeaderboardStoreContract
     {
         var (seasons, _) = await CreateStoresAsync();
 
-        var first = await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
-        var again = await seasons.EnsureCurrentAsync("m1", M1, At.AddDays(1), Ct);
+        var first = await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
+        var again = await seasons.EnsureCurrentAsync("m1", M1, M1, At.AddDays(1), Ct);
 
-        Assert.Equal(new Season(1, "m1", M1, At, null), first);
+        Assert.Equal(new Season(1, "m1", M1, At, null, MechanicsHash: M1), first);
         Assert.Equal(first, again);
         Assert.Equal(first, await seasons.CurrentAsync(Ct));
     }
@@ -39,12 +39,12 @@ public abstract class LeaderboardStoreContract
     public async Task New_content_closes_the_open_season_and_opens_the_next()
     {
         var (seasons, _) = await CreateStoresAsync();
-        await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
+        await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
 
-        var next = await seasons.EnsureCurrentAsync("m3", M3, At.AddDays(5), Ct);
+        var next = await seasons.EnsureCurrentAsync("m3", M3, M3, At.AddDays(5), Ct);
 
-        Assert.Equal(new Season(2, "m3", M3, At.AddDays(5), null), next);
-        Assert.Equal(new Season(1, "m1", M1, At, At.AddDays(5)), await seasons.FindAsync(1, Ct));
+        Assert.Equal(new Season(2, "m3", M3, At.AddDays(5), null, MechanicsHash: M3), next);
+        Assert.Equal(new Season(1, "m1", M1, At, At.AddDays(5), MechanicsHash: M1), await seasons.FindAsync(1, Ct));
         Assert.Equal([2, 1], (await seasons.ListAsync(Ct)).Select(s => s.Number));
         Assert.Null(await seasons.FindAsync(3, Ct));
     }
@@ -53,9 +53,9 @@ public abstract class LeaderboardStoreContract
     public async Task Concurrent_starts_leave_one_open_season()
     {
         var (seasons, _) = await CreateStoresAsync();
-        await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
+        await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
 
-        var started = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => seasons.EnsureCurrentAsync("m3", M3, At.AddDays(1), Ct)));
+        var started = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => seasons.EnsureCurrentAsync("m3", M3, M3, At.AddDays(1), Ct)));
 
         Assert.Single(started.Select(s => s.Number).Distinct());
         Assert.Single(await seasons.ListAsync(Ct), s => s.ClosedAt is null);
@@ -65,8 +65,8 @@ public abstract class LeaderboardStoreContract
     public async Task The_latest_extension_is_the_deadline()
     {
         var (seasons, _) = await CreateStoresAsync();
-        await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
-        await seasons.EnsureCurrentAsync("m3", M3, At.AddDays(1), Ct);
+        await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
+        await seasons.EnsureCurrentAsync("m3", M3, M3, At.AddDays(1), Ct);
 
         await seasons.AddExtensionAsync(1, At.AddDays(120), Audit("Outage", At.AddDays(80)), Ct);
         await seasons.AddExtensionAsync(1, At.AddDays(150), Audit("Longer outage", At.AddDays(110)), Ct);
@@ -79,7 +79,7 @@ public abstract class LeaderboardStoreContract
     public async Task A_career_has_at_most_one_entry()
     {
         var (seasons, entries) = await CreateStoresAsync();
-        await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
+        await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
         var careerId = Guid.NewGuid();
         var first = LeaderboardRulesTests.Entry(careerId, 100, 10, At);
 
@@ -92,8 +92,8 @@ public abstract class LeaderboardStoreContract
     public async Task Ranks_and_the_table_follow_the_leaderboard_order()
     {
         var (seasons, entries) = await CreateStoresAsync();
-        await seasons.EnsureCurrentAsync("m1", M1, At, Ct);
-        await seasons.EnsureCurrentAsync("m3", M3, At, Ct);
+        await seasons.EnsureCurrentAsync("m1", M1, M1, At, Ct);
+        await seasons.EnsureCurrentAsync("m3", M3, M3, At, Ct);
 
         // .NET and SQL Server order these two career IDs differently; the stores agree with SQL Server.
         var tieA = LeaderboardRulesTests.Entry(Guid.Parse("00000001-0000-0000-0000-000000000000"), 500, 10, At);

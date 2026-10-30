@@ -12,7 +12,8 @@ public sealed record Season(
     string ContentDigest,
     DateTimeOffset OpenedAt,
     DateTimeOffset? ClosedAt,
-    DateTimeOffset? ExtendedUntil = null)
+    DateTimeOffset? ExtendedUntil = null,
+    string? MechanicsHash = null)
 {
     /// <summary>How long a closed season accepts results without an extension.</summary>
     public static readonly TimeSpan SubmissionWindow = TimeSpan.FromDays(90);
@@ -35,20 +36,23 @@ public sealed record Season(
     /// <summary>Whether a result published at <paramref name="now"/> is accepted; the same moment for every career.</summary>
     public bool AcceptsAt(DateTimeOffset now) => SubmissionDeadline is not { } deadline || now <= deadline;
 
-    /// <summary>Whether new careers created with this content belong to the season.</summary>
-    public bool Pins(string rulesetId, string contentDigest)
-        => ClosedAt is null && RulesetId == rulesetId && ContentDigest == contentDigest;
+    /// <summary>
+    /// Whether new careers with this ruleset and mechanics fingerprint belong to the open season; a text-only revision
+    /// keeps the fingerprint (spec M4-E §4).
+    /// </summary>
+    public bool Pins(string rulesetId, string mechanicsHash)
+        => ClosedAt is null && RulesetId == rulesetId && MechanicsHash == mechanicsHash;
 }
 
 /// <summary>Persistence port for seasons and their deadline extensions.</summary>
 public interface ISeasonStore
 {
     /// <summary>
-    /// Returns the open season for this content; if the open season has other content it is closed at
-    /// <paramref name="now"/> and the next one opened, in one transaction. Safe to call concurrently: every caller
-    /// returns the same season.
+    /// Returns the open season when it pins <paramref name="rulesetId"/> and <paramref name="mechanicsHash"/>; an open
+    /// season stored before M4-E with the same <paramref name="contentDigest"/> adopts the fingerprint. Otherwise closes it
+    /// and opens the next one, which records <paramref name="contentDigest"/> as the content it opened with.
     /// </summary>
-    Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken);
+    Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, string mechanicsHash, DateTimeOffset now, CancellationToken cancellationToken);
 
     /// <summary>The open season, or <c>null</c> before the first startup.</summary>
     Task<Season?> CurrentAsync(CancellationToken cancellationToken);

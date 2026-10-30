@@ -9,19 +9,25 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
 {
     private const int RolloverAttempts = 3;
 
-    public async Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken)
+    public async Task<Season> EnsureCurrentAsync(string rulesetId, string contentDigest, string mechanicsHash, DateTimeOffset now, CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= RolloverAttempts; attempt++)
         {
             var open = await CurrentAsync(cancellationToken);
-            if (open is not null && open.Pins(rulesetId, contentDigest))
+            if (open is not null && open.Pins(rulesetId, mechanicsHash))
             {
                 return open;
             }
 
+            if (open is { MechanicsHash: null, ClosedAt: null } && open.RulesetId == rulesetId && open.ContentDigest == contentDigest
+                && await AdoptAsync(open, mechanicsHash, cancellationToken) is { } adopted)
+            {
+                return adopted;
+            }
+
             try
             {
-                if (await RollOverAsync(open, rulesetId, contentDigest, now, cancellationToken) is { } opened)
+                if (await RollOverAsync(open, rulesetId, contentDigest, mechanicsHash, now, cancellationToken) is { } opened)
                 {
                     return opened;
                 }
@@ -59,7 +65,7 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
     /// Closing only that season keeps a slower instance from closing the season a faster one has just opened.
     /// </summary>
     /// <returns>The new season, or <c>null</c> when another instance closed <paramref name="seen"/> first.</returns>
-    private async Task<Season?> RollOverAsync(Season? seen, string rulesetId, string contentDigest, DateTimeOffset now, CancellationToken cancellationToken)
+    private async Task<Season?> RollOverAsync(Season? seen, string rulesetId, string contentDigest, string mechanicsHash, DateTimeOffset now, CancellationToken cancellationToken)
     {
         await using var db = await contexts.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
@@ -71,11 +77,21 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
             return null;
         }
 
-        var row = new SeasonRow { RulesetId = rulesetId, ContentDigest = contentDigest, OpenedAt = now };
+        var row = new SeasonRow { RulesetId = rulesetId, ContentDigest = contentDigest, MechanicsHash = mechanicsHash, OpenedAt = now };
         db.Seasons.Add(row);
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new Season(row.Id, rulesetId, contentDigest, now, null);
+        return new Season(row.Id, rulesetId, contentDigest, now, null, null, mechanicsHash);
+    }
+
+    /// <summary>Gives an open season stored before M4-E the fingerprint of its own content (spec M4-E §4).</summary>
+    private async Task<Season?> AdoptAsync(Season open, string mechanicsHash, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        var updated = await db.Seasons
+            .Where(s => s.Id == open.Number && s.ClosedAt == null && s.MechanicsHash == null)
+            .ExecuteUpdateAsync(u => u.SetProperty(s => s.MechanicsHash, mechanicsHash), cancellationToken);
+        return updated == 1 ? open with { MechanicsHash = mechanicsHash } : null;
     }
 
     private async Task<List<Season>> QueryAsync(System.Linq.Expressions.Expression<Func<SeasonRow, bool>> filter, CancellationToken cancellationToken)
@@ -89,7 +105,8 @@ public sealed class EfSeasonStore(IDbContextFactory<GameDbContext> contexts) : I
                 s.ContentDigest,
                 s.OpenedAt,
                 s.ClosedAt,
-                db.SeasonExtensions.Where(x => x.SeasonId == s.Id).Max(x => (DateTimeOffset?)x.Deadline)))
+                db.SeasonExtensions.Where(x => x.SeasonId == s.Id).Max(x => (DateTimeOffset?)x.Deadline),
+                s.MechanicsHash))
             .ToListAsync(cancellationToken);
     }
 }

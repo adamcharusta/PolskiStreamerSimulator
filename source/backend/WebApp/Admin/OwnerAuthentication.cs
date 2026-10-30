@@ -80,14 +80,14 @@ public static class OwnerAuthentication
     }
 
     /// <summary>
-    /// Rejects a signed-in admin <c>POST</c> without a valid anti-forgery token. Anonymous requests pass on to the
+    /// Rejects a signed-in admin <c>POST</c>, <c>PUT</c> or <c>DELETE</c> without a valid anti-forgery token. Anonymous requests pass on to the
     /// authorization check, which answers 401.
     /// </summary>
     public static IApplicationBuilder UseOwnerAntiforgery(this IApplicationBuilder app)
         => app.Use(async (context, next) =>
         {
             var request = context.Request;
-            if (HttpMethods.IsPost(request.Method)
+            if ((HttpMethods.IsPost(request.Method) || HttpMethods.IsPut(request.Method) || HttpMethods.IsDelete(request.Method))
                 && request.Path.StartsWithSegments(AdminPrefix, StringComparison.Ordinal)
                 && !SignInPaths.Contains(request.Path.Value, StringComparer.Ordinal)
                 && context.User.Identity?.IsAuthenticated == true)

@@ -169,7 +169,7 @@ public sealed class AppTestKit
     public async Task StartAsync()
     {
         await ContentStore.EnsureStoredAsync(Current.Files, Ct);
-        await Seasons.EnsureCurrentAsync(Current.Snapshot.RulesetId, Current.Snapshot.Digest, Time.GetUtcNow(), Ct);
+        await Seasons.EnsureCurrentAsync(Current.Snapshot.RulesetId, Current.Snapshot.Digest, Current.MechanicsHash, Time.GetUtcNow(), Ct);
     }
 
     /// <summary>Retires the career at once; a retired career has a final score and can publish it.</summary>
@@ -272,6 +272,8 @@ public sealed class TestCurrentContent : ICurrentContent
     public ContentFiles Files { get; private set; } = null!;
 
     public ContentSnapshot Snapshot { get; private set; } = null!;
+
+    public string MechanicsHash => ContentMechanics.Hash(Files);
 
     public void Switch(string directory)
     {

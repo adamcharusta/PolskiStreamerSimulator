@@ -37,12 +37,13 @@ public sealed class LeaderboardRulesTests
     [Fact]
     public void An_open_season_has_no_deadline_and_accepts()
     {
-        var season = new Season(1, "r", "d", Closed.AddYears(-1), null);
+        var season = new Season(1, "r", "d", Closed.AddYears(-1), null, MechanicsHash: "m");
 
         Assert.Null(season.SubmissionDeadline);
         Assert.True(season.AcceptsAt(Closed.AddYears(5)));
-        Assert.True(season.Pins("r", "d"));
+        Assert.True(season.Pins("r", "m"));
         Assert.False(season.Pins("r", "other"));
+        Assert.False(season.Pins("other", "m"));
     }
 
     [Fact]

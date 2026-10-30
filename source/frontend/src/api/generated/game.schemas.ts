@@ -746,6 +746,128 @@ export interface CareerOptionsView {
 }
 
 /**
+ * Kind of a publication: the repository content, a draft, or a copy of an earlier publication.
+ */
+export type PublicationKind = typeof PublicationKind[keyof typeof PublicationKind];
+
+
+export const PublicationKind = {
+  release: 'release',
+  publish: 'publish',
+  revert: 'revert',
+} as const;
+
+/**
+ * A publication: its number, digest, mechanics fingerprint, kind, the publication it copies, who published it, why and when.
+ */
+export interface ContentPublicationView {
+  number: number;
+  digest: string;
+  mechanicsHash: string;
+  kind: PublicationKind;
+  /** @nullable */
+  sourceNumber: number | null;
+  actor: string;
+  reason: string;
+  publishedAt: string;
+}
+
+export interface JsonElement {}
+
+/**
+ * An event of the draft: its ID, version, phase and title for the list, and the whole event as JSON.
+ */
+export interface DraftEventView {
+  id: string;
+  /** @nullable */
+  version: number | null;
+  /** @nullable */
+  phase: string | null;
+  /** @nullable */
+  title: string | null;
+  event: JsonElement;
+}
+
+export type ContentChange = typeof ContentChange[keyof typeof ContentChange];
+
+
+export const ContentChange = {
+  added: 'added',
+  changed: 'changed',
+  removed: 'removed',
+} as const;
+
+/**
+ * An event or sponsor template that differs from the newest publication; mechanical unless only its texts or version changed.
+ */
+export interface ItemDiffView {
+  section: string;
+  id: string;
+  change: ContentChange;
+  mechanical: boolean;
+  /** @nullable */
+  versionBefore: number | null;
+  /** @nullable */
+  versionAfter: number | null;
+}
+
+/**
+ * A balance or events-file value that differs, by JSON path, with both values as JSON text.
+ */
+export interface ValueDiffView {
+  path: string;
+  /** @nullable */
+  before: string | null;
+  /** @nullable */
+  after: string | null;
+  mechanical: boolean;
+}
+
+/**
+ * What a draft changes: items, values, and whether it changes mechanics (a new season), only texts, or nothing.
+ */
+export interface ContentDiffView {
+  items: ItemDiffView[];
+  values: ValueDiffView[];
+  mechanical: boolean;
+  unchanged: boolean;
+}
+
+/**
+ * The draft with its check: problems that block publication and the diff against the newest publication.
+ */
+export interface ContentDraftView {
+  baseNumber: number;
+  revision: number;
+  updatedAt: string;
+  updatedBy: string;
+  behindCurrent: boolean;
+  balance: JsonElement;
+  events: DraftEventView[];
+  problems: string[];
+  diff: ContentDiffView;
+}
+
+/**
+ * The newest publication and the owner's draft, if any.
+ */
+export interface ContentAdminView {
+  current: ContentPublicationView;
+  draft: null | ContentDraftView;
+}
+
+/**
+ * Both files of a publication as their exact stored text, so their SHA-256 reproduces the digest.
+ */
+export interface ContentExportView {
+  number: number;
+  digest: string;
+  mechanicsHash: string;
+  balanceJson: string;
+  eventsJson: string;
+}
+
+/**
  * Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122).
  */
 export interface CreateCareerRequest {
@@ -766,6 +888,30 @@ export interface CreatedCareer {
   secret: string;
   recoveryKey: string;
   career: CareerView;
+}
+
+/**
+ * Creates the draft from the newest publication, or from int? CreateDraftRequest.FromPublication.
+ */
+export interface CreateDraftRequest {
+  /** @nullable */
+  fromPublication?: number | null;
+}
+
+/**
+ * The whole balance document at the revision the owner read.
+ */
+export interface DraftBalanceRequest {
+  revision: number;
+  balance: JsonElement;
+}
+
+/**
+ * An event to put into the draft at the revision the owner read; its `id` equals the path.
+ */
+export interface DraftEventRequest {
+  revision: number;
+  event: JsonElement;
 }
 
 /**
@@ -825,8 +971,6 @@ export interface WeekSummaryView {
 export interface HistoryView {
   weeks: WeekSummaryView[];
 }
-
-export interface JsonElement {}
 
 /**
  * The exported save file as it was downloaded (spec M4-C §5).
@@ -973,6 +1117,14 @@ export interface ProblemDetails {
 }
 
 /**
+ * Publishes the draft at the revision the owner checked, for a reason kept in the audit record.
+ */
+export interface PublishContentRequest {
+  revision: number;
+  reason: string;
+}
+
+/**
  * Only the nickname: the server publishes the score it computed, and any other field is ignored.
  */
 export interface PublishResultRequest {
@@ -1052,9 +1204,50 @@ export interface SeasonExtensionRequest {
   reason: string;
 }
 
+export type SimulationRunViewEndings = {[key: string]: number};
+
+/**
+ * Percentiles 10, 50 and 90 of one measure over the simulated careers.
+ */
+export interface SpreadView {
+  p10: number;
+  p50: number;
+  p90: number;
+}
+
+/**
+ * One simulated batch: how many careers, their endings, score and length spread, and every broken invariant or error.
+ */
+export interface SimulationRunView {
+  digest: string;
+  careers: number;
+  endings: SimulationRunViewEndings;
+  score: SpreadView;
+  weeks: SpreadView;
+  violations: string[];
+  errors: string[];
+}
+
+/**
+ * The draft and the current content replayed on the same seeds, policies, backgrounds and difficulties.
+ */
+export interface SimulationView {
+  draft: SimulationRunView;
+  current: SimulationRunView;
+  passed: boolean;
+}
+
 export type GetLeaderboardParams = {
 season?: number;
 limit?: number;
+};
+
+export type DiscardContentDraftParams = {
+revision?: number;
+};
+
+export type RemoveDraftEventParams = {
+revision?: number;
 };
 
 export type ListModeratedEntriesParams = {

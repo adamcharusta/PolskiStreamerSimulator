@@ -46,6 +46,14 @@ public static class ApiProblems
         [ErrorCodes.OwnerLoginFailed] = StatusCodes.Status401Unauthorized,
         [ErrorCodes.OwnerLockedOut] = StatusCodes.Status423Locked,
         [ErrorCodes.AntiforgeryFailed] = StatusCodes.Status400BadRequest,
+        [ErrorCodes.DraftNotFound] = StatusCodes.Status404NotFound,
+        [ErrorCodes.DraftExists] = StatusCodes.Status409Conflict,
+        [ErrorCodes.DraftStale] = StatusCodes.Status409Conflict,
+        [ErrorCodes.EventNotFound] = StatusCodes.Status404NotFound,
+        [ErrorCodes.ContentInvalid] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.ContentUnchanged] = StatusCodes.Status409Conflict,
+        [ErrorCodes.SimulationFailed] = StatusCodes.Status422UnprocessableEntity,
+        [ErrorCodes.PublicationNotFound] = StatusCodes.Status404NotFound,
     };
 
     public static ProblemHttpResult From(AppError error)

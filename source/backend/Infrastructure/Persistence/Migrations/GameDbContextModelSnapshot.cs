@@ -432,6 +432,108 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                     b.ToTable("career_secrets", "game");
                 });
 
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.ContentDraftRow", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BalanceJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("balance_json");
+
+                    b.Property<int>("BaseNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("base_number");
+
+                    b.Property<string>("EventsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("events_json");
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("int")
+                        .HasColumnName("revision");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("content_drafts", "game", t =>
+                        {
+                            t.HasCheckConstraint("ck_content_drafts_single", "[id] = 1");
+                        });
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.ContentPublicationRow", b =>
+                {
+                    b.Property<int>("Number")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("number");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Number"));
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("actor");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("digest")
+                        .IsFixedLength();
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(16)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("MechanicsHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("mechanics_hash")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("PublishedAt")
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<int?>("SourceNumber")
+                        .HasColumnType("int")
+                        .HasColumnName("source_number");
+
+                    b.HasKey("Number");
+
+                    b.HasIndex("Digest", "Kind")
+                        .HasDatabaseName("ix_content_publications_digest");
+
+                    b.ToTable("content_publications", "game");
+                });
+
             modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.ContentSnapshotRow", b =>
                 {
                     b.Property<string>("Digest")
@@ -641,6 +743,13 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .HasColumnName("content_digest")
                         .IsFixedLength();
 
+                    b.Property<string>("MechanicsHash")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("mechanics_hash")
+                        .IsFixedLength();
+
                     b.Property<DateTimeOffset>("OpenedAt")
                         .HasColumnType("datetimeoffset")
                         .HasColumnName("opened_at");
@@ -720,6 +829,15 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                         .WithOne()
                         .HasForeignKey("PolskiStreamerSimulator.Infrastructure.Persistence.CareerSecretRow", "CareerId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.ContentPublicationRow", b =>
+                {
+                    b.HasOne("PolskiStreamerSimulator.Infrastructure.Persistence.ContentSnapshotRow", null)
+                        .WithMany()
+                        .HasForeignKey("Digest")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

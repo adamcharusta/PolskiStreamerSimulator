@@ -44,6 +44,20 @@ public sealed class EfContentStore(IDbContextFactory<GameDbContext> contexts, Ti
         return cache.GetOrAdd(snapshot.Digest, snapshot);
     }
 
+    public async Task<ContentFiles?> FindFilesAsync(string digest, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        var row = await db.ContentSnapshots.AsNoTracking().SingleOrDefaultAsync(s => s.Digest == digest, cancellationToken);
+        return row is null ? null : new ContentFiles(row.BalanceJson, row.EventsJson);
+    }
+
+    public async Task<IReadOnlyList<string>> VersionConflictsAsync(byte[] events, CancellationToken cancellationToken)
+    {
+        await using var db = await contexts.CreateDbContextAsync(cancellationToken);
+        var stored = await db.ContentSnapshots.AsNoTracking().Select(r => r.EventsJson).ToListAsync(cancellationToken);
+        return [.. EventVersions.Conflicts(events, stored).Select(k => $"event-version-changed:{k}")];
+    }
+
     public async Task<ContentSnapshot?> FindAsync(string digest, CancellationToken cancellationToken)
     {
         if (cache.TryGetValue(digest, out var cached))
