@@ -1,3 +1,4 @@
+import { Agent } from 'node:http';
 import { fileURLToPath, URL } from 'node:url';
 
 import tailwindcss from '@tailwindcss/vite';
@@ -14,7 +15,9 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    proxy: { '/v1': { target: apiTarget } },
+    // A fresh upstream connection per request: with Node's keep-alive default, a request the browser aborts (React
+    // Strict Mode remounts, query cancellation) can leave a pooled socket that stalls the next proxied response.
+    proxy: { '/v1': { target: apiTarget, agent: new Agent({ keepAlive: false }) } },
     watch: polling ? { usePolling: true, interval: 300 } : undefined,
   },
 });
