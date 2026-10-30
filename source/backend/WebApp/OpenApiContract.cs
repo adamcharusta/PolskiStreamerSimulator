@@ -56,6 +56,7 @@ public static class OpenApiContract
         ["listContentPublications"] = ("List the content publications", false),
         ["revertContentPublication"] = ("Publish an earlier content publication again", false),
         ["exportContentPublication"] = ("Export both files of a content publication", false),
+        ["recordTelemetry"] = ("Count opted-in gameplay events per day", false),
     };
 
     /// <summary>Operations that need the owner cookie (and, for a POST, the anti-forgery header).</summary>

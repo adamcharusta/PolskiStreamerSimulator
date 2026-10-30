@@ -37,7 +37,7 @@
     "home": "Wróć na start"
   },
   "notice": {
-    "online": "Gra wymaga połączenia z internetem. Kariera zapisuje się na serwerze po każdym kroku.",
+    "online": "Gra wymaga połączenia z internetem: kariera zapisuje się na serwerze po każdym kroku i bez połączenia nie da się grać. Po poważnej awarii bazy danych możesz stracić do około jednego dnia postępu.",
     "dismiss": "Rozumiem"
   },
   "home": {
@@ -47,14 +47,16 @@
     "continue": "Kontynuuj",
     "continueNamed": "Kontynuuj karierę {{nickname}}",
     "new": "Nowa kariera",
-    "accessNotice": "Dostęp do kariery jest zapisany w tej przeglądarce, a klucz odzyskiwania przywraca ją na innym urządzeniu. Nieukończona kariera wygasa po 6 miesiącach bez rozegranego tygodnia, ukończona — 12 miesięcy po zakończeniu.",
+    "accessNotice": "Dostęp do kariery jest zapisany w tej przeglądarce, a klucz odzyskiwania przywraca ją na innym urządzeniu. Nieukończona kariera wygasa po 6 miesiącach bez rozegranego tygodnia, ukończona — 12 miesięcy po zakończeniu. Po poważnej awarii bazy danych możesz stracić do około jednego dnia postępu.",
     "recover": "Odzyskaj karierę kluczem",
     "pendingTitle": "Kończę zakładanie kariery {{nickname}}…",
     "pendingFailed": "Nie udało się dokończyć zakładania kariery {{nickname}}.",
     "pendingRetry": "Spróbuj ponownie",
     "pendingClosed": "Nie da się już dokończyć zakładania kariery {{nickname}}. Jeśli masz jej klucz odzyskiwania, odzyskaj ją.",
     "leaderboard": "Ranking",
-    "import": "Importuj zapis"
+    "import": "Importuj zapis",
+    "extended": "Termin publikacji wyników z sezonu {{season}} przedłużono do {{date}}.",
+    "extendedLabel": "Przedłużone terminy"
   },
   "create": {
     "title": "Nowa kariera",
@@ -923,5 +925,17 @@
         "same": "Ta treść jest już obecna."
       }
     }
+  },
+  "analytics": {
+    "title": "Pomóż ulepszyć grę?",
+    "body": "Za Twoją zgodą gra wysyła anonimowe liczniki: jakie postacie są wybierane, jak długo trwają kariery i jak się kończą. Bez nicku, kariery, klucza i zapisu. Zgodę cofniesz w ustawieniach.",
+    "accept": "Zgadzam się",
+    "decline": "Nie, dziękuję",
+    "settingsLegend": "Analityka",
+    "settingsLabel": "Wysyłaj anonimowe liczniki rozgrywki",
+    "settingsHint": "Wyłączenie usuwa liczniki, które czekają jeszcze na wysłanie."
+  },
+  "connection": {
+    "down": "Brak połączenia z serwerem. Gra jest wstrzymana — widzisz ostatni potwierdzony stan. Wrócimy, gdy serwer odpowie."
   }
 }

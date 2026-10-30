@@ -3,6 +3,7 @@ import { Link, useParams } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { track } from '@/analytics/analytics';
 import {
   exportCareer,
   getGetCareerQueryKey,
@@ -74,6 +75,7 @@ function Slots({ career, secret }: { readonly career: CareerView; readonly secre
     request: auth,
     mutation: {
       onSuccess: async (outcome, { slot }) => {
+        track('save_restored');
         queryClient.setQueryData(getGetCareerQueryKey(career.careerId), outcome.career);
         await queryClient.invalidateQueries({ queryKey: getGetHistoryQueryKey(career.careerId) });
         setNotice(t('saves.restored', { slot, week: outcome.career.week }));

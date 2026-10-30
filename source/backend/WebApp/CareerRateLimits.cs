@@ -17,6 +17,9 @@ public sealed class RateLimitOptions
 
     public int OwnerSignInPermits { get; set; } = 10;
 
+    /// <summary>Telemetry batches per minute and address (spec M4-F §2).</summary>
+    public int TelemetryPermits { get; set; } = 30;
+
     public TimeSpan Window { get; set; } = TimeSpan.FromMinutes(10);
 }
 
@@ -26,6 +29,7 @@ public static class CareerRateLimits
     public const string Create = "career-create";
     public const string Recover = "career-recover";
     public const string OwnerSignIn = "owner-sign-in";
+    public const string Telemetry = "telemetry";
 
     public static IServiceCollection AddCareerRateLimits(this IServiceCollection services, IConfiguration configuration)
     {
@@ -37,6 +41,7 @@ public static class CareerRateLimits
             limiter.AddPolicy(Create, context => PerAddress(context, limits.Value.CreatePermits, limits.Value.Window));
             limiter.AddPolicy(Recover, context => PerAddress(context, limits.Value.RecoverPermits, limits.Value.Window));
             limiter.AddPolicy(OwnerSignIn, context => PerAddress(context, limits.Value.OwnerSignInPermits, limits.Value.Window));
+            limiter.AddPolicy(Telemetry, context => PerAddress(context, limits.Value.TelemetryPermits, TimeSpan.FromMinutes(1)));
             limiter.OnRejected = (context, cancellationToken) => RejectAsync(context.HttpContext, cancellationToken);
         });
         return services;

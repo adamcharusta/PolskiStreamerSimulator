@@ -6,6 +6,7 @@ using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Application.Content;
 using PolskiStreamerSimulator.Application.Leaderboard;
 using PolskiStreamerSimulator.Application.Moderation;
+using PolskiStreamerSimulator.Application.Telemetry;
 using PolskiStreamerSimulator.Infrastructure.Content;
 using PolskiStreamerSimulator.Infrastructure.Persistence;
 using PolskiStreamerSimulator.Infrastructure.Security;
@@ -25,6 +26,7 @@ public static class InfrastructureServices
         services.AddSingleton<ICareerStore, EfCareerStore>();
         services.AddSingleton<IContentStore, EfContentStore>();
         services.AddSingleton<ISaveSlotStore, EfSaveSlotStore>();
+        services.AddSingleton<ITelemetryStore, EfTelemetryStore>();
         services.AddSingleton<ISeasonStore, EfSeasonStore>();
         services.AddSingleton<ILeaderboardStore, EfLeaderboardStore>();
         services.AddSingleton<EfModerationStore>();

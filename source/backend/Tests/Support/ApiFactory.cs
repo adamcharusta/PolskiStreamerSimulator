@@ -33,6 +33,8 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     public InMemoryAuditTrail Audit { get; } = new();
 
+    public InMemoryTelemetryStore Telemetry { get; } = new();
+
     public InMemorySeasonStore Seasons => seasons ??= new InMemorySeasonStore(Audit);
 
     public InMemoryLeaderboardStore Entries => entries ??= new InMemoryLeaderboardStore(Audit);
@@ -47,6 +49,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("RateLimits:CreatePermits", "100000");
         builder.UseSetting("RateLimits:RecoverPermits", "100000");
         builder.UseSetting("RateLimits:OwnerSignInPermits", "100000");
+        builder.UseSetting("RateLimits:TelemetryPermits", "100000");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<ICareerStore>();
@@ -71,6 +74,7 @@ public class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IAuditTrail>();
             services.AddSingleton<IAuditTrail>(Audit);
             services.AddSingleton<ISaveSlotStore>(new InMemorySaveSlotStore(Store));
+            services.AddSingleton<PolskiStreamerSimulator.Application.Telemetry.ITelemetryStore>(Telemetry);
         });
     }
 }

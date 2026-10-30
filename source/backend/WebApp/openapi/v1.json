@@ -5,6 +5,77 @@
     "version": "v1"
   },
   "paths": {
+    "/v1/telemetry": {
+      "post": {
+        "tags": [
+          "careers"
+        ],
+        "summary": "Count opted-in gameplay events per day",
+        "operationId": "recordTelemetry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload Too Large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TelemetryAccepted"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/careers/{id}/saves": {
       "get": {
         "tags": [
@@ -6086,6 +6157,55 @@
           }
         },
         "description": "An active policy strike on a platform and the last settled week in which it still counts."
+      },
+      "TelemetryAccepted": {
+        "required": [
+          "accepted"
+        ],
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "How many events of the batch were counted."
+      },
+      "TelemetryEvent": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "props": {
+            "type": [
+              "null",
+              "object"
+            ]
+          }
+        },
+        "description": "One gameplay event as the browser sends it; only allowlisted names and values are counted (spec M4-F §2)."
+      },
+      "TelemetryRequest": {
+        "required": [
+          "events"
+        ],
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TelemetryEvent"
+            }
+          }
+        },
+        "description": "Opted-in gameplay events: only allowlisted names and values, counted per day (spec M4-F §2)."
       },
       "ValueDiffView": {
         "required": [

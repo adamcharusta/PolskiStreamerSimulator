@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { track } from '@/analytics/analytics';
 import { getGetCareerQueryKey, importCareer } from '@/api/generated/game';
 import type { CreatedCareer } from '@/api/generated/game.schemas';
 import type { ApiRequestError } from '@/api/http';
@@ -36,6 +37,7 @@ export function ImportScreen() {
   const importing = useMutation<CreatedCareer, ApiRequestError, unknown>({
     mutationFn: (file) => importCareer({ save: file as object }),
     onSuccess: async (created) => {
+      track('save_imported');
       try {
         rememberCareer({
           careerId: created.careerId,

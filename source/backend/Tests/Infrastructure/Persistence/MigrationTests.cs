@@ -66,5 +66,8 @@ public sealed class MigrationTests(SqlServerFixture sql)
         // M4-E: nothing is published before startup, and the season fingerprint starts empty.
         Assert.Equal(0, await db.ContentPublications.CountAsync(ct));
         Assert.Equal(0, await db.ContentDrafts.CountAsync(ct));
+
+        // M4-F: nothing is counted before a player opts in.
+        Assert.Equal(0, await db.TelemetryDaily.CountAsync(ct));
     }
 }

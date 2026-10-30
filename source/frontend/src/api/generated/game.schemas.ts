@@ -1237,6 +1237,35 @@ export interface SimulationView {
   passed: boolean;
 }
 
+/**
+ * How many events of the batch were counted.
+ */
+export interface TelemetryAccepted {
+  accepted: number;
+}
+
+/**
+ * @nullable
+ */
+export type TelemetryEventProps = null | { [key: string]: unknown };
+
+/**
+ * One gameplay event as the browser sends it; only allowlisted names and values are counted (spec M4-F §2).
+ */
+export interface TelemetryEvent {
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  props?: TelemetryEventProps;
+}
+
+/**
+ * Opted-in gameplay events: only allowlisted names and values, counted per day (spec M4-F §2).
+ */
+export interface TelemetryRequest {
+  events: TelemetryEvent[];
+}
+
 export type GetLeaderboardParams = {
 season?: number;
 limit?: number;

@@ -23,6 +23,8 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
 
     public DbSet<ContentDraftRow> ContentDrafts => Set<ContentDraftRow>();
 
+    public DbSet<TelemetryDailyRow> TelemetryDaily => Set<TelemetryDailyRow>();
+
     public DbSet<CareerRow> Careers => Set<CareerRow>();
 
     public DbSet<CareerSecretRow> CareerSecrets => Set<CareerSecretRow>();
@@ -63,6 +65,16 @@ public sealed class GameDbContext(DbContextOptions<GameDbContext> options) : Ide
             e.Property(x => x.PublishedAt).HasColumnName("published_at");
             e.HasIndex(x => new { x.Digest, x.Kind }).HasDatabaseName("ix_content_publications_digest");
             e.HasOne<ContentSnapshotRow>().WithMany().HasForeignKey(x => x.Digest).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<TelemetryDailyRow>(e =>
+        {
+            e.ToTable("telemetry_daily");
+            e.HasKey(x => new { x.Day, x.Event, x.PropsKey });
+            e.Property(x => x.Day).HasColumnName("day");
+            e.Property(x => x.Event).HasColumnName("event").HasMaxLength(64).IsUnicode(false);
+            e.Property(x => x.PropsKey).HasColumnName("props_key").HasMaxLength(200).IsUnicode(false);
+            e.Property(x => x.Count).HasColumnName("count");
         });
 
         builder.Entity<ContentDraftRow>(e =>
