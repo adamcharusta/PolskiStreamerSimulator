@@ -22,21 +22,20 @@ public sealed class TelemetryTests
         Assert.Equal(("batch_run", "weeks=13"), TelemetryAllowlist.Key(Event("batch_run", ("weeks", 13))));
     }
 
-    public static TheoryData<TelemetryEvent> Rejected => new()
-    {
-        Event(null),
-        Event("page_view"),
-        Event("career_created", ("nickname", "Ala")),
-        Event("career_created", ("background", "somethingElse")),
-        Event("batch_run", ("weeks", 7)),
-        Event("week_settled", ("stage", new[] { "1-4" })),
-        Event("result_published", ("careerId", Guid.NewGuid())),
-    };
-
     [Theory]
-    [MemberData(nameof(Rejected))]
-    public void Anything_off_the_allowlist_is_skipped(TelemetryEvent e)
-        => Assert.Null(TelemetryAllowlist.Key(e));
+    [InlineData(null, "{}")]
+    [InlineData("page_view", "{}")]
+    [InlineData("career_created", """{"nickname":"Ala"}""")]
+    [InlineData("career_created", """{"background":"somethingElse"}""")]
+    [InlineData("batch_run", """{"weeks":7}""")]
+    [InlineData("week_settled", """{"stage":["1-4"]}""")]
+    [InlineData("result_published", """{"careerId":"0199e3a0-0000-7000-8000-000000000001"}""")]
+    public void Anything_off_the_allowlist_is_skipped(string? name, string props)
+    {
+        var parsed = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(props);
+
+        Assert.Null(TelemetryAllowlist.Key(new TelemetryEvent(name, parsed)));
+    }
 
     [Fact]
     public async Task A_batch_counts_its_valid_events_for_the_day()
