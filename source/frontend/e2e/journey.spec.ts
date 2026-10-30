@@ -472,3 +472,46 @@ test('the owner signs in with an authenticator code and hides a published entry'
   await expect(page.getByRole('heading', { name: pl.leaderboard.title, level: 1 })).toBeVisible();
   await expect(page.getByRole('rowheader', { name: 'MOD' })).toHaveCount(0);
 });
+
+test('the owner publishes a title fix that keeps the season', async ({ page }) => {
+  const owner = ownerCredentials();
+  await page.goto('/admin');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await page.getByLabel(pl.admin.signIn.username).fill(owner.username);
+  await page.getByLabel(pl.admin.signIn.password).fill(owner.password);
+  await page.getByRole('button', { name: pl.admin.signIn.next }).click();
+  await page.getByLabel(pl.admin.signIn.code).fill(totp(owner.key));
+  await page.getByRole('button', { name: pl.admin.signIn.submit }).click();
+
+  const content = page.getByRole('region', { name: pl.admin.content.title });
+  const create = content.getByRole('button', { name: pl.admin.content.create });
+  const discard = content.getByRole('button', { name: pl.admin.content.discard });
+  await expect(create.or(discard)).toBeVisible();
+  if (await discard.isVisible()) {
+    await discard.click();
+  }
+
+  await create.click();
+  const events = content.getByRole('region', { name: pl.admin.content.events.title });
+  await events.getByLabel(pl.admin.content.events.filter).fill('jc-hot-take');
+  await events.getByRole('button', { name: /^jc-hot-take v/u }).click();
+  const editor = events.getByLabel(fill(pl.admin.content.events.json, { id: 'jc-hot-take' }));
+  const item = JSON.parse(await editor.inputValue()) as { title: string; version: number };
+  item.title = `Gorąca teza (${String(Date.now())})`;
+  item.version += 1;
+  await editor.fill(JSON.stringify(item, null, 2));
+  await events.getByRole('button', { name: pl.admin.content.events.save }).click();
+
+  await expect(content.getByText(pl.admin.content.sameSeason)).toBeVisible();
+  await expect(content.getByText(pl.admin.content.noProblems)).toBeVisible();
+  await expectAccessible(page, 'content draft');
+  const publish = content.getByRole('form', { name: pl.admin.content.publishTitle });
+  await publish.getByLabel(pl.admin.moderation.reason).fill('Poprawka tytułu E2E');
+  await publish.getByRole('button', { name: pl.admin.content.publish }).click();
+  await expect(content.getByText(/^Opublikowano jako #\d+\./u)).toBeVisible({ timeout: 60_000 });
+
+  const history = content.getByRole('region', { name: pl.admin.content.history.title });
+  await expect(history).toContainText('Poprawka tytułu E2E');
+  await expect(content.getByRole('button', { name: pl.admin.content.create })).toBeVisible();
+});

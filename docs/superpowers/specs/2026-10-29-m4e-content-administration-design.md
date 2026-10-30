@@ -1,7 +1,7 @@
 # M4-E Content Administration — Design
 
 Date: 2026-10-29
-Status: **Agent proposal; API in PR 1, `/admin` screens in PR 2 (2026-10-29).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-D merged). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; API in PR 1 ([#104](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/104)), `/admin` screens in PR 2 ([#105](https://github.com/adamcharusta/PolskiStreamerSimulator/pull/105)) (2026-10-30).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-D merged). Every rule, field and wording below is an agent proposal for owner review.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project E, delivering [#29](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/29) (TD-125). The M4 decomposition is in the [M4-A design §0](2026-10-29-m4a-career-access-and-retention-design.md).
 
 ## 1. Intent
@@ -119,7 +119,7 @@ Success means (#29, REQ-20):
 
 ## 7. API
 
-Every endpoint is under `/v1/admin/content` and requires the owner cookie (M4-D). `POST`, `PUT` and `DELETE` also require the `X-CSRF-TOKEN` header.
+Every endpoint is under `/v1/admin/content` and requires the owner cookie (M4-D). Every `/v1/admin` response is `Cache-Control: no-store`. `POST`, `PUT` and `DELETE` also require the `X-CSRF-TOKEN` header.
 
 | Method and path | Purpose |
 | --- | --- |

@@ -80,13 +80,20 @@ public static class OwnerAuthentication
     }
 
     /// <summary>
-    /// Rejects a signed-in admin <c>POST</c>, <c>PUT</c> or <c>DELETE</c> without a valid anti-forgery token. Anonymous requests pass on to the
+    /// Marks every admin response <c>no-store</c> and rejects a signed-in admin <c>POST</c>, <c>PUT</c> or <c>DELETE</c>
+    /// without a valid anti-forgery token. Anonymous requests pass on to the
     /// authorization check, which answers 401.
     /// </summary>
     public static IApplicationBuilder UseOwnerAntiforgery(this IApplicationBuilder app)
         => app.Use(async (context, next) =>
         {
             var request = context.Request;
+            if (request.Path.StartsWithSegments(AdminPrefix, StringComparison.Ordinal))
+            {
+                // Owner data must never be served from a browser or proxy cache (spec M4-D §6).
+                context.Response.Headers.CacheControl = "no-store";
+            }
+
             if ((HttpMethods.IsPost(request.Method) || HttpMethods.IsPut(request.Method) || HttpMethods.IsDelete(request.Method))
                 && request.Path.StartsWithSegments(AdminPrefix, StringComparison.Ordinal)
                 && !SignInPaths.Contains(request.Path.Value, StringComparer.Ordinal)
