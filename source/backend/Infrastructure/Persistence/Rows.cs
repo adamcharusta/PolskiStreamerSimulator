@@ -55,6 +55,18 @@ public sealed class SeasonRow
     public DateTimeOffset? ClosedAt { get; set; }
 }
 
+/// <summary>Row of <c>game.telemetry_daily</c>: how often an allowlisted event with these props happened on a UTC day (M4-F).</summary>
+public sealed class TelemetryDailyRow
+{
+    public DateOnly Day { get; set; }
+
+    public string Event { get; set; } = "";
+
+    public string PropsKey { get; set; } = "";
+
+    public long Count { get; set; }
+}
+
 /// <summary>Row of <c>game.content_publications</c>: a content version new careers pinned from its time on (M4-E).</summary>
 public sealed class ContentPublicationRow
 {

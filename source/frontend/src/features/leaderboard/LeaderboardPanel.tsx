@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { track } from '@/analytics/analytics';
 import {
   getGetLeaderboardEntryQueryKey,
   useGetLeaderboardEntry,
@@ -121,6 +122,7 @@ function PublishForm({
     request: careerAuth(secret),
     mutation: {
       onSuccess: (published) => {
+        track('result_published');
         queryClient.setQueryData(getGetLeaderboardEntryQueryKey(career.careerId), published);
       },
     },

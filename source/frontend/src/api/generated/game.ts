@@ -69,6 +69,8 @@ import type {
   SeasonExtensionRequest,
   SeasonView,
   SimulationView,
+  TelemetryAccepted,
+  TelemetryRequest,
   WeekReportView
 } from './game.schemas';
 
@@ -94,6 +96,74 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+/**
+ * @summary Count opted-in gameplay events per day
+ */
+export const recordTelemetry = (
+    telemetryRequest: TelemetryRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<TelemetryAccepted>(
+      {url: `/v1/telemetry`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: telemetryRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRecordTelemetryMutationKey = () => ['recordTelemetry'] as const;
+
+export const getRecordTelemetryMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordTelemetry>>, TError,RecordTelemetryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordTelemetry>>, TError,RecordTelemetryMutationVariables, TContext> => {
+
+const mutationKey = getRecordTelemetryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordTelemetry>>, RecordTelemetryMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordTelemetry(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordTelemetryMutationResult = NonNullable<Awaited<ReturnType<typeof recordTelemetry>>>
+    export type RecordTelemetryMutationBody = TelemetryRequest
+    export type RecordTelemetryMutationError = ErrorType<ProblemDetails>
+    export type RecordTelemetryMutationVariables = {data: TelemetryRequest}
+
+    /**
+ * @summary Count opted-in gameplay events per day
+ */
+export const useRecordTelemetry = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordTelemetry>>, TError,RecordTelemetryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordTelemetry>>,
+        TError,
+        RecordTelemetryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordTelemetryMutationOptions(options), queryClient);
+    }
 
 /**
  * @summary List the three manual slots of an unranked career

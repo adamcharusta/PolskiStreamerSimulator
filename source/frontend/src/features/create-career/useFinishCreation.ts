@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
+import { track } from '@/analytics/analytics';
 import { createCareer, getGetCareerQueryKey } from '@/api/generated/game';
 import type { CreatedCareer } from '@/api/generated/game.schemas';
 import type { ApiRequestError } from '@/api/http';
@@ -44,6 +45,11 @@ export function useFinishCreation() {
       }
 
       clearPendingCreation();
+      track('career_created', {
+        background: created.career.background,
+        difficulty: created.career.difficulty,
+        ranked: created.career.ranked ?? false,
+      });
       queryClient.setQueryData(getGetCareerQueryKey(created.careerId), created.career);
       await navigate({ to: '/kariera/$careerId/klucz', params: { careerId: created.careerId } });
     },

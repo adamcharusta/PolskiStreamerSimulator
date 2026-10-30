@@ -515,3 +515,43 @@ test('the owner publishes a title fix that keeps the season', async ({ page }) =
   await expect(history).toContainText('Poprawka tytułu E2E');
   await expect(content.getByRole('button', { name: pl.admin.content.create })).toBeVisible();
 });
+
+test('analytics stay silent until the player opts in, then count a new career', async ({
+  page,
+}) => {
+  const telemetry: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('/v1/telemetry')) {
+      telemetry.push(request.postData() ?? '');
+    }
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: pl.gate.confirm }).click();
+  await page.getByRole('button', { name: pl.notice.dismiss }).click();
+  await expect(page.getByRole('region', { name: pl.analytics.title })).toBeVisible();
+  await expectAccessible(page, 'analytics consent');
+
+  await page.getByRole('link', { name: pl.home.new }).click();
+  await page.getByLabel(pl.create.nickname).fill('Bez zgody');
+  await page.getByRole('button', { name: pl.create.submit }).click();
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
+  await page.evaluate(() => {
+    globalThis.dispatchEvent(new Event('pagehide'));
+  });
+  expect(telemetry).toEqual([]);
+
+  await page.getByRole('button', { name: pl.analytics.accept }).click();
+  await page.goto('/nowa-kariera');
+  await page.getByLabel(pl.create.nickname).fill('Ze zgodą');
+  await page.getByRole('button', { name: pl.create.submit }).click();
+  await page.getByRole('link', { name: pl.recovery.saved }).click();
+  const counted = page.waitForResponse((response) => response.url().includes('/v1/telemetry'));
+  await page.evaluate(() => {
+    globalThis.dispatchEvent(new Event('pagehide'));
+  });
+  const response = await counted;
+  expect(response.status()).toBe(202);
+  expect(telemetry).toHaveLength(1);
+  expect(telemetry[0]).toContain('"career_created"');
+  expect(telemetry[0]).not.toContain('Ze zgodą');
+});

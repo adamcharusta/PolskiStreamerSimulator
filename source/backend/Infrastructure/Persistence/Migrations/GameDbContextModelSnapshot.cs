@@ -773,6 +773,33 @@ namespace PolskiStreamerSimulator.Infrastructure.Persistence.Migrations
                     b.ToTable("seasons", "game");
                 });
 
+            modelBuilder.Entity("PolskiStreamerSimulator.Infrastructure.Persistence.TelemetryDailyRow", b =>
+                {
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date")
+                        .HasColumnName("day");
+
+                    b.Property<string>("Event")
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("event");
+
+                    b.Property<string>("PropsKey")
+                        .HasMaxLength(200)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("props_key");
+
+                    b.Property<long>("Count")
+                        .HasColumnType("bigint")
+                        .HasColumnName("count");
+
+                    b.HasKey("Day", "Event", "PropsKey");
+
+                    b.ToTable("telemetry_daily", "game");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)

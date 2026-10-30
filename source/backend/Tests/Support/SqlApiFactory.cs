@@ -22,5 +22,6 @@ public sealed class SqlApiFactory(string connectionString, string? contentDirect
         builder.UseSetting("RateLimits:CreatePermits", "100000");
         builder.UseSetting("RateLimits:RecoverPermits", "100000");
         builder.UseSetting("RateLimits:OwnerSignInPermits", "100000");
+        builder.UseSetting("RateLimits:TelemetryPermits", "100000");
     }
 }

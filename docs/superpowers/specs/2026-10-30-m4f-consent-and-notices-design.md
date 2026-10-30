@@ -1,7 +1,7 @@
 # M4-F Consent and Notices — Design
 
 Date: 2026-10-30
-Status: **Agent proposal; one PR (2026-10-30).** The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-E merged). Every rule, field and wording below is an agent proposal for owner review.
+Status: **Agent proposal; one PR (2026-10-30).** The home screen's `/v1/seasons` read is a notice: it fails silently. The owner asked the agent to deliver every M4 sub-project in order without a design interview ("tak zrób je po kolei wszystkie", 2026-10-29; "zmergowane" after M4-E merged). Every rule, field and wording below is an agent proposal for owner review.
 Milestone: [M4 — Online play and administration](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4), sub-project F, delivering [#31](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/31) (TD-126). The M4 decomposition is in the [M4-A design §0](2026-10-29-m4a-career-access-and-retention-design.md).
 
 ## 1. Intent
@@ -41,7 +41,7 @@ Success means (#31, REQ-25):
   - When full, the oldest event is dropped.
 - **Flushing.**
   - Every 30 seconds, and on `pagehide`, the buffer is sent as `POST /v1/telemetry`, at most 50 events per request.
-  - Sending uses `fetch` with `keepalive`, and carries no credentials, cookies or headers beyond `Content-Type`.
+  - Sending uses `fetch` with `keepalive` and `credentials: 'omit'`, and carries no cookies or headers beyond `Content-Type`.
   - The sent events are removed only after a `2xx` answer. A failure keeps them for the next flush.
   - Before each send the client checks consent again.
 
@@ -83,7 +83,7 @@ The owner reads the counts in SQL for now. An analytics view in `/admin` is not 
   The home screen keeps the same sentence about the risk in its access notice.
 - **Outage banner.** `ConnectionBanner` in the layout:
   - **Detection.** It watches `navigator.onLine` and the outcome of API requests, through the query cache and the mutation cache: a network error or a 5xx marks the server unreachable, and any successful response clears it. While unreachable, it checks `GET /health` every 15 seconds.
-  - **Message.** While unreachable it shows `role="alert"` with „Brak połączenia z serwerem. Gra jest wstrzymana — widzisz ostatni potwierdzony stan. Wrócimy, gdy serwer odpowie.”
+  - **Message.** While unreachable it shows a polite live region (`<output>`, so the screen's own failure alert keeps focus) with „Brak połączenia z serwerem. Gra jest wstrzymana — widzisz ostatni potwierdzony stan. Wrócimy, gdy serwer odpowie.”
   - **No offline play.** No step is queued offline. The existing retry banner and the pending buttons stay as they are.
 - **Extended deadlines.** The home screen lists every closed season with `extended: true` whose deadline has not passed: „Termin publikacji wyników z sezonu N przedłużono do <data>.” (data from `GET /v1/seasons`).
 
