@@ -122,16 +122,17 @@ function Draft({
   const { diff } = draft;
   const blocked = draft.problems.length > 0 || diff.unchanged;
 
-  /** Runs a write; it returns the draft to show, null when the draft is gone, or undefined to reload everything. */
+  /** Runs a write; it returns the draft to show, null when the draft is gone, or 'reload' to reload everything. */
   const run = async (
-    action: () => Promise<ContentDraftView | null | undefined>,
+    action: () => Promise<ContentDraftView | null | 'reload'>,
     failure: string,
   ) => {
     setPending(true);
     setProblem(null);
     onNotice(null);
     try {
-      await onChange(await action());
+      const result = await action();
+      await (result === 'reload' ? onChange() : onChange(result));
     } catch (error) {
       setProblem(
         isApiError(error) && error.code === 'draft-stale' ? 'admin.content.stale' : failure,
@@ -154,7 +155,7 @@ function Draft({
         );
         setReason('');
         onNotice(t('admin.content.published', { number: published.number }));
-        return;
+        return 'reload';
       },
       reason.trim() === '' ? 'admin.moderation.reasonRequired' : 'admin.content.publishFailed',
     );
@@ -203,11 +204,7 @@ function Draft({
             ))}
           </ul>
         )}
-        <p className="m-0">
-          {diff.unchanged
-            ? t('admin.content.unchanged')
-            : t(diff.mechanical ? 'admin.content.newSeason' : 'admin.content.sameSeason')}
-        </p>
+        <p className="m-0">{t(seasonEffect(diff))}</p>
         {(diff.items.length > 0 || diff.values.length > 0) && (
           <ul className="m-0" aria-label={t('admin.content.diff')}>
             {diff.items.map((item) => (
@@ -262,4 +259,13 @@ function Draft({
       )}
     </div>
   );
+}
+
+/** What publishing the draft does to the leaderboard season, as a translation key. */
+function seasonEffect(diff: ContentDraftView['diff']): string {
+  if (diff.unchanged) {
+    return 'admin.content.unchanged';
+  }
+
+  return diff.mechanical ? 'admin.content.newSeason' : 'admin.content.sameSeason';
 }
