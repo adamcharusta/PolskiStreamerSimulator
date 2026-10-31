@@ -96,7 +96,8 @@ public sealed class SubmitActionHandler(
 
         var (next, roll, report) = step.Value;
         var lastReport = report ?? await store.LastReportAsync(career.Id, cancellationToken);
-        var outcome = new ActionOutcome(views.Build(career.Id, career.Nickname, next, content, lastReport), roll, report);
+        var now = time.GetUtcNow();
+        var outcome = new ActionOutcome(views.Build(career.Id, career.Nickname, next, content, lastReport, CareerRetention.ExpiresAt(next, now), career.Season), roll, report);
         var entry = new NewAction(
             command.CommandId,
             0,
@@ -105,7 +106,7 @@ public sealed class SubmitActionHandler(
             ContractJson.Serialize(outcome),
             report is null ? null : ContractJson.Serialize(report));
 
-        var appended = await store.AppendAsync(career.Id, command.Input.ExpectedVersion, next, entry, time.GetUtcNow(), cancellationToken);
+        var appended = await store.AppendAsync(career.Id, command.Input.ExpectedVersion, next, entry, now, cancellationToken);
         if (appended == AppendOutcome.Appended)
         {
             return AppResult<ActionOutcome>.Ok(outcome);

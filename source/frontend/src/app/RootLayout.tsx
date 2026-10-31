@@ -1,7 +1,10 @@
 import { Link, Outlet } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
+import { ConsentPanel } from '@/analytics/ConsentPanel';
 import { SettingsDialog } from '@/features/settings/SettingsDialog';
+
+import { ConnectionBanner } from './ConnectionBanner';
 
 export function RootLayout() {
   const { t } = useTranslation();
@@ -16,6 +19,8 @@ export function RootLayout() {
         </Link>
         <SettingsDialog />
       </header>
+      <ConnectionBanner />
+      <ConsentPanel />
       <main id="main">
         <Outlet />
       </main>

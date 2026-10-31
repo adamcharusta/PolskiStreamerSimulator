@@ -521,7 +521,7 @@ export interface EndingSummaryView {
 }
 
 /**
- * A career as the client sees it at one version (and the ruleset it plays for life); also the stored response of each step.
+ * A career as the client sees it at one version (and the ruleset and, if ranked, season it plays for life); also the stored response of each step.
  */
 export interface CareerView {
   careerId: string;
@@ -548,6 +548,11 @@ export interface CareerView {
   achievements: AchievementView[];
   score: null | ScoreView;
   summary: null | EndingSummaryView;
+  /** @nullable */
+  expiresAt?: string | null;
+  ranked?: boolean;
+  /** @nullable */
+  season?: number | null;
 }
 
 export interface ActionOutcome {
@@ -587,6 +592,22 @@ export interface ActionRequest {
   offerId?: string | null;
   /** @nullable */
   accept?: boolean | null;
+}
+
+/**
+ * An audit record: who changed what and why, with the values before and after as JSON text.
+ */
+export interface AuditRecordView {
+  id: number;
+  at: string;
+  actor: string;
+  action: string;
+  target: string;
+  reason: string;
+  /** @nullable */
+  oldJson: string | null;
+  /** @nullable */
+  newJson: string | null;
 }
 
 export type ReasonViewArgs = {[key: string]: string};
@@ -724,20 +745,211 @@ export interface CareerOptionsView {
   pronouns: PronounSet[];
 }
 
+/**
+ * Kind of a publication: the repository content, a draft, or a copy of an earlier publication.
+ */
+export type PublicationKind = typeof PublicationKind[keyof typeof PublicationKind];
+
+
+export const PublicationKind = {
+  release: 'release',
+  publish: 'publish',
+  revert: 'revert',
+} as const;
+
+/**
+ * A publication: its number, digest, mechanics fingerprint, kind, the publication it copies, who published it, why and when.
+ */
+export interface ContentPublicationView {
+  number: number;
+  digest: string;
+  mechanicsHash: string;
+  kind: PublicationKind;
+  /** @nullable */
+  sourceNumber: number | null;
+  actor: string;
+  reason: string;
+  publishedAt: string;
+}
+
+export interface JsonElement {}
+
+/**
+ * An event of the draft: its ID, version, phase and title for the list, and the whole event as JSON.
+ */
+export interface DraftEventView {
+  id: string;
+  /** @nullable */
+  version: number | null;
+  /** @nullable */
+  phase: string | null;
+  /** @nullable */
+  title: string | null;
+  event: JsonElement;
+}
+
+export type ContentChange = typeof ContentChange[keyof typeof ContentChange];
+
+
+export const ContentChange = {
+  added: 'added',
+  changed: 'changed',
+  removed: 'removed',
+} as const;
+
+/**
+ * An event or sponsor template that differs from the newest publication; mechanical unless only its texts or version changed.
+ */
+export interface ItemDiffView {
+  section: string;
+  id: string;
+  change: ContentChange;
+  mechanical: boolean;
+  /** @nullable */
+  versionBefore: number | null;
+  /** @nullable */
+  versionAfter: number | null;
+}
+
+/**
+ * A balance or events-file value that differs, by JSON path, with both values as JSON text.
+ */
+export interface ValueDiffView {
+  path: string;
+  /** @nullable */
+  before: string | null;
+  /** @nullable */
+  after: string | null;
+  mechanical: boolean;
+}
+
+/**
+ * What a draft changes: items, values, and whether it changes mechanics (a new season), only texts, or nothing.
+ */
+export interface ContentDiffView {
+  items: ItemDiffView[];
+  values: ValueDiffView[];
+  mechanical: boolean;
+  unchanged: boolean;
+}
+
+/**
+ * The draft with its check: problems that block publication and the diff against the newest publication.
+ */
+export interface ContentDraftView {
+  baseNumber: number;
+  revision: number;
+  updatedAt: string;
+  updatedBy: string;
+  behindCurrent: boolean;
+  balance: JsonElement;
+  events: DraftEventView[];
+  problems: string[];
+  diff: ContentDiffView;
+}
+
+/**
+ * The newest publication and the owner's draft, if any.
+ */
+export interface ContentAdminView {
+  current: ContentPublicationView;
+  draft: null | ContentDraftView;
+}
+
+/**
+ * Both files of a publication as their exact stored text, so their SHA-256 reproduces the digest.
+ */
+export interface ContentExportView {
+  number: number;
+  digest: string;
+  mechanicsHash: string;
+  balanceJson: string;
+  eventsJson: string;
+}
+
+/**
+ * Guid? CreateCareerRequest.CreationId is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122).
+ */
 export interface CreateCareerRequest {
   nickname: string;
   background: Background;
   difficulty: Difficulty;
   pronouns: PronounSet;
+  /** @nullable */
+  creationId?: string | null;
+  ranked?: boolean;
 }
 
 /**
- * The new career; string CreatedCareer.Secret is returned only here and never stored.
+ * The new career; string CreatedCareer.Secret and string CreatedCareer.RecoveryKey are returned only here and never stored.
  */
 export interface CreatedCareer {
   careerId: string;
   secret: string;
+  recoveryKey: string;
   career: CareerView;
+}
+
+/**
+ * Creates the draft from the newest publication, or from int? CreateDraftRequest.FromPublication.
+ */
+export interface CreateDraftRequest {
+  /** @nullable */
+  fromPublication?: number | null;
+}
+
+/**
+ * The whole balance document at the revision the owner read.
+ */
+export interface DraftBalanceRequest {
+  revision: number;
+  balance: JsonElement;
+}
+
+/**
+ * An event to put into the draft at the revision the owner read; its `id` equals the path.
+ */
+export interface DraftEventRequest {
+  revision: number;
+  event: JsonElement;
+}
+
+/**
+ * What the ending screen can offer for a career's result.
+ */
+export type EntryStatus = typeof EntryStatus[keyof typeof EntryStatus];
+
+
+export const EntryStatus = {
+  unranked: 'unranked',
+  notEnded: 'notEnded',
+  open: 'open',
+  closed: 'closed',
+  published: 'published',
+} as const;
+
+/**
+ * A career's own published entry; the rank is null while the owner hides the entry.
+ */
+export interface PublishedEntryView {
+  nickname: string;
+  score: number;
+  weeksPlayed: number;
+  submittedAt: string;
+  /** @nullable */
+  rank: number | null;
+}
+
+/**
+ * Whether and until when a career can publish its result, and the published entry with its season rank.
+ */
+export interface EntryStatusView {
+  status: EntryStatus;
+  /** @nullable */
+  season: number | null;
+  /** @nullable */
+  submissionDeadline: string | null;
+  entry: null | PublishedEntryView;
 }
 
 /**
@@ -761,6 +973,128 @@ export interface HistoryView {
 }
 
 /**
+ * The exported save file as it was downloaded (spec M4-C §5).
+ */
+export interface ImportCareerRequest {
+  save: null | JsonElement;
+}
+
+/**
+ * A new recovery key, shown once; the previous key no longer opens the career.
+ */
+export interface IssuedRecoveryKey {
+  careerId: string;
+  recoveryKey: string;
+}
+
+/**
+ * A public leaderboard row: only the fields every visitor may see.
+ */
+export interface LeaderboardRowView {
+  rank: number;
+  nickname: string;
+  score: number;
+  weeksPlayed: number;
+  difficulty: Difficulty;
+  ending: EndingReason;
+  submittedAt: string;
+}
+
+/**
+ * A season with its dates; the deadline is null while it is open, and extended once the owner announced a later one.
+ */
+export interface SeasonView {
+  number: number;
+  openedAt: string;
+  /** @nullable */
+  closedAt: string | null;
+  /** @nullable */
+  submissionDeadline: string | null;
+  extended: boolean;
+  current: boolean;
+}
+
+/**
+ * A season's top entries in leaderboard order.
+ */
+export interface LeaderboardView {
+  season: SeasonView;
+  entries: LeaderboardRowView[];
+}
+
+/**
+ * An entry as the owner sees it: the public fields, its receipt, whether and why it is hidden, and its public rank while visible.
+ */
+export interface ModeratedEntryView {
+  entryId: string;
+  careerId: string;
+  /** @nullable */
+  rank: number | null;
+  nickname: string;
+  score: number;
+  weeksPlayed: number;
+  difficulty: Difficulty;
+  ending: EndingReason;
+  submittedAt: string;
+  rulesetId: string;
+  finalStateVersion: number;
+  finalStateHash: string;
+  /** @nullable */
+  hiddenAt: string | null;
+  /** @nullable */
+  hiddenReason: string | null;
+}
+
+/**
+ * A season with every one of its entries.
+ */
+export interface ModeratedSeasonView {
+  season: SeasonView;
+  entries: ModeratedEntryView[];
+}
+
+/**
+ * Why the owner hides or restores an entry; kept in the audit record.
+ */
+export interface ModerationRequest {
+  reason: string;
+}
+
+/**
+ * Either the authenticator app's six-digit code or one unused recovery code.
+ */
+export interface OwnerCodeRequest {
+  /** @nullable */
+  code?: string | null;
+  /** @nullable */
+  recoveryCode?: string | null;
+}
+
+/**
+ * The owner's user name and password, the first sign-in step.
+ */
+export interface OwnerLoginRequest {
+  username: string;
+  password: string;
+}
+
+/**
+ * The next sign-in step after a correct password: always the second factor.
+ */
+export interface OwnerLoginStep {
+  next: string;
+}
+
+/**
+ * The signed-in owner, the anti-forgery token for admin writes, and how many recovery codes are left.
+ */
+export interface OwnerSessionView {
+  username: string;
+  csrfToken: string;
+  recoveryCodesLeft: number;
+}
+
+/**
  * Field errors of validation-failed, keyed by camelCase field name.
  */
 export type ProblemDetailsErrors = {[key: string]: string[]};
@@ -781,4 +1115,175 @@ export interface ProblemDetails {
   /** Field errors of validation-failed, keyed by camelCase field name. */
   errors?: ProblemDetailsErrors;
 }
+
+/**
+ * Publishes the draft at the revision the owner checked, for a reason kept in the audit record.
+ */
+export interface PublishContentRequest {
+  revision: number;
+  reason: string;
+}
+
+/**
+ * Only the nickname: the server publishes the score it computed, and any other field is ignored.
+ */
+export interface PublishResultRequest {
+  nickname: string;
+}
+
+export interface RecoverCareerRequest {
+  recoveryKey: string;
+}
+
+/**
+ * The recovered career and its new browser secret; the previous secret no longer opens it.
+ */
+export interface RecoveredCareer {
+  careerId: string;
+  secret: string;
+  career: CareerView;
+}
+
+/**
+ * Guid RestoreSlotRequest.CommandId makes the restore safe to repeat, like a command (spec M4-C §3).
+ */
+export interface RestoreSlotRequest {
+  commandId: string;
+  expectedVersion: number;
+}
+
+/**
+ * An exported unranked career: the canonical state without history; unsigned, validated on import (spec M4-C §5).
+ */
+export interface SaveFile {
+  format: string;
+  schema: number;
+  exportedAt: string;
+  nickname: string;
+  state: JsonElement;
+}
+
+/**
+ * One manual slot: empty, or the week, cash and followers of the saved state and when it was saved.
+ */
+export interface SaveSlotView {
+  slot: number;
+  empty: boolean;
+  /** @nullable */
+  savedAt: string | null;
+  /** @nullable */
+  week: number | null;
+  /** @nullable */
+  lastSettledWeek: number | null;
+  status: null | CareerStatus;
+  /** @nullable */
+  cashPln: number | null;
+  /** @nullable */
+  followers: number | null;
+}
+
+/**
+ * The three manual slots of an unranked career, in slot order.
+ */
+export interface SaveSlotsView {
+  slots: SaveSlotView[];
+}
+
+/**
+ * The state version the player is looking at; a stale one is rejected (spec M4-C §3).
+ */
+export interface SaveToSlotRequest {
+  expectedVersion: number;
+}
+
+/**
+ * The later deadline of a closed season and why it moves.
+ */
+export interface SeasonExtensionRequest {
+  until: string;
+  reason: string;
+}
+
+export type SimulationRunViewEndings = {[key: string]: number};
+
+/**
+ * Percentiles 10, 50 and 90 of one measure over the simulated careers.
+ */
+export interface SpreadView {
+  p10: number;
+  p50: number;
+  p90: number;
+}
+
+/**
+ * One simulated batch: how many careers, their endings, score and length spread, and every broken invariant or error.
+ */
+export interface SimulationRunView {
+  digest: string;
+  careers: number;
+  endings: SimulationRunViewEndings;
+  score: SpreadView;
+  weeks: SpreadView;
+  violations: string[];
+  errors: string[];
+}
+
+/**
+ * The draft and the current content replayed on the same seeds, policies, backgrounds and difficulties.
+ */
+export interface SimulationView {
+  draft: SimulationRunView;
+  current: SimulationRunView;
+  passed: boolean;
+}
+
+/**
+ * How many events of the batch were counted.
+ */
+export interface TelemetryAccepted {
+  accepted: number;
+}
+
+/**
+ * @nullable
+ */
+export type TelemetryEventProps = null | { [key: string]: unknown };
+
+/**
+ * One gameplay event as the browser sends it; only allowlisted names and values are counted (spec M4-F §2).
+ */
+export interface TelemetryEvent {
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  props?: TelemetryEventProps;
+}
+
+/**
+ * Opted-in gameplay events: only allowlisted names and values, counted per day (spec M4-F §2).
+ */
+export interface TelemetryRequest {
+  events: TelemetryEvent[];
+}
+
+export type GetLeaderboardParams = {
+season?: number;
+limit?: number;
+};
+
+export type DiscardContentDraftParams = {
+revision?: number;
+};
+
+export type RemoveDraftEventParams = {
+revision?: number;
+};
+
+export type ListModeratedEntriesParams = {
+season?: number;
+};
+
+export type ListAuditParams = {
+limit?: number;
+};
 

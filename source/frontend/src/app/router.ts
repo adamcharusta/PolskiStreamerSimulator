@@ -2,6 +2,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   type RouterHistory,
 } from '@tanstack/react-router';
 
@@ -9,6 +10,11 @@ import { CareerScreen } from '@/features/career/CareerScreen';
 import { CreateCareerScreen } from '@/features/create-career/CreateCareerScreen';
 import { HistoryScreen } from '@/features/history/HistoryScreen';
 import { HomeScreen } from '@/features/home/HomeScreen';
+import { LeaderboardScreen } from '@/features/leaderboard/LeaderboardScreen';
+import { RecoverScreen } from '@/features/recovery/RecoverScreen';
+import { RecoveryKeyScreen } from '@/features/recovery/RecoveryKeyScreen';
+import { ImportScreen } from '@/features/saves/ImportScreen';
+import { SavesScreen } from '@/features/saves/SavesScreen';
 
 import { RootLayout } from './RootLayout';
 import { NotFound, RouteError } from './RouteFallbacks';
@@ -36,9 +42,68 @@ const historyRoute = createRoute({
   component: HistoryScreen,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, createCareerRoute, careerRoute, historyRoute]);
+const keyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/kariera/$careerId/klucz',
+  component: RecoveryKeyScreen,
+});
 
-/** One game route per career (its stage follows the server's next step, not the URL, TD-98) and its history (M3-D). */
+const savesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/kariera/$careerId/zapisy',
+  component: SavesScreen,
+});
+
+const importRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/importuj',
+  component: ImportScreen,
+});
+
+const recoverRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/odzyskaj',
+  component: RecoverScreen,
+});
+
+/** `?sezon=N` picks a season; anything else shows the current one. */
+function seasonSearch(search: Record<string, unknown>): { sezon?: number } {
+  const season = Number(search.sezon);
+  return Number.isInteger(season) && season > 0 ? { sezon: season } : {};
+}
+
+const leaderboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/ranking',
+  validateSearch: seasonSearch,
+  component: LeaderboardScreen,
+});
+
+// The owner's panel is loaded only when visited; players never download it (spec M4-D §7).
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  component: lazyRouteComponent(() => import('@/features/admin/AdminScreen'), 'AdminScreen'),
+});
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  createCareerRoute,
+  careerRoute,
+  historyRoute,
+  keyRoute,
+  savesRoute,
+  recoverRoute,
+  importRoute,
+  leaderboardRoute,
+  adminRoute,
+]);
+
+/**
+ * One game route per career (its stage follows the server's next step, not the URL, TD-98), its history (M3-D), its
+ * recovery key and the recovery route (M4-A), the season tables (M4-B), the unranked slots and import (M4-C), and the
+ * owner's lazy-loaded panel (M4-D).
+ */
 export function createAppRouter(history?: RouterHistory) {
   return createRouter({
     routeTree,

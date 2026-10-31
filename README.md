@@ -2,7 +2,7 @@
 
 Polski Streamer Simulator is a free, satirical 18+ browser career game in which the player guides a fictional Polish streamer through a 20-year (1,040-week) career. Each week the player picks one main action and a primary category, plays or automates a stream with two or three live events, and watches followers, live viewers, money, drama, credibility and burnout change. All gameplay and scoring rules run in a deterministic, server-authoritative C# `Domain`, and finished careers compete on a season-scoped global top 100.
 
-**Status:** M1 simulation prototype and M2 vertical slice released to `main` and closed on 2026-10-16 ([M1](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/1), [M2](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/2)); M3 complete gameplay systems released to `main` on 2026-10-28 ([M3](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3); the content-capacity estimate [#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7) moved to M5, TD-120). The game is playable locally: create an unranked career, play manual weeks and 4/13/52-week strategy batches with five categories, sponsors, wagers, the optional side business, platforms and bans, browse the week history and reach any of the five endings with a PDF diploma, in the browser against the HTTP API and SQL Server (see *Run locally*). The [M1](docs/reports/m1-baseline-simulation.md) to [M3-C](docs/reports/m3c-baseline-simulation.md) simulation reports cover full 1,040-week careers. Next: M4 — online play and administration.
+**Status:** M1 simulation prototype and M2 vertical slice released to `main` and closed on 2026-10-16 ([M1](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/1), [M2](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/2)); M3 complete gameplay systems released to `main` on 2026-10-28 ([M3](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/3); the content-capacity estimate [#7](https://github.com/adamcharusta/PolskiStreamerSimulator/issues/7) moved to M5, TD-120). The game is playable locally: create a ranked or unranked career, play manual weeks and 4/13/52-week strategy batches with five categories, sponsors, wagers, the optional side business, platforms and bans, browse the week history and reach any of the five endings with a PDF diploma, in the browser against the HTTP API and SQL Server (see *Run locally*). The [M1](docs/reports/m1-baseline-simulation.md) to [M3-C](docs/reports/m3c-baseline-simulation.md) simulation reports cover full 1,040-week careers. M4 online play and administration released to `main` on 2026-10-31 ([M4](https://github.com/adamcharusta/PolskiStreamerSimulator/milestone/4)): per-career recovery keys and retention, ranked careers with season leaderboards, unranked save slots with export and import, the owner's `/admin` panel with two-factor sign-in, moderation, an audit trail and content publication, and opt-in analytics with outage notices. Next: M5.
 
 ## Repository layout
 
@@ -59,6 +59,29 @@ docker compose up             # SQL Server, the API on :8080 and Vite on :5173
 ```
 
 `docker compose down -v` resets the local database. See [local Docker Compose](docs/development-and-delivery.md#local-docker-compose) for rebuilding the API and running the browser journey.
+
+## Owner account and `/admin`
+
+The owner panel at `/admin` is never linked from the game. It has exactly one account, which only a command run next to the API creates; there is no registration page ([M4-D design](docs/superpowers/specs/2026-10-29-m4d-owner-account-and-moderation-design.md), TD-124). Run it once after the database is migrated:
+
+```sh
+# local Docker Compose stack
+docker compose exec api dotnet PolskiStreamerSimulator.WebApp.dll owner-create --username <name>
+# from source/backend against the database in ConnectionStrings__Game
+dotnet run --project WebApp -- owner-create --username <name>
+```
+
+The command prints, once, a generated password, the authenticator key with its `otpauth://` URI, and ten recovery codes. Add the key to an authenticator app and keep the password and codes offline; the server stores only hashes of the codes, and each code signs in once. A second `owner-create` is refused.
+
+Sign-in at `/admin` takes the password, then the six-digit code from the app or, behind „Użyj kodu zapasowego”, one recovery code. Five failed attempts lock the account for 15 minutes, and a sign-in lasts 8 hours. Passwords and second factors cannot be changed in the browser: after a lost phone, lost codes or a leaked password, run
+
+```sh
+docker compose exec api dotnet PolskiStreamerSimulator.WebApp.dll owner-create --reset
+```
+
+which prints a new password, authenticator key and recovery codes, unlocks the account and signs out every session.
+
+In the panel the owner hides an entry (also the way to revoke an invalid result) and restores it, each with a required reason; a hidden entry keeps its score and returns to its rank when restored. Hiding, restoring and season deadline extensions (also `season-extend` on the command line) are kept in the panel's „Dziennik zmian” audit trail.
 
 ## Build and test
 

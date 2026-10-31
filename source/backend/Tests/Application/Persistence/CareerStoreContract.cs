@@ -17,8 +17,17 @@ public abstract class CareerStoreContract
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     // A secret hash is always a 32-byte SHA-256; the SQL column is binary(32).
-    protected static NewCareer SampleCareer(ulong seed = 1)
-        => new(Guid.CreateVersion7(Created), "Streamer", TestCareers.For(Background.DormRoomNewcomer, Difficulty.Normal, seed), SHA256.HashData("secret"u8), Created);
+    protected static NewCareer SampleCareer(ulong seed = 1, CreationHashes? creation = null)
+        => new(
+            Guid.CreateVersion7(Created),
+            "Streamer",
+            TestCareers.For(Background.DormRoomNewcomer, Difficulty.Normal, seed),
+            SHA256.HashData("secret"u8),
+            SHA256.HashData("recovery"u8),
+            creation,
+            Created);
+
+    private static CreationHashes Creation(string id) => new(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(id)), SHA256.HashData("request"u8));
 
     private static CareerState Advanced(CareerState s) => s with { StateVersion = s.StateVersion + 1 };
 
@@ -45,7 +54,141 @@ public abstract class CareerStoreContract
         Assert.Equal(StateHash.Of(career.State), StateHash.Of(found.State));
         Assert.Equal(Created, found.CreatedAt);
         Assert.Equal(Created, found.LastActionAt);
+        Assert.Equal(Created.AddMonths(6), found.ExpiresAt);
+        Assert.Null(found.EndedAt);
         Assert.Equal(career.SecretHash, await store.FindSecretHashAsync(career.Id, Ct));
+        var credentials = await store.FindCredentialsAsync(career.Id, Ct);
+        Assert.Equal(career.SecretHash, credentials!.SecretHash);
+        Assert.Equal(career.RecoveryHash, credentials.RecoveryHash);
+        Assert.Null(credentials.CreationRequestHash);
+    }
+
+    [Fact]
+    public async Task A_creation_hash_finds_its_career_and_a_second_career_under_it_is_refused()
+    {
+        var store = await CreateStoreAsync();
+        var career = SampleCareer(creation: Creation("first"));
+        Assert.Equal(CreateOutcome.Created, await store.CreateAsync(career, Ct));
+
+        var duplicate = SampleCareer(2, Creation("first")) with { Id = Guid.CreateVersion7(Later) };
+
+        Assert.Equal(CreateOutcome.DuplicateCreation, await store.CreateAsync(duplicate, Ct));
+        Assert.Null(await store.FindAsync(duplicate.Id, Ct));
+        Assert.Equal(career.Id, await store.FindByCreationAsync(Creation("first").CreationHash, Ct));
+        Assert.Null(await store.FindByCreationAsync(Creation("other").CreationHash, Ct));
+        Assert.Equal(SHA256.HashData("request"u8), (await store.FindCredentialsAsync(career.Id, Ct))!.CreationRequestHash);
+    }
+
+    [Fact]
+    public async Task Careers_without_a_creation_hash_do_not_collide()
+    {
+        var store = await CreateStoreAsync();
+
+        Assert.Equal(CreateOutcome.Created, await store.CreateAsync(SampleCareer(), Ct));
+        Assert.Equal(CreateOutcome.Created, await store.CreateAsync(SampleCareer(2) with { Id = Guid.CreateVersion7(Later) }, Ct));
+    }
+
+    [Fact]
+    public async Task Replacing_credentials_keeps_the_state_the_last_action_and_the_expiry()
+    {
+        var (store, career) = await StoreWithCareerAsync();
+        var newSecret = SHA256.HashData("new secret"u8);
+
+        Assert.True(await store.ReplaceCredentialsAsync(career.Id, newSecret, null, null, Later, Ct));
+
+        var credentials = await store.FindCredentialsAsync(career.Id, Ct);
+        Assert.Equal(newSecret, credentials!.SecretHash);
+        Assert.Equal(career.RecoveryHash, credentials.RecoveryHash);
+        var found = await store.FindAsync(career.Id, Ct);
+        Assert.Equal(career.State.StateVersion, found!.State.StateVersion);
+        Assert.Equal(Created, found.LastActionAt);
+        Assert.Equal(Created.AddMonths(6), found.ExpiresAt);
+    }
+
+    [Fact]
+    public async Task Replacing_credentials_while_at_a_version_fails_once_the_career_moved_on()
+    {
+        var (store, career) = await StoreWithCareerAsync();
+        await store.AppendAsync(career.Id, career.State.StateVersion, Advanced(career.State), Entry(Guid.NewGuid()), Later, Ct);
+        var newRecovery = SHA256.HashData("new recovery"u8);
+
+        Assert.False(await store.ReplaceCredentialsAsync(career.Id, null, newRecovery, career.State.StateVersion, Later, Ct));
+        Assert.Equal(career.RecoveryHash, (await store.FindCredentialsAsync(career.Id, Ct))!.RecoveryHash);
+        Assert.True(await store.ReplaceCredentialsAsync(career.Id, null, newRecovery, career.State.StateVersion + 1, Later, Ct));
+        Assert.Equal(newRecovery, (await store.FindCredentialsAsync(career.Id, Ct))!.RecoveryHash);
+    }
+
+    [Fact]
+    public async Task Replacing_credentials_of_an_unknown_career_fails()
+    {
+        var store = await CreateStoreAsync();
+
+        Assert.False(await store.ReplaceCredentialsAsync(Guid.NewGuid(), SHA256.HashData("x"u8), null, null, Later, Ct));
+        Assert.Null(await store.FindCredentialsAsync(Guid.NewGuid(), Ct));
+    }
+
+    [Fact]
+    public async Task An_action_moves_the_expiry_six_months_and_an_ending_twelve_months()
+    {
+        var (store, career) = await StoreWithCareerAsync();
+        var v1 = Advanced(career.State);
+        await store.AppendAsync(career.Id, career.State.StateVersion, v1, Entry(Guid.NewGuid()), Later, Ct);
+        Assert.Equal(Later.AddMonths(6), (await store.FindAsync(career.Id, Ct))!.ExpiresAt);
+
+        var ending = Later.AddDays(3);
+        var ended = Advanced(v1) with { Status = CareerStatus.Ended };
+        await store.AppendAsync(career.Id, v1.StateVersion, ended, Entry(Guid.NewGuid()), ending, Ct);
+
+        var found = await store.FindAsync(career.Id, Ct);
+        Assert.Equal(ending, found!.EndedAt);
+        Assert.Equal(ending.AddMonths(12), found.ExpiresAt);
+    }
+
+    [Fact]
+    public async Task A_rejected_append_keeps_the_expiry()
+    {
+        var (store, career) = await StoreWithCareerAsync();
+        var command = Guid.NewGuid();
+        var v1 = Advanced(career.State);
+        await store.AppendAsync(career.Id, career.State.StateVersion, v1, Entry(command), Later, Ct);
+
+        await store.AppendAsync(career.Id, v1.StateVersion, Advanced(v1), Entry(command), Later.AddDays(30), Ct);
+        await store.AppendAsync(career.Id, career.State.StateVersion, v1, Entry(Guid.NewGuid()), Later.AddDays(30), Ct);
+
+        Assert.Equal(Later.AddMonths(6), (await store.FindAsync(career.Id, Ct))!.ExpiresAt);
+    }
+
+    [Fact]
+    public async Task Deleting_expired_careers_removes_them_with_their_log_and_keeps_the_others()
+    {
+        var store = await CreateStoreAsync();
+        var expired = SampleCareer();
+        var kept = SampleCareer(2) with { Id = Guid.CreateVersion7(Later), CreatedAt = Later };
+        await store.CreateAsync(expired, Ct);
+        await store.CreateAsync(kept, Ct);
+        var command = Guid.NewGuid();
+        await store.AppendAsync(expired.Id, expired.State.StateVersion, Advanced(expired.State), Entry(command), Created, Ct);
+
+        Assert.Equal(1, await store.DeleteExpiredAsync(Created.AddMonths(6), 10, Ct));
+
+        Assert.Null(await store.FindAsync(expired.Id, Ct));
+        Assert.Null(await store.FindCredentialsAsync(expired.Id, Ct));
+        Assert.Empty(await store.FindCommandAsync(expired.Id, command, Ct));
+        Assert.NotNull(await store.FindAsync(kept.Id, Ct));
+        Assert.Equal(0, await store.DeleteExpiredAsync(Created.AddMonths(6), 10, Ct));
+    }
+
+    [Fact]
+    public async Task Deleting_expired_careers_stops_at_the_limit()
+    {
+        var store = await CreateStoreAsync();
+        for (var i = 0; i < 3; i++)
+        {
+            await store.CreateAsync(SampleCareer((ulong)i + 1) with { Id = Guid.NewGuid() }, Ct);
+        }
+
+        Assert.Equal(2, await store.DeleteExpiredAsync(Later.AddMonths(6), 2, Ct));
+        Assert.Equal(1, await store.DeleteExpiredAsync(Later.AddMonths(6), 2, Ct));
     }
 
     [Fact]

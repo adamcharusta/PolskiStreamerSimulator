@@ -7,9 +7,10 @@ namespace PolskiStreamerSimulator.Tests.Support;
 /// <summary>HTTP helpers for the career API.</summary>
 public static class ApiCalls
 {
-    public static async Task<(Guid Id, string Secret, JsonElement Career)> CreateCareerAsync(this HttpClient client, CancellationToken ct, string nickname = "Streamer")
+    public static async Task<(Guid Id, string Secret, JsonElement Career)> CreateCareerAsync(
+        this HttpClient client, CancellationToken ct, string nickname = "Streamer", bool ranked = false)
     {
-        var response = await client.PostAsJsonAsync("/v1/careers", new { nickname, background = "dormRoomNewcomer", difficulty = "normal", pronouns = "woman" }, ct);
+        var response = await client.PostAsJsonAsync("/v1/careers", new { nickname, background = "dormRoomNewcomer", difficulty = "normal", pronouns = "woman", ranked }, ct);
         response.EnsureSuccessStatusCode();
         var body = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
         return (body.GetProperty("careerId").GetGuid(), body.GetProperty("secret").GetString()!, body.GetProperty("career"));
@@ -17,6 +18,24 @@ public static class ApiCalls
 
     public static Task<HttpResponseMessage> GetCareerAsync(this HttpClient client, Guid id, string? secret, CancellationToken ct)
         => client.SendAsync(Request(HttpMethod.Get, $"/v1/careers/{id}", secret, null), ct);
+
+    public static Task<HttpResponseMessage> GetLeaderboardEntryAsync(this HttpClient client, Guid id, string? secret, CancellationToken ct)
+        => client.SendAsync(Request(HttpMethod.Get, $"/v1/careers/{id}/leaderboard-entry", secret, null), ct);
+
+    public static Task<HttpResponseMessage> PostLeaderboardEntryAsync(this HttpClient client, Guid id, string? secret, object body, CancellationToken ct)
+        => client.SendAsync(Request(HttpMethod.Post, $"/v1/careers/{id}/leaderboard-entry", secret, body), ct);
+
+    public static Task<HttpResponseMessage> GetSlotsAsync(this HttpClient client, Guid id, string? secret, CancellationToken ct)
+        => client.SendAsync(Request(HttpMethod.Get, $"/v1/careers/{id}/saves", secret, null), ct);
+
+    public static Task<HttpResponseMessage> PutSlotAsync(this HttpClient client, Guid id, string? secret, int slot, object body, CancellationToken ct)
+        => client.SendAsync(Request(HttpMethod.Put, $"/v1/careers/{id}/saves/{slot}", secret, body), ct);
+
+    public static Task<HttpResponseMessage> PostRestoreAsync(this HttpClient client, Guid id, string? secret, int slot, object body, CancellationToken ct)
+        => client.SendAsync(Request(HttpMethod.Post, $"/v1/careers/{id}/saves/{slot}/restore", secret, body), ct);
+
+    public static Task<HttpResponseMessage> GetExportAsync(this HttpClient client, Guid id, string? secret, CancellationToken ct)
+        => client.SendAsync(Request(HttpMethod.Get, $"/v1/careers/{id}/export", secret, null), ct);
 
     public static Task<HttpResponseMessage> PostActionAsync(this HttpClient client, Guid id, string? secret, object body, CancellationToken ct)
         => client.SendAsync(Request(HttpMethod.Post, $"/v1/careers/{id}/actions", secret, body), ct);

@@ -269,4 +269,47 @@ describe('game screen', () => {
       await screen.findByText('Kariera ukończona — dwadzieścia lat streamowania za tobą.'),
     ).toBeInTheDocument();
   });
+
+  it('dates the expiry of an unfinished career and links its recovery key', async () => {
+    rememberTestCareer();
+    serveCareer(careerView({ expiresAt: '2027-04-14T12:00:00+00:00' }));
+
+    renderApp(path);
+
+    expect(await screen.findByText(/Kariera wygaśnie/u)).toHaveTextContent('14 kwi 2027');
+    expect(screen.getByRole('link', { name: 'Klucz odzyskiwania' })).toHaveAttribute(
+      'href',
+      `${path}/klucz`,
+    );
+  });
+
+  it('dates how long a finished career keeps its history and diploma', async () => {
+    rememberTestCareer();
+    serveCareer(
+      careerView({
+        status: 'ended',
+        ending: 'completed',
+        next: endedNext(),
+        expiresAt: '2027-10-14T12:00:00+00:00',
+      }),
+    );
+
+    renderApp(path);
+
+    expect(await screen.findByText(/Historia i dyplom są dostępne do/u)).toHaveTextContent(
+      '14 paź 2027',
+    );
+  });
+
+  it('points a career the server does not find to recovery', async () => {
+    rememberTestCareer();
+    server.use(http.get('/v1/careers/:id', () => problem(404, 'career-not-found')));
+    renderApp(path);
+
+    expect(await screen.findByRole('link', { name: 'Odzyskaj karierę kluczem' })).toHaveAttribute(
+      'href',
+      '/odzyskaj',
+    );
+    expect(screen.getByText(/kariera wygasła/u)).toBeInTheDocument();
+  });
 });

@@ -26,14 +26,51 @@ import type {
 import type {
   ActionOutcome,
   ActionRequest,
+  AuditRecordView,
   BatchOutcome,
   BatchRequest,
   CareerOptionsView,
   CareerView,
+  ContentAdminView,
+  ContentDraftView,
+  ContentExportView,
+  ContentPublicationView,
   CreateCareerRequest,
+  CreateDraftRequest,
   CreatedCareer,
+  DiscardContentDraftParams,
+  DraftBalanceRequest,
+  DraftEventRequest,
+  EntryStatusView,
+  GetLeaderboardParams,
   HistoryView,
+  ImportCareerRequest,
+  IssuedRecoveryKey,
+  LeaderboardView,
+  ListAuditParams,
+  ListModeratedEntriesParams,
+  ModeratedEntryView,
+  ModeratedSeasonView,
+  ModerationRequest,
+  OwnerCodeRequest,
+  OwnerLoginRequest,
+  OwnerLoginStep,
+  OwnerSessionView,
   ProblemDetails,
+  PublishContentRequest,
+  PublishResultRequest,
+  RecoverCareerRequest,
+  RecoveredCareer,
+  RemoveDraftEventParams,
+  RestoreSlotRequest,
+  SaveFile,
+  SaveSlotsView,
+  SaveToSlotRequest,
+  SeasonExtensionRequest,
+  SeasonView,
+  SimulationView,
+  TelemetryAccepted,
+  TelemetryRequest,
   WeekReportView
 } from './game.schemas';
 
@@ -61,7 +98,818 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 /**
- * @summary Create a career and receive its secret once
+ * @summary Count opted-in gameplay events per day
+ */
+export const recordTelemetry = (
+    telemetryRequest: TelemetryRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<TelemetryAccepted>(
+      {url: `/v1/telemetry`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: telemetryRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRecordTelemetryMutationKey = () => ['recordTelemetry'] as const;
+
+export const getRecordTelemetryMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordTelemetry>>, TError,RecordTelemetryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordTelemetry>>, TError,RecordTelemetryMutationVariables, TContext> => {
+
+const mutationKey = getRecordTelemetryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordTelemetry>>, RecordTelemetryMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordTelemetry(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordTelemetryMutationResult = NonNullable<Awaited<ReturnType<typeof recordTelemetry>>>
+    export type RecordTelemetryMutationBody = TelemetryRequest
+    export type RecordTelemetryMutationError = ErrorType<ProblemDetails>
+    export type RecordTelemetryMutationVariables = {data: TelemetryRequest}
+
+    /**
+ * @summary Count opted-in gameplay events per day
+ */
+export const useRecordTelemetry = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordTelemetry>>, TError,RecordTelemetryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordTelemetry>>,
+        TError,
+        RecordTelemetryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecordTelemetryMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary List the three manual slots of an unranked career
+ */
+export const listSaveSlots = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SaveSlotsView>(
+      {url: `/v1/careers/${id}/saves`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListSaveSlotsQueryKey = (id: string,) => {
+    return [
+    `/v1/careers/${id}/saves`
+    ] as const;
+    }
+
+
+export const getListSaveSlotsQueryOptions = <TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSaveSlotsQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSaveSlots>>> = ({ signal }) => listSaveSlots(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSaveSlotsQueryResult = NonNullable<Awaited<ReturnType<typeof listSaveSlots>>>
+export type ListSaveSlotsQueryError = ErrorType<ProblemDetails>
+
+
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSaveSlots>>,
+          TError,
+          Awaited<ReturnType<typeof listSaveSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSaveSlots>>,
+          TError,
+          Awaited<ReturnType<typeof listSaveSlots>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the three manual slots of an unranked career
+ */
+
+export function useListSaveSlots<TData = Awaited<ReturnType<typeof listSaveSlots>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSaveSlots>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSaveSlotsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Save the current state of an unranked career into a slot
+ */
+export const saveToSlot = (
+    id: string,
+    slot: number,
+    saveToSlotRequest: SaveToSlotRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SaveSlotsView>(
+      {url: `/v1/careers/${id}/saves/${slot}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: saveToSlotRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getSaveToSlotMutationKey = () => ['saveToSlot'] as const;
+
+export const getSaveToSlotMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveToSlot>>, TError,SaveToSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveToSlot>>, TError,SaveToSlotMutationVariables, TContext> => {
+
+const mutationKey = getSaveToSlotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveToSlot>>, SaveToSlotMutationVariables> = (props) => {
+          const {id,slot,data} = props ?? {};
+
+          return  saveToSlot(id,slot,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveToSlotMutationResult = NonNullable<Awaited<ReturnType<typeof saveToSlot>>>
+    export type SaveToSlotMutationBody = SaveToSlotRequest
+    export type SaveToSlotMutationError = ErrorType<ProblemDetails>
+    export type SaveToSlotMutationVariables = {id: string;slot: number;data: SaveToSlotRequest}
+
+    /**
+ * @summary Save the current state of an unranked career into a slot
+ */
+export const useSaveToSlot = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveToSlot>>, TError,SaveToSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof saveToSlot>>,
+        TError,
+        SaveToSlotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getSaveToSlotMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Restore an unranked career to the state saved in a slot
+ */
+export const restoreSlot = (
+    id: string,
+    slot: number,
+    restoreSlotRequest: RestoreSlotRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ActionOutcome>(
+      {url: `/v1/careers/${id}/saves/${slot}/restore`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: restoreSlotRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRestoreSlotMutationKey = () => ['restoreSlot'] as const;
+
+export const getRestoreSlotMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreSlot>>, TError,RestoreSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreSlot>>, TError,RestoreSlotMutationVariables, TContext> => {
+
+const mutationKey = getRestoreSlotMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreSlot>>, RestoreSlotMutationVariables> = (props) => {
+          const {id,slot,data} = props ?? {};
+
+          return  restoreSlot(id,slot,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreSlotMutationResult = NonNullable<Awaited<ReturnType<typeof restoreSlot>>>
+    export type RestoreSlotMutationBody = RestoreSlotRequest
+    export type RestoreSlotMutationError = ErrorType<ProblemDetails>
+    export type RestoreSlotMutationVariables = {id: string;slot: number;data: RestoreSlotRequest}
+
+    /**
+ * @summary Restore an unranked career to the state saved in a slot
+ */
+export const useRestoreSlot = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreSlot>>, TError,RestoreSlotMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreSlot>>,
+        TError,
+        RestoreSlotMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRestoreSlotMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Export an unranked career as a save file
+ */
+export const exportCareer = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SaveFile>(
+      {url: `/v1/careers/${id}/export`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getExportCareerQueryKey = (id: string,) => {
+    return [
+    `/v1/careers/${id}/export`
+    ] as const;
+    }
+
+
+export const getExportCareerQueryOptions = <TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportCareerQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportCareer>>> = ({ signal }) => exportCareer(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportCareerQueryResult = NonNullable<Awaited<ReturnType<typeof exportCareer>>>
+export type ExportCareerQueryError = ErrorType<ProblemDetails>
+
+
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCareer>>,
+          TError,
+          Awaited<ReturnType<typeof exportCareer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportCareer>>,
+          TError,
+          Awaited<ReturnType<typeof exportCareer>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export an unranked career as a save file
+ */
+
+export function useExportCareer<TData = Awaited<ReturnType<typeof exportCareer>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportCareer>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportCareerQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Create a new unranked career from a save file
+ */
+export const importCareer = (
+    importCareerRequest: ImportCareerRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<CreatedCareer>(
+      {url: `/v1/careers/import`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: importCareerRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getImportCareerMutationKey = () => ['importCareer'] as const;
+
+export const getImportCareerMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importCareer>>, TError,ImportCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof importCareer>>, TError,ImportCareerMutationVariables, TContext> => {
+
+const mutationKey = getImportCareerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof importCareer>>, ImportCareerMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  importCareer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ImportCareerMutationResult = NonNullable<Awaited<ReturnType<typeof importCareer>>>
+    export type ImportCareerMutationBody = ImportCareerRequest
+    export type ImportCareerMutationError = ErrorType<ProblemDetails>
+    export type ImportCareerMutationVariables = {data: ImportCareerRequest}
+
+    /**
+ * @summary Create a new unranked career from a save file
+ */
+export const useImportCareer = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof importCareer>>, TError,ImportCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof importCareer>>,
+        TError,
+        ImportCareerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getImportCareerMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Read whether and until when a career can publish its result
+ */
+export const getLeaderboardEntry = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<EntryStatusView>(
+      {url: `/v1/careers/${id}/leaderboard-entry`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetLeaderboardEntryQueryKey = (id: string,) => {
+    return [
+    `/v1/careers/${id}/leaderboard-entry`
+    ] as const;
+    }
+
+
+export const getGetLeaderboardEntryQueryOptions = <TData = Awaited<ReturnType<typeof getLeaderboardEntry>>, TError = ErrorType<ProblemDetails>>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboardEntry>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeaderboardEntryQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaderboardEntry>>> = ({ signal }) => getLeaderboardEntry(id, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeaderboardEntry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLeaderboardEntryQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaderboardEntry>>>
+export type GetLeaderboardEntryQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetLeaderboardEntry<TData = Awaited<ReturnType<typeof getLeaderboardEntry>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboardEntry>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaderboardEntry>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaderboardEntry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLeaderboardEntry<TData = Awaited<ReturnType<typeof getLeaderboardEntry>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboardEntry>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaderboardEntry>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaderboardEntry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLeaderboardEntry<TData = Awaited<ReturnType<typeof getLeaderboardEntry>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboardEntry>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read whether and until when a career can publish its result
+ */
+
+export function useGetLeaderboardEntry<TData = Awaited<ReturnType<typeof getLeaderboardEntry>>, TError = ErrorType<ProblemDetails>>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboardEntry>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetLeaderboardEntryQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Publish the server-computed result of an ended ranked career under a nickname
+ */
+export const publishResult = (
+    id: string,
+    publishResultRequest: PublishResultRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<EntryStatusView>(
+      {url: `/v1/careers/${id}/leaderboard-entry`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: publishResultRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getPublishResultMutationKey = () => ['publishResult'] as const;
+
+export const getPublishResultMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishResult>>, TError,PublishResultMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof publishResult>>, TError,PublishResultMutationVariables, TContext> => {
+
+const mutationKey = getPublishResultMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishResult>>, PublishResultMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  publishResult(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublishResultMutationResult = NonNullable<Awaited<ReturnType<typeof publishResult>>>
+    export type PublishResultMutationBody = PublishResultRequest
+    export type PublishResultMutationError = ErrorType<ProblemDetails>
+    export type PublishResultMutationVariables = {id: string;data: PublishResultRequest}
+
+    /**
+ * @summary Publish the server-computed result of an ended ranked career under a nickname
+ */
+export const usePublishResult = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishResult>>, TError,PublishResultMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publishResult>>,
+        TError,
+        PublishResultMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPublishResultMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Read the top entries of a season
+ */
+export const getLeaderboard = (
+    params?: GetLeaderboardParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<LeaderboardView>(
+      {url: `/v1/leaderboard`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetLeaderboardQueryKey = (params?: GetLeaderboardParams,) => {
+    return [
+    `/v1/leaderboard`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetLeaderboardQueryOptions = <TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<ProblemDetails>>(params?: GetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeaderboardQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaderboard>>> = ({ signal }) => getLeaderboard(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetLeaderboardQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaderboard>>>
+export type GetLeaderboardQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetLeaderboard<TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<ProblemDetails>>(
+ params: undefined |  GetLeaderboardParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaderboard>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaderboard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLeaderboard<TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<ProblemDetails>>(
+ params?: GetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getLeaderboard>>,
+          TError,
+          Awaited<ReturnType<typeof getLeaderboard>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetLeaderboard<TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<ProblemDetails>>(
+ params?: GetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read the top entries of a season
+ */
+
+export function useGetLeaderboard<TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<ProblemDetails>>(
+ params?: GetLeaderboardParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetLeaderboardQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary List the seasons and their submission deadlines
+ */
+export const listSeasons = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SeasonView[]>(
+      {url: `/v1/seasons`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListSeasonsQueryKey = () => {
+    return [
+    `/v1/seasons`
+    ] as const;
+    }
+
+
+export const getListSeasonsQueryOptions = <TData = Awaited<ReturnType<typeof listSeasons>>, TError = ErrorType<ProblemDetails>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSeasons>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSeasonsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSeasons>>> = ({ signal }) => listSeasons(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSeasons>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListSeasonsQueryResult = NonNullable<Awaited<ReturnType<typeof listSeasons>>>
+export type ListSeasonsQueryError = ErrorType<ProblemDetails>
+
+
+export function useListSeasons<TData = Awaited<ReturnType<typeof listSeasons>>, TError = ErrorType<ProblemDetails>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSeasons>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSeasons>>,
+          TError,
+          Awaited<ReturnType<typeof listSeasons>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSeasons<TData = Awaited<ReturnType<typeof listSeasons>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSeasons>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSeasons>>,
+          TError,
+          Awaited<ReturnType<typeof listSeasons>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListSeasons<TData = Awaited<ReturnType<typeof listSeasons>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSeasons>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the seasons and their submission deadlines
+ */
+
+export function useListSeasons<TData = Awaited<ReturnType<typeof listSeasons>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSeasons>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListSeasonsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Create a career and receive its secret and recovery key once
  */
 export const createCareer = (
     createCareerRequest: CreateCareerRequest,
@@ -115,7 +963,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type CreateCareerMutationVariables = {data: CreateCareerRequest}
 
     /**
- * @summary Create a career and receive its secret once
+ * @summary Create a career and receive its secret and recovery key once
  */
 export const useCreateCareer = <TError = ErrorType<ProblemDetails>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCareer>>, TError,CreateCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
@@ -126,6 +974,140 @@ export const useCreateCareer = <TError = ErrorType<ProblemDetails>,
         TContext
       > => {
       return useMutation(getCreateCareerMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Open a career with its recovery key and receive a new secret
+ */
+export const recoverCareer = (
+    recoverCareerRequest: RecoverCareerRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<RecoveredCareer>(
+      {url: `/v1/careers/recover`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: recoverCareerRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRecoverCareerMutationKey = () => ['recoverCareer'] as const;
+
+export const getRecoverCareerMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverCareer>>, TError,RecoverCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof recoverCareer>>, TError,RecoverCareerMutationVariables, TContext> => {
+
+const mutationKey = getRecoverCareerMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverCareer>>, RecoverCareerMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  recoverCareer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecoverCareerMutationResult = NonNullable<Awaited<ReturnType<typeof recoverCareer>>>
+    export type RecoverCareerMutationBody = RecoverCareerRequest
+    export type RecoverCareerMutationError = ErrorType<ProblemDetails>
+    export type RecoverCareerMutationVariables = {data: RecoverCareerRequest}
+
+    /**
+ * @summary Open a career with its recovery key and receive a new secret
+ */
+export const useRecoverCareer = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverCareer>>, TError,RecoverCareerMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recoverCareer>>,
+        TError,
+        RecoverCareerMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRecoverCareerMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Issue a new recovery key; the previous one stops working
+ */
+export const issueRecoveryKey = (
+    id: string,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<IssuedRecoveryKey>(
+      {url: `/v1/careers/${id}/recovery-key`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getIssueRecoveryKeyMutationKey = () => ['issueRecoveryKey'] as const;
+
+export const getIssueRecoveryKeyMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueRecoveryKey>>, TError,IssueRecoveryKeyMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof issueRecoveryKey>>, TError,IssueRecoveryKeyMutationVariables, TContext> => {
+
+const mutationKey = getIssueRecoveryKeyMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof issueRecoveryKey>>, IssueRecoveryKeyMutationVariables> = (props) => {
+          const {id} = props ?? {};
+
+          return  issueRecoveryKey(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type IssueRecoveryKeyMutationResult = NonNullable<Awaited<ReturnType<typeof issueRecoveryKey>>>
+
+    export type IssueRecoveryKeyMutationError = ErrorType<ProblemDetails>
+    export type IssueRecoveryKeyMutationVariables = {id: string}
+
+    /**
+ * @summary Issue a new recovery key; the previous one stops working
+ */
+export const useIssueRecoveryKey = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof issueRecoveryKey>>, TError,IssueRecoveryKeyMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof issueRecoveryKey>>,
+        TError,
+        IssueRecoveryKeyMutationVariables,
+        TContext
+      > => {
+      return useMutation(getIssueRecoveryKeyMutationOptions(options), queryClient);
     }
 
 /**
@@ -315,7 +1297,7 @@ export function useGetCareer<TData = Awaited<ReturnType<typeof getCareer>>, TErr
 
 
 /**
- * @summary getHistory
+ * @summary List the settled weeks of a career
  */
 export const getHistory = (
     id: string,
@@ -386,7 +1368,7 @@ export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TE
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary getHistory
+ * @summary List the settled weeks of a career
  */
 
 export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TError = ErrorType<ProblemDetails>>(
@@ -408,7 +1390,7 @@ export function useGetHistory<TData = Awaited<ReturnType<typeof getHistory>>, TE
 
 
 /**
- * @summary getHistoryWeek
+ * @summary Read the stored report of one week
  */
 export const getHistoryWeek = (
     id: string,
@@ -485,7 +1467,7 @@ export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWe
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary getHistoryWeek
+ * @summary Read the stored report of one week
  */
 
 export function useGetHistoryWeek<TData = Awaited<ReturnType<typeof getHistoryWeek>>, TError = ErrorType<ProblemDetails>>(
@@ -577,7 +1559,7 @@ export const useSubmitAction = <TError = ErrorType<ProblemDetails>,
     }
 
 /**
- * @summary Play up to 13 weeks automatically
+ * @summary Play 4, 13 or 52 weeks automatically
  */
 export const runBatch = (
     id: string,
@@ -632,7 +1614,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type RunBatchMutationVariables = {id: string;data: BatchRequest}
 
     /**
- * @summary Play up to 13 weeks automatically
+ * @summary Play 4, 13 or 52 weeks automatically
  */
 export const useRunBatch = <TError = ErrorType<ProblemDetails>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runBatch>>, TError,RunBatchMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
@@ -644,4 +1626,1516 @@ export const useRunBatch = <TError = ErrorType<ProblemDetails>,
       > => {
       return useMutation(getRunBatchMutationOptions(options), queryClient);
     }
+
+/**
+ * @summary Read the newest content publication and the draft with its check
+ */
+export const getContentAdmin = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentAdminView>(
+      {url: `/v1/admin/content`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetContentAdminQueryKey = () => {
+    return [
+    `/v1/admin/content`
+    ] as const;
+    }
+
+
+export const getGetContentAdminQueryOptions = <TData = Awaited<ReturnType<typeof getContentAdmin>>, TError = ErrorType<ProblemDetails>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getContentAdmin>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetContentAdminQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getContentAdmin>>> = ({ signal }) => getContentAdmin(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getContentAdmin>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetContentAdminQueryResult = NonNullable<Awaited<ReturnType<typeof getContentAdmin>>>
+export type GetContentAdminQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetContentAdmin<TData = Awaited<ReturnType<typeof getContentAdmin>>, TError = ErrorType<ProblemDetails>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getContentAdmin>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getContentAdmin>>,
+          TError,
+          Awaited<ReturnType<typeof getContentAdmin>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetContentAdmin<TData = Awaited<ReturnType<typeof getContentAdmin>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getContentAdmin>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getContentAdmin>>,
+          TError,
+          Awaited<ReturnType<typeof getContentAdmin>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetContentAdmin<TData = Awaited<ReturnType<typeof getContentAdmin>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getContentAdmin>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read the newest content publication and the draft with its check
+ */
+
+export function useGetContentAdmin<TData = Awaited<ReturnType<typeof getContentAdmin>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getContentAdmin>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetContentAdminQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Create the content draft from a publication
+ */
+export const createContentDraft = (
+    createDraftRequest: CreateDraftRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentDraftView>(
+      {url: `/v1/admin/content/draft`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createDraftRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getCreateContentDraftMutationKey = () => ['createContentDraft'] as const;
+
+export const getCreateContentDraftMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createContentDraft>>, TError,CreateContentDraftMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof createContentDraft>>, TError,CreateContentDraftMutationVariables, TContext> => {
+
+const mutationKey = getCreateContentDraftMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createContentDraft>>, CreateContentDraftMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  createContentDraft(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateContentDraftMutationResult = NonNullable<Awaited<ReturnType<typeof createContentDraft>>>
+    export type CreateContentDraftMutationBody = CreateDraftRequest
+    export type CreateContentDraftMutationError = ErrorType<ProblemDetails>
+    export type CreateContentDraftMutationVariables = {data: CreateDraftRequest}
+
+    /**
+ * @summary Create the content draft from a publication
+ */
+export const useCreateContentDraft = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createContentDraft>>, TError,CreateContentDraftMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createContentDraft>>,
+        TError,
+        CreateContentDraftMutationVariables,
+        TContext
+      > => {
+      return useMutation(getCreateContentDraftMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Discard the content draft
+ */
+export const discardContentDraft = (
+    params?: DiscardContentDraftParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<void>(
+      {url: `/v1/admin/content/draft`, method: 'DELETE',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getDiscardContentDraftMutationKey = () => ['discardContentDraft'] as const;
+
+export const getDiscardContentDraftMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof discardContentDraft>>, TError,DiscardContentDraftMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof discardContentDraft>>, TError,DiscardContentDraftMutationVariables, TContext> => {
+
+const mutationKey = getDiscardContentDraftMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof discardContentDraft>>, DiscardContentDraftMutationVariables> = (props) => {
+          const {params} = props ?? {};
+
+          return  discardContentDraft(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DiscardContentDraftMutationResult = NonNullable<Awaited<ReturnType<typeof discardContentDraft>>>
+
+    export type DiscardContentDraftMutationError = ErrorType<ProblemDetails>
+    export type DiscardContentDraftMutationVariables = {params?: DiscardContentDraftParams}
+
+    /**
+ * @summary Discard the content draft
+ */
+export const useDiscardContentDraft = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof discardContentDraft>>, TError,DiscardContentDraftMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof discardContentDraft>>,
+        TError,
+        DiscardContentDraftMutationVariables,
+        TContext
+      > => {
+      return useMutation(getDiscardContentDraftMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Replace or add one event of the draft
+ */
+export const putDraftEvent = (
+    id: string,
+    draftEventRequest: DraftEventRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentDraftView>(
+      {url: `/v1/admin/content/draft/events/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: draftEventRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getPutDraftEventMutationKey = () => ['putDraftEvent'] as const;
+
+export const getPutDraftEventMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDraftEvent>>, TError,PutDraftEventMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof putDraftEvent>>, TError,PutDraftEventMutationVariables, TContext> => {
+
+const mutationKey = getPutDraftEventMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putDraftEvent>>, PutDraftEventMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  putDraftEvent(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutDraftEventMutationResult = NonNullable<Awaited<ReturnType<typeof putDraftEvent>>>
+    export type PutDraftEventMutationBody = DraftEventRequest
+    export type PutDraftEventMutationError = ErrorType<ProblemDetails>
+    export type PutDraftEventMutationVariables = {id: string;data: DraftEventRequest}
+
+    /**
+ * @summary Replace or add one event of the draft
+ */
+export const usePutDraftEvent = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDraftEvent>>, TError,PutDraftEventMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putDraftEvent>>,
+        TError,
+        PutDraftEventMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutDraftEventMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Remove one event from the draft
+ */
+export const removeDraftEvent = (
+    id: string,
+    params?: RemoveDraftEventParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentDraftView>(
+      {url: `/v1/admin/content/draft/events/${id}`, method: 'DELETE',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRemoveDraftEventMutationKey = () => ['removeDraftEvent'] as const;
+
+export const getRemoveDraftEventMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeDraftEvent>>, TError,RemoveDraftEventMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeDraftEvent>>, TError,RemoveDraftEventMutationVariables, TContext> => {
+
+const mutationKey = getRemoveDraftEventMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeDraftEvent>>, RemoveDraftEventMutationVariables> = (props) => {
+          const {id,params} = props ?? {};
+
+          return  removeDraftEvent(id,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveDraftEventMutationResult = NonNullable<Awaited<ReturnType<typeof removeDraftEvent>>>
+
+    export type RemoveDraftEventMutationError = ErrorType<ProblemDetails>
+    export type RemoveDraftEventMutationVariables = {id: string;params?: RemoveDraftEventParams}
+
+    /**
+ * @summary Remove one event from the draft
+ */
+export const useRemoveDraftEvent = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeDraftEvent>>, TError,RemoveDraftEventMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeDraftEvent>>,
+        TError,
+        RemoveDraftEventMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRemoveDraftEventMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Replace the balance document of the draft
+ */
+export const putDraftBalance = (
+    draftBalanceRequest: DraftBalanceRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentDraftView>(
+      {url: `/v1/admin/content/draft/balance`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: draftBalanceRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getPutDraftBalanceMutationKey = () => ['putDraftBalance'] as const;
+
+export const getPutDraftBalanceMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDraftBalance>>, TError,PutDraftBalanceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof putDraftBalance>>, TError,PutDraftBalanceMutationVariables, TContext> => {
+
+const mutationKey = getPutDraftBalanceMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putDraftBalance>>, PutDraftBalanceMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  putDraftBalance(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutDraftBalanceMutationResult = NonNullable<Awaited<ReturnType<typeof putDraftBalance>>>
+    export type PutDraftBalanceMutationBody = DraftBalanceRequest
+    export type PutDraftBalanceMutationError = ErrorType<ProblemDetails>
+    export type PutDraftBalanceMutationVariables = {data: DraftBalanceRequest}
+
+    /**
+ * @summary Replace the balance document of the draft
+ */
+export const usePutDraftBalance = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putDraftBalance>>, TError,PutDraftBalanceMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putDraftBalance>>,
+        TError,
+        PutDraftBalanceMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPutDraftBalanceMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Simulate careers on the draft and on the current content
+ */
+export const simulateContentDraft = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SimulationView>(
+      {url: `/v1/admin/content/draft/simulation`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getSimulateContentDraftMutationKey = () => ['simulateContentDraft'] as const;
+
+export const getSimulateContentDraftMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof simulateContentDraft>>, TError,void, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof simulateContentDraft>>, TError,void, TContext> => {
+
+const mutationKey = getSimulateContentDraftMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof simulateContentDraft>>, void> = () => {
+
+
+          return  simulateContentDraft(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SimulateContentDraftMutationResult = NonNullable<Awaited<ReturnType<typeof simulateContentDraft>>>
+
+    export type SimulateContentDraftMutationError = ErrorType<ProblemDetails>
+
+
+    /**
+ * @summary Simulate careers on the draft and on the current content
+ */
+export const useSimulateContentDraft = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof simulateContentDraft>>, TError,void, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof simulateContentDraft>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getSimulateContentDraftMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Publish the draft for new careers
+ */
+export const publishContent = (
+    publishContentRequest: PublishContentRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentPublicationView>(
+      {url: `/v1/admin/content/publish`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: publishContentRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getPublishContentMutationKey = () => ['publishContent'] as const;
+
+export const getPublishContentMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishContent>>, TError,PublishContentMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof publishContent>>, TError,PublishContentMutationVariables, TContext> => {
+
+const mutationKey = getPublishContentMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publishContent>>, PublishContentMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  publishContent(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublishContentMutationResult = NonNullable<Awaited<ReturnType<typeof publishContent>>>
+    export type PublishContentMutationBody = PublishContentRequest
+    export type PublishContentMutationError = ErrorType<ProblemDetails>
+    export type PublishContentMutationVariables = {data: PublishContentRequest}
+
+    /**
+ * @summary Publish the draft for new careers
+ */
+export const usePublishContent = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishContent>>, TError,PublishContentMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publishContent>>,
+        TError,
+        PublishContentMutationVariables,
+        TContext
+      > => {
+      return useMutation(getPublishContentMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary List the content publications
+ */
+export const listContentPublications = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentPublicationView[]>(
+      {url: `/v1/admin/content/publications`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getListContentPublicationsQueryKey = () => {
+    return [
+    `/v1/admin/content/publications`
+    ] as const;
+    }
+
+
+export const getListContentPublicationsQueryOptions = <TData = Awaited<ReturnType<typeof listContentPublications>>, TError = ErrorType<ProblemDetails>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContentPublications>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListContentPublicationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listContentPublications>>> = ({ signal }) => listContentPublications(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listContentPublications>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListContentPublicationsQueryResult = NonNullable<Awaited<ReturnType<typeof listContentPublications>>>
+export type ListContentPublicationsQueryError = ErrorType<ProblemDetails>
+
+
+export function useListContentPublications<TData = Awaited<ReturnType<typeof listContentPublications>>, TError = ErrorType<ProblemDetails>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContentPublications>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listContentPublications>>,
+          TError,
+          Awaited<ReturnType<typeof listContentPublications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListContentPublications<TData = Awaited<ReturnType<typeof listContentPublications>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContentPublications>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listContentPublications>>,
+          TError,
+          Awaited<ReturnType<typeof listContentPublications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListContentPublications<TData = Awaited<ReturnType<typeof listContentPublications>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContentPublications>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the content publications
+ */
+
+export function useListContentPublications<TData = Awaited<ReturnType<typeof listContentPublications>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listContentPublications>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListContentPublicationsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Publish an earlier content publication again
+ */
+export const revertContentPublication = (
+    number: number,
+    moderationRequest: ModerationRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentPublicationView>(
+      {url: `/v1/admin/content/publications/${number}/revert`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: moderationRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRevertContentPublicationMutationKey = () => ['revertContentPublication'] as const;
+
+export const getRevertContentPublicationMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revertContentPublication>>, TError,RevertContentPublicationMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof revertContentPublication>>, TError,RevertContentPublicationMutationVariables, TContext> => {
+
+const mutationKey = getRevertContentPublicationMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof revertContentPublication>>, RevertContentPublicationMutationVariables> = (props) => {
+          const {number,data} = props ?? {};
+
+          return  revertContentPublication(number,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RevertContentPublicationMutationResult = NonNullable<Awaited<ReturnType<typeof revertContentPublication>>>
+    export type RevertContentPublicationMutationBody = ModerationRequest
+    export type RevertContentPublicationMutationError = ErrorType<ProblemDetails>
+    export type RevertContentPublicationMutationVariables = {number: number;data: ModerationRequest}
+
+    /**
+ * @summary Publish an earlier content publication again
+ */
+export const useRevertContentPublication = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof revertContentPublication>>, TError,RevertContentPublicationMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof revertContentPublication>>,
+        TError,
+        RevertContentPublicationMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRevertContentPublicationMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Export both files of a content publication
+ */
+export const exportContentPublication = (
+    number: number,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ContentExportView>(
+      {url: `/v1/admin/content/publications/${number}/export`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getExportContentPublicationQueryKey = (number: number,) => {
+    return [
+    `/v1/admin/content/publications/${number}/export`
+    ] as const;
+    }
+
+
+export const getExportContentPublicationQueryOptions = <TData = Awaited<ReturnType<typeof exportContentPublication>>, TError = ErrorType<ProblemDetails>>(number: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportContentPublication>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportContentPublicationQueryKey(number);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportContentPublication>>> = ({ signal }) => exportContentPublication(number, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: number !== null && number !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportContentPublication>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportContentPublicationQueryResult = NonNullable<Awaited<ReturnType<typeof exportContentPublication>>>
+export type ExportContentPublicationQueryError = ErrorType<ProblemDetails>
+
+
+export function useExportContentPublication<TData = Awaited<ReturnType<typeof exportContentPublication>>, TError = ErrorType<ProblemDetails>>(
+ number: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportContentPublication>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportContentPublication>>,
+          TError,
+          Awaited<ReturnType<typeof exportContentPublication>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportContentPublication<TData = Awaited<ReturnType<typeof exportContentPublication>>, TError = ErrorType<ProblemDetails>>(
+ number: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportContentPublication>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportContentPublication>>,
+          TError,
+          Awaited<ReturnType<typeof exportContentPublication>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportContentPublication<TData = Awaited<ReturnType<typeof exportContentPublication>>, TError = ErrorType<ProblemDetails>>(
+ number: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportContentPublication>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export both files of a content publication
+ */
+
+export function useExportContentPublication<TData = Awaited<ReturnType<typeof exportContentPublication>>, TError = ErrorType<ProblemDetails>>(
+ number: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportContentPublication>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportContentPublicationQueryOptions(number,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Owner sign-in, step 1: the password
+ */
+export const ownerLogin = (
+    ownerLoginRequest: OwnerLoginRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<OwnerLoginStep>(
+      {url: `/v1/admin/login`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: ownerLoginRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getOwnerLoginMutationKey = () => ['ownerLogin'] as const;
+
+export const getOwnerLoginMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogin>>, TError,OwnerLoginMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof ownerLogin>>, TError,OwnerLoginMutationVariables, TContext> => {
+
+const mutationKey = getOwnerLoginMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ownerLogin>>, OwnerLoginMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  ownerLogin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OwnerLoginMutationResult = NonNullable<Awaited<ReturnType<typeof ownerLogin>>>
+    export type OwnerLoginMutationBody = OwnerLoginRequest
+    export type OwnerLoginMutationError = ErrorType<ProblemDetails>
+    export type OwnerLoginMutationVariables = {data: OwnerLoginRequest}
+
+    /**
+ * @summary Owner sign-in, step 1: the password
+ */
+export const useOwnerLogin = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogin>>, TError,OwnerLoginMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ownerLogin>>,
+        TError,
+        OwnerLoginMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOwnerLoginMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Owner sign-in, step 2: an authenticator or recovery code
+ */
+export const ownerLoginCode = (
+    ownerCodeRequest: OwnerCodeRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<OwnerSessionView>(
+      {url: `/v1/admin/login/code`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: ownerCodeRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getOwnerLoginCodeMutationKey = () => ['ownerLoginCode'] as const;
+
+export const getOwnerLoginCodeMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLoginCode>>, TError,OwnerLoginCodeMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof ownerLoginCode>>, TError,OwnerLoginCodeMutationVariables, TContext> => {
+
+const mutationKey = getOwnerLoginCodeMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ownerLoginCode>>, OwnerLoginCodeMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  ownerLoginCode(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OwnerLoginCodeMutationResult = NonNullable<Awaited<ReturnType<typeof ownerLoginCode>>>
+    export type OwnerLoginCodeMutationBody = OwnerCodeRequest
+    export type OwnerLoginCodeMutationError = ErrorType<ProblemDetails>
+    export type OwnerLoginCodeMutationVariables = {data: OwnerCodeRequest}
+
+    /**
+ * @summary Owner sign-in, step 2: an authenticator or recovery code
+ */
+export const useOwnerLoginCode = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLoginCode>>, TError,OwnerLoginCodeMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ownerLoginCode>>,
+        TError,
+        OwnerLoginCodeMutationVariables,
+        TContext
+      > => {
+      return useMutation(getOwnerLoginCodeMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Read the signed-in owner and a new anti-forgery token
+ */
+export const getOwnerSession = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<OwnerSessionView>(
+      {url: `/v1/admin/session`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOwnerSessionQueryKey = () => {
+    return [
+    `/v1/admin/session`
+    ] as const;
+    }
+
+
+export const getGetOwnerSessionQueryOptions = <TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOwnerSessionQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOwnerSession>>> = ({ signal }) => getOwnerSession(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOwnerSessionQueryResult = NonNullable<Awaited<ReturnType<typeof getOwnerSession>>>
+export type GetOwnerSessionQueryError = ErrorType<ProblemDetails>
+
+
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerSession>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerSession>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOwnerSession>>,
+          TError,
+          Awaited<ReturnType<typeof getOwnerSession>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Read the signed-in owner and a new anti-forgery token
+ */
+
+export function useGetOwnerSession<TData = Awaited<ReturnType<typeof getOwnerSession>>, TError = ErrorType<ProblemDetails>>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOwnerSession>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOwnerSessionQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Sign the owner out
+ */
+export const ownerLogout = (
+
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<void>(
+      {url: `/v1/admin/logout`, method: 'POST', signal
+    },
+      options);
+    }
+
+
+
+
+export const getOwnerLogoutMutationKey = () => ['ownerLogout'] as const;
+
+export const getOwnerLogoutMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogout>>, TError,void, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof ownerLogout>>, TError,void, TContext> => {
+
+const mutationKey = getOwnerLogoutMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof ownerLogout>>, void> = () => {
+
+
+          return  ownerLogout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OwnerLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof ownerLogout>>>
+
+    export type OwnerLogoutMutationError = ErrorType<ProblemDetails>
+
+
+    /**
+ * @summary Sign the owner out
+ */
+export const useOwnerLogout = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof ownerLogout>>, TError,void, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof ownerLogout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getOwnerLogoutMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary List every entry of a season, hidden ones included
+ */
+export const listModeratedEntries = (
+    params?: ListModeratedEntriesParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ModeratedSeasonView>(
+      {url: `/v1/admin/leaderboard`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListModeratedEntriesQueryKey = (params?: ListModeratedEntriesParams,) => {
+    return [
+    `/v1/admin/leaderboard`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListModeratedEntriesQueryOptions = <TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListModeratedEntriesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listModeratedEntries>>> = ({ signal }) => listModeratedEntries(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListModeratedEntriesQueryResult = NonNullable<Awaited<ReturnType<typeof listModeratedEntries>>>
+export type ListModeratedEntriesQueryError = ErrorType<ProblemDetails>
+
+
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params: undefined |  ListModeratedEntriesParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listModeratedEntries>>,
+          TError,
+          Awaited<ReturnType<typeof listModeratedEntries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listModeratedEntries>>,
+          TError,
+          Awaited<ReturnType<typeof listModeratedEntries>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List every entry of a season, hidden ones included
+ */
+
+export function useListModeratedEntries<TData = Awaited<ReturnType<typeof listModeratedEntries>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListModeratedEntriesParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listModeratedEntries>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListModeratedEntriesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+/**
+ * @summary Hide or revoke a leaderboard entry with a reason
+ */
+export const hideEntry = (
+    entryId: string,
+    moderationRequest: ModerationRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ModeratedEntryView>(
+      {url: `/v1/admin/leaderboard/${entryId}/hide`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: moderationRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getHideEntryMutationKey = () => ['hideEntry'] as const;
+
+export const getHideEntryMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof hideEntry>>, TError,HideEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof hideEntry>>, TError,HideEntryMutationVariables, TContext> => {
+
+const mutationKey = getHideEntryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof hideEntry>>, HideEntryMutationVariables> = (props) => {
+          const {entryId,data} = props ?? {};
+
+          return  hideEntry(entryId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type HideEntryMutationResult = NonNullable<Awaited<ReturnType<typeof hideEntry>>>
+    export type HideEntryMutationBody = ModerationRequest
+    export type HideEntryMutationError = ErrorType<ProblemDetails>
+    export type HideEntryMutationVariables = {entryId: string;data: ModerationRequest}
+
+    /**
+ * @summary Hide or revoke a leaderboard entry with a reason
+ */
+export const useHideEntry = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof hideEntry>>, TError,HideEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof hideEntry>>,
+        TError,
+        HideEntryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getHideEntryMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Restore a hidden leaderboard entry with a reason
+ */
+export const restoreEntry = (
+    entryId: string,
+    moderationRequest: ModerationRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<ModeratedEntryView>(
+      {url: `/v1/admin/leaderboard/${entryId}/restore`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: moderationRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getRestoreEntryMutationKey = () => ['restoreEntry'] as const;
+
+export const getRestoreEntryMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreEntry>>, TError,RestoreEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof restoreEntry>>, TError,RestoreEntryMutationVariables, TContext> => {
+
+const mutationKey = getRestoreEntryMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof restoreEntry>>, RestoreEntryMutationVariables> = (props) => {
+          const {entryId,data} = props ?? {};
+
+          return  restoreEntry(entryId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RestoreEntryMutationResult = NonNullable<Awaited<ReturnType<typeof restoreEntry>>>
+    export type RestoreEntryMutationBody = ModerationRequest
+    export type RestoreEntryMutationError = ErrorType<ProblemDetails>
+    export type RestoreEntryMutationVariables = {entryId: string;data: ModerationRequest}
+
+    /**
+ * @summary Restore a hidden leaderboard entry with a reason
+ */
+export const useRestoreEntry = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof restoreEntry>>, TError,RestoreEntryMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof restoreEntry>>,
+        TError,
+        RestoreEntryMutationVariables,
+        TContext
+      > => {
+      return useMutation(getRestoreEntryMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary Move a closed season's submission deadline later
+ */
+export const extendSeason = (
+    number: number,
+    seasonExtensionRequest: SeasonExtensionRequest,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<SeasonView>(
+      {url: `/v1/admin/seasons/${number}/extension`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: seasonExtensionRequest, signal
+    },
+      options);
+    }
+
+
+
+
+export const getExtendSeasonMutationKey = () => ['extendSeason'] as const;
+
+export const getExtendSeasonMutationOptions = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof extendSeason>>, TError,ExtendSeasonMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof extendSeason>>, TError,ExtendSeasonMutationVariables, TContext> => {
+
+const mutationKey = getExtendSeasonMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof extendSeason>>, ExtendSeasonMutationVariables> = (props) => {
+          const {number,data} = props ?? {};
+
+          return  extendSeason(number,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExtendSeasonMutationResult = NonNullable<Awaited<ReturnType<typeof extendSeason>>>
+    export type ExtendSeasonMutationBody = SeasonExtensionRequest
+    export type ExtendSeasonMutationError = ErrorType<ProblemDetails>
+    export type ExtendSeasonMutationVariables = {number: number;data: SeasonExtensionRequest}
+
+    /**
+ * @summary Move a closed season's submission deadline later
+ */
+export const useExtendSeason = <TError = ErrorType<ProblemDetails>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof extendSeason>>, TError,ExtendSeasonMutationVariables, TContext>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof extendSeason>>,
+        TError,
+        ExtendSeasonMutationVariables,
+        TContext
+      > => {
+      return useMutation(getExtendSeasonMutationOptions(options), queryClient);
+    }
+
+/**
+ * @summary List the newest owner audit records
+ */
+export const listAudit = (
+    params?: ListAuditParams,
+ options?: SecondParameter<typeof apiRequest>,signal?: AbortSignal
+) => {
+
+
+      return apiRequest<AuditRecordView[]>(
+      {url: `/v1/admin/audit`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListAuditQueryKey = (params?: ListAuditParams,) => {
+    return [
+    `/v1/admin/audit`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListAuditQueryOptions = <TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAuditQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAudit>>> = ({ signal }) => listAudit(params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListAuditQueryResult = NonNullable<Awaited<ReturnType<typeof listAudit>>>
+export type ListAuditQueryError = ErrorType<ProblemDetails>
+
+
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params: undefined |  ListAuditParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAudit>>,
+          TError,
+          Awaited<ReturnType<typeof listAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listAudit>>,
+          TError,
+          Awaited<ReturnType<typeof listAudit>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List the newest owner audit records
+ */
+
+export function useListAudit<TData = Awaited<ReturnType<typeof listAudit>>, TError = ErrorType<ProblemDetails>>(
+ params?: ListAuditParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listAudit>>, TError, TData>>, request?: SecondParameter<typeof apiRequest>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListAuditQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 

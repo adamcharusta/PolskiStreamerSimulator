@@ -1,6 +1,7 @@
 import { useMutation, useMutationState, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
+import { track, weekStage } from '@/analytics/analytics';
 import { getGetCareerQueryKey, runBatch, submitAction } from '@/api/generated/game';
 import type {
   ActionOutcome,
@@ -90,6 +91,17 @@ export function useCareerCommand<TBody, TResult>(
 
 export type ActionInput = Omit<ActionRequest, 'commandId'>;
 
+/** Opted-in counts of a step: a settled week by its stage and the end of a career (spec M4-F §2). */
+function trackOutcome(career: CareerView, settledWeek?: number): void {
+  if (settledWeek !== undefined) {
+    track('week_settled', { stage: weekStage(settledWeek) });
+  }
+
+  if (career.status === 'ended' && career.ending !== null) {
+    track('career_ended', { ending: career.ending, ranked: career.ranked ?? false });
+  }
+}
+
 export function useActionCommand(
   careerId: string,
   secret: string,
@@ -99,7 +111,10 @@ export function useActionCommand(
     careerId,
     (request) => submitAction(careerId, request, careerAuth(secret)),
     (outcome) => outcome.career,
-    onDone,
+    (outcome) => {
+      trackOutcome(outcome.career, outcome.report?.week);
+      onDone?.(outcome);
+    },
   );
 }
 
@@ -131,9 +146,15 @@ export function useBatchCommand(
 ) {
   return useCareerCommand<BatchInput, BatchOutcome>(
     careerId,
-    (request) => runBatch(careerId, request, careerAuth(secret)),
+    (request) => {
+      track('batch_run', { weeks: request.weeks });
+      return runBatch(careerId, request, careerAuth(secret));
+    },
     (outcome) => outcome.career,
-    onDone,
+    (outcome) => {
+      trackOutcome(outcome.career);
+      onDone?.(outcome);
+    },
     onRefused,
   );
 }

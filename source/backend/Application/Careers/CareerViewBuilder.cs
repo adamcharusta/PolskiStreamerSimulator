@@ -1,3 +1,4 @@
+using PolskiStreamerSimulator.Application.Careers.Persistence;
 using PolskiStreamerSimulator.Domain.Careers;
 using PolskiStreamerSimulator.Domain.Content;
 using PolskiStreamerSimulator.Domain.Numerics;
@@ -14,7 +15,19 @@ namespace PolskiStreamerSimulator.Application.Careers;
 /// </summary>
 public sealed class CareerViewBuilder(WeekEngine engine)
 {
-    public CareerView Build(Guid careerId, string nickname, CareerState s, ContentSnapshot c, WeekReportView? lastReport)
+    /// <summary>The view of a stored career, with the expiry date the retention sweep uses.</summary>
+    public CareerView Build(StoredCareer career, ContentSnapshot c, WeekReportView? lastReport)
+        => Build(career.Id, career.Nickname, career.State, c, lastReport, career.ExpiresAt, career.Season);
+
+    /// <summary>The view of a career at state <paramref name="s"/>; a ranked career has a <paramref name="season"/>.</summary>
+    public CareerView Build(
+        Guid careerId,
+        string nickname,
+        CareerState s,
+        ContentSnapshot c,
+        WeekReportView? lastReport,
+        DateTimeOffset? expiresAt = null,
+        int? season = null)
         => new(
             careerId,
             nickname,
@@ -39,7 +52,10 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             SideBusiness(s, c.Balance),
             AchievementViews(s, c.Balance),
             s.FinalScore is { } score ? Score(score) : null,
-            EndingSummary.Of(s, c) is { } summary ? Summary(summary) : null);
+            EndingSummary.Of(s, c) is { } summary ? Summary(summary) : null,
+            expiresAt,
+            season is not null,
+            season);
 
     /// <summary>The content's achievements (or the M1 set), earned first, each in definition order.</summary>
     private static AchievementView[] AchievementViews(CareerState s, BalanceConstants b)

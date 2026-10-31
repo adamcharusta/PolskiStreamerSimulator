@@ -6,6 +6,7 @@ using PolskiStreamerSimulator.Application.Careers;
 using PolskiStreamerSimulator.Infrastructure;
 using PolskiStreamerSimulator.Infrastructure.Content;
 using PolskiStreamerSimulator.WebApp;
+using PolskiStreamerSimulator.WebApp.Admin;
 using Wolverine;
 using Wolverine.FluentValidation;
 using Wolverine.Http;
@@ -26,6 +27,8 @@ builder.Services.AddProblemDetails(ApiProblems.Configure);
 builder.Services.ConfigureHttpJsonOptions(options => ContractJson.Configure(options.SerializerOptions));
 builder.Services.AddGameApplication();
 builder.Services.AddGameInfrastructure(builder.Configuration);
+builder.Services.AddCareerRateLimits(builder.Configuration);
+builder.Services.AddOwnerAuthentication(builder.Environment);
 builder.Services.PostConfigure<ContentOptions>(options => options.Directory = Path.GetFullPath(options.Directory, AppContext.BaseDirectory));
 // A lambda, not a method group: the XML-comment source generator only intercepts a lambda (schema descriptions).
 builder.Services.AddOpenApi(options => OpenApiContract.Configure(options));
@@ -33,6 +36,11 @@ builder.Services.AddOpenApi(options => OpenApiContract.Configure(options));
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseOwnerAntiforgery();
+app.UseAuthorization();
+app.UseRequestSizeLimits();
 app.MapGet("/health", () => "ok").ExcludeFromDescription();
 if (app.Environment.IsDevelopment())
 {

@@ -1,24 +1,23 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
 import { type ReactNode, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
-import { createCareer, getGetCareerQueryKey, useGetCareerOptions } from '@/api/generated/game';
+import { useGetCareerOptions } from '@/api/generated/game';
 import type {
   BackgroundOptionView,
   CareerOptionsView,
   CreateCareerRequest,
-  CreatedCareer,
 } from '@/api/generated/game.schemas';
 import { type ApiRequestError, isApiError } from '@/api/http';
-import { canStoreCareer, rememberCareer } from '@/careers/knownCareers';
+import { beginCreation } from '@/careers/pendingCreation';
 import { Button } from '@/components/ui/Button';
 import { Panel } from '@/components/ui/Panel';
 import { count, multiplier, pln } from '@/format';
 
 import { type CreateCareerForm, createCareerSchema } from './schema';
+import { UnsavedCareer } from './UnsavedCareer';
+import { useFinishCreation } from './useFinishCreation';
 
 /** The category with the highest starting skill, or null when none stands out. */
 function strongest(option: BackgroundOptionView): string | null {
@@ -58,8 +57,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
   const [storageError, setStorageError] = useState(false);
   // Set before the request, so a second activation in the same moment cannot create a second career.
   const submitting = useRef(false);
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const { creation, unsaved } = useFinishCreation();
   const form = useForm<CreateCareerForm, unknown, CreateCareerRequest>({
     resolver: zodResolver(createCareerSchema),
     defaultValues: {
@@ -67,35 +65,40 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
       background: 'dormRoomNewcomer',
       difficulty: 'normal',
       pronouns: 'woman',
+      ranked: 'ranked',
     },
   });
-  const creation = useMutation<CreatedCareer, ApiRequestError, CreateCareerRequest>({
-    mutationFn: (request) => createCareer(request),
-    retry: false,
-    onSuccess: async (created) => {
-      rememberCareer({
-        careerId: created.careerId,
-        nickname: created.career.nickname,
-        secret: created.secret,
-        createdAt: new Date().toISOString(),
-      });
-      queryClient.setQueryData(getGetCareerQueryKey(created.careerId), created.career);
-      await navigate({ to: '/kariera/$careerId', params: { careerId: created.careerId } });
-    },
-    onError: (error) => {
+  const start = (request: CreateCareerRequest) => {
+    // Written before the request: a lost answer or a closed tab can repeat this creation ID later.
+    const pending = beginCreation(request);
+    if (pending === null) {
+      setStorageError(true);
       submitting.current = false;
-      if (rejectsNickname(error)) {
-        form.setError('nickname', { message: 'create.errors.nickname' });
-      }
-    },
-  });
+      return;
+    }
+
+    creation.mutate(pending, {
+      onError: (error) => {
+        submitting.current = false;
+        if (rejectsNickname(error)) {
+          form.setError('nickname', { message: 'create.errors.nickname' });
+        }
+      },
+    });
+  };
+
   // useWatch, not watch(): the React Compiler lint rules reject watch() (eslint-plugin-react-hooks 7).
   const watched = useWatch({ control: form.control });
   const nickname = watched.nickname ?? '';
   const background = watched.background ?? 'dormRoomNewcomer';
   const difficulty = watched.difficulty ?? 'normal';
   const pronouns = watched.pronouns ?? 'woman';
+  const ranked = (watched.ranked ?? 'ranked') === 'ranked';
   const nicknameError = form.formState.errors.nickname?.message;
+
+  if (unsaved !== null) {
+    return <UnsavedCareer created={unsaved} />;
+  }
 
   return (
     <form
@@ -106,13 +109,9 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
           if (submitting.current) {
             return;
           }
-          if (!canStoreCareer()) {
-            setStorageError(true);
-            return;
-          }
           setStorageError(false);
           submitting.current = true;
-          creation.mutate(request);
+          start(request);
         })(event);
       }}
     >
@@ -180,10 +179,26 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
         ))}
       </fieldset>
 
+      <fieldset className="choices panel">
+        <legend className="panel-title">{t('create.mode')}</legend>
+        <label className="choice">
+          <input type="radio" value="ranked" {...form.register('ranked')} />
+          <span className="font-bold">{t('create.ranked')}</span>
+          <span>{t('create.rankedHint')}</span>
+        </label>
+        <label className="choice">
+          <input type="radio" value="unranked" {...form.register('ranked')} />
+          <span className="font-bold">{t('create.unranked')}</span>
+          <span>{t('create.unrankedHint')}</span>
+        </label>
+      </fieldset>
+
       <Panel title={t('create.summary')}>
+        <p className="muted">{t('create.retention')}</p>
         <p>
           {nickname.trim() || '—'} · {t(`background.${background}`)} ·{' '}
-          {t(`difficulty.${difficulty}`)} · {t(`pronouns.${pronouns}`)}
+          {t(`difficulty.${difficulty}`)} · {t(`pronouns.${pronouns}`)} ·{' '}
+          {t(ranked ? 'create.ranked' : 'create.unranked')}
         </p>
         {storageError && (
           <p role="alert" className="bad">
@@ -192,7 +207,11 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
         )}
         {!storageError && creation.error !== null && !rejectsNickname(creation.error) && (
           <p role="alert" className="bad">
-            {t('create.errors.generic')}
+            {t(
+              creation.error.code === 'season-unavailable'
+                ? 'create.errors.season'
+                : 'create.errors.generic',
+            )}
           </p>
         )}
         <Button type="submit" variant="primary" pending={creation.isPending}>

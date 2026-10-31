@@ -17,6 +17,37 @@ public static class ErrorCodes
     public const string DecisionPending = "decision-pending";
     public const string NoPendingDecision = "no-pending-decision";
     public const string WeekNotFound = "week-not-found";
+    public const string RecoveryFailed = "recovery-failed";
+    public const string CreationIdReused = "creation-id-reused";
+    public const string CreationClosed = "creation-closed";
+    public const string RateLimited = "rate-limited";
+    public const string CareerUnranked = "career-unranked";
+    public const string CareerNotEnded = "career-not-ended";
+    public const string SubmissionClosed = "submission-closed";
+    public const string SeasonNotFound = "season-not-found";
+    public const string SeasonUnavailable = "season-unavailable";
+    public const string CareerRanked = "career-ranked";
+    public const string SlotNotFound = "slot-not-found";
+    public const string SlotEmpty = "slot-empty";
+    public const string ImportInvalid = "import-invalid";
+    public const string ImportNewer = "import-newer";
+    public const string ImportUnsupported = "import-unsupported";
+    public const string PayloadTooLarge = "payload-too-large";
+    public const string EntryNotFound = "entry-not-found";
+    public const string EntryHidden = "entry-hidden";
+    public const string EntryVisible = "entry-visible";
+    public const string OwnerUnauthorized = "owner-unauthorized";
+    public const string OwnerLoginFailed = "owner-login-failed";
+    public const string OwnerLockedOut = "owner-locked-out";
+    public const string AntiforgeryFailed = "antiforgery-failed";
+    public const string DraftNotFound = "draft-not-found";
+    public const string DraftExists = "draft-exists";
+    public const string DraftStale = "draft-stale";
+    public const string EventNotFound = "event-not-found";
+    public const string ContentInvalid = "content-invalid";
+    public const string ContentUnchanged = "content-unchanged";
+    public const string SimulationFailed = "simulation-failed";
+    public const string PublicationNotFound = "publication-not-found";
     public const string Internal = "internal-error";
 }
 

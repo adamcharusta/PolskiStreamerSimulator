@@ -13,14 +13,58 @@ public static class OpenApiContract
     public const string SecurityScheme = "careerSecret";
 
     private const string Tag = "careers";
+    private const string AdminTag = "admin";
+    private const string OwnerScheme = "owner";
 
     private static readonly Dictionary<string, (string Summary, bool Secured)> Operations = new(StringComparer.Ordinal)
     {
-        ["createCareer"] = ("Create a career and receive its secret once", false),
+        ["createCareer"] = ("Create a career and receive its secret and recovery key once", false),
+        ["recoverCareer"] = ("Open a career with its recovery key and receive a new secret", false),
+        ["issueRecoveryKey"] = ("Issue a new recovery key; the previous one stops working", true),
         ["getCareerOptions"] = ("List the starting profiles and difficulties", false),
         ["getCareer"] = ("Read a career and its next step", true),
         ["submitAction"] = ("Settle one manual step", true),
-        ["runBatch"] = ("Play up to 13 weeks automatically", true),
+        ["runBatch"] = ("Play 4, 13 or 52 weeks automatically", true),
+        ["getHistory"] = ("List the settled weeks of a career", true),
+        ["getHistoryWeek"] = ("Read the stored report of one week", true),
+        ["getLeaderboardEntry"] = ("Read whether and until when a career can publish its result", true),
+        ["publishResult"] = ("Publish the server-computed result of an ended ranked career under a nickname", true),
+        ["getLeaderboard"] = ("Read the top entries of a season", false),
+        ["listSeasons"] = ("List the seasons and their submission deadlines", false),
+        ["listSaveSlots"] = ("List the three manual slots of an unranked career", true),
+        ["saveToSlot"] = ("Save the current state of an unranked career into a slot", true),
+        ["restoreSlot"] = ("Restore an unranked career to the state saved in a slot", true),
+        ["exportCareer"] = ("Export an unranked career as a save file", true),
+        ["importCareer"] = ("Create a new unranked career from a save file", false),
+        ["ownerLogin"] = ("Owner sign-in, step 1: the password", false),
+        ["ownerLoginCode"] = ("Owner sign-in, step 2: an authenticator or recovery code", false),
+        ["getOwnerSession"] = ("Read the signed-in owner and a new anti-forgery token", false),
+        ["ownerLogout"] = ("Sign the owner out", false),
+        ["listModeratedEntries"] = ("List every entry of a season, hidden ones included", false),
+        ["hideEntry"] = ("Hide or revoke a leaderboard entry with a reason", false),
+        ["restoreEntry"] = ("Restore a hidden leaderboard entry with a reason", false),
+        ["extendSeason"] = ("Move a closed season's submission deadline later", false),
+        ["listAudit"] = ("List the newest owner audit records", false),
+        ["getContentAdmin"] = ("Read the newest content publication and the draft with its check", false),
+        ["createContentDraft"] = ("Create the content draft from a publication", false),
+        ["discardContentDraft"] = ("Discard the content draft", false),
+        ["putDraftEvent"] = ("Replace or add one event of the draft", false),
+        ["removeDraftEvent"] = ("Remove one event from the draft", false),
+        ["putDraftBalance"] = ("Replace the balance document of the draft", false),
+        ["simulateContentDraft"] = ("Simulate careers on the draft and on the current content", false),
+        ["publishContent"] = ("Publish the draft for new careers", false),
+        ["listContentPublications"] = ("List the content publications", false),
+        ["revertContentPublication"] = ("Publish an earlier content publication again", false),
+        ["exportContentPublication"] = ("Export both files of a content publication", false),
+        ["recordTelemetry"] = ("Count opted-in gameplay events per day", false),
+    };
+
+    /// <summary>Operations that need the owner cookie (and, for a POST, the anti-forgery header).</summary>
+    private static readonly HashSet<string> OwnerOperations = new(StringComparer.Ordinal)
+    {
+        "getOwnerSession", "ownerLogout", "listModeratedEntries", "hideEntry", "restoreEntry", "extendSeason", "listAudit",
+        "getContentAdmin", "createContentDraft", "discardContentDraft", "putDraftEvent", "removeDraftEvent", "putDraftBalance",
+        "simulateContentDraft", "publishContent", "listContentPublications", "revertContentPublication", "exportContentPublication",
     };
 
     public static void Configure(OpenApiOptions options)
@@ -28,7 +72,11 @@ public static class OpenApiContract
         options.AddDocumentTransformer((document, _, _) =>
         {
             document.Info = new OpenApiInfo { Title = "Polski Streamer Simulator API", Version = "v1" };
-            document.Tags = new HashSet<OpenApiTag> { new() { Name = Tag, Description = "Anonymous careers: creation, reading, steps and batches." } };
+            document.Tags = new HashSet<OpenApiTag>
+            {
+                new() { Name = Tag, Description = "Anonymous careers: creation, recovery, reading, steps and batches." },
+                new() { Name = AdminTag, Description = "The owner's sign-in, leaderboard moderation, season deadlines and audit trail." },
+            };
             document.Components ??= new OpenApiComponents();
             document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
             document.Components.SecuritySchemes[SecurityScheme] = new OpenApiSecurityScheme
@@ -36,6 +84,13 @@ public static class OpenApiContract
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
                 Description = "The career secret returned once by createCareer, sent as Authorization: Bearer <secret>.",
+            };
+            document.Components.SecuritySchemes[OwnerScheme] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Cookie,
+                Name = "pss.owner",
+                Description = "The owner's sign-in cookie; a POST also sends the X-CSRF-TOKEN header from getOwnerSession.",
             };
             return Task.CompletedTask;
         });
@@ -46,10 +101,12 @@ public static class OpenApiContract
             var (summary, secured) = Operations.TryGetValue(id, out var known) ? known : (id, false);
             operation.Summary = summary;
             operation.Description = null;
-            operation.Tags = new HashSet<OpenApiTagReference> { new(Tag, context.Document) };
-            if (secured)
+            var owner = OwnerOperations.Contains(id);
+            operation.Tags = new HashSet<OpenApiTagReference> { new(id.StartsWith("owner", StringComparison.Ordinal) || owner ? AdminTag : Tag, context.Document) };
+            if (secured || owner)
             {
-                operation.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(SecurityScheme, context.Document)] = [] }];
+                var scheme = owner ? OwnerScheme : SecurityScheme;
+                operation.Security = [new OpenApiSecurityRequirement { [new OpenApiSecuritySchemeReference(scheme, context.Document)] = [] }];
             }
 
             operation.Responses ??= [];

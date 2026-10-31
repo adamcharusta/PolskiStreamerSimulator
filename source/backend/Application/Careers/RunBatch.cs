@@ -290,7 +290,7 @@ public sealed class RunBatchHandler(
             records.Sum(r => Total(r.Week.Report.Costs)),
             records.Count > 0 ? records[0].Before : now,
             records.Count > 0 ? records[^1].After : now);
-        return new BatchOutcome(records.Count, stop, [.. records.Select(r => r.Week)], summary, views.Build(current.Id, current.Nickname, current.State, c, lastReport));
+        return new BatchOutcome(records.Count, stop, [.. records.Select(r => r.Week)], summary, views.Build(current, c, lastReport));
     }
 
     private static long Total(IReadOnlyList<ReportLineView> lines) => lines.Sum(l => l.AmountPln ?? 0);

@@ -2,11 +2,15 @@ import { Link } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import type { CareerView } from '@/api/generated/game.schemas';
-import { count } from '@/format';
+import { count, date } from '@/format';
 
+import { CareerMode } from './CareerMode';
 import { ageAt, nextMilestone } from './dashboard';
 
-/** Where the career stands (content §3.4): week, age, platform, obligations due, next milestone and the history link. */
+/**
+ * Where the career stands (content §3.4): week, age, platform, obligations due, next milestone, and the links to the
+ * history, the recovery key and, for an unranked career, its manual saves (M4-C).
+ */
 export function DashboardCard({ career }: { readonly career: CareerView }) {
   const { t } = useTranslation();
   const due = career.contracts.filter((deal) => deal.dueThisWeek);
@@ -18,6 +22,9 @@ export function DashboardCard({ career }: { readonly career: CareerView }) {
       <p className="m-0">
         {t('dashboard.week', { week: career.week, age: ageAt(career.week) })} ·{' '}
         {t(`platform.${career.platform}`)}
+      </p>
+      <p className="m-0 muted">
+        <CareerMode career={career} />
       </p>
       <p className="m-0">
         {due.length === 0
@@ -32,10 +39,21 @@ export function DashboardCard({ career }: { readonly career: CareerView }) {
           })}
         </p>
       )}
-      <p className="m-0">
+      {career.expiresAt != null && (
+        <p className="m-0 muted">{t('dashboard.expires', { date: date(career.expiresAt) })}</p>
+      )}
+      <p className="m-0 flex flex-wrap gap-3">
         <Link to="/kariera/$careerId/historia" params={{ careerId: career.careerId }}>
           {t('dashboard.history')}
         </Link>
+        <Link to="/kariera/$careerId/klucz" params={{ careerId: career.careerId }}>
+          {t('dashboard.key')}
+        </Link>
+        {!career.ranked && (
+          <Link to="/kariera/$careerId/zapisy" params={{ careerId: career.careerId }}>
+            {t('dashboard.saves')}
+          </Link>
+        )}
       </p>
     </section>
   );

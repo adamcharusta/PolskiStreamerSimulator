@@ -13,4 +13,10 @@ public interface IContentStore
 
     /// <summary>The snapshot with <paramref name="digest"/>, or <c>null</c> when it was never stored.</summary>
     Task<ContentSnapshot?> FindAsync(string digest, CancellationToken cancellationToken);
+
+    /// <summary>The stored bytes of the snapshot with <paramref name="digest"/>, or <c>null</c>.</summary>
+    Task<ContentFiles?> FindFilesAsync(string digest, CancellationToken cancellationToken);
+
+    /// <summary>Every <c>event-version-changed:&lt;key&gt;</c> problem of <paramref name="events"/> against stored snapshots (TD-112).</summary>
+    Task<IReadOnlyList<string>> VersionConflictsAsync(byte[] events, CancellationToken cancellationToken);
 }

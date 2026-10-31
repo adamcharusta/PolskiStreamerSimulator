@@ -37,7 +37,7 @@
     "home": "Wróć na start"
   },
   "notice": {
-    "online": "Gra wymaga połączenia z internetem. Kariera zapisuje się na serwerze po każdym kroku.",
+    "online": "Gra wymaga połączenia z internetem: kariera zapisuje się na serwerze po każdym kroku i bez połączenia nie da się grać. Po poważnej awarii bazy danych możesz stracić do około jednego dnia postępu.",
     "dismiss": "Rozumiem"
   },
   "home": {
@@ -47,7 +47,16 @@
     "continue": "Kontynuuj",
     "continueNamed": "Kontynuuj karierę {{nickname}}",
     "new": "Nowa kariera",
-    "accessNotice": "Dostęp do kariery jest zapisany tylko w tej przeglądarce. Wyczyszczenie danych strony odbiera dostęp. Klucze odzyskiwania pojawią się w kolejnej wersji."
+    "accessNotice": "Dostęp do kariery jest zapisany w tej przeglądarce, a klucz odzyskiwania przywraca ją na innym urządzeniu. Nieukończona kariera wygasa po 6 miesiącach bez rozegranego tygodnia, ukończona — 12 miesięcy po zakończeniu. Po poważnej awarii bazy danych możesz stracić do około jednego dnia postępu.",
+    "recover": "Odzyskaj karierę kluczem",
+    "pendingTitle": "Kończę zakładanie kariery {{nickname}}…",
+    "pendingFailed": "Nie udało się dokończyć zakładania kariery {{nickname}}.",
+    "pendingRetry": "Spróbuj ponownie",
+    "pendingClosed": "Nie da się już dokończyć zakładania kariery {{nickname}}. Jeśli masz jej klucz odzyskiwania, odzyskaj ją.",
+    "leaderboard": "Ranking",
+    "import": "Importuj zapis",
+    "extended": "Termin publikacji wyników z sezonu {{season}} przedłużono do {{date}}.",
+    "extendedLabel": "Przedłużone terminy"
   },
   "create": {
     "title": "Nowa kariera",
@@ -69,8 +78,16 @@
     "errors": {
       "nickname": "Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .",
       "generic": "Nie udało się założyć kariery. Spróbuj ponownie.",
-      "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
-    }
+      "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie.",
+      "unsaved": "Kariera powstała, ale ta przeglądarka nie zapisała dostępu. Zapisz teraz klucz odzyskiwania — to jedyna droga powrotu — i użyj go na stronie „Odzyskaj karierę” w przeglądarce z włączoną pamięcią strony.",
+      "season": "Ranking jest chwilowo niedostępny. Spróbuj za chwilę albo załóż karierę bez rankingu."
+    },
+    "retention": "Po założeniu dostaniesz klucz odzyskiwania. Kariera wygasa po 6 miesiącach bez rozegranego tygodnia, a ukończona jest dostępna jeszcze 12 miesięcy.",
+    "mode": "Tryb kariery",
+    "ranked": "Rankingowa",
+    "rankedHint": "Wynik trafi do rankingu sezonu. Bez ręcznych zapisów i importu.",
+    "unranked": "Bez rankingu",
+    "unrankedHint": "Grasz dla siebie; wynik nie trafia do rankingu."
   },
   "background": {
     "dormRoomNewcomer": "Świeżak z akademika",
@@ -140,7 +157,7 @@
     "saving": "Zapisuję…",
     "offline": "Brak połączenia",
     "notFound": "Nie znaleziono kariery",
-    "notFoundBody": "Ta przeglądarka nie ma dostępu do tej kariery albo kariera nie istnieje.",
+    "notFoundBody": "Ta przeglądarka nie ma dostępu do tej kariery, kariera wygasła albo nie istnieje. Jeśli masz klucz odzyskiwania, możesz ją odzyskać.",
     "forget": "Usuń z listy",
     "backHome": "Wróć na start",
     "loadFailed": "Nie udało się wczytać kariery.",
@@ -534,7 +551,8 @@
       "difficulty": "Mnożnik trudności",
       "background": "Mnożnik pochodzenia",
       "final": "Wynik"
-    }
+    },
+    "expires": "Historia i dyplom są dostępne do {{date}}."
   },
   "retire": {
     "action": "Zakończ karierę",
@@ -556,7 +574,12 @@
     "obligations": "W tym tygodniu: {{list}}",
     "noObligations": "Brak zleceń sponsorów w tym tygodniu",
     "nextMilestone": "Do {{target}} obserwujących brakuje {{missing}}",
-    "history": "Historia kariery"
+    "history": "Historia kariery",
+    "expires": "Kariera wygaśnie {{date}}, jeśli do tego czasu nie rozegrasz tygodnia.",
+    "key": "Klucz odzyskiwania",
+    "ranked": "Rankingowa · Sezon {{season}}",
+    "unranked": "Bez rankingu",
+    "saves": "Zapisy"
   },
   "history": {
     "title": "Historia kariery",
@@ -608,5 +631,311 @@
     "achievements": "Osiągnięcia: {{list}}",
     "noAchievements": "Bez osiągnięć — następnym razem!",
     "footer": "Polski Streamer Simulator · fikcyjna kariera · {{date}}"
+  },
+  "recovery": {
+    "keyTitle": "Klucz odzyskiwania",
+    "keyIntro": "Ten klucz przywraca karierę {{nickname}} na innym urządzeniu albo po wyczyszczeniu danych przeglądarki. Zapisz go poza przeglądarką.",
+    "keyWarning": "Nie ma kont ani haseł: zgubionego klucza razem z danymi przeglądarki nie da się odzyskać. Nie pokazuj klucza nikomu — kto go ma, przejmuje karierę.",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano klucz.",
+    "failed": "Nie udało się skopiować. Zaznacz klucz i skopiuj go ręcznie.",
+    "download": "Pobierz plik",
+    "fileIntro": "Polski Streamer Simulator — klucz odzyskiwania kariery {{nickname}}",
+    "fileHow": "Wklej go na stronie „Odzyskaj karierę”, aby wrócić do tej kariery.",
+    "saved": "Zapisałem klucz — graj",
+    "backToCareer": "Wróć do kariery",
+    "missing": "Ta kariera nie ma jeszcze klucza odzyskiwania.",
+    "issue": "Utwórz klucz odzyskiwania",
+    "rotate": "Wygeneruj nowy klucz",
+    "rotateHint": "Nowy klucz unieważnia poprzedni.",
+    "issueFailed": "Nie udało się utworzyć klucza. Spróbuj ponownie.",
+    "keyNotStored": "Ta przeglądarka nie zapisała klucza. Zapisz go teraz, bo później go tu nie zobaczysz.",
+    "unknownCareer": "Ta przeglądarka nie zna tej kariery."
+  },
+  "recover": {
+    "title": "Odzyskaj karierę",
+    "intro": "Wklej klucz odzyskiwania albo wczytaj plik z kluczem. Kariera otworzy się w tej przeglądarce, a przeglądarka, która miała ją wcześniej, straci do niej dostęp.",
+    "keyLabel": "Klucz odzyskiwania",
+    "fileLabel": "Plik z kluczem",
+    "fileNoKey": "W tym pliku nie ma klucza odzyskiwania.",
+    "invalid": "To nie wygląda na klucz odzyskiwania. Klucz zaczyna się od „pss1.”.",
+    "submit": "Odzyskaj",
+    "failed": "Nie znaleziono kariery dla tego klucza. Mogła wygasnąć albo klucz jest niepełny.",
+    "rateLimited": "Za dużo prób. Spróbuj za kilka minut.",
+    "generic": "Nie udało się odzyskać kariery. Spróbuj ponownie.",
+    "storage": "Nie można zapisać dostępu do kariery w tej przeglądarce. Włącz pamięć strony i spróbuj ponownie."
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "season": "Sezon",
+    "seasonOption": "Sezon {{season}}",
+    "seasonCurrent": "Sezon {{season}} (trwa)",
+    "open": "Sezon trwa. Każda ukończona kariera rankingowa może dodać swój wynik.",
+    "closed": "Sezon zamknięty. Wyniki przyjmujemy do {{date}}.",
+    "closedFinal": "Sezon zamknięty. Termin przyjmowania wyników minął {{date}}.",
+    "extended": "Termin przedłużony dla wszystkich.",
+    "caption": "Top 100 — sezon {{season}}",
+    "empty": "W tym sezonie nikt jeszcze nie opublikował wyniku.",
+    "loading": "Wczytuję ranking…",
+    "failed": "Nie udało się wczytać rankingu.",
+    "notFound": "Nie ma takiego sezonu.",
+    "column": {
+      "rank": "Miejsce",
+      "nickname": "Nick",
+      "score": "Wynik",
+      "weeks": "Tygodnie",
+      "difficulty": "Poziom",
+      "ending": "Zakończenie"
+    },
+    "ending": {
+      "completed": "Ukończona",
+      "insolvency": "Bankructwo",
+      "earlyRetirement": "Emerytura",
+      "globalBan": "Globalny ban",
+      "allPlatformsBanned": "Bany wszędzie"
+    },
+    "panel": {
+      "title": "Ranking",
+      "loading": "Sprawdzam ranking…",
+      "failed": "Nie udało się sprawdzić rankingu.",
+      "unranked": "Ta kariera jest bez rankingu, więc jej wynik nie trafia do tabeli.",
+      "intro": "Dodaj wynik {{score}} pkt do tabeli sezonu {{season}}. Nicku nie zmienisz po publikacji.",
+      "deadline": "Wyniki z tego sezonu przyjmujemy do {{date}}.",
+      "nickname": "Nick w rankingu",
+      "nicknameHint": "1–5 znaków: litery A–Z, polskie litery albo cyfry.",
+      "invalid": "Nick musi mieć 1–5 znaków: litery A–Z, polskie litery albo cyfry.",
+      "submit": "Publikuję wynik",
+      "publishFailed": "Nie udało się opublikować wyniku. Spróbuj ponownie.",
+      "closed": "Termin publikacji wyników z sezonu {{season}} minął {{date}}.",
+      "published": "{{nickname}} — {{score}} pkt, {{rank}}. miejsce w sezonie {{season}}.",
+      "publishedHidden": "{{nickname}} — {{score}} pkt. Wpis jest ukryty.",
+      "show": "Zobacz ranking sezonu"
+    }
+  },
+  "saves": {
+    "title": "Zapisy ręczne",
+    "back": "Wróć do kariery",
+    "loading": "Wczytuję zapisy…",
+    "loadFailed": "Nie udało się wczytać zapisów tej kariery.",
+    "ranked": "Kariera rankingowa nie ma zapisów ręcznych ani eksportu: jej wynik liczy się tylko wtedy, gdy nie da się cofnąć ruchów.",
+    "intro": "Masz trzy niezależne sloty. Zapis zachowuje dokładny stan kariery, a wczytanie wraca do niego — razem z historią tamtej rozgrywki.",
+    "slotsLabel": "Sloty zapisu",
+    "slot": "Slot {{slot}}",
+    "empty": "Pusty",
+    "week": "Tydzień",
+    "savedAt": "Zapisano",
+    "endedSlot": "Zapis z zakończonej kariery.",
+    "saveHere": "Zapisz w slocie {{slot}}",
+    "restore": "Wczytaj slot {{slot}}",
+    "confirmLabel": "Potwierdzenie",
+    "confirmSave": "Slot {{slot}} ma już zapis. Nadpisać go bieżącym stanem?",
+    "confirmRestore": "Wczytać slot {{slot}}? Postęp, którego nie masz w żadnym slocie, przepadnie.",
+    "overwrite": "Tak, nadpisz",
+    "load": "Tak, wczytaj",
+    "cancel": "Anuluj",
+    "saved": "Zapisano w slocie {{slot}}.",
+    "restored": "Wczytano slot {{slot}}. Kariera wraca do tygodnia {{week}}.",
+    "stale": "Kariera zmieniła się w innej karcie. Odśwież stronę i spróbuj ponownie.",
+    "saveFailed": "Nie udało się zapisać. Spróbuj ponownie.",
+    "restoreFailed": "Nie udało się wczytać zapisu. Spróbuj ponownie.",
+    "exportTitle": "Eksport",
+    "exportIntro": "Pobierz plik z bieżącym stanem kariery. Zaimportowany plik tworzy nową karierę bez rankingu; historia tygodni nie przechodzi do pliku.",
+    "export": "Eksportuj zapis",
+    "exportFailed": "Nie udało się pobrać pliku zapisu."
+  },
+  "import": {
+    "title": "Import zapisu",
+    "intro": "Wybierz plik wyeksportowany z kariery bez rankingu. Powstanie z niego nowa kariera bez rankingu z własnym kluczem odzyskiwania; żadna istniejąca kariera się nie zmieni.",
+    "fileLabel": "Plik zapisu (.json)",
+    "submit": "Importuj",
+    "notStored": "Kariera powstała, ale ta przeglądarka nie zapisała dostępu do niej. Zachowaj klucz odzyskiwania — tylko nim ją otworzysz.",
+    "errors": {
+      "noFile": "Najpierw wybierz plik zapisu.",
+      "notJson": "To nie jest plik zapisu tej gry.",
+      "storage": "Ta przeglądarka nie może zapisać dostępu do kariery, więc import się nie uda. Sprawdź ustawienia prywatności.",
+      "import-invalid": "Plik jest uszkodzony albo zmieniony i nie da się z niego odtworzyć kariery.",
+      "import-newer": "Ten zapis pochodzi z nowszej wersji gry. Spróbuj ponownie, gdy serwer zostanie zaktualizowany.",
+      "import-unsupported": "Ten zapis używa zasad albo treści, których ten serwer nie ma.",
+      "payload-too-large": "Plik jest za duży, by był zapisem tej gry.",
+      "rate-limited": "Za dużo prób w krótkim czasie. Odczekaj chwilę i spróbuj ponownie.",
+      "generic": "Nie udało się zaimportować zapisu. Spróbuj ponownie."
+    }
+  },
+  "admin": {
+    "title": "Panel właściciela",
+    "loading": "Wczytuję…",
+    "failed": "Nie udało się wczytać danych. Odśwież stronę.",
+    "account": "Konto",
+    "signedInAs": "Zalogowano jako {{username}}.",
+    "logout": "Wyloguj",
+    "fewCodes_one": "Został Ci {{count}} kod zapasowy. Wygeneruj nowe poleceniem owner-create --reset.",
+    "fewCodes_few": "Zostały Ci {{count}} kody zapasowe. Wygeneruj nowe poleceniem owner-create --reset.",
+    "fewCodes_many": "Zostało Ci {{count}} kodów zapasowych. Wygeneruj nowe poleceniem owner-create --reset.",
+    "fewCodes_other": "Zostało Ci {{count}} kodów zapasowych. Wygeneruj nowe poleceniem owner-create --reset.",
+    "signIn": {
+      "title": "Logowanie",
+      "username": "Nazwa użytkownika",
+      "password": "Hasło",
+      "next": "Dalej",
+      "codeIntro": "Wpisz sześciocyfrowy kod z aplikacji uwierzytelniającej.",
+      "recoveryIntro": "Wpisz jeden z kodów zapasowych. Każdy działa tylko raz.",
+      "code": "Kod z aplikacji",
+      "recoveryCode": "Kod zapasowy",
+      "useRecovery": "Użyj kodu zapasowego",
+      "useCode": "Użyj kodu z aplikacji",
+      "submit": "Zaloguj",
+      "errors": {
+        "failed": "Nieprawidłowe dane logowania.",
+        "locked": "Konto jest zablokowane na 15 minut po kilku nieudanych próbach.",
+        "rateLimited": "Za dużo prób w krótkim czasie. Odczekaj chwilę.",
+        "generic": "Nie udało się zalogować. Spróbuj ponownie."
+      }
+    },
+    "moderation": {
+      "title": "Ranking",
+      "list": "Wpisy sezonu",
+      "empty": "W tym sezonie nie ma jeszcze wpisów.",
+      "summary": "{{score}} pkt, {{weeks}} tyg., opublikowano {{at}}.",
+      "rank": "Miejsce {{rank}}.",
+      "hidden": "Ukryty: {{reason}}",
+      "receipt": "Zasady {{ruleset}}, stan v{{version}}, skrót {{hash}}…",
+      "hide": "Ukryj {{nickname}}",
+      "restore": "Przywróć {{nickname}}",
+      "reason": "Powód",
+      "reasonRequired": "Podaj powód — trafi do dziennika zmian.",
+      "confirmHide": "Ukryj wpis {{nickname}}",
+      "confirmRestore": "Przywróć wpis {{nickname}}",
+      "failed": "Nie udało się zmienić wpisu. Odśwież stronę i spróbuj ponownie."
+    },
+    "extension": {
+      "title": "Termin sezonu",
+      "none": "Żaden sezon nie jest jeszcze zamknięty.",
+      "option": "Sezon {{season}} (termin {{date}})",
+      "until": "Nowy termin",
+      "submit": "Przedłuż termin",
+      "incomplete": "Wybierz sezon, nowy termin i podaj powód.",
+      "done": "Sezon {{season}} przyjmuje wyniki do {{date}}.",
+      "failed": "Nie udało się przedłużyć terminu. Nowy termin musi być późniejszy niż obecny."
+    },
+    "audit": {
+      "title": "Dziennik zmian",
+      "empty": "Nie ma jeszcze żadnych zmian.",
+      "line": "{{target}} — {{actor}}, {{at}}: {{reason}}",
+      "action": {
+        "leaderboard": {
+          "hide": "Ukrycie wpisu",
+          "restore": "Przywrócenie wpisu"
+        },
+        "season": {
+          "extend": "Przedłużenie terminu"
+        },
+        "content": {
+          "publish": "Publikacja treści",
+          "revert": "Przywrócenie treści",
+          "release": "Wydanie treści",
+          "draft": {
+            "create": "Utworzenie szkicu",
+            "discard": "Odrzucenie szkicu",
+            "event": "Zmiana wydarzenia",
+            "event-remove": "Usunięcie wydarzenia",
+            "balance": "Zmiana stałych"
+          }
+        }
+      }
+    },
+    "content": {
+      "title": "Treść",
+      "failed": "Nie udało się zapisać zmiany. Odśwież stronę i spróbuj ponownie.",
+      "stale": "Szkic zmienił się w innej karcie. Odśwież stronę.",
+      "publishFailed": "Nie udało się opublikować. Sprawdź problemy i symulację.",
+      "current": "Nowe kariery grają na publikacji #{{number}} ({{kind}}, {{date}}, skrót {{digest}}…).",
+      "kind": {
+        "release": "wydanie",
+        "publish": "publikacja",
+        "revert": "przywrócenie"
+      },
+      "create": "Utwórz szkic",
+      "draft": "Szkic z publikacji #{{base}}, wersja {{revision}}, ostatnio zmienił {{by}} ({{date}}).",
+      "behind": "Od utworzenia szkicu opublikowano nowszą treść. Publikacja szkicu ją zastąpi.",
+      "discard": "Odrzuć szkic",
+      "check": "Sprawdzenie",
+      "problems": "Problemy",
+      "noProblems": "Brak problemów.",
+      "unchanged": "Szkic niczego nie zmienia.",
+      "newSeason": "Zmiana mechaniki: publikacja otworzy nowy sezon rankingu.",
+      "sameSeason": "Tylko teksty: sezon rankingu się nie zmieni.",
+      "diff": "Zmiany",
+      "change": {
+        "added": "Nowe:",
+        "changed": "Zmienione:",
+        "removed": "Usunięte:"
+      },
+      "mechanical": "mechanika",
+      "textOnly": "tekst",
+      "publishTitle": "Publikacja",
+      "publish": "Opublikuj",
+      "published": "Opublikowano jako #{{number}}. Nowe kariery grają już na tej treści.",
+      "events": {
+        "title": "Wydarzenia",
+        "filter": "Szukaj wydarzenia",
+        "add": "Nowe wydarzenie",
+        "list": "Wydarzenia szkicu",
+        "json": "Wydarzenie {{id}} (JSON)",
+        "preview": "Podgląd",
+        "form": {
+          "woman": "Kobieta",
+          "man": "Mężczyzna",
+          "nonbinary": "Forma neutralna"
+        },
+        "save": "Zapisz wydarzenie",
+        "remove": "Usuń ze szkicu",
+        "notJson": "To nie jest poprawny JSON.",
+        "noId": "Wydarzenie musi mieć pole id."
+      },
+      "balance": {
+        "title": "Stałe balansu",
+        "filter": "Szukaj stałej",
+        "save_one": "Zapisz {{count}} zmianę",
+        "save_few": "Zapisz {{count}} zmiany",
+        "save_many": "Zapisz {{count}} zmian",
+        "save_other": "Zapisz {{count}} zmian",
+        "notNumber": "Każda stała musi być liczbą."
+      },
+      "simulation": {
+        "title": "Symulacja",
+        "run": "Symuluj 40 karier",
+        "failed": "Symulacja się nie udała.",
+        "passed": "Żadna symulowana kariera nie złamała reguł.",
+        "broken": "Symulacja wykryła błędy — publikacja zostanie odrzucona.",
+        "measure": "Miara",
+        "draft": "Szkic",
+        "current": "Obecna treść",
+        "score": "Wynik (p10 / p50 / p90)",
+        "weeks": "Tygodnie (p10 / p50 / p90)",
+        "endings": "Zakończenia",
+        "violations": "Błędy"
+      },
+      "history": {
+        "title": "Historia publikacji",
+        "line": "— {{actor}}, {{date}}: {{reason}} (skrót {{digest}}…)",
+        "current": "obecna",
+        "revert": "Przywróć #{{number}}",
+        "confirmRevert": "Opublikuj ponownie #{{number}}",
+        "export": "Eksportuj #{{number}}",
+        "same": "Ta treść jest już obecna."
+      }
+    }
+  },
+  "analytics": {
+    "title": "Pomóż ulepszyć grę?",
+    "body": "Za Twoją zgodą gra wysyła anonimowe liczniki: jakie postacie są wybierane, jak długo trwają kariery i jak się kończą. Bez nicku, kariery, klucza i zapisu. Zgodę cofniesz w ustawieniach.",
+    "accept": "Zgadzam się",
+    "decline": "Nie, dziękuję",
+    "settingsLegend": "Analityka",
+    "settingsLabel": "Wysyłaj anonimowe liczniki rozgrywki",
+    "settingsHint": "Wyłączenie usuwa liczniki, które czekają jeszcze na wysłanie."
+  },
+  "connection": {
+    "down": "Brak połączenia z serwerem. Gra jest wstrzymana — widzisz ostatni potwierdzony stan. Wrócimy, gdy serwer odpowie."
   }
 }

@@ -1,6 +1,12 @@
 import { http, HttpResponse } from 'msw';
 
-import type { ActionRequest, BatchRequest, CareerView } from '@/api/generated/game.schemas';
+import type {
+  ActionRequest,
+  BatchRequest,
+  CareerView,
+  EntryStatusView,
+  PublishResultRequest,
+} from '@/api/generated/game.schemas';
 
 import { server } from './server';
 
@@ -53,3 +59,19 @@ export const captureActions = (
 export const captureBatches = (
   respond: (body: BatchRequest, call: number) => Response | Promise<Response>,
 ) => capture<BatchRequest>('/v1/careers/:id/batches', respond);
+
+/** `GET /v1/careers/:id/leaderboard-entry` answers with each status in turn and then keeps the last one. */
+export function serveEntryStatus(...statuses: EntryStatusView[]) {
+  let call = 0;
+  server.use(
+    http.get('/v1/careers/:id/leaderboard-entry', () => {
+      const status = statuses[Math.min(call, statuses.length - 1)];
+      call += 1;
+      return HttpResponse.json(status);
+    }),
+  );
+}
+
+export const capturePublications = (
+  respond: (body: PublishResultRequest, call: number) => Response | Promise<Response>,
+) => capture<PublishResultRequest>('/v1/careers/:id/leaderboard-entry', respond);

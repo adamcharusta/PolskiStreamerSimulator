@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentValidation;
 using FluentValidation.Results;
 using PolskiStreamerSimulator.Application.Careers;
@@ -6,7 +7,14 @@ using PolskiStreamerSimulator.Domain.Simulation;
 
 namespace PolskiStreamerSimulator.WebApp.Careers;
 
-public sealed record CreateCareerRequest(string Nickname, Background Background, Difficulty Difficulty, PronounSet Pronouns);
+/// <summary><see cref="CreationId"/> is a fresh random UUID per creation; repeating it repeats the creation (TD-121). A ranked career plays for the open season (TD-122).</summary>
+public sealed record CreateCareerRequest(
+    string Nickname,
+    Background Background,
+    Difficulty Difficulty,
+    PronounSet Pronouns,
+    Guid? CreationId = null,
+    bool Ranked = false);
 
 public sealed class CreateCareerRequestValidator : AbstractValidator<CreateCareerRequest>
 {
@@ -16,9 +24,32 @@ public sealed class CreateCareerRequestValidator : AbstractValidator<CreateCaree
         RuleFor(r => r.Background).IsInEnum();
         RuleFor(r => r.Difficulty).IsInEnum();
         RuleFor(r => r.Pronouns).IsInEnum();
+        RuleFor(r => r.CreationId).NotEqual(Guid.Empty);
     }
 
     protected override bool PreValidate(ValidationContext<CreateCareerRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+public sealed record RecoverCareerRequest(string RecoveryKey);
+
+public sealed class RecoverCareerRequestValidator : AbstractValidator<RecoverCareerRequest>
+{
+    public RecoverCareerRequestValidator() => RuleFor(r => r.RecoveryKey).NotEmpty().MaximumLength(200);
+
+    protected override bool PreValidate(ValidationContext<RecoverCareerRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary>Only the nickname: the server publishes the score it computed, and any other field is ignored.</summary>
+public sealed record PublishResultRequest(string Nickname);
+
+public sealed class PublishResultRequestValidator : AbstractValidator<PublishResultRequest>
+{
+    // The handler applies the nickname rule after the eligibility checks, so a repeat returns the entry it already has.
+    public PublishResultRequestValidator() => RuleFor(r => r.Nickname).NotNull().MaximumLength(50);
+
+    protected override bool PreValidate(ValidationContext<PublishResultRequest> context, ValidationResult result)
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 
@@ -87,6 +118,43 @@ public sealed class BatchRequestValidator : AbstractValidator<BatchRequest>
     }
 
     protected override bool PreValidate(ValidationContext<BatchRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary>The state version the player is looking at; a stale one is rejected (spec M4-C §3).</summary>
+public sealed record SaveToSlotRequest(long ExpectedVersion);
+
+public sealed class SaveToSlotRequestValidator : AbstractValidator<SaveToSlotRequest>
+{
+    public SaveToSlotRequestValidator() => RuleFor(r => r.ExpectedVersion).GreaterThanOrEqualTo(0);
+
+    protected override bool PreValidate(ValidationContext<SaveToSlotRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary><see cref="CommandId"/> makes the restore safe to repeat, like a command (spec M4-C §3).</summary>
+public sealed record RestoreSlotRequest(Guid CommandId, long ExpectedVersion);
+
+public sealed class RestoreSlotRequestValidator : AbstractValidator<RestoreSlotRequest>
+{
+    public RestoreSlotRequestValidator()
+    {
+        RuleFor(r => r.CommandId).NotEqual(Guid.Empty);
+        RuleFor(r => r.ExpectedVersion).GreaterThanOrEqualTo(0);
+    }
+
+    protected override bool PreValidate(ValidationContext<RestoreSlotRequest> context, ValidationResult result)
+        => RequestBodies.Present(context.InstanceToValidate, result);
+}
+
+/// <summary>The exported save file as it was downloaded (spec M4-C §5).</summary>
+public sealed record ImportCareerRequest(JsonElement? Save);
+
+public sealed class ImportCareerRequestValidator : AbstractValidator<ImportCareerRequest>
+{
+    public ImportCareerRequestValidator() => RuleFor(r => r.Save).NotNull();
+
+    protected override bool PreValidate(ValidationContext<ImportCareerRequest> context, ValidationResult result)
         => RequestBodies.Present(context.InstanceToValidate, result);
 }
 

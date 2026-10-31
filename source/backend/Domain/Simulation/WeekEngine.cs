@@ -11,6 +11,9 @@ namespace PolskiStreamerSimulator.Domain.Simulation;
 /// </summary>
 public sealed class WeekEngine(RulesetRegistry registry)
 {
+    /// <summary>Whether a career on <paramref name="rulesetId"/> can be played here (an imported save names its own).</summary>
+    public bool Supports(string rulesetId) => registry.Resolve(rulesetId).IsSuccess;
+
     public Result<CareerState> StartWeek(CareerState s, ContentSnapshot c, WeekPlan plan, long expectedVersion)
     {
         var ruleset = Resolve(s, c);

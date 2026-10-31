@@ -48,13 +48,15 @@ public sealed class OpenApiDocumentTests(ApiFactory api) : IClassFixture<ApiFact
         Assert.True(paths.GetProperty("/v1/careers/{id}").GetProperty("get").GetProperty("security")[0].TryGetProperty("careerSecret", out _));
         Assert.False(paths.GetProperty("/v1/careers").GetProperty("post").TryGetProperty("security", out _));
         Assert.False(paths.TryGetProperty("/health", out _));
+        Assert.True(paths.GetProperty("/v1/admin/audit").GetProperty("get").GetProperty("security")[0].TryGetProperty("owner", out _));
+        Assert.False(paths.GetProperty("/v1/admin/login").GetProperty("post").TryGetProperty("security", out _));
         foreach (var path in paths.EnumerateObject())
         {
             foreach (var operation in path.Value.EnumerateObject())
             {
                 var op = operation.Value;
                 Assert.True(op.GetProperty("responses").TryGetProperty("500", out _), $"{operation.Name} {path.Name} has no 500");
-                Assert.Equal("careers", op.GetProperty("tags")[0].GetString());
+                Assert.Equal(path.Name.StartsWith("/v1/admin", StringComparison.Ordinal) ? "admin" : "careers", op.GetProperty("tags")[0].GetString());
                 Assert.DoesNotContain('_', op.GetProperty("summary").GetString() ?? "_");
             }
         }
