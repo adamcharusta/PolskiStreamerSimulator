@@ -30,6 +30,7 @@ public sealed class DecisionFlowTests
         Assert.Null(shown.TitleKey);
         Assert.Equal((definition.Title, definition.TextPl), (shown.Title, shown.Text));
         Assert.Equal(definition.Choices.Select(c => c.LabelPl), shown.Choices.Select(c => c.Label));
+        Assert.Equal(definition.Tags, shown.Tags);
     }
 
     [Fact]

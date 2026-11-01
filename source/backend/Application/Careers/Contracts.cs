@@ -170,8 +170,8 @@ public sealed record PlatformProfileView(decimal Reach, decimal SubYield, decima
 /// <summary>A missed installment or breach the plan would cause: missedInstallment or breach, the penalty, the credibility change and whether the deal ends.</summary>
 public sealed record SponsorConsequenceView(string ContractId, string TemplateId, string Kind, long PenaltyPln, decimal Credibility, bool Terminates);
 
-/// <summary>An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks.</summary>
-public sealed record EventView(string EventId, string? TitleKey, string? Title, string Text, IReadOnlyList<ChoiceView> Choices, bool Mandatory);
+/// <summary>An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks. Tags (M5-B) let the client replace sensitive wording; absent in responses stored before them.</summary>
+public sealed record EventView(string EventId, string? TitleKey, string? Title, string Text, IReadOnlyList<ChoiceView> Choices, bool Mandatory, IReadOnlyList<string>? Tags = null);
 
 /// <summary>A response with its odds, the viral chance a critical outcome adds and why the career cannot take it (needs-cash, needs-energy), if so.</summary>
 public sealed record ChoiceView(
@@ -189,7 +189,7 @@ public sealed record ChoiceView(
 
 public sealed record ModifierView(string LabelKey, decimal Value);
 
-/// <summary>A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them.</summary>
+/// <summary>A roll with the authored title, label and outcome text of the career's snapshot (M3-D) and the event's content tags (M5-B); they are absent in responses stored before them.</summary>
 public sealed record RollView(
     string EventId,
     string ChoiceId,
@@ -199,7 +199,8 @@ public sealed record RollView(
     RollOutcome Outcome,
     string? EventTitle = null,
     string? ChoiceLabel = null,
-    string? OutcomeText = null);
+    string? OutcomeText = null,
+    IReadOnlyList<string>? Tags = null);
 
 public sealed record ReportLineView(string Code, long? AmountPln, decimal? Delta, string? Detail);
 

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import { type CareerView, NextStepKind } from '@/api/generated/game.schemas';
+import { masked } from '@/textFilters/textFilters';
 
 import { DashboardCard } from './DashboardCard';
 import { OffersCard } from './OffersCard';
@@ -28,7 +29,7 @@ export function CareerDesk({
   return (
     <div className="grid gap-3">
       <h1 className="sr-only">
-        {t('career.summaryLabel')}: {career.nickname}
+        {t('career.summaryLabel')}: {masked(career.nickname)}
       </h1>
       <TopBar career={career} />
       <div className="desk">

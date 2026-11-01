@@ -12,6 +12,7 @@ import {
 import { BatchLauncher } from './batch/BatchLauncher';
 import { BatchResult } from './batch/BatchResult';
 import { CommandNotice } from './CommandNotice';
+import { rollText } from './reportLabels';
 import { EndedView } from './stage/EndedView';
 import { LiveEvent } from './stage/LiveEvent';
 import { PlanWeek } from './stage/PlanWeek';
@@ -43,11 +44,13 @@ export function Stage({
   readonly secret: string;
 }) {
   const [revealed, setRevealed] = useState<Revealed | null>(null);
-  const [announcement, setAnnouncement] = useState('');
+  // The focused step heading already names each result; the live region adds only what the heading leaves out (the
+  // roll line, why a batch stopped). A new key per reveal re-announces an identical result (#77).
+  const [announcement, setAnnouncement] = useState({ id: 0, text: '' });
   return (
     <div className="panel grid gap-3">
       <div aria-live="polite" className="sr-only">
-        {announcement}
+        {announcement.text !== '' && <p key={announcement.id}>{announcement.text}</p>}
       </div>
       <CommandNotice careerId={career.careerId} />
       <StageView
@@ -56,7 +59,7 @@ export function Stage({
         revealed={revealed}
         onReveal={(next, text) => {
           setRevealed(next);
-          setAnnouncement(text);
+          setAnnouncement((previous) => ({ id: previous.id + 1, text }));
         }}
         onClose={() => {
           setRevealed(null);
@@ -103,10 +106,7 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
           career={career}
           secret={secret}
           onRolled={(roll) => {
-            onReveal(
-              { kind: 'roll', roll },
-              t('roll.title', { outcome: t(`roll.outcome.${roll.outcome}`) }),
-            );
+            onReveal({ kind: 'roll', roll }, rollText(t, roll));
           }}
         />
       );
@@ -117,7 +117,7 @@ function StageView({ career, secret, revealed, onReveal, onClose }: StageViewPro
           career={career}
           secret={secret}
           onSettled={(report) => {
-            onReveal({ kind: 'report', report }, t('report.title', { week: report.week }));
+            onReveal({ kind: 'report', report }, '');
           }}
         />
       );

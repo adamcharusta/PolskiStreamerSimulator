@@ -45,4 +45,17 @@ describe('batch result', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     expect(onNext).toHaveBeenCalledOnce();
   });
+
+  it('nests the headings of a folded week report under its week heading', () => {
+    const { container } = render(<BatchResult outcome={batchOutcome()} onNext={vi.fn()} />);
+
+    const levels = [...container.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((heading) =>
+      Number(heading.tagName.slice(1)),
+    );
+    expect(levels).toContain(5);
+    // Each heading is at most one level below the one before it.
+    for (const [index, level] of levels.entries()) {
+      expect(level - (levels[index - 1] ?? level)).toBeLessThanOrEqual(1);
+    }
+  });
 });

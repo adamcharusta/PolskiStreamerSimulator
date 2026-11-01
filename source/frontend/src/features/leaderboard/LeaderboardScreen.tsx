@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useGetLeaderboard, useListSeasons } from '@/api/generated/game';
 import type { LeaderboardView, SeasonView } from '@/api/generated/game.schemas';
 import { count, date } from '@/format';
+import { masked } from '@/textFilters/textFilters';
 
 /** `/ranking`: the season picker and the season's top 100 (content §3, TD-122). */
 export function LeaderboardScreen() {
@@ -66,7 +67,13 @@ function Table({ board }: { readonly board: LeaderboardView }) {
       {board.entries.length === 0 ? (
         <p>{t('leaderboard.empty')}</p>
       ) : (
-        <div className="overflow-x-auto">
+        // A wide table scrolls inside this region; keyboard users reach and scroll it too (WCAG 2.1.1, M5-C #37).
+        <section
+          className="overflow-x-auto"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must take focus (axe).
+          tabIndex={0}
+          aria-label={t('leaderboard.caption', { season: season.number })}
+        >
           <table className="w-full">
             <caption className="panel-title text-left">
               {t('leaderboard.caption', { season: season.number })}
@@ -85,7 +92,7 @@ function Table({ board }: { readonly board: LeaderboardView }) {
               {board.entries.map((entry) => (
                 <tr key={entry.rank}>
                   <td>{entry.rank}</td>
-                  <th scope="row">{entry.nickname}</th>
+                  <th scope="row">{masked(entry.nickname)}</th>
                   <td>{count(entry.score)}</td>
                   <td>{entry.weeksPlayed}</td>
                   <td>{t(`difficulty.${entry.difficulty}`)}</td>
@@ -94,7 +101,7 @@ function Table({ board }: { readonly board: LeaderboardView }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       )}
     </section>
   );

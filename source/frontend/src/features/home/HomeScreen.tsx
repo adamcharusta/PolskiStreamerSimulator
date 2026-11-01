@@ -7,6 +7,7 @@ import { knownCareers } from '@/careers/knownCareers';
 import { Panel } from '@/components/ui/Panel';
 import { PendingCreationPanel } from '@/features/create-career/PendingCreationPanel';
 import { date } from '@/format';
+import { masked } from '@/textFilters/textFilters';
 
 export function HomeScreen() {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ export function HomeScreen() {
           <ul className="grid list-none gap-2 p-0">
             {careers.map((career) => (
               <li key={career.careerId} className="choice justify-between">
-                <span className="font-bold">{career.nickname}</span>
+                <span className="font-bold">{masked(career.nickname)}</span>
                 <span className="muted">{t('home.started', { date: date(career.createdAt) })}</span>
                 <Link
                   className="btn btn-secondary"

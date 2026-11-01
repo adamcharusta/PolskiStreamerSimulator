@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { formatContent } from '@/content/icu';
 import { count, pln, signed, stat } from '@/format';
+import { masked } from '@/textFilters/textFilters';
 
 import { blockedKey } from './offers';
 import { RetryBanner } from './RetryBanner';
@@ -156,7 +157,7 @@ function ContractLine({ deal }: { readonly deal: ContractView }) {
   const { t } = useTranslation();
   return (
     <li>
-      <span className="font-bold">{deal.name}</span> · {t(`offer.kind.${deal.kind}`)} ·{' '}
+      <span className="font-bold">{masked(deal.name)}</span> · {t(`offer.kind.${deal.kind}`)} ·{' '}
       {t('offer.payment', { amount: pln(deal.paymentPln) })} ·{' '}
       {deal.dueThisWeek ? (
         <strong>{t('offer.dueNow')}</strong>
