@@ -14,8 +14,25 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     // M5-C (#37): the browser matrix runs the shorter cross-browser spec in the other engines and on emulated phones.
     { name: 'firefox', testMatch: /browsers\.spec\.ts/u, use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', testMatch: /browsers\.spec\.ts/u, use: { ...devices['Desktop Safari'] } },
-    { name: 'mobile-chrome', testMatch: /browsers\.spec\.ts/u, use: { ...devices['Pixel 7'] } },
-    { name: 'mobile-safari', testMatch: /browsers\.spec\.ts/u, use: { ...devices['iPhone 14'] } },
+    // Left out with grepInvert: WebKit keeps links out of the Tab order by default, and phones have no Tab key and
+    // run the first test at their own width instead of the 320-pixel screen check.
+    {
+      name: 'webkit',
+      testMatch: /browsers\.spec\.ts/u,
+      grepInvert: /keyboard alone/u,
+      use: { ...devices['Desktop Safari'] },
+    },
+    {
+      name: 'mobile-chrome',
+      testMatch: /browsers\.spec\.ts/u,
+      grepInvert: /keyboard alone|secondary screens/u,
+      use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'mobile-safari',
+      testMatch: /browsers\.spec\.ts/u,
+      grepInvert: /keyboard alone|secondary screens/u,
+      use: { ...devices['iPhone 14'] },
+    },
   ],
 });

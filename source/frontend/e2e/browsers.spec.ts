@@ -115,15 +115,9 @@ async function expectVisibleFocus(target: Locator): Promise<void> {
   expect(outlined || style.shadow !== 'none', JSON.stringify(style)).toBe(true);
 }
 
-test('a career starts and plays a week with the keyboard alone', async ({
-  page,
-  isMobile,
-  browserName,
-}) => {
-  test.skip(isMobile, 'Phones have no Tab key; touch journeys are covered by the first test.');
-  // WebKit keeps links out of the Tab order by default (Safari's "Press Tab to highlight each item" setting), and
-  // Playwright's WebKit offers no key that adds them, so the keyboard journey runs in Chromium and Firefox.
-  test.skip(browserName === 'webkit', 'WebKit skips links when tabbing by default.');
+// Chromium and Firefox only (grepInvert in playwright.config.ts): phones have no Tab key, and WebKit keeps links out
+// of the Tab order by default (Safari's "Press Tab to highlight each item"), with no Playwright key that adds them.
+test('a career starts and plays a week with the keyboard alone', async ({ page }) => {
   await page.goto('/');
   const confirm = page.getByRole('button', { name: pl.gate.confirm });
   await tabTo(page, confirm);
@@ -196,11 +190,8 @@ test('reduced motion removes the tilted buttons', async ({ page }) => {
   }
 });
 
-test('the secondary screens fit 320 pixels and pass axe', async ({ page, isMobile }) => {
-  test.skip(
-    isMobile,
-    'One engine set is enough for the static screens; phones run the first test.',
-  );
+// Desktop engines only (grepInvert in playwright.config.ts): the phones run the first test at their own width.
+test('the secondary screens fit 320 pixels and pass axe', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await enterGame(page);
   await expectNoHorizontalScroll(page);
