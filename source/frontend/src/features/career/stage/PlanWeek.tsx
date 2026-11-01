@@ -34,6 +34,8 @@ export interface PlanWeekProps {
   readonly children?: ReactNode;
 }
 
+// A disabled reason (and a slot's tier) sits inside the label for sighted players but is aria-hidden there, so a screen
+// reader hears it once, as the radio's description, not also in its name (#77).
 export function PlanWeek({ career, secret, children }: PlanWeekProps) {
   const { t } = useTranslation();
   const plans = career.next.plans;
@@ -80,7 +82,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
               />
               <span className="font-bold">{t(`action.${option}`)}</span>
               {block !== null && (
-                <span id={hint} className="muted">
+                <span id={hint} className="muted" aria-hidden="true">
                   {reason(block)}
                 </span>
               )}
@@ -119,6 +121,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
           {Object.values(EquipmentSlot).map((option) => {
             const block = optionFor(plans, action, category, option)?.disabledReason ?? null;
             const hint = `plan-slot-${option}`;
+            const tier = `plan-slot-tier-${option}`;
             return (
               <label key={option} className="choice">
                 <input
@@ -127,17 +130,17 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
                   value={option}
                   checked={slot === option}
                   disabled={block !== null}
-                  aria-describedby={block === null ? undefined : hint}
+                  aria-describedby={block === null ? tier : `${tier} ${hint}`}
                   onChange={() => {
                     setSlot(option);
                   }}
                 />
                 <span className="font-bold">{t(`slot.${option}`)}</span>
-                <span className="muted">
+                <span id={tier} className="muted" aria-hidden="true">
                   {t('stat.tier', { value: career.stats.equipment[option] })}
                 </span>
                 {block !== null && (
-                  <span id={hint} className="muted">
+                  <span id={hint} className="muted" aria-hidden="true">
                     {reason(block)}
                   </span>
                 )}
@@ -169,7 +172,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
                 />
                 <span className="font-bold">{t(`wager.${name}`)}</span>
                 {block !== null && (
-                  <span id={hint} className="muted">
+                  <span id={hint} className="muted" aria-hidden="true">
                     {reason(block)}
                   </span>
                 )}
@@ -201,7 +204,7 @@ export function PlanWeek({ career, secret, children }: PlanWeekProps) {
                 />
                 <span className="font-bold">{t(`platform.${option}`)}</span>
                 {block !== null && (
-                  <span id={hint} className="muted">
+                  <span id={hint} className="muted" aria-hidden="true">
                     {reason(block)}
                   </span>
                 )}

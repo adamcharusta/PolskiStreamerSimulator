@@ -109,7 +109,11 @@ export function BatchResult({
               )}
               <details>
                 <summary>{t('report.title', { week: week.report.week })}</summary>
-                <WeekReport report={week.report} pronouns={outcome.career.pronouns} />
+                <WeekReport
+                  report={week.report}
+                  pronouns={outcome.career.pronouns}
+                  headingLevel={5}
+                />
               </details>
             </li>
           );

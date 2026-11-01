@@ -30,6 +30,28 @@ function rejectsNickname(error: ApiRequestError | null): boolean {
   return error !== null && isApiError(error) && 'nickname' in error.errors;
 }
 
+/** The preferred value when the server offers it, otherwise the first value it lists. */
+function offered<T>(values: readonly T[], preferred: T): T {
+  return values.includes(preferred) ? preferred : (values[0] ?? preferred);
+}
+
+/** Every preselected choice is one the server offers (#79); the preferences keep today's defaults. */
+function formDefaults(options: CareerOptionsView) {
+  return {
+    nickname: '',
+    background: offered(
+      options.backgrounds.map((option) => option.background),
+      'dormRoomNewcomer',
+    ),
+    difficulty: offered(
+      options.difficulties.map((option) => option.difficulty),
+      'normal',
+    ),
+    pronouns: offered(options.pronouns, 'woman'),
+    ranked: 'ranked',
+  } satisfies CreateCareerForm;
+}
+
 export function CreateCareerScreen() {
   const { t } = useTranslation();
   const options = useGetCareerOptions();
@@ -58,15 +80,10 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
   // Set before the request, so a second activation in the same moment cannot create a second career.
   const submitting = useRef(false);
   const { creation, unsaved } = useFinishCreation();
+  const defaults = formDefaults(options);
   const form = useForm<CreateCareerForm, unknown, CreateCareerRequest>({
     resolver: zodResolver(createCareerSchema),
-    defaultValues: {
-      nickname: '',
-      background: 'dormRoomNewcomer',
-      difficulty: 'normal',
-      pronouns: 'woman',
-      ranked: 'ranked',
-    },
+    defaultValues: defaults,
   });
   const start = (request: CreateCareerRequest) => {
     // Written before the request: a lost answer or a closed tab can repeat this creation ID later.
@@ -81,7 +98,7 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
       onError: (error) => {
         submitting.current = false;
         if (rejectsNickname(error)) {
-          form.setError('nickname', { message: 'create.errors.nickname' });
+          form.setError('nickname', { message: 'create.errors.nickname' }, { shouldFocus: true });
         }
       },
     });
@@ -90,9 +107,9 @@ function CreateCareerForm({ options }: { readonly options: CareerOptionsView }) 
   // useWatch, not watch(): the React Compiler lint rules reject watch() (eslint-plugin-react-hooks 7).
   const watched = useWatch({ control: form.control });
   const nickname = watched.nickname ?? '';
-  const background = watched.background ?? 'dormRoomNewcomer';
-  const difficulty = watched.difficulty ?? 'normal';
-  const pronouns = watched.pronouns ?? 'woman';
+  const background = watched.background ?? defaults.background;
+  const difficulty = watched.difficulty ?? defaults.difficulty;
+  const pronouns = watched.pronouns ?? defaults.pronouns;
   const ranked = (watched.ranked ?? 'ranked') === 'ranked';
   const nicknameError = form.formState.errors.nickname?.message;
 

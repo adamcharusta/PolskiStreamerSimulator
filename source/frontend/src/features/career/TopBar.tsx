@@ -33,7 +33,8 @@ export function TopBar({ career }: { readonly career: CareerView }) {
       <span>
         {t('career.viewers')}: {count(career.stats.lastLiveViewers)}
       </span>
-      <output>{t(`career.${saveStatus(latest)}`)}</output>
+      {/* Visible, not live: it changed with every command and talked over the stage's announcements (#77). */}
+      <span>{t(`career.${saveStatus(latest)}`)}</span>
       <Button
         className="rail-toggle"
         aria-expanded={statsOpen}

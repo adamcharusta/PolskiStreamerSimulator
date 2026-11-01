@@ -81,7 +81,8 @@ describe('game screen', () => {
     expect(await screen.findByRole('heading', { name: 'Sponsorka pisze' })).toHaveFocus();
     await user.click(screen.getByRole('radio', { name: /Odmów/u }));
     await user.click(screen.getByRole('button', { name: 'Wybieram' }));
-    expect(await screen.findByText('Pewny wybór — bez rzutu')).toBeInTheDocument();
+    // Shown under the focused result heading and announced once by the stage's live region.
+    expect(await screen.findAllByText('Pewny wybór — bez rzutu')).toHaveLength(2);
     await user.click(screen.getByRole('button', { name: 'Dalej' }));
 
     expect(await screen.findByRole('heading', { name: 'Plan tygodnia' })).toBeInTheDocument();
@@ -167,7 +168,7 @@ describe('game screen', () => {
       await user.click(screen.getByRole('button', { name: 'Zaczynam stream' }));
 
       expect(await screen.findByRole('button', { name: 'Spróbuj ponownie' })).toBeInTheDocument();
-      expect(within(desk()).getByRole('status')).toHaveTextContent('Brak połączenia');
+      expect(within(desk()).getByText('Brak połączenia')).toBeInTheDocument();
     } finally {
       onlineManager.setOnline(true);
     }
@@ -198,10 +199,10 @@ describe('game screen', () => {
     await user.click(await screen.findByRole('radio', { name: 'Odpoczynek' }));
     await user.click(screen.getByRole('button', { name: 'Zaczynam stream' }));
 
-    expect(within(desk()).getByRole('status')).toHaveTextContent('Zapisuję…');
-    await waitFor(() => {
-      expect(within(desk()).getByRole('status')).toHaveTextContent('Zapisano');
-    });
+    expect(within(desk()).getByText('Zapisuję…')).toBeInTheDocument();
+    // Visible only: the save status is not a live region, so it does not talk over the stage (#77).
+    expect(within(desk()).queryByRole('status')).toBeNull();
+    expect(await within(desk()).findByText('Zapisano')).toBeInTheDocument();
   });
 
   it('can forget a career the server does not find', async () => {
@@ -257,6 +258,21 @@ describe('game screen', () => {
     expect(within(rail).getByRole('heading', { name: 'Statystyki' })).toHaveFocus();
     await user.click(toggle);
     expect(rail).not.toHaveClass('open');
+  });
+
+  it('closes the statistics drawer when the player leaves the career', async () => {
+    rememberTestCareer();
+    serveCareer(careerView());
+    const { user, router } = renderApp(path);
+
+    await user.click(await screen.findByRole('button', { name: 'Statystyki' }));
+    await router.navigate({ to: '/' });
+    await router.navigate({ to: '/kariera/$careerId', params: { careerId: TEST_CAREER_ID } });
+
+    expect(await screen.findByRole('button', { name: 'Statystyki' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
   });
 
   it('shows the ending of a finished career', async () => {

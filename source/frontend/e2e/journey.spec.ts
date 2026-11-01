@@ -29,6 +29,11 @@ async function expectAccessible(page: Page, screen: string): Promise<void> {
   });
 }
 
+/** Spec §4: every action fits a 320 CSS pixel viewport without horizontal scrolling. */
+async function expectFitsNarrowScreen(page: Page): Promise<void> {
+  await expectFitsNarrowScreen(page);
+}
+
 test('a new career plays a manual week and a 13-week batch, then reloads to the same state', async ({
   page,
 }) => {
@@ -90,6 +95,8 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
 
   await page.getByRole('button', { name: pl.batch.launch }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await expectAccessible(page, 'batch confirmation');
   await page.getByRole('button', { name: fill(pl.batch.confirm_many, { count: 13 }) }).click();
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
     timeout: 60_000,
@@ -111,6 +118,7 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
     .count();
   expect(weeks).toBeGreaterThan(0);
   await expectAccessible(page, 'batch result');
+  await expectFitsNarrowScreen(page);
   await page.getByRole('button', { name: pl.batch.next }).click();
 
   const desk = page.getByRole('region', { name: pl.career.summaryLabel });
