@@ -31,7 +31,9 @@ async function expectAccessible(page: Page, screen: string): Promise<void> {
 
 /** Spec §4: every action fits a 320 CSS pixel viewport without horizontal scrolling. */
 async function expectFitsNarrowScreen(page: Page): Promise<void> {
-  await expectFitsNarrowScreen(page);
+  await page.setViewportSize({ width: 320, height: 720 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await page.setViewportSize({ width: 1280, height: 800 });
 }
 
 test('a new career plays a manual week and a 13-week batch, then reloads to the same state', async ({
@@ -54,9 +56,7 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
   await expectAccessible(page, 'week plan');
-  await page.setViewportSize({ width: 320, height: 720 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await expectFitsNarrowScreen(page);
 
   await page.getByRole('radio', { name: pl.action.rest }).check();
   await page.getByRole('button', { name: pl.plan.start }).click();
