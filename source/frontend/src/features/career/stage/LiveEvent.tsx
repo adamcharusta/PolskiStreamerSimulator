@@ -25,6 +25,8 @@ export interface LiveEventProps {
  * One live situation or mandatory decision without a timer: every response shows its chance and modifiers
  * before the player commits. M1 events carry a title key and plain text, M3 events ICU text in the career's pronouns.
  */
+// A disabled reason (and a slot's tier) sits inside the label for sighted players but is aria-hidden there, so a screen
+// reader hears it once, as the radio's description, not also in its name (#77).
 export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
   const { t } = useTranslation();
   const [choiceId, setChoiceId] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
               <span className="font-bold">{format(choice.label)}</span>
               <ChoiceOdds choice={choice} />
               {unavailable !== null && (
-                <span id={hint} className="muted">
+                <span id={hint} className="muted" aria-hidden="true">
                   {t(`choice.${unavailable}`, { defaultValue: t('disabled.unknown') })}
                 </span>
               )}

@@ -68,8 +68,12 @@ describe('week plan', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Ulepszenie sprzętu' }));
     expect(screen.getByRole('button', { name: 'Zaczynam stream' })).toBeDisabled();
-    expect(screen.getByRole('radio', { name: /Kamera/u })).toHaveAccessibleDescription(
-      'Nie stać cię',
+    // The tier and the reason are read once, as the description, not also as part of the name (#77).
+    expect(screen.getByRole('radio', { name: 'Kamera' })).toHaveAccessibleDescription(
+      /^poziom \d+ Nie stać cię$/u,
+    );
+    expect(screen.getByRole('radio', { name: 'Mikrofon' })).toHaveAccessibleDescription(
+      /^poziom \d+$/u,
     );
     await user.click(screen.getByRole('radio', { name: /Mikrofon/u }));
     await user.click(screen.getByRole('button', { name: 'Zaczynam stream' }));
