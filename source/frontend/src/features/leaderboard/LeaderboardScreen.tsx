@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useGetLeaderboard, useListSeasons } from '@/api/generated/game';
 import type { LeaderboardView, SeasonView } from '@/api/generated/game.schemas';
 import { count, date } from '@/format';
+import { masked } from '@/textFilters/textFilters';
 
 /** `/ranking`: the season picker and the season's top 100 (content §3, TD-122). */
 export function LeaderboardScreen() {
@@ -85,7 +86,7 @@ function Table({ board }: { readonly board: LeaderboardView }) {
               {board.entries.map((entry) => (
                 <tr key={entry.rank}>
                   <td>{entry.rank}</td>
-                  <th scope="row">{entry.nickname}</th>
+                  <th scope="row">{masked(entry.nickname)}</th>
                   <td>{count(entry.score)}</td>
                   <td>{entry.weeksPlayed}</td>
                   <td>{t(`difficulty.${entry.difficulty}`)}</td>

@@ -19,14 +19,28 @@ export interface WeekReportProps {
   readonly onNext?: () => void;
   /** The career's pronouns for the authored roll texts; the neutral form without them. */
   readonly pronouns?: PronounSet;
+  /** Level of a folded report's headings: 3 under a step heading, 5 inside the batch ledger's week headings. */
+  readonly headingLevel?: 3 | 5;
 }
 
-export function WeekReport({ report, onNext, pronouns = PronounSet.nonbinary }: WeekReportProps) {
+type ReportHeading = 'h3' | 'h5';
+
+export function WeekReport({
+  report,
+  onNext,
+  pronouns = PronounSet.nonbinary,
+  headingLevel = 3,
+}: WeekReportProps) {
   const { t } = useTranslation();
   const title = t('report.title', { week: report.week });
+  const Heading: ReportHeading = headingLevel === 5 ? 'h5' : 'h3';
   return (
     <div className="grid gap-2">
-      {onNext ? <StepHeading>{title}</StepHeading> : <h3 className="panel-title">{title}</h3>}
+      {onNext ? (
+        <StepHeading>{title}</StepHeading>
+      ) : (
+        <Heading className="panel-title">{title}</Heading>
+      )}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3">
         <dt>{t('report.viewers')}</dt>
         <dd className="m-0">{count(report.liveViewers)}</dd>
@@ -58,11 +72,21 @@ export function WeekReport({ report, onNext, pronouns = PronounSet.nonbinary }: 
         </p>
       )}
       <RiskLines report={report} />
-      <Rolls title={t('report.decisions')} rolls={report.decisionRolls} pronouns={pronouns} />
-      <Rolls title={t('report.events')} rolls={report.rolls} pronouns={pronouns} />
-      <MoneyLines title={t('report.income')} lines={report.income} sign={1} />
-      <MoneyLines title={t('report.costs')} lines={report.costs} sign={-1} />
-      <h3 className="font-bold">{t('report.statChanges')}</h3>
+      <Rolls
+        title={t('report.decisions')}
+        rolls={report.decisionRolls}
+        pronouns={pronouns}
+        heading={Heading}
+      />
+      <Rolls
+        title={t('report.events')}
+        rolls={report.rolls}
+        pronouns={pronouns}
+        heading={Heading}
+      />
+      <MoneyLines title={t('report.income')} lines={report.income} sign={1} heading={Heading} />
+      <MoneyLines title={t('report.costs')} lines={report.costs} sign={-1} heading={Heading} />
+      <Heading className="font-bold">{t('report.statChanges')}</Heading>
       {report.statChanges.length === 0 ? (
         <p>{t('report.none')}</p>
       ) : (
@@ -86,15 +110,17 @@ function MoneyLines({
   title,
   lines,
   sign,
+  heading: Heading,
 }: {
   readonly title: string;
   readonly lines: readonly ReportLineView[];
   readonly sign: 1 | -1;
+  readonly heading: ReportHeading;
 }) {
   const { t } = useTranslation();
   return (
     <>
-      <h3 className="font-bold">{title}</h3>
+      <Heading className="font-bold">{title}</Heading>
       {lines.length === 0 ? (
         <p>{t('report.none')}</p>
       ) : (
@@ -159,10 +185,12 @@ function Rolls({
   title,
   rolls,
   pronouns,
+  heading: Heading,
 }: {
   readonly title: string;
   readonly rolls: readonly RollView[];
   readonly pronouns: PronounSet;
+  readonly heading: ReportHeading;
 }) {
   if (rolls.length === 0) {
     return null;
@@ -170,7 +198,7 @@ function Rolls({
 
   return (
     <>
-      <h3 className="font-bold">{title}</h3>
+      <Heading className="font-bold">{title}</Heading>
       <ul aria-label={title}>
         {rolls.map((roll, index) => (
           <li key={`${roll.eventId}-${String(index)}`}>

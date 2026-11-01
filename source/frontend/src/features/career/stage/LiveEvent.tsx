@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { formatContent } from '@/content/icu';
+import { sensitiveTag, useSensitiveFilter } from '@/textFilters/textFilters';
 
 import { RetryBanner } from '../RetryBanner';
 import { useActionCommand } from '../useCareerCommand';
@@ -25,9 +26,12 @@ export interface LiveEventProps {
  * One live situation or mandatory decision without a timer: every response shows its chance and modifiers
  * before the player commits. M1 events carry a title key and plain text, M3 events ICU text in the career's pronouns.
  */
+// A disabled reason (and a slot's tier) sits inside the label for sighted players but is aria-hidden there, so a screen
+// reader hears it once, as the radio's description, not also in its name (#77).
 export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
   const { t } = useTranslation();
   const [choiceId, setChoiceId] = useState<string | null>(null);
+  const sensitiveOn = useSensitiveFilter();
   const command = useActionCommand(career.careerId, secret, (outcome) => {
     if (outcome.roll !== null) {
       onRolled(outcome.roll);
@@ -40,10 +44,16 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
 
   const decision = career.next.kind === NextStepKind.resolveDecision;
   const format = (text: string) => formatContent(text, career.pronouns);
-  const title =
-    event.title === null
-      ? t(event.titleKey ?? 'event.untitled', { defaultValue: t('event.untitled') })
-      : format(event.title);
+  // The Sensitive content filter replaces the description, never the choices, odds or outcomes.
+  const sensitive = sensitiveTag(event.tags, sensitiveOn);
+  let title = format(event.title ?? '');
+  if (sensitive !== null) {
+    title = t(`filters.sensitiveText.${sensitive}.title`);
+  } else if (event.title === null) {
+    title = t(event.titleKey ?? 'event.untitled', { defaultValue: t('event.untitled') });
+  }
+  const text =
+    sensitive === null ? format(event.text) : t(`filters.sensitiveText.${sensitive}.text`);
 
   return (
     <div className="grid gap-3">
@@ -53,7 +63,7 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
         </span>
       </p>
       <StepHeading>{title}</StepHeading>
-      <p>{format(event.text)}</p>
+      <p>{text}</p>
       <fieldset className="choices" disabled={command.pending || command.stalled}>
         <legend className="font-bold">{t('event.choices')}</legend>
         {event.choices.map((choice) => {
@@ -75,7 +85,7 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
               <span className="font-bold">{format(choice.label)}</span>
               <ChoiceOdds choice={choice} />
               {unavailable !== null && (
-                <span id={hint} className="muted">
+                <span id={hint} className="muted" aria-hidden="true">
                   {t(`choice.${unavailable}`, { defaultValue: t('disabled.unknown') })}
                 </span>
               )}

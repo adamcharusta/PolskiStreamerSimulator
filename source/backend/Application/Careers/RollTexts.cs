@@ -9,7 +9,8 @@ namespace PolskiStreamerSimulator.Application.Careers;
 /// M3-D (#82): a roll with the authored text of the career's pinned snapshot: the event title, the choice label and
 /// the outcome text (success text for a success, critical success or guaranteed choice; failure text, else success
 /// text, for a failure). Networking and the sponsor pitch read their balance choices; the ruleset-built platform-ban
-/// decision reads <c>balance.platformBan</c>. An event missing from the snapshot keeps only its IDs.
+/// decision reads <c>balance.platformBan</c>. An event missing from the snapshot keeps only its IDs. An authored event
+/// also carries its content tags (M5-B), so the client can replace sensitive wording.
 /// </summary>
 public static class RollTexts
 {
@@ -26,13 +27,13 @@ public static class RollTexts
             return view with { EventTitle = ban.Title, ChoiceLabel = label };
         }
 
-        var (title, choice) = Find(roll, c);
+        var (title, choice, tags) = Find(roll, c);
         return choice is null
             ? view
-            : view with { EventTitle = title, ChoiceLabel = choice.LabelPl, OutcomeText = OutcomeText(choice, roll.Outcome) };
+            : view with { EventTitle = title, ChoiceLabel = choice.LabelPl, OutcomeText = OutcomeText(choice, roll.Outcome), Tags = tags };
     }
 
-    private static (string? Title, ChoiceDefinition? Choice) Find(RollResult roll, ContentSnapshot c)
+    private static (string? Title, ChoiceDefinition? Choice, IReadOnlyList<string>? Tags) Find(RollResult roll, ContentSnapshot c)
     {
         var balanceChoice = roll.EventId switch
         {
@@ -42,11 +43,11 @@ public static class RollTexts
         };
         if (balanceChoice is not null)
         {
-            return (null, balanceChoice);
+            return (null, balanceChoice, null);
         }
 
         var e = c.Events.FirstOrDefault(x => string.Equals(x.Id, roll.EventId, StringComparison.Ordinal));
-        return (e?.Title, e?.Choices.FirstOrDefault(x => string.Equals(x.Id, roll.ChoiceId, StringComparison.Ordinal)));
+        return (e?.Title, e?.Choices.FirstOrDefault(x => string.Equals(x.Id, roll.ChoiceId, StringComparison.Ordinal)), e is null ? null : [.. e.Tags]);
     }
 
     private static string? OutcomeText(ChoiceDefinition choice, RollOutcome outcome)
