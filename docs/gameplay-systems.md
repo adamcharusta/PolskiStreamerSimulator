@@ -61,7 +61,7 @@ The following formulas define a **first balancing model**, not final tuned numbe
 
 `quality = clamp(0, 100, 25 + 0.35 × primarySkill + 4 × equipmentAverage + eventQuality - burnout × 0.20 + energy × 0.10)`.
 
-`baselineViewers = max(5, (50 + 1.5 × primarySkill + 35 × sqrt(followers) + 0.025 × followers) × platformReach × (0.6 + quality/100))`.
+`baselineViewers = max(5, (50 + 1.5 × primarySkill + 35 × sqrt(followers) + 0.025 × followers) × platformReach × (0.6 + quality/100))`. **M5-E (content `m3.3`, [§14](#14-m5-e-balance-content-m33)):** 25 × sqrt and 0.005 × followers.
 
 `liveViewers = round(baselineViewers × categoryTrend × (1 - boredom/250) × eventAudienceMultiplier × seededNoise(0.85..1.15))`.
 
@@ -150,9 +150,9 @@ Batch runs are incremental commits, not one opaque transaction: each completed w
 
 Achievements are earned from varied career milestones (for example first 10,000 followers, successful platform move, long trusted sponsorship, category mastery, survival after a scandal). They may unlock narrative templates or cosmetics but do not give hidden score multipliers. **Proposed score model:**
 
-`F = clamp(0, 1, log10(1 + finalFollowers) / log10(1 + 1,000,000))`
+`F = clamp(0, 1, log10(1 + finalFollowers) / log10(1 + 1,000,000))` (M5-E, [§14](#14-m5-e-balance-content-m33): 10,000,000)
 
-`W = clamp(0, 1, log10(1 + max(0, finalCashPln)) / log10(1 + 10,000,000))`
+`W = clamp(0, 1, log10(1 + max(0, finalCashPln)) / log10(1 + 10,000,000))` (M5-E: 100,000,000)
 
 `A = min(1, earnedAchievementPoints / 10)`
 
@@ -292,7 +292,7 @@ Once per stream, after live viewers are computed:
 
 `viralChance = min(30 %, category base + 0.2 points × max(0, quality − 70) + 5 points × critical outcomes + ViralChance effects)`
 
-A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, never above 3× baseline (`viralCapMultiplier`), and adds `max(100, min(10 % of followers, 20 % of the stream's live viewers))` followers. The report has a `viral` line with the roll and the threshold, and the career gets the flag `viral-clip` for 4 weeks (used by the `first-viral` milestone). Gained, lost and net followers stay separate from live viewers (REQ-06).
+A viral stream multiplies live viewers by a seeded factor between 1.5 and 3.0, never above 3× baseline (`viralCapMultiplier`), and adds `max(100, min(10 % of followers, 20 % of the stream's live viewers))` followers (M5-E, [§14](#14-m5-e-balance-content-m33): 2 % of followers, and 0.1 instead of 0.2 points of chance per quality point above 70). The report has a `viral` line with the roll and the threshold, and the career gets the flag `viral-clip` for 4 weeks (used by the `first-viral` milestone). Gained, lost and net followers stay separate from live viewers (REQ-06).
 
 ### Flags and follow-ups
 
@@ -309,13 +309,13 @@ Every career starts on Czatnia. Settlement replaces the scalar platform values w
 | Platform | Reach | Sub yield | Ad yield | Policy risk | Category reach |
 | --- | ---: | ---: | ---: | ---: | --- |
 | Czatnia | 1.00 | 1.00 | 1.00 | 1.00 | — |
-| PulsLive | 1.20 | 0.85 | 1.10 | 1.30 | FPS 1.10, MOBA 1.10, Chess 0.90 |
-| Nurt | 0.85 | 1.25 | 0.70 | 0.80 | Chess 1.20, Just Chatting 1.10, Gambling 0.80 |
+| PulsLive | 1.20 (M5-E: 1.10) | 0.85 | 1.10 | 1.30 | FPS 1.10, MOBA 1.10, Chess 0.90 |
+| Nurt | 0.85 (M5-E: 0.92) | 1.25 | 0.70 | 0.80 | Chess 1.20, Just Chatting 1.10, Gambling 0.80 |
 
 ### Policy exposure, strikes and bans
 
 - **Exposure** is frozen when the week starts, from the state before it: +1 for a Gambling stream, +1 / +2 / +3 for a Low / Medium / High wager, +1 while the side business is open (or for this week's work on it), +1 at drama 70 or more. The plan screen shows the exposure, the chance and the threshold.
-- **Strike roll.** With exposure above zero, settlement draws one 1–100 roll against `round(100 × min(6 %, exposure × 0.3 % × policy risk))`; a hit gives a strike on the current platform. Content can give strikes too (`PolicyStrike`). A strike stays active for 26 weeks.
+- **Strike roll.** With exposure above zero, settlement draws one 1–100 roll against `round(100 × min(6 %, exposure × 0.3 % × policy risk))`; a hit gives a strike on the current platform. Content can give strikes too (`PolicyStrike`). A strike stays active for 26 weeks (M5-E, [§14](#14-m5-e-balance-content-m33): 13 weeks).
 - **Ban.** At settlement, three active strikes on the current platform ban the career from it permanently. When another platform is open, the ruleset-built decision `platform-ban` opens first (before the recovery crisis): one guaranteed choice `move-{Platform}` per open platform, each with its forced-move retention range. Moving switches the platform at once, ends tied contracts without penalty and applies the retention at the next settlement (or at retirement). Strikes on the old platform stay.
 - **Endings.** Order at settlement: `Insolvency`, then `GlobalBan` (the system flag `sys:global-ban`, set only by a disclosed failure outcome of a crisis choice), then `AllPlatformsBanned` (current platform banned, no other open), then `Completed`. Both new endings keep their wealth points.
 
@@ -382,17 +382,17 @@ A batch plays 4, 13 or 52 weeks, committing each week on its own, and stops at a
 
 Plan order: forced rest, a due sponsor installment, rest thresholds, community above the drama limit, upgrade, side-business week, routine; a due one-off sets the category. A disabled choice falls back to a normal stream, then to rest. Reason codes: `routine-step` (`step`, `of`, `action`), `fallback-safe` (`preferred`, `disabledReason`), `strategy-wager` (`tier`, `routine`), `strategy-side-business`, `strategy-upgrade` (`slot`, `pricePln`, `reservePln`), plus the existing rest, drama, sponsor, offer and event codes (§8, §12). Event-response priorities are deferred to M5.
 
-Simulator strategies: `Strategy-Default` (the defaults), `Strategy-Safe` (safe, rest below 50, reserve 2,000 PLN, routine normal stream / community / training) and `Strategy-Bold` (bold, focus Gambling, Low wager, routine normal stream / networking). Every `Strategy-Bold` career ends with `AllPlatformsBanned` (report follow-up).
+Simulator strategies: `Strategy-Default` (the defaults), `Strategy-Safe` (safe, rest below 50, reserve 2,000 PLN, routine normal stream / community / training) and `Strategy-Bold` (bold, focus Gambling, Low wager, routine normal stream / networking). Every `Strategy-Bold` career ends with `AllPlatformsBanned` (report follow-up; superseded by M5-E, [§14](#14-m5-e-balance-content-m33): 38 % complete).
 
 ### Achievements
 
 | ID | Rule | Points |
 | --- | --- | ---: |
-| `followers-1m` | 1,000,000 followers | 1 |
-| `followers-10m` | 10,000,000 followers | 1 |
-| `followers-100m` | 100,000,000 followers | 2 |
-| `cash-100m` | 100,000,000 PLN | 1 |
-| `cash-1b` | 1,000,000,000 PLN | 1 |
+| `followers-100k` (M5-E; was `followers-1m`) | 100,000 followers | 1 |
+| `followers-1m` (M5-E; was `followers-10m`) | 1,000,000 followers | 1 |
+| `followers-5m` (M5-E; was `followers-100m`) | 5,000,000 followers | 2 |
+| `cash-10m` (M5-E; was `cash-100m`) | 10,000,000 PLN | 1 |
+| `cash-50m` (M5-E; was `cash-1b`) | 50,000,000 PLN | 1 |
 | `career-completed` | week 1,040 settled | 1 |
 | `skill-master` | skill 100 in any category | 1 |
 | `one-category` | 780 weeks in one category | 1 |
@@ -405,3 +405,16 @@ Achievements are evaluated at every settlement and at retirement and never revok
 ### Ending summary
 
 An ended career has a summary: the ending reason, weeks played, the most streamed category, the reputation (trusted: credibility ≥ 70 and drama ≤ 30; controversial: drama ≥ 60; steady otherwise), the final and banned platforms, the peak follower milestone and the earned achievements with points. The client builds the Polish narrative from it.
+
+## 14. M5-E Balance (content `m3.3`)
+
+**Agent proposal, 2026-11-02 ([design](superpowers/specs/2026-11-02-m5e-balance-design.md), [report](reports/m5e-balance-simulation.md), TD-131).** The ruleset stays `m3-systems.2`; only `content/m3/balance.json` changes, so new careers open a new season (2026-10-31 decision).
+
+- **Why.** With credibility at 100 the conversion doubles, so the viewers linear in followers alone recruited more followers each week than the 0.4 % churn removed, and careers grew without bound (Balanced median 96 million followers, 525 million PLN). The linear term is now below churn at any credibility, so growth settles where churn balances the square-root discovery term.
+- **Audience.** `viewersSqrtFollowers` 25, `viewersLinearFollowers` 0.005; viral follower share 2 % of followers and 0.1 points of chance per quality point above 70.
+- **Score.** `scoreFollowersCap` 10,000,000 and `scoreCashCap` 100,000,000, above the new p95, so the score separates careers.
+- **Platforms.** Reach 1.10 on PulsLive and 0.92 on Nurt: at equilibrium followers grow with the square of reach.
+- **Policy.** A strike stays active 13 weeks.
+- **Categories.** FPS reach 1.20; MOBA noise 0.78–1.22 and 0.65 drama per stream.
+- **Achievements.** `followers-100k`, `followers-1m`, `followers-5m`, `cash-10m`, `cash-50m` replace the five M3-C scale achievements with the same points.
+- **Criteria.** The simulator adds four M5-E criteria: Balanced median followers 1–10 million and cash 10–100 million PLN; Balanced score p95 at most 95 % of the 110,000 maximum with a p5–p95 spread of at least 10 %; no policy's median score above 1.10× Balanced; Strategy-Bold completes at least 25 % with at least 80 % of the Strategy-Safe median score and a wider spread (REQ-07).

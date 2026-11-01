@@ -75,6 +75,7 @@ public static class ReportWriter
         {
             AppendAchievements(md, r);
             AppendCriteria(md, "M3-C criteria", BatchStatistics.M3CCriteria(careers, r.AchievementIds, r.AchievementPointsCap));
+            AppendCriteria(md, "M5-E balance criteria", BalanceCriteria.M5Criteria(careers));
         }
 
         var byScore = careers.OrderByDescending(c => c.Score).ThenBy(c => c.Index).ToArray();
@@ -135,6 +136,7 @@ public static class ReportWriter
                 Achievements = r.AchievementIds.Count > 0 ? BatchStatistics.AchievementShares(r.Careers, r.AchievementIds) : null,
                 StrategyPolicies = r.AchievementIds.Count > 0 ? BatchStatistics.Strategies(r.Careers) : null,
                 M3CCriteria = r.AchievementIds.Count > 0 ? BatchStatistics.M3CCriteria(r.Careers, r.AchievementIds, r.AchievementPointsCap) : null,
+                M5Criteria = r.AchievementIds.Count > 0 ? BalanceCriteria.M5Criteria(r.Careers) : null,
                 r.Careers,
             },
             performance = new
