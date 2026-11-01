@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, test as base } from '@playwright/test';
 
 const themes = ['overlay', 'win98', 'web2005'] as const;
 
@@ -29,3 +29,36 @@ export async function expectFitsNarrowScreen(page: Page): Promise<void> {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   await page.setViewportSize({ width: 1280, height: 800 });
 }
+
+/** Records every content security policy violation on the page (M5-D, #38), from the first navigation on. */
+async function watchCsp(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const seen: string[] = [];
+    Object.assign(globalThis, { cspViolations: seen });
+    document.addEventListener('securitypolicyviolation', (event) => {
+      seen.push(`${event.violatedDirective} ${event.blockedURI} ${event.sourceFile}`);
+    });
+  });
+}
+
+async function expectNoCspViolations(page: Page): Promise<void> {
+  const violations = await page.evaluate(
+    () => (globalThis as unknown as { cspViolations?: string[] }).cspViolations ?? [],
+  );
+  expect(violations).toEqual([]);
+}
+
+/** Every journey runs under the development content security policy and fails on any violation (M5-D, #38). */
+// An automatic fixture: tests never read its value.
+export const test = base.extend<{ csp: true }>({
+  csp: [
+    async ({ page }, use) => {
+      await watchCsp(page);
+      await use(true);
+      await expectNoCspViolations(page);
+    },
+    { auto: true },
+  ],
+});
+
+export { expect } from '@playwright/test';

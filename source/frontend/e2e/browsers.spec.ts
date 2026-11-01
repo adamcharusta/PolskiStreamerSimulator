@@ -1,7 +1,7 @@
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 
 import pl from '../src/locales/pl/translation.json' with { type: 'json' };
-import { expectAccessible, fill } from './support';
+import { expect, expectAccessible, fill, test } from './support';
 
 // M5-C (#37): the core journey in every supported engine and on emulated phones (playwright.config.ts projects),
 // plus keyboard-only play, reduced motion and the secondary screens at 320 CSS pixels.

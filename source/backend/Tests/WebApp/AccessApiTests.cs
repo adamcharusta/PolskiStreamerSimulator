@@ -121,6 +121,46 @@ public sealed class AccessApiTests(ApiFactory api) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task A_client_cannot_pick_its_rate_limit_address_with_x_forwarded_for()
+    {
+        using var limited = api.WithWebHostBuilder(b => b.UseSetting("RateLimits:RecoverPermits", "1"));
+        var limitedClient = limited.CreateClient();
+
+        var first = await RecoverFromAsync(limitedClient, "203.0.113.1");
+        var second = await RecoverFromAsync(limitedClient, "203.0.113.2");
+
+        Assert.Equal(HttpStatusCode.NotFound, first.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
+    }
+
+    [Fact]
+    public async Task Behind_a_trusted_proxy_each_forwarded_client_has_its_own_rate_limit()
+    {
+        using var limited = api.WithWebHostBuilder(b => b
+            .UseSetting("RateLimits:RecoverPermits", "1")
+            .UseSetting("ForwardedHeaders:KnownNetworks:0", "0.0.0.0/0")
+            .UseSetting("ForwardedHeaders:KnownNetworks:1", "::/0"));
+        var limitedClient = limited.CreateClient();
+
+        await RecoverFromAsync(limitedClient, "203.0.113.1");
+        var other = await RecoverFromAsync(limitedClient, "203.0.113.2");
+        var again = await RecoverFromAsync(limitedClient, "203.0.113.1");
+
+        Assert.Equal(HttpStatusCode.NotFound, other.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, again.StatusCode);
+    }
+
+    private static async Task<HttpResponseMessage> RecoverFromAsync(HttpClient client, string forwardedFor)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/v1/careers/recover")
+        {
+            Content = JsonContent.Create(new { recoveryKey = "pss1.nope" }),
+        };
+        request.Headers.Add("X-Forwarded-For", forwardedFor);
+        return await client.SendAsync(request, Ct);
+    }
+
+    [Fact]
     public async Task Too_many_creations_are_429_and_reads_are_not_limited()
     {
         using var limited = api.WithWebHostBuilder(b => b.UseSetting("RateLimits:CreatePermits", "1"));

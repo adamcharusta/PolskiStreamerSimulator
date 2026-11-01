@@ -177,6 +177,10 @@ jobs:
       - name: Browser journey
         working-directory: source/frontend
         run: npm run e2e
+      # M5-D (#38): the production build under the production content security policy.
+      - name: Production build journey
+        working-directory: source/frontend
+        run: npm run e2e:production
       - name: Collect stack logs
         if: failure() || cancelled()
         run: docker compose logs --no-color > "$RUNNER_TEMP/compose.log"
@@ -186,6 +190,7 @@ jobs:
           name: frontend-e2e-report
           path: |
             source/frontend/playwright-report
+            source/frontend/playwright-report-production
             source/frontend/test-results
             ${{ runner.temp }}/compose.log
           if-no-files-found: warn

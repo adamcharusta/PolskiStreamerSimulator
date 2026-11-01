@@ -2,10 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-import { expect, type Page, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 import pl from '../src/locales/pl/translation.json' with { type: 'json' };
-import { expectAccessible, expectFitsNarrowScreen, fill } from './support';
+import { expect, expectAccessible, expectFitsNarrowScreen, fill, test } from './support';
 
 test('a new career plays a manual week and a 13-week batch, then reloads to the same state', async ({
   page,
