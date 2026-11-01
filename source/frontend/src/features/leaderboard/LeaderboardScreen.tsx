@@ -67,7 +67,13 @@ function Table({ board }: { readonly board: LeaderboardView }) {
       {board.entries.length === 0 ? (
         <p>{t('leaderboard.empty')}</p>
       ) : (
-        <div className="overflow-x-auto">
+        // A wide table scrolls inside this region; keyboard users reach and scroll it too (WCAG 2.1.1, M5-C #37).
+        <section
+          className="overflow-x-auto"
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scrollable region must take focus (axe).
+          tabIndex={0}
+          aria-label={t('leaderboard.caption', { season: season.number })}
+        >
           <table className="w-full">
             <caption className="panel-title text-left">
               {t('leaderboard.caption', { season: season.number })}
@@ -95,7 +101,7 @@ function Table({ board }: { readonly board: LeaderboardView }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </section>
       )}
     </section>
   );

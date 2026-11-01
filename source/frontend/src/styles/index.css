@@ -413,8 +413,24 @@ body {
   transform: rotate(-6deg);
 }
 
+/* M5-C (#37): a file picker's built-in width would push its form past a 320 CSS pixel screen. */
+input[type='file'] {
+  width: 100%;
+  min-width: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .btn-primary {
     transform: none;
+  }
+
+  /* M5-C (#37): no future animation or transition plays for a player who asked for less motion. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

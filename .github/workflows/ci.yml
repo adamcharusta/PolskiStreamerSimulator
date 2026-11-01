@@ -148,7 +148,10 @@ jobs:
   frontend-e2e:
     name: frontend-e2e
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
+    env:
+      # Every journey in five browser projects creates careers from one address (M5-C, #37).
+      CREATE_PERMITS: 200
     steps:
       # A random password for this run's throwaway database (TD-99), masked in the log; first, so the cleanup steps can read compose.yaml after any failure.
       - name: Generate the database password
@@ -166,9 +169,9 @@ jobs:
         working-directory: source/frontend
         run: npm ci --ignore-scripts
       # The Playwright CLI pinned by package-lock.json, not a package npx could fetch on demand.
-      - name: Install Chromium
+      - name: Install the browsers
         working-directory: source/frontend
-        run: ./node_modules/.bin/playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
       - name: Start the local stack
         run: docker compose up -d --build --wait --wait-timeout 600
       - name: Browser journey
