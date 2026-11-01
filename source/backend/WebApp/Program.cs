@@ -27,6 +27,7 @@ builder.Services.AddProblemDetails(ApiProblems.Configure);
 builder.Services.ConfigureHttpJsonOptions(options => ContractJson.Configure(options.SerializerOptions));
 builder.Services.AddGameApplication();
 builder.Services.AddGameInfrastructure(builder.Configuration);
+builder.Services.AddTrustedProxies(builder.Configuration);
 builder.Services.AddCareerRateLimits(builder.Configuration);
 builder.Services.AddOwnerAuthentication(builder.Environment);
 builder.Services.PostConfigure<ContentOptions>(options => options.Directory = Path.GetFullPath(options.Directory, AppContext.BaseDirectory));
@@ -35,6 +36,8 @@ builder.Services.AddOpenApi(options => OpenApiContract.Configure(options));
 
 var app = builder.Build();
 
+app.UseTrustedProxies(app.Configuration);
+app.UseSecurityHeaders();
 app.UseExceptionHandler();
 app.UseRateLimiter();
 app.UseAuthentication();

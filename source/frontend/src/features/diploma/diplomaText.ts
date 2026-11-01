@@ -6,6 +6,7 @@ import extBold from '@fontsource/comic-relief/files/comic-relief-latin-ext-700-n
 import type { CareerView, ScoreView } from '@/api/generated/game.schemas';
 import { formatContent } from '@/content/icu';
 import { count, percent, pln } from '@/format';
+import { masked } from '@/textFilters/textFilters';
 
 import type { DiplomaFonts, DiplomaText } from './diploma';
 
@@ -37,7 +38,7 @@ export function diplomaText(
     .map((a) => formatContent(a.name ?? a.id, career.pronouns));
   return {
     title: t('diploma.title'),
-    nickname: career.nickname,
+    nickname: masked(career.nickname),
     subtitle: t('diploma.subtitle', {
       background: t(`background.${career.background}`),
       difficulty: t(`difficulty.${career.difficulty}`),

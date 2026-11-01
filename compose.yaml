@@ -24,6 +24,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Game: Server=sql,1433;Database=PolskiStreamerSimulator;User Id=sa;Password=${MSSQL_SA_PASSWORD:?Set MSSQL_SA_PASSWORD in .env (copy .env.example)};TrustServerCertificate=True;Encrypt=True
+      # The browser matrix creates more careers from one address than the 20-per-window default allows (M5-C).
+      RateLimits__CreatePermits: ${CREATE_PERMITS:-20}
     depends_on:
       sql:
         condition: service_healthy

@@ -17,6 +17,7 @@ Read and follow [AGENTS.md](AGENTS.md); it is the canonical agent guide for this
 | `docs/technical-decisions.md` | Current technical decisions, defaults, open inputs, and superseded choices. |
 | `docs/validation-and-delivery.md` | Acceptance criteria, test gates, balance validation, and risks. |
 | `docs/requirements-traceability.md` | Requirement → source → acceptance criterion → issue/milestone → status; superseded guidance → replacement. |
+| `docs/security-review.md` | Threat model, controls and evidence, M6 deployment obligations, open legal questions. |
 | `docs/reports/` | Generated simulation reports (M1 baseline) and their findings. |
 | `docs/superpowers/` | Milestone design specs and implementation plans (M1 simulation prototype). |
 | `docs/core-concept.md` | Original concept; the current GDD and specifications take precedence. |

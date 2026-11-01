@@ -2,32 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { createHmac } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
-import AxeBuilder from '@axe-core/playwright';
-import { expect, type Page, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 import pl from '../src/locales/pl/translation.json' with { type: 'json' };
-
-const themes = ['overlay', 'win98', 'web2005'] as const;
-
-const fill = (text: string, values: Record<string, string | number>): string =>
-  text.replaceAll(/\{\{(\w+)\}\}/gu, (_, name: string) => String(values[name]));
-
-/** WCAG 2.2 AA in every theme (spec §5): any axe violation on a key screen fails the journey. */
-async function expectAccessible(page: Page, screen: string): Promise<void> {
-  for (const theme of themes) {
-    await page.evaluate((name) => {
-      document.documentElement.dataset.theme = name;
-    }, theme);
-    const results = await new AxeBuilder({ page })
-      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-      .analyze();
-    expect(results.violations, `${screen} (${theme})`).toEqual([]);
-  }
-
-  await page.evaluate(() => {
-    document.documentElement.dataset.theme = 'overlay';
-  });
-}
+import { expect, expectAccessible, expectFitsNarrowScreen, fill, test } from './support';
 
 test('a new career plays a manual week and a 13-week batch, then reloads to the same state', async ({
   page,
@@ -49,9 +27,7 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
   await expectAccessible(page, 'week plan');
-  await page.setViewportSize({ width: 320, height: 720 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await expectFitsNarrowScreen(page);
 
   await page.getByRole('radio', { name: pl.action.rest }).check();
   await page.getByRole('button', { name: pl.plan.start }).click();
@@ -90,6 +66,8 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
   await expect(page.getByRole('heading', { name: pl.plan.title })).toBeVisible();
 
   await page.getByRole('button', { name: pl.batch.launch }).click();
+  await expect(page.getByRole('alertdialog')).toBeVisible();
+  await expectAccessible(page, 'batch confirmation');
   await page.getByRole('button', { name: fill(pl.batch.confirm_many, { count: 13 }) }).click();
   await expect(page.getByRole('heading', { name: pl.batch.title })).toBeVisible({
     timeout: 60_000,
@@ -111,6 +89,7 @@ test('a new career plays a manual week and a 13-week batch, then reloads to the 
     .count();
   expect(weeks).toBeGreaterThan(0);
   await expectAccessible(page, 'batch result');
+  await expectFitsNarrowScreen(page);
   await page.getByRole('button', { name: pl.batch.next }).click();
 
   const desk = page.getByRole('region', { name: pl.career.summaryLabel });

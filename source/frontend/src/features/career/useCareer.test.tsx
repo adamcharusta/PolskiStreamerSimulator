@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
@@ -21,7 +21,7 @@ function Wrapper({ children }: { readonly children: ReactNode }) {
 }
 
 describe('useCareer', () => {
-  it('treats a career without a stored secret as not found and asks nothing', () => {
+  it('treats a career without a stored secret as not found and asks nothing', async () => {
     let requests = 0;
     server.use(
       http.all('*', () => {
@@ -33,6 +33,8 @@ describe('useCareer', () => {
     const { result } = renderHook(() => useCareer(TEST_CAREER_ID), { wrapper: Wrapper });
 
     expect(result.current.secret).toBeNull();
+    // A request sent after the first render (an effect, a retry, a refetch) would still be counted here.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
     expect(result.current.query.fetchStatus).toBe('idle');
     expect(requests).toBe(0);
   });

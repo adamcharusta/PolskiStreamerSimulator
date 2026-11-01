@@ -4501,9 +4501,18 @@
           },
           "mandatory": {
             "type": "boolean"
+          },
+          "tags": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks."
+        "description": "An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks. Tags (M5-B) let the client replace sensitive wording; absent in responses stored before them."
       },
       "HistoryView": {
         "required": [
@@ -5588,9 +5597,18 @@
               "null",
               "string"
             ]
+          },
+          "tags": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "description": "A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them."
+        "description": "A roll with the authored title, label and outcome text of the career's snapshot (M3-D) and the event's content tags (M5-B); they are absent in responses stored before them."
       },
       "SaveFile": {
         "required": [

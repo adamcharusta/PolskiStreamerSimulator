@@ -8,6 +8,7 @@ build/
 .vite/
 coverage/
 playwright-report/
+playwright-report-production/
 test-results/
 *.tsbuildinfo
 .eslintcache

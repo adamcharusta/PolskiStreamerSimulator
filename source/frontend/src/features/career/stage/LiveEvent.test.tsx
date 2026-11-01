@@ -3,6 +3,7 @@ import { delay, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PronounSet } from '@/api/generated/game.schemas';
+import { useTextFilters } from '@/textFilters/textFilters';
 
 import { captureActions } from '../../../../test/api';
 import {
@@ -175,5 +176,47 @@ describe('live event', () => {
       type: 'resolveDecision',
       choiceId: 'sign',
     });
+  });
+
+  it('replaces a sensitive description but keeps the choices and sends the same answer', async () => {
+    const received = captureActions(answer);
+    const next = decisionNext();
+    const career = careerView({
+      rulesetId: 'm3-systems.1',
+      version: 5,
+      next: { ...next, event: next.event && { ...next.event, tags: ['privacy-incident'] } },
+    });
+    useTextFilters.getState().setFilter('sensitive', true);
+    const { user } = renderWithClient(
+      <LiveEvent career={career} secret="secret-1" onRolled={vi.fn()} />,
+    );
+
+    expect(screen.getByRole('heading', { name: 'Sprawa prywatnych danych' })).toBeInTheDocument();
+    expect(screen.queryByText('Dostałaś ofertę współpracy.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /Podpisz jako twórczyni/u }));
+    await user.click(screen.getByRole('button', { name: 'Wybieram' }));
+
+    await waitFor(() => {
+      expect(received[0]?.body).toMatchObject({ type: 'resolveDecision', choiceId: 'sign' });
+    });
+  });
+
+  it('masks the event text and choices in Streamer Friendly mode', () => {
+    const next = eventNext();
+    const career = careerView({
+      next: {
+        ...next,
+        event: next.event && {
+          ...next.event,
+          title: 'O kurwa, rajd!',
+          text: 'Czat krzyczy: ja pierdolę!',
+        },
+      },
+    });
+    useTextFilters.getState().setFilter('streamerFriendly', true);
+    renderWithClient(<LiveEvent career={career} secret="secret-1" onRolled={vi.fn()} />);
+
+    expect(screen.getByRole('heading', { name: 'O k****, rajd!' })).toBeInTheDocument();
+    expect(screen.getByText('Czat krzyczy: ja p*******!')).toBeInTheDocument();
   });
 });

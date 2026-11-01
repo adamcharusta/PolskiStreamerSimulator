@@ -25,6 +25,8 @@ export default defineConfig(
       'playwright-report/',
       'test-results/',
       'src/api/generated/',
+      // Static files copied as they are; theme-boot.js runs before the bundle (M5-D).
+      'public/',
       'node_modules/',
     ],
   },

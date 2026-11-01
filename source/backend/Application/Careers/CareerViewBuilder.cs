@@ -232,7 +232,8 @@ public sealed class CareerViewBuilder(WeekEngine engine)
             definition.Title,
             definition.TextPl,
             [.. presented.Choices.Select(o => Choice(o, definition.Choices.First(x => string.Equals(x.Id, o.ChoiceId, StringComparison.Ordinal))))],
-            mandatory);
+            mandatory,
+            [.. definition.Tags]);
     }
 
     private static ChoiceView Choice(ChoiceOdds odds, ChoiceDefinition choice)

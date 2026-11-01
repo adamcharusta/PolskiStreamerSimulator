@@ -13,9 +13,11 @@
   },
   "include": [
     "vite.config.ts",
+    "securityHeaders.ts",
     "vitest.config.ts",
     "orval.config.ts",
     "playwright.config.ts",
+    "playwright.production.config.ts",
     "e2e"
   ]
 }

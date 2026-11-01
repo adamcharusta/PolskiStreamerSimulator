@@ -1,16 +1,21 @@
 import { Link, useNavigate, useParams } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { forgetCareer } from '@/careers/knownCareers';
 import { Button } from '@/components/ui/Button';
 
 import { CareerDesk } from './CareerDesk';
+import { useDesk } from './deskStore';
 import { useCareer } from './useCareer';
 
 export function CareerScreen() {
   const { careerId } = useParams({ from: '/kariera/$careerId' });
   const { t } = useTranslation();
   const { secret, query } = useCareer(careerId);
+  const closeStats = useDesk((state) => state.closeStats);
+  // The drawer belongs to one visit of one career (#79): leaving the screen or switching careers closes it.
+  useEffect(() => closeStats, [careerId, closeStats]);
 
   if (secret === null || query.error?.code === 'career-not-found') {
     return <CareerNotFound careerId={careerId} />;
