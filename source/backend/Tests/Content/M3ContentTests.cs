@@ -15,12 +15,25 @@ public class M3ContentTests
 
     private static readonly string[] M3bPrefixes = ["policy-", "wager-", "side-", "sponsor-", "puls-", "nurt-"];
 
-    private static bool IsM3b(EventDefinition e) => M3bPrefixes.Any(p => e.Id.StartsWith(p, StringComparison.Ordinal));
+    private static readonly string[] M5SampleIds =
+    [
+        "jc-cooking-live", "jc-reaction-queue", "fps-stream-sniper", "fps-screaming-teammate", "moba-afk-ally",
+        "moba-chat-pick", "chess-engine-suspicion", "chess-bullet-marathon", "gamba-chat-picks-slot", "gamba-loss-tally",
+        "x-power-cut", "x-family-visit", "x-out-of-context", "x-charity-stream", "czatnia-emote-rules", "nurt-subs-only",
+        "channel-first-year", "followers-100k", "pc-breakdown", "mod-team-quits",
+    ];
+
+    private static bool IsM5Sample(EventDefinition e) => M5SampleIds.Contains(e.Id);
+
+    private static bool IsM3b(EventDefinition e)
+        => !IsM5Sample(e) && M3bPrefixes.Any(p => e.Id.StartsWith(p, StringComparison.Ordinal));
+
+    private static bool IsM3a(EventDefinition e) => !IsM5Sample(e) && !IsM3b(e);
 
     [Fact]
     public void Has_the_representative_set()
     {
-        var live = C.Events.Where(e => e.Phase == EventPhase.Live && !IsM3b(e)).ToList();
+        var live = C.Events.Where(e => e.Phase == EventPhase.Live && IsM3a(e)).ToList();
         foreach (var category in Enum.GetValues<Category>())
         {
             Assert.Equal(5, live.Count(e => e.Eligibility.Categories is [var only] && only == category));
@@ -28,7 +41,7 @@ public class M3ContentTests
 
         Assert.True(live.Count(e => e.Eligibility.Categories.IsDefaultOrEmpty) >= 8);
         Assert.True(C.Events.Count(e => e.Phase != EventPhase.Live) >= 4);
-        Assert.Equal(42, C.Events.Count(e => !IsM3b(e)));
+        Assert.Equal(42, C.Events.Count(IsM3a));
     }
 
     [Fact]
@@ -39,9 +52,26 @@ public class M3ContentTests
         Assert.Equal(3, C.Sponsors.Count(t => t.Prerequisites.MinDrama is { } d && d >= Fixed.FromInt(50)));
         Assert.Equal(3, C.Sponsors.Count(t => t.RequiredCategory is not null));
         Assert.Equal(2, C.Sponsors.Count(t => !t.Platforms.IsEmpty));
-        Assert.Equal(57, C.Events.Length);   // 42 existing M3-A events + the 15 new ones
+        Assert.Equal(77, C.Events.Length);   // 42 M3-A events, the 15 M3-B ones and the 20 M5 samples
         Assert.Equal(15, C.Events.Count(IsM3b));
         Assert.Equal(4, C.Events.Count(e => e.Eligibility.RequiresFlags.Contains("side-business")));
+    }
+
+    [Fact]
+    public void Has_the_m5_sample_set()
+    {
+        var samples = C.Events.Where(IsM5Sample).ToList();
+        Assert.Equal(M5SampleIds.Length, samples.Count);
+        var live = samples.Where(e => e.Phase == EventPhase.Live).ToList();
+        foreach (var category in Enum.GetValues<Category>())
+        {
+            Assert.Equal(2, live.Count(e => e.Eligibility.Categories is [var only] && only == category));
+        }
+
+        Assert.Equal(4, live.Count(e => e.Eligibility.Categories.IsDefaultOrEmpty && e.Eligibility.Platforms.IsDefaultOrEmpty));
+        Assert.Equal(2, live.Count(e => !e.Eligibility.Platforms.IsDefaultOrEmpty));
+        Assert.Equal(2, samples.Count(e => e.Phase == EventPhase.Milestone));
+        Assert.Equal(2, samples.Count(e => e.Phase == EventPhase.Crisis));
     }
 
     [Fact]

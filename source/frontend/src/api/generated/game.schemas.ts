@@ -263,7 +263,7 @@ export interface PlanOptionView {
 }
 
 /**
- * An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks.
+ * An event to answer: M1 gives a title key and plain text, M3 an ICU title and text that the client formats; mandatory marks a decision between weeks. Tags (M5-B) let the client replace sensitive wording; absent in responses stored before them.
  */
 export interface EventView {
   eventId: string;
@@ -274,6 +274,8 @@ export interface EventView {
   text: string;
   choices: ChoiceView[];
   mandatory: boolean;
+  /** @nullable */
+  tags?: string[] | null;
 }
 
 /**
@@ -297,7 +299,7 @@ export const RollOutcome = {
 } as const;
 
 /**
- * A roll with the authored title, label and outcome text of the career's snapshot (M3-D); the texts are absent in responses stored before them.
+ * A roll with the authored title, label and outcome text of the career's snapshot (M3-D) and the event's content tags (M5-B); they are absent in responses stored before them.
  */
 export interface RollView {
   eventId: string;
@@ -313,6 +315,8 @@ export interface RollView {
   choiceLabel?: string | null;
   /** @nullable */
   outcomeText?: string | null;
+  /** @nullable */
+  tags?: string[] | null;
 }
 
 export interface ReportLineView {

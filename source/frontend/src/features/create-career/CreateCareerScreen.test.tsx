@@ -264,6 +264,7 @@ describe('character creation', () => {
     expect(
       await screen.findByText('Nick musi mieć 3–20 znaków: litery, cyfry, spacja, _ - .'),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('Nick')).toHaveFocus();
   });
 
   it('shows a generic error when the server fails', async () => {
@@ -290,5 +291,33 @@ describe('character creation', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Ranking jest chwilowo niedostępny');
     expect(bodies[0]?.ranked).toBe(true);
+  });
+
+  it('preselects the first offered option when the server does not offer the usual default', async () => {
+    const options = careerOptions();
+    server.use(
+      http.get('/v1/career-options', () =>
+        HttpResponse.json({
+          ...options,
+          backgrounds: options.backgrounds.slice(1),
+          difficulties: options.difficulties.slice(0, 1),
+          pronouns: options.pronouns.slice(2),
+        }),
+      ),
+    );
+    const bodies = captureCreation(() => problem(500, 'internal-error'));
+    const { user } = renderApp('/nowa-kariera');
+
+    await user.type(await screen.findByLabelText('Nick'), 'Valid Name');
+    await user.click(screen.getByRole('button', { name: 'Zaczynam karierę' }));
+
+    await waitFor(() => {
+      expect(bodies).toHaveLength(1);
+    });
+    expect(bodies[0]).toMatchObject({
+      background: options.backgrounds[1]?.background,
+      difficulty: 'easy',
+      pronouns: 'nonbinary',
+    });
   });
 });
