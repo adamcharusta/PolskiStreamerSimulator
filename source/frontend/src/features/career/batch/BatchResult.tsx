@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 
 import type { BatchOutcome, CareerStatsView } from '@/api/generated/game.schemas';
+import { usePronounOverride } from '@/careers/displayPronouns';
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { count, pln, signed, stat } from '@/format';
@@ -36,6 +37,7 @@ export function BatchResult({
 }) {
   const { t } = useTranslation();
   const { summary } = outcome;
+  const pronouns = usePronounOverride(outcome.career.careerId) ?? outcome.career.pronouns;
   return (
     <div className="grid gap-3">
       <StepHeading>{t('batch.title')}</StepHeading>
@@ -101,7 +103,7 @@ export function BatchResult({
                 <ul>
                   {week.choices.map((choice, index) => (
                     <li key={`${choice.eventId}-${String(index)}`}>
-                      <RollStory roll={choice.roll} pronouns={outcome.career.pronouns} />{' '}
+                      <RollStory roll={choice.roll} pronouns={pronouns} />{' '}
                       <span className="muted">{reasonText(t, choice.reason)}</span>
                     </li>
                   ))}
@@ -109,11 +111,7 @@ export function BatchResult({
               )}
               <details>
                 <summary>{t('report.title', { week: week.report.week })}</summary>
-                <WeekReport
-                  report={week.report}
-                  pronouns={outcome.career.pronouns}
-                  headingLevel={5}
-                />
+                <WeekReport report={week.report} pronouns={pronouns} headingLevel={5} />
               </details>
             </li>
           );

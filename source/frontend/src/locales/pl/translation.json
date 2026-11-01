@@ -937,5 +937,26 @@
   },
   "connection": {
     "down": "Brak połączenia z serwerem. Gra jest wstrzymana — widzisz ostatni potwierdzony stan. Wrócimy, gdy serwer odpowie."
+  },
+  "filters": {
+    "legend": "Filtry tekstu",
+    "streamerFriendly": "Tryb Streamer Friendly",
+    "streamerFriendlyHint": "Zamienia wybrane wulgaryzmy na gwiazdki we wszystkich tekstach, ogłoszeniach dla czytników ekranu i w dyplomie PDF. Lista nie gwarantuje zgodności z zasadami żadnej platformy.",
+    "sensitive": "Łagodniejsze opisy treści wrażliwych",
+    "sensitiveHint": "Zastępuje opisy wydarzeń o pracy dla dorosłych i wyciekach prywatnych danych neutralnymi. Wybory, szanse i skutki zostają te same.",
+    "sensitiveText": {
+      "adult-business": {
+        "title": "Sprawa z biznesu po godzinach",
+        "text": "Dzieje się coś związanego z twoim biznesem po godzinach. Szczegóły ukrywa filtr treści wrażliwych; wybory i ich skutki są takie jak zawsze.",
+        "outcome": "Sprawa z biznesu po godzinach rozstrzygnięta. Szczegóły ukrywa filtr treści wrażliwych."
+      },
+      "privacy-incident": {
+        "title": "Sprawa prywatnych danych",
+        "text": "W sieci pojawiły się informacje, które miały zostać prywatne. Szczegóły ukrywa filtr treści wrażliwych; wybory i ich skutki są takie jak zawsze.",
+        "outcome": "Sprawa prywatnych danych rozstrzygnięta. Szczegóły ukrywa filtr treści wrażliwych."
+      }
+    },
+    "pronounsLegend": "Zaimki w tej karierze",
+    "pronounsHint": "Zmieniają tylko formy w tekstach w tej przeglądarce. Wydarzenia, rzuty, wynik i ranking zostają takie same."
   }
 }

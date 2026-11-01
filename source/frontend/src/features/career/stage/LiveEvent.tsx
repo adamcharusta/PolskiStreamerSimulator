@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { StepHeading } from '@/components/ui/StepHeading';
 import { formatContent } from '@/content/icu';
+import { sensitiveTag, useSensitiveFilter } from '@/textFilters/textFilters';
 
 import { RetryBanner } from '../RetryBanner';
 import { useActionCommand } from '../useCareerCommand';
@@ -30,6 +31,7 @@ export interface LiveEventProps {
 export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
   const { t } = useTranslation();
   const [choiceId, setChoiceId] = useState<string | null>(null);
+  const sensitiveOn = useSensitiveFilter();
   const command = useActionCommand(career.careerId, secret, (outcome) => {
     if (outcome.roll !== null) {
       onRolled(outcome.roll);
@@ -42,10 +44,16 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
 
   const decision = career.next.kind === NextStepKind.resolveDecision;
   const format = (text: string) => formatContent(text, career.pronouns);
-  const title =
-    event.title === null
-      ? t(event.titleKey ?? 'event.untitled', { defaultValue: t('event.untitled') })
-      : format(event.title);
+  // The Sensitive content filter replaces the description, never the choices, odds or outcomes.
+  const sensitive = sensitiveTag(event.tags, sensitiveOn);
+  let title = format(event.title ?? '');
+  if (sensitive !== null) {
+    title = t(`filters.sensitiveText.${sensitive}.title`);
+  } else if (event.title === null) {
+    title = t(event.titleKey ?? 'event.untitled', { defaultValue: t('event.untitled') });
+  }
+  const text =
+    sensitive === null ? format(event.text) : t(`filters.sensitiveText.${sensitive}.text`);
 
   return (
     <div className="grid gap-3">
@@ -55,7 +63,7 @@ export function LiveEvent({ career, secret, onRolled }: LiveEventProps) {
         </span>
       </p>
       <StepHeading>{title}</StepHeading>
-      <p>{format(event.text)}</p>
+      <p>{text}</p>
       <fieldset className="choices" disabled={command.pending || command.stalled}>
         <legend className="font-bold">{t('event.choices')}</legend>
         {event.choices.map((choice) => {

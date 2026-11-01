@@ -24,6 +24,15 @@ public sealed class RollTextTests
     }
 
     [Fact]
+    public void An_authored_roll_carries_its_event_tags_and_a_balance_roll_none()
+    {
+        var leak = RollTexts.Of(new RollResult("side-leak-rumour", "deny-loudly", 10, 50, [], RollOutcome.Success), C);
+        Assert.Equal(["adult-business", "privacy-incident"], leak.Tags);
+        Assert.Equal([], RollTexts.Of(new RollResult("jc-hot-take", "defend", 10, 50, [], RollOutcome.Success), C).Tags);
+        Assert.Null(RollTexts.Of(new RollResult("network", "collaborate", 20, 35, [], RollOutcome.Failure), C).Tags);
+    }
+
+    [Fact]
     public void Network_and_pitch_rolls_use_the_balance_choices()
     {
         var network = RollTexts.Of(new RollResult("network", "collaborate", 20, 35, [], RollOutcome.Failure), C);

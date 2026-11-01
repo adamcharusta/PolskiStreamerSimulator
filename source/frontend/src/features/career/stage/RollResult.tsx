@@ -6,7 +6,7 @@ import { StepHeading } from '@/components/ui/StepHeading';
 import { formatContent } from '@/content/icu';
 
 import { rollText } from '../reportLabels';
-import { useRollName } from '../rollName';
+import { useOutcomeText, useRollName } from '../rollName';
 
 const gains = new Set(['success', 'criticalSuccess']);
 
@@ -21,6 +21,7 @@ export function RollResult({
 }) {
   const { t } = useTranslation();
   const name = useRollName();
+  const outcomeText = useOutcomeText()(roll, pronouns);
   const outcome = t(`roll.outcome.${roll.outcome}`);
   const good = gains.has(roll.outcome);
   return (
@@ -31,7 +32,7 @@ export function RollResult({
         {roll.choiceLabel && `: ${formatContent(roll.choiceLabel, pronouns)}`}
       </p>
       <p>{rollText(t, roll)}</p>
-      {roll.outcomeText && <p>{formatContent(roll.outcomeText, pronouns)}</p>}
+      {outcomeText !== null && <p>{outcomeText}</p>}
       <p className={good ? 'good font-bold' : 'bad font-bold'}>
         <span aria-hidden="true">{good ? '✔ ' : '✖ '}</span>
         {outcome}

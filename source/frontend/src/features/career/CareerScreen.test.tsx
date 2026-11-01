@@ -1,9 +1,10 @@
 import { onlineManager } from '@tanstack/react-query';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { delay, http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 
 import { knownCareers } from '@/careers/knownCareers';
+import { useTextFilters } from '@/textFilters/textFilters';
 
 import { captureActions, captureBatches, problem, serveCareer } from '../../../test/api';
 import {
@@ -273,6 +274,21 @@ describe('game screen', () => {
       'aria-expanded',
       'false',
     );
+  });
+
+  it('masks the nickname at once when Streamer Friendly is switched on', async () => {
+    rememberTestCareer();
+    serveCareer(careerView({ nickname: 'Kurwiszon' }));
+    renderApp(path);
+
+    await screen.findByRole('region', { name: 'Stan kariery' });
+    expect(within(desk()).getByText('Kurwiszon')).toBeInTheDocument();
+    act(() => {
+      useTextFilters.getState().setFilter('streamerFriendly', true);
+    });
+
+    expect(await within(desk()).findByText('K********')).toBeInTheDocument();
+    expect(screen.queryByText(/Kurwiszon/u)).not.toBeInTheDocument();
   });
 
   it('shows the ending of a finished career', async () => {
